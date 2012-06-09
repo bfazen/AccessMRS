@@ -1,0 +1,72 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <!--
+    <PreferenceCategory android:title="@string/odk" >
+
+
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/openmrs" >
+
+                <PreferenceScreen
+            android:id="@+id/info"
+            android:key="info"
+            android:summary="@string/default_info"
+            android:title="@string/app_name" >
+
+            <intent
+                android:action="android.intent.action.VIEW"
+                android:data="http://opendatakit.org" />
+        </PreferenceScreen>
+    -->
+    <EditTextPreference
+        android:id="@+id/server"
+        android:defaultValue="@string/default_server"
+        android:dialogTitle="@string/change_server"
+        android:key="server"
+        android:title="@string/server" />
+    <EditTextPreference
+        android:id="@+id/username"
+        android:defaultValue="@string/default_username"
+        android:dialogTitle="@string/change_username"
+        android:key="username"
+        android:title="@string/username" />
+    <EditTextPreference
+        android:id="@+id/password"
+        android:defaultValue="@string/default_password"
+        android:dialogTitle="@string/change_password"
+        android:key="password"
+        android:password="true"
+        android:title="@string/password" />
+    <EditTextPreference
+        android:id="@+id/provider"
+        android:defaultValue="0"
+        android:dialogTitle="@string/change_provider"
+        android:inputType="phone"
+        android:key="provider"
+        android:title="@string/provider" />
+    <EditTextPreference
+        android:id="@+id/program"
+        android:defaultValue="0"
+        android:dialogTitle="@string/change_program"
+        android:inputType="phone"
+        android:key="program"
+        android:title="@string/program" />
+    <EditTextPreference
+        android:id="@+id/saved_search"
+        android:defaultValue="0"
+        android:dialogTitle="@string/change_saved_search"
+        android:inputType="phone"
+        android:key="saved_search"
+        android:title="@string/saved_search" />
+
+    <CheckBoxPreference
+        android:id="@+id/use_saved_searches"
+        android:key="use_saved_searches"
+        android:summaryOff="@string/saved_search_hint"
+        android:summaryOn="@string/saved_search_hint"
+        android:title="@string/use_saved_search" />
+
+    <!-- </PreferenceCategory> -->
+
+</PreferenceScreen>

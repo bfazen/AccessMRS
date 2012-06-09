@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Copyright (C) 2009 Google Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <string name="app_name">ODK Clinic</string>
+    <string name="app_version">1.1.1</string>
+    <string name="barcode_error">Barcode Scanner not installed.</string>
+    <string name="cancel">Cancel</string>
+    <string name="cancel_download">Cancel Download</string>
+    <string name="change_password">Change Password</string>
+    <string name="change_server">Change URL</string>
+    <string name="change_username">Change Username</string>
+    <string name="connecting_server">Connecting &#8230;</string>
+    <string name="create_patient">Create Patient</string>
+    <string name="default_info">http://opendatakit.org</string>
+    <string name="default_password">test</string>
+    
+   <!-- Customization by louis.fazen@gmail.com
+   		Setting to AMPATH Server Preferences
+    --> 
+    <string name="default_server">http://192.168.43.232:8080/openmrs</string>
+    <string name="default_username">admin</string>
+    <string name="download">Download</string>
+    <string name="download_forms">Refresh Data</string>
+    <string name="download_patients">Refresh Data</string>
+    <string name="download_selected">Download Selected</string>
+    <string name="downloading">Getting %s&#8230;</string>
+    <string name="please_wait">Please wait a few moments.</string>
+    <string name="error">Error: %s</string>
+    <string name="fill_forms">Fill Blank Forms</string>
+    <string name="fill_patient_forms">Fill Patient Forms</string>
+    <string name="find_patient">List Patients</string>
+    <string name="finding_patient">Finding patients&#8230;</string>
+    <string name="forms">Get Forms</string>
+    <string name="go_back">Go Back</string>
+    <string name="no_cohort">No cohorts. Try Refresh Data.</string>
+    <string name="no_forms">No forms found.</string>
+    <string name="no_patients">No patients found.</string>
+    <string name="no_select_error">Sorry, you have not selected any patients!</string>
+    <string name="no_upload_patients">No forms to upload!</string>
+    <string name="odk">Open Data Kit</string>
+    <string name="form_find_error">Error: Try getting forms.</string>    
+    <string name="odk_collect_error">Error: ODK Collect not installed.</string>
+    <string name="openmrs">OpenMRS</string>
+    <string name="password">Password</string>
+    <string name="refresh">Refresh</string>
+    <string name="use_saved_search">Use Saved Searches</string>
+    <string name="saved_search_hint">Use Saved Searches instead of Cohorts</string>
+    <string name="search_hint">Enter name or identifier</string>
+    <string name="select_cohort">Select Cohort</string>
+    <string name="select_forms">Select Forms</string>
+    <string name="server">URL</string>
+    <string name="server_preferences">Change Settings</string>
+    <string name="show_patient">Show Patient</string>
+    <string name="storage_error">SD card not ready.</string>
+    <string name="toggle_selected">Toggle All</string>
+    <string name="update_list">Update List</string>
+    <string name="upload_all_successful">%s forms(s) uploaded successfully.</string>
+    <string name="upload_patients">Upload Forms</string>
+    <string name="upload_some_failed">Sorry, %s forms(s) failed to upload!</string>
+    <string name="uploading_patients">Uploading Forms&#8230;</string>
+    <string name="username">Username</string>
+    <string name="view_patient">View Patient</string>
+    <string name="view_patient_detail">View Observation</string>
+    <string name="saved_search">Cohort or Search ID</string>
+    <string name="change_saved_search">Change Cohort or Search ID</string>
+    <string name="provider">Provider</string>
+    <string name="change_provider">Change Provider</string>
+    <string name="xform_parse_error">XForm parse error</string>
+
+</resources>

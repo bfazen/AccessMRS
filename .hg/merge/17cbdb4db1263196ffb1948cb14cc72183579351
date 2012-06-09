@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="org.odk.clinic.android"
+    android:versionCode="1"
+    android:versionName="@string/app_version" >
+
+    
+    <!-- Customization by louis.fazen@gmail.com
+		Changing the theme to make full screen with NoTitleBar    
+     -->
+    <application
+        android:icon="@drawable/icon"
+        android:label="@string/app_name"
+        android:name=".utilities.App"
+        android:theme="@android:style/Theme.Light.NoTitleBar.Fullscreen">
+        <activity
+            android:label="@string/app_name"
+            android:name=".activities.ListPatientActivity" 
+            android:screenOrientation="portrait">
+            <intent-filter >
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:label="@string/app_name"
+            android:name=".activities.ListFormActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:label="@string/app_name"
+            android:name=".activities.DownloadFormActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:label="@string/app_name"
+            android:name=".activities.DownloadPatientActivity"
+            android:screenOrientation="portrait" />
+        
+        <!-- Customization by louis.fazen@gmail.com
+			Allow for PreferencesActivity to be called by external application intent        
+         -->
+        <activity
+            android:name=".activities.PreferencesActivity" 
+             android:label="@string/app_name"
+            >
+            <intent-filter>
+				<action
+					android:name="android.intent.action.VIEW" />
+			</intent-filter>
+		</activity>
+            
+            
+        <activity
+            android:label="@string/app_name"
+            android:name=".activities.ViewPatientActivity" 
+            android:screenOrientation="portrait"/>
+        <activity
+            android:label="@string/app_name"
+            android:name=".activities.ObservationChartActivity" 
+            android:screenOrientation="portrait"/>
+        <activity
+            android:label="@string/app_name"
+            android:name=".activities.ObservationTimelineActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:label="@string/app_name"
+            android:name=".activities.InstanceUploaderList"
+            android:screenOrientation="portrait" />
+        <activity
+            android:label="@string/app_name"
+            android:name=".activities.InstanceUploaderActivity"
+            android:screenOrientation="portrait" />
+    </application>
+
+    <uses-permission
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" >
+    </uses-permission>
+
+    <uses-sdk android:minSdkVersion="4" >
+    </uses-sdk>
+
+    <supports-screens
+        android:anyDensity="true"
+        android:largeScreens="true"
+        android:normalScreens="true" />
+
+</manifest>
