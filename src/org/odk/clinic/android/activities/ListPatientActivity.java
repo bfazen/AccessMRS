@@ -450,6 +450,7 @@ public class ListPatientActivity extends ListActivity implements UploadFormListe
 			c = ca.fetchPatients(searchStr, searchStr);
 		} else {
 			c = ca.fetchAllPatients();
+
 		}
 
 		if (c != null && c.getCount() >= 0) {
@@ -463,8 +464,9 @@ public class ListPatientActivity extends ListActivity implements UploadFormListe
 			int middleNameIndex = c.getColumnIndex(ClinicAdapter.KEY_MIDDLE_NAME);
 			int birthDateIndex = c.getColumnIndex(ClinicAdapter.KEY_BIRTH_DATE);
 			int genderIndex = c.getColumnIndex(ClinicAdapter.KEY_GENDER);
-			
-			// TODO: louis.fazen check all the other occurrences of get and setFamilyName and add get and set priority as well...
+
+			// TODO: louis.fazen check all the other occurrences of get and
+			// setFamilyName and add get and set priority as well...
 			int priorityIndex = c.getColumnIndexOrThrow(ClinicAdapter.KEY_PRIORITY_FORM_NUMBER);
 			int priorityFormIndex = c.getColumnIndexOrThrow(ClinicAdapter.KEY_PRIORITY_FORM_NAMES);
 			if (c.getCount() > 0) {
@@ -480,26 +482,30 @@ public class ListPatientActivity extends ListActivity implements UploadFormListe
 					p.setBirthDate(c.getString(birthDateIndex));
 					p.setGender(c.getString(genderIndex));
 
-					// TODO: louis.fazen check all the other occurrences of get and setFamilyName and add get and set priority as well...
+					// TODO: louis.fazen check all the other occurrences of get
+					// and setFamilyName and add get and set priority as well...
 					p.setPriorityNumber(c.getInt(priorityIndex));
 					p.setPriorityForms(c.getString(priorityFormIndex));
+
 					if (c.getInt(priorityIndex) > 0) {
+
 						p.setPriority(true);
+
 					}
-					
+
 					mPatients.add(p);
-					
+
 				} while (c.moveToNext());
 			}
 
 		}
 
 		// sort em
-		Collections.sort(mPatients, new Comparator<Patient>() {
-			public int compare(Patient p1, Patient p2) {
-				return p1.getName().compareTo(p2.getName());
-			}
-		});
+		// Collections.sort(mPatients, new Comparator<Patient>() {
+		// public int compare(Patient p1, Patient p2) {
+		// return p1.getName().compareTo(p2.getName());
+		// }
+		// });
 
 		refreshView();
 

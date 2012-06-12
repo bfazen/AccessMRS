@@ -8,7 +8,7 @@ import org.odk.clinic.android.openmrs.Form;
 import org.odk.clinic.android.openmrs.FormInstance;
 import org.odk.clinic.android.openmrs.Observation;
 import org.odk.clinic.android.openmrs.Patient;
-import org.odk.clinic.android.tasks.EventLogger;
+import org.odk.clinic.android.tasks.ActivityLog;
 import org.odk.clinic.android.utilities.FileUtils;
 
 import android.content.ContentValues;
@@ -71,15 +71,14 @@ public class ClinicAdapter {
 	// private DateFormat mDateFormat = new
 	// SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	// private String mZeroDate = "0000-00-00 00:00:00";
-	
-	
-	//louis.fazen is putting in new events table...
-	private static final String EVENT_NAME = "event_name";
-	private static final String EVENT_START = "start_time";
-	private static final String EVENT_STOP = "stop_time";
-	private static final String EVENT_TABLE = "events";
-	
-	
+
+	// louis.fazen is putting in new events table...
+	private static final String ACTIVITY_START_NAME = "start_activity";
+	private static final String ACTIVITY_STOP_NAME = "stop_activity";
+	private static final String ACTIVITY_PARAM_NAME = "parameter";
+	private static final String ACTIVITY_START_TIME = "start_time";
+	private static final String ACTIVITY_STOP_TIME = "stop_time";
+	private static final String ACTIVITY_TABLE = "activity_log";
 
 	private DatabaseHelper mDbHelper;
 	private SQLiteDatabase mDb;
@@ -112,10 +111,9 @@ public class ClinicAdapter {
 	private static final String CREATE_FORMINSTANCES_TABLE = "create table " + FORMINSTANCES_TABLE + " (_id integer primary key autoincrement, " + KEY_PATIENT_ID + " integer not null, " + KEY_FORM_ID + " integer not null, " + KEY_FORMINSTANCE_DISPLAY + " text, "
 			+ KEY_FORMINSTANCE_STATUS + " text, " + KEY_PATH + " text);";
 
-	private static final String CREATE_EVENT_TABLE = "create table " + EVENT_TABLE + " (_id integer primary key autoincrement, " + EVENT_NAME + " text, " + 
-			 EVENT_START + " integer, " + EVENT_STOP + " integer);";
+	private static final String CREATE_ACTIVITY_TABLE = "create table " + ACTIVITY_TABLE + " (_id integer primary key autoincrement, " + ACTIVITY_START_NAME + " text, " + ACTIVITY_PARAM_NAME + " text, " + ACTIVITY_START_TIME + " integer, " + ACTIVITY_STOP_NAME + " text, "
+			+ ACTIVITY_STOP_TIME + " integer);";
 
-	
 	private static class DatabaseHelper extends ODKSQLiteOpenHelper {
 
 		DatabaseHelper() {
@@ -130,7 +128,7 @@ public class ClinicAdapter {
 			db.execSQL(CREATE_COHORTS_TABLE);
 			db.execSQL(CREATE_FORMS_TABLE);
 			db.execSQL(CREATE_FORMINSTANCES_TABLE);
-//			db.execSQL(CREATE_EVENT_TABLE);
+			db.execSQL(CREATE_ACTIVITY_TABLE);
 		}
 
 		@Override
@@ -141,8 +139,8 @@ public class ClinicAdapter {
 			db.execSQL("DROP TABLE IF EXISTS " + COHORTS_TABLE);
 			db.execSQL("DROP TABLE IF EXISTS " + FORMS_TABLE);
 			db.execSQL("DROP TABLE IF EXISTS " + FORMINSTANCES_TABLE);
-			
-//			db.execSQL("DROP TABLE IF EXISTS " + EVENT_TABLE);
+
+			db.execSQL("DROP TABLE IF EXISTS " + ACTIVITY_TABLE);
 			onCreate(db);
 		}
 	}
@@ -291,22 +289,24 @@ public class ClinicAdapter {
 		return id;
 	}
 
-	public void createEvent(EventLogger eventlog) {
+	public void createActivityLog(ActivityLog activitylog) {
 		try {
 			mDb.beginTransaction();
 
 			ContentValues cv = new ContentValues();
-			cv.put(EVENT_START, eventlog.getEventStart());
-			cv.put(EVENT_STOP, eventlog.getEventStop());
+			cv.put(ACTIVITY_START_TIME, activitylog.getActivityStartTime());
+			cv.put(ACTIVITY_STOP_TIME, activitylog.getActivityStopTime());
+			cv.put(ACTIVITY_START_NAME, activitylog.getStartActivity());
+			cv.put(ACTIVITY_PARAM_NAME, activitylog.getStartParam());
 
-			if (eventlog.sameEvent()) {
-				cv.put(EVENT_NAME, eventlog.getEventName());
+			if (activitylog.getStartActivity() == activitylog.getStopActivity()) {
+				cv.put(ACTIVITY_STOP_NAME, activitylog.getStopActivity());
 
 			} else {
-				cv.put(EVENT_NAME, "Error: " + eventlog.getEventName());
+				cv.put(ACTIVITY_STOP_NAME, "Error: " + activitylog.getStopActivity());
 			}
 
-			mDb.insert(EVENT_TABLE, null, cv);
+			mDb.insert(ACTIVITY_TABLE, null, cv);
 			mDb.setTransactionSuccessful();
 		} finally {
 			mDb.endTransaction();
@@ -411,7 +411,7 @@ public class ClinicAdapter {
 	public Cursor fetchPatient(Integer patientId) throws SQLException {
 		Cursor c = null;
 		c = mDb.query(true, PATIENTS_TABLE, new String[] { KEY_ID, KEY_PATIENT_ID, KEY_IDENTIFIER, KEY_GIVEN_NAME, KEY_FAMILY_NAME, KEY_MIDDLE_NAME, KEY_BIRTH_DATE, KEY_GENDER, KEY_PRIORITY_FORM_NAMES, KEY_PRIORITY_FORM_NUMBER }, KEY_PATIENT_ID + "=" + patientId, null, null,
-				null, null, null);
+				null, KEY_PRIORITY_FORM_NUMBER + " DESC, " + KEY_FAMILY_NAME + " ASC", null);
 
 		if (c != null) {
 			c.moveToFirst();
@@ -421,7 +421,8 @@ public class ClinicAdapter {
 
 	public Cursor fetchAllPatients() throws SQLException {
 		Cursor c = null;
-		c = mDb.query(true, PATIENTS_TABLE, new String[] { KEY_ID, KEY_PATIENT_ID, KEY_IDENTIFIER, KEY_GIVEN_NAME, KEY_FAMILY_NAME, KEY_MIDDLE_NAME, KEY_BIRTH_DATE, KEY_GENDER, KEY_PRIORITY_FORM_NAMES, KEY_PRIORITY_FORM_NUMBER }, null, null, null, null, null, null);
+		c = mDb.query(true, PATIENTS_TABLE, new String[] { KEY_ID, KEY_PATIENT_ID, KEY_IDENTIFIER, KEY_GIVEN_NAME, KEY_FAMILY_NAME, KEY_MIDDLE_NAME, KEY_BIRTH_DATE, KEY_GENDER, KEY_PRIORITY_FORM_NAMES, KEY_PRIORITY_FORM_NUMBER }, null, null, null, null, 
+				KEY_PRIORITY_FORM_NUMBER + " DESC, " + KEY_FAMILY_NAME + " ASC", null);
 
 		if (c != null) {
 			c.moveToFirst();
@@ -519,8 +520,7 @@ public class ClinicAdapter {
 		return c;
 	}
 
-	// TODO: change the following to be more generic rather than just a long
-	// string... see code from 6/6 on desktop CLinicAdapter
+	// TODO:
 	// louis.fazen is adding the following cursor to identify the correct
 
 	public void updatePatientFormList() throws SQLException {
@@ -536,7 +536,7 @@ public class ClinicAdapter {
 				// FROM tables
 				FORMS_TABLE + "," + OBSERVATIONS_TABLE,
 				// two columns (one of which is a group_concat()
-				new String[] { OBSERVATIONS_TABLE + "." + KEY_PATIENT_ID + " group_concat(" + FORMS_TABLE + "." + KEY_FORM_NAME + ",\", \") AS " + KEY_PRIORITY_FORM_NAMES },
+				new String[] { OBSERVATIONS_TABLE + "." + KEY_PATIENT_ID + ", group_concat(" + FORMS_TABLE + "." + KEY_FORM_NAME + ",\", \") AS " + KEY_PRIORITY_FORM_NAMES },
 				// where
 				OBSERVATIONS_TABLE + "." + KEY_FIELD_NAME + "=" + KEY_FIELD_FORM_VALUE + " AND " + FORMS_TABLE + "." + KEY_FORM_ID + "=" + OBSERVATIONS_TABLE + "." + KEY_VALUE_INT,
 				// group by
@@ -559,6 +559,7 @@ public class ClinicAdapter {
 				mDb.update(PATIENTS_TABLE, cv, KEY_PATIENT_ID + "=" + patientId, null);
 			} while (c.moveToNext());
 		}
+
 		c.close();
 
 	}

@@ -1,5 +1,6 @@
 package org.odk.clinic.android.activities;
 
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;

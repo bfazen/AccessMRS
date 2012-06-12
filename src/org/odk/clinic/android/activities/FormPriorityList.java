@@ -29,6 +29,8 @@ import org.odk.clinic.android.openmrs.Form;
 import org.odk.clinic.android.openmrs.FormInstance;
 import org.odk.clinic.android.openmrs.Observation;
 import org.odk.clinic.android.openmrs.Patient;
+import org.odk.clinic.android.tasks.ActivityLog;
+import org.odk.clinic.android.tasks.ActivityLogTask;
 import org.odk.clinic.android.utilities.App;
 import org.odk.clinic.android.utilities.FileUtils;
 import org.odk.collect.android.provider.FormsProviderAPI.FormsColumns;
@@ -132,6 +134,7 @@ public class FormPriorityList extends ListActivity {
 		String formIdStr = f.getFormId().toString();
 		Toast.makeText(this, formIdStr, Toast.LENGTH_SHORT).show();
 		Log.d("MergeAdapterDemo", String.valueOf(position));
+		
 		launchFormEntry(formIdStr);
 	}
 	
@@ -413,6 +416,16 @@ public class FormPriorityList extends ListActivity {
 					intent.setAction(Intent.ACTION_EDIT);
 					intent.setData(Uri.parse(InstanceColumns.CONTENT_URI + "/" + instanceId));
 
+					ActivityLog newActivity = new ActivityLog();
+					newActivity.setStartActivity(TAG + ".launchFormEntry");
+					newActivity.setActivityStartTime();
+					newActivity.setStartParam(jrFormId);
+					new ActivityLogTask(newActivity).execute();
+//					if (activityname != null && activityname == activityName) {
+//						sameActivity = true;
+//					}
+					Log.e(TAG, "adding a new Activity Log");
+					
 					startActivity(intent);
 
 				} else {

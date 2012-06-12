@@ -7,6 +7,7 @@ import org.odk.clinic.android.openmrs.Patient;
 
 import android.content.Context;
 import android.content.res.Resources;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,9 +17,8 @@ import android.widget.TextView;
 
 public class PatientAdapter extends ArrayAdapter<Patient> {
 	Context mContext;
-	
-	public PatientAdapter(Context context, int textViewResourceId,
-			List<Patient> items) {
+
+	public PatientAdapter(Context context, int textViewResourceId, List<Patient> items) {
 		super(context, textViewResourceId, items);
 		mContext = context;
 	}
@@ -27,8 +27,7 @@ public class PatientAdapter extends ArrayAdapter<Patient> {
 		View v = convertView;
 		Resources res = mContext.getResources();
 		if (v == null) {
-			LayoutInflater vi = (LayoutInflater) getContext().getSystemService(
-					Context.LAYOUT_INFLATER_SERVICE);
+			LayoutInflater vi = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 			v = vi.inflate(R.layout.patient_list_item, null);
 		}
 		Patient p = getItem(position);
@@ -60,23 +59,39 @@ public class PatientAdapter extends ArrayAdapter<Patient> {
 				if (p.getGender().equals("M")) {
 					imageView.setImageResource(R.drawable.male_gray);
 				} else if (p.getGender().equals("F")) {
-					imageView.setImageResource(R.drawable.female_gray);
+					imageView.setImageDrawable(res.getDrawable(R.drawable.female_gray));
 				}
 			}
-			
+
 			ImageView priorityArrow = (ImageView) v.findViewById(R.id.arrow_image);
 			ImageView priorityImage = (ImageView) v.findViewById(R.id.priority_image);
 			TextView priorityNumber = (TextView) v.findViewById(R.id.priority_number);
-			if (priorityArrow != null && priorityNumber != null ) {
+			
+			priorityImage.setImageDrawable(res.getDrawable(R.drawable.priority_icon_blank));
+
+
+
+			if (priorityArrow != null && nameView != null) {
 				if (p.getPriority()) {
 					priorityArrow.setImageResource(R.drawable.arrow_red);
-					priorityNumber.setText(p.getPriorityNumber().toString());
-					priorityImage.setImageResource(R.drawable.priority_icon_blank);
-					nameView.setTextColor(res.getColor(R.color.priority));
+//					nameView.setTextColor(res.getColor(R.color.priority));
+					nameView.setTextColor(res.getColor(R.color.dark_gray));
+
+					if (priorityNumber != null && priorityImage != null) {
+						priorityNumber.setText(p.getPriorityNumber().toString());
+						priorityImage.setVisibility(View.VISIBLE);
+						
+					}
 
 				} else {
 					priorityArrow.setImageResource(R.drawable.arrow_gray);
 					nameView.setTextColor(res.getColor(R.color.dark_gray));
+					
+					if (priorityNumber != null && priorityImage != null) {
+						priorityNumber.setText(null);
+						priorityImage.setVisibility(View.INVISIBLE);
+
+					}
 				}
 			}
 		}

@@ -43,6 +43,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.net.Uri;
@@ -82,8 +83,7 @@ public class ViewPatientActivity extends ListActivity {
 
 	private static HashMap<String, String> mInstanceValues = new HashMap<String, String>();
 
-	private static final DateFormat COLLECT_INSTANCE_NAME_DATE_FORMAT = new SimpleDateFormat(
-			"yyyy-MM-dd_HH-mm-ss");
+	private static final DateFormat COLLECT_INSTANCE_NAME_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
 
 	private ArrayAdapter<Observation> mObservationAdapter;
 	private static ArrayList<Observation> mObservations = new ArrayList<Observation>();
@@ -91,12 +91,12 @@ public class ViewPatientActivity extends ListActivity {
 	private static Element mFormNode;
 
 	private static Context mContext;
-	
-	
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		mContext = this;
+		Resources res = mContext.getResources();
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.view_patient);
 
@@ -105,18 +105,15 @@ public class ViewPatientActivity extends ListActivity {
 			finish();
 		}
 
-		SharedPreferences settings = PreferenceManager
-				.getDefaultSharedPreferences(getBaseContext());
+		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
 		mProviderId = settings.getString(PreferencesActivity.KEY_PROVIDER, "0");
 
 		// TODO Check for invalid patient IDs
-		String patientIdStr = getIntent().getStringExtra(
-				Constants.KEY_PATIENT_ID);
+		String patientIdStr = getIntent().getStringExtra(Constants.KEY_PATIENT_ID);
 		Integer patientId = Integer.valueOf(patientIdStr);
 		mPatient = getPatient(patientId);
 
-		setTitle(getString(R.string.app_name) + " > "
-				+ getString(R.string.view_patient));
+		setTitle(getString(R.string.app_name) + " > " + getString(R.string.view_patient));
 
 		View patientView = (View) findViewById(R.id.patient_info);
 		patientView.setBackgroundResource(R.drawable.search_gradient);
@@ -152,6 +149,39 @@ public class ViewPatientActivity extends ListActivity {
 			}
 		}
 
+		// ImageView priorityArrow = (ImageView)
+		// v.findViewById(R.id.arrow_image);
+		ImageView priorityImage = (ImageView) findViewById(R.id.priority_image);
+		TextView priorityNumber = (TextView) findViewById(R.id.priority_number);
+		TextView formNames = (TextView) findViewById(R.id.form_names);
+		priorityImage.setImageDrawable(res.getDrawable(R.drawable.priority_icon_blank));
+
+		if (priorityNumber != null && priorityImage != null) {
+			if (mPatient.getPriority()) {
+				// priorityArrow.setImageResource(R.drawable.arrow_red);
+				// nameView.setTextColor(res.getColor(R.color.priority));
+				// nameView.setTextColor(res.getColor(R.color.dark_gray));
+
+				priorityNumber.setText(mPatient.getPriorityNumber().toString());
+				Log.e("ViewPtActivity", "priorityNumber: " + mPatient.getPriorityNumber());
+				formNames.setText(mPatient.getPriorityForms());
+				Log.e("ViewPtActivity", "Forms: " + mPatient.getPriorityForms());
+
+				priorityImage.setVisibility(View.VISIBLE);
+				formNames.setVisibility(View.VISIBLE);
+				priorityNumber.setVisibility(View.VISIBLE);
+
+			} else {
+				// priorityArrow.setImageResource(R.drawable.arrow_gray);
+				// nameView.setTextColor(res.getColor(R.color.dark_gray));
+
+				priorityNumber.setText(null);
+				priorityImage.setVisibility(View.GONE);
+				formNames.setVisibility(View.GONE);
+				priorityNumber.setVisibility(View.GONE);
+			}
+		}
+
 		mActionButton = (Button) findViewById(R.id.fill_forms);
 		mActionButton.setOnClickListener(new OnClickListener() {
 			@Override
@@ -160,7 +190,7 @@ public class ViewPatientActivity extends ListActivity {
 				// branch of id of form to fill...
 				getDownloadedForms();
 				if (mForms.size() > 0) {
-					
+
 					createBranchDialog();
 				} else {
 					showCustomToast(getString(R.string.no_forms));
@@ -213,7 +243,6 @@ public class ViewPatientActivity extends ListActivity {
 		ca.close();
 	}
 
-
 	private static String parseDate(String s) {
 		SimpleDateFormat inputFormat = new SimpleDateFormat("MMM dd, yyyy");
 		SimpleDateFormat outputFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -223,6 +252,7 @@ public class ViewPatientActivity extends ListActivity {
 			return "";
 		}
 	}
+
 	private static void traverseInstanceNodes(Element element) {
 
 		// extract 'WEIGHT (KG)' from '5089^WEIGHT (KG)^99DCT'
@@ -239,52 +269,44 @@ public class ViewPatientActivity extends ListActivity {
 				// patient id
 				if (childName.equalsIgnoreCase("patient.patient_id")) {
 					childElement.clear();
-					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mPatient
-							.getPatientId().toString());
+					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mPatient.getPatientId().toString());
 				}
 				if (childName.equalsIgnoreCase("patient.birthdate")) {
 					childElement.clear();
-					childElement.addChild(0, org.kxml2.kdom.Node.TEXT,parseDate(mPatient.getBirthdate()));
+					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, parseDate(mPatient.getBirthdate()));
 				}
 				if (childName.equalsIgnoreCase("patient.family_name")) {
 					childElement.clear();
-					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mPatient
-							.getFamilyName().toString());
+					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mPatient.getFamilyName().toString());
 				}
 				if (childName.equalsIgnoreCase("patient.given_name")) {
 					childElement.clear();
-					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mPatient
-							.getGivenName().toString());
+					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mPatient.getGivenName().toString());
 				}
 
 				if (childName.equalsIgnoreCase("patient.middle_name")) {
 					childElement.clear();
-					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mPatient
-							.getMiddleName().toString());
+					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mPatient.getMiddleName().toString());
 
 				}
 				if (childName.equalsIgnoreCase("patient.sex")) {
 					childElement.clear();
-					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mPatient
-							.getGender().toString());
+					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mPatient.getGender().toString());
 
 				}
 				if (childName.equalsIgnoreCase("patient.medical_record_number")) {
 					childElement.clear();
-					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mPatient
-							.getIdentifier().toString());
+					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mPatient.getIdentifier().toString());
 
 				}
 
 				// provider id
 				if (childName.equalsIgnoreCase("encounter.provider_id")) {
 					childElement.clear();
-					childElement.addChild(0, org.kxml2.kdom.Node.TEXT,
-							mProviderId.toString());
+					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mProviderId.toString());
 				}
 
-				if (childName.equalsIgnoreCase("date")
-						|| childName.equalsIgnoreCase("time")) {
+				if (childName.equalsIgnoreCase("date") || childName.equalsIgnoreCase("time")) {
 					childElement.clear();
 
 				}
@@ -296,22 +318,19 @@ public class ViewPatientActivity extends ListActivity {
 
 					// parent of value node
 					Element parentElement = ((Element) childElement.getParent());
-					String parentConcept = parentElement.getAttributeValue("",
-							"openmrs_concept");
+					String parentConcept = parentElement.getAttributeValue("", "openmrs_concept");
 
 					// match the text inside ^^
 					String match = null;
 					Matcher matcher = pattern.matcher(parentConcept);
 					while (matcher.find()) {
-						match = matcher.group(0).substring(1,
-								matcher.group(0).length() - 1);
+						match = matcher.group(0).substring(1, matcher.group(0).length() - 1);
 					}
 
 					// write value into value n
 					String value = mInstanceValues.get(match);
 					if (value != null) {
-						childElement.addChild(0, org.kxml2.kdom.Node.TEXT,
-								value.toString());
+						childElement.addChild(0, org.kxml2.kdom.Node.TEXT, value.toString());
 					}
 				}
 
@@ -361,8 +380,7 @@ public class ViewPatientActivity extends ListActivity {
 		} else {
 			instanceName = jrFormId;
 		}
-		instanceName = instanceName + "_"
-				+ COLLECT_INSTANCE_NAME_DATE_FORMAT.format(new Date());
+		instanceName = instanceName + "_" + COLLECT_INSTANCE_NAME_DATE_FORMAT.format(new Date());
 
 		String instancePath = FileUtils.INSTANCES_PATH + instanceName;
 		(new File(instancePath)).mkdirs();
@@ -381,12 +399,10 @@ public class ViewPatientActivity extends ListActivity {
 
 			// register into content provider
 			ContentValues insertValues = new ContentValues();
-			insertValues.put("displayName", mPatient.getGivenName() + " "
-					+ mPatient.getFamilyName());
+			insertValues.put("displayName", mPatient.getGivenName() + " " + mPatient.getFamilyName());
 			insertValues.put("instanceFilePath", instanceFilePath);
 			insertValues.put("jrFormId", jrFormId);
-			Uri insertResult = App.getApp().getContentResolver()
-					.insert(InstanceColumns.CONTENT_URI, insertValues);
+			Uri insertResult = App.getApp().getContentResolver().insert(InstanceColumns.CONTENT_URI, insertValues);
 
 			// insert to clinic
 			// Save form instance to db
@@ -398,8 +414,7 @@ public class ViewPatientActivity extends ListActivity {
 
 			ClinicAdapter ca = new ClinicAdapter();
 			ca.open();
-			ca.createFormInstance(fi,
-					mPatient.getGivenName() + " " + mPatient.getFamilyName());
+			ca.createFormInstance(fi, mPatient.getGivenName() + " " + mPatient.getFamilyName());
 			ca.close();
 
 			return Integer.valueOf(insertResult.getLastPathSegment());
@@ -438,18 +453,14 @@ public class ViewPatientActivity extends ListActivity {
 		String formPath = null;
 		int id = -1;
 		try {
-			Cursor mCursor = App.getApp().getContentResolver()
-					.query(FormsColumns.CONTENT_URI, null, null, null, null);
+			Cursor mCursor = App.getApp().getContentResolver().query(FormsColumns.CONTENT_URI, null, null, null, null);
 			mCursor.moveToPosition(-1);
 			while (mCursor.moveToNext()) {
 
-				int dbid = mCursor.getInt(mCursor
-						.getColumnIndex(FormsColumns._ID));
-				String dbjrFormId = mCursor.getString(mCursor
-						.getColumnIndex(FormsColumns.JR_FORM_ID));
+				int dbid = mCursor.getInt(mCursor.getColumnIndex(FormsColumns._ID));
+				String dbjrFormId = mCursor.getString(mCursor.getColumnIndex(FormsColumns.JR_FORM_ID));
 
-				formPath = mCursor.getString(mCursor
-						.getColumnIndex(FormsColumns.FORM_FILE_PATH));
+				formPath = mCursor.getString(mCursor.getColumnIndex(FormsColumns.FORM_FILE_PATH));
 
 				if (jrFormId.equalsIgnoreCase(dbjrFormId)) {
 					id = dbid;
@@ -467,26 +478,21 @@ public class ViewPatientActivity extends ListActivity {
 
 				if (instanceId != -1) {
 					Intent intent = new Intent();
-					intent.setComponent(new ComponentName(
-							"org.odk.collect.android",
-							"org.odk.collect.android.activities.FormEntryActivity"));
+					intent.setComponent(new ComponentName("org.odk.collect.android", "org.odk.collect.android.activities.FormEntryActivity"));
 					intent.setAction(Intent.ACTION_EDIT);
-					intent.setData(Uri.parse(InstanceColumns.CONTENT_URI + "/"
-							+ instanceId));
+					intent.setData(Uri.parse(InstanceColumns.CONTENT_URI + "/" + instanceId));
 
 					startActivity(intent);
 
 				} else {
-					Uri formUri = ContentUris.withAppendedId(
-							FormsColumns.CONTENT_URI, id);
+					Uri formUri = ContentUris.withAppendedId(FormsColumns.CONTENT_URI, id);
 					startActivity(new Intent(Intent.ACTION_EDIT, formUri));
 				}
 
 			}
 
 		} catch (ActivityNotFoundException e) {
-			showCustomToast(getString(R.string.error,
-							getString(R.string.odk_collect_error)));
+			showCustomToast(getString(R.string.error, getString(R.string.odk_collect_error)));
 		}
 	}
 
@@ -519,18 +525,14 @@ public class ViewPatientActivity extends ListActivity {
 		return items;
 	}
 
-	
-//	louis.fazen is changing the following:
+	// louis.fazen is changing the following:
 	private void createBranchDialog() {
 
 		Log.i("ODK Clinic", "createBranchDialog is called!");
 		final CharSequence[] items = getFormNames();
 
-	    
 		AlertDialog.Builder builder = new AlertDialog.Builder(this);
 		builder.setTitle("Select a form to fill");
-		
-
 
 		// pick the first preferred form
 		int selected = -1;
@@ -538,41 +540,33 @@ public class ViewPatientActivity extends ListActivity {
 			selected = 0;
 
 		builder.setSingleChoiceItems(items, selected, null);
-		builder.setPositiveButton("Fill Form",
-				new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int id) {
-						// extract form id
-						int i = ((AlertDialog) dialog).getListView()
-								.getCheckedItemPosition();
-						if (i != -1) {
-							Pattern p = Pattern.compile("\\([0-9]+\\)$");
-							Matcher m = p.matcher(items[i]);
-							while (m.find()) {
-								mSelectedId = m.group(0).substring(1,
-										m.group(0).length() - 1);
-							}
-							dialog.dismiss();
-							launchFormEntry(mSelectedId);
-						} else {
-							dialog.dismiss();
-						}
+		builder.setPositiveButton("Fill Form", new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int id) {
+				// extract form id
+				int i = ((AlertDialog) dialog).getListView().getCheckedItemPosition();
+				if (i != -1) {
+					Pattern p = Pattern.compile("\\([0-9]+\\)$");
+					Matcher m = p.matcher(items[i]);
+					while (m.find()) {
+						mSelectedId = m.group(0).substring(1, m.group(0).length() - 1);
+					}
+					dialog.dismiss();
+					launchFormEntry(mSelectedId);
+				} else {
+					dialog.dismiss();
+				}
 
-					}
-				});
-		builder.setNegativeButton("Cancel",
-				new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int id) {
-						dialog.cancel();
-					}
-				});
-		
-		
-		
+			}
+		});
+		builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int id) {
+				dialog.cancel();
+			}
+		});
+
 		AlertDialog alert = builder.create();
 		alert.show();
-		
-		
-		
+
 	}
 
 	private Patient getPatient(Integer patientId) {
@@ -585,15 +579,17 @@ public class ViewPatientActivity extends ListActivity {
 
 		if (c != null && c.getCount() > 0) {
 			int patientIdIndex = c.getColumnIndex(ClinicAdapter.KEY_PATIENT_ID);
-			int identifierIndex = c
-					.getColumnIndex(ClinicAdapter.KEY_IDENTIFIER);
+			int identifierIndex = c.getColumnIndex(ClinicAdapter.KEY_IDENTIFIER);
 			int givenNameIndex = c.getColumnIndex(ClinicAdapter.KEY_GIVEN_NAME);
-			int familyNameIndex = c
-					.getColumnIndex(ClinicAdapter.KEY_FAMILY_NAME);
-			int middleNameIndex = c
-					.getColumnIndex(ClinicAdapter.KEY_MIDDLE_NAME);
+			int familyNameIndex = c.getColumnIndex(ClinicAdapter.KEY_FAMILY_NAME);
+			int middleNameIndex = c.getColumnIndex(ClinicAdapter.KEY_MIDDLE_NAME);
 			int birthDateIndex = c.getColumnIndex(ClinicAdapter.KEY_BIRTH_DATE);
 			int genderIndex = c.getColumnIndex(ClinicAdapter.KEY_GENDER);
+
+			// TODO: louis.fazen check all the other occurrences of get and
+			// setFamilyName and add get and set priority as well...
+			int priorityIndex = c.getColumnIndexOrThrow(ClinicAdapter.KEY_PRIORITY_FORM_NUMBER);
+			int priorityFormIndex = c.getColumnIndexOrThrow(ClinicAdapter.KEY_PRIORITY_FORM_NAMES);
 
 			p = new Patient();
 			p.setPatientId(c.getInt(patientIdIndex));
@@ -603,6 +599,17 @@ public class ViewPatientActivity extends ListActivity {
 			p.setMiddleName(c.getString(middleNameIndex));
 			p.setBirthDate(c.getString(birthDateIndex));
 			p.setGender(c.getString(genderIndex));
+
+			// TODO: louis.fazen check all the other occurrences of get
+			// and setFamilyName and add get and set priority as well...
+			p.setPriorityNumber(c.getInt(priorityIndex));
+			p.setPriorityForms(c.getString(priorityFormIndex));
+
+			if (c.getInt(priorityIndex) > 0) {
+
+				p.setPriority(true);
+
+			}
 		}
 
 		if (c != null) {
@@ -625,11 +632,9 @@ public class ViewPatientActivity extends ListActivity {
 			int valueTextIndex = c.getColumnIndex(ClinicAdapter.KEY_VALUE_TEXT);
 			int valueIntIndex = c.getColumnIndex(ClinicAdapter.KEY_VALUE_INT);
 			int valueDateIndex = c.getColumnIndex(ClinicAdapter.KEY_VALUE_DATE);
-			int valueNumericIndex = c
-					.getColumnIndex(ClinicAdapter.KEY_VALUE_NUMERIC);
+			int valueNumericIndex = c.getColumnIndex(ClinicAdapter.KEY_VALUE_NUMERIC);
 			int fieldNameIndex = c.getColumnIndex(ClinicAdapter.KEY_FIELD_NAME);
-			int encounterDateIndex = c
-					.getColumnIndex(ClinicAdapter.KEY_ENCOUNTER_DATE);
+			int encounterDateIndex = c.getColumnIndex(ClinicAdapter.KEY_ENCOUNTER_DATE);
 			int dataTypeIndex = c.getColumnIndex(ClinicAdapter.KEY_DATA_TYPE);
 
 			Observation obs;
@@ -706,8 +711,7 @@ public class ViewPatientActivity extends ListActivity {
 
 	private void refreshView() {
 
-		mObservationAdapter = new ObservationAdapter(this,
-				R.layout.observation_list_item, mObservations);
+		mObservationAdapter = new ObservationAdapter(this, R.layout.observation_list_item, mObservations);
 		setListAdapter(mObservationAdapter);
 
 	}
