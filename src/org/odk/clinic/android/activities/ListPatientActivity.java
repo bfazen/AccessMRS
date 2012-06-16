@@ -400,6 +400,7 @@ public class ListPatientActivity extends ListActivity implements UploadFormListe
 			}
 		}
 
+		//louis.fazen jun 15, 2012 this would need to be changed depending on whether the form is complete or not...
 		if (requestCode == FILL_BLANK_FORM && intent != null) {
 
 			Uri u = intent.getData();

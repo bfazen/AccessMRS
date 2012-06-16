@@ -1,10 +1,8 @@
 package org.odk.clinic.android.tasks;
 
-import android.os.AsyncTask;
 import org.odk.clinic.android.database.ClinicAdapter;
+import org.odk.clinic.android.openmrs.ActivityLog;
 
-import android.content.ContentValues;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 import android.util.Log;
 
@@ -16,7 +14,7 @@ public class ActivityLogTask extends AsyncTask<Void, Void, Void> {
 	  public ActivityLogTask(ActivityLog activitylogged) {
 		  super();
 	        newActivity = activitylogged;
-
+	        
 	    }
 
 	  
@@ -27,6 +25,7 @@ public class ActivityLogTask extends AsyncTask<Void, Void, Void> {
 			try {
 		
 				ClinicAdapter ca = new ClinicAdapter();
+				ca.open();
 				ca.createActivityLog(newActivity);
 				ca.close();
 			}
@@ -35,7 +34,9 @@ public class ActivityLogTask extends AsyncTask<Void, Void, Void> {
 			}
 		}
 		Log.e("ActivityLogTask", "newactivity added to db!");
+		
 		return null;
+		
 	}
 
 	@Override
@@ -43,6 +44,19 @@ public class ActivityLogTask extends AsyncTask<Void, Void, Void> {
 		// TODO Auto-generated method stub
 		super.onCancelled();
 	}
+
+
+
+	@Override
+	protected void onPostExecute(Void result) {
+		// TODO Auto-generated method stub
+		Log.e("ActivityLogTask", "onPostExecute Called!");
+		super.onPostExecute(result);
+	}
+	
+	
+	
+	
 
 }
 

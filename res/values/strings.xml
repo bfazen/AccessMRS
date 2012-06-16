@@ -15,7 +15,7 @@ License for the specific language governing permissions and limitations under
 the License.
 -->
 <resources xmlns:android="http://schemas.android.com/apk/res/android">
-    
+
     <string name="app_name">ODK Clinic</string>
     <string name="app_version">1.1.1</string>
     <string name="barcode_error">Barcode Scanner not installed.</string>
@@ -28,10 +28,11 @@ the License.
     <string name="create_patient">Create Patient</string>
     <string name="default_info">http://opendatakit.org</string>
     <string name="default_password">test</string>
-    
-   <!-- Customization by louis.fazen@gmail.com
+
+    <!--
+        Customization by louis.fazen@gmail.com
    		Setting to AMPATH Server Preferences
-    --> 
+    -->
     <string name="default_server">http://192.168.43.232:8080/openmrs</string>
     <string name="default_username">admin</string>
     <string name="download">Download</string>
@@ -84,12 +85,13 @@ the License.
     <string name="xform_parse_error">XForm parse error</string>
     <string name="program">Program</string>
     <string name="change_program">Change Program</string>
-	<string name="chw_menu_pref">Change Menu View Settings</string>
-	
-	<string name="priority_form_section">TO DO FORMS:</string>
-    <string name="nonpriority_form_section">ADDITIONAL FORMS:</string>
-	<string name="all_form_section">All Available Forms:</string>
-	
-	
-	
+    <string name="chw_menu_pref">Change Menu View Settings</string>
+    <string name="priority_form_section">To Do Forms:</string>
+    <string name="nonpriority_form_section">Additional Forms:</string>
+    <string name="all_form_section">All Available Forms:</string>
+    <string name="clinical_form_section">Clinical Forms:</string>
+    <string name="clinical_data_section">Clinical Data:</string>
+    <string name="completed_form_section">Completed Forms:</string>
+    <string name="saved_form_section">Incomplete Forms:</string>
+
 </resources>

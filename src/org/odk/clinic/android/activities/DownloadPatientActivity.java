@@ -99,6 +99,7 @@ public class DownloadPatientActivity extends Activity implements
 			return;
 		
 		// setup dialog and upload task
+
 		showDialog(PATIENTS_PROGRESS_DIALOG);
 
 		SharedPreferences settings = PreferenceManager

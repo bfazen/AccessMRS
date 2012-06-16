@@ -1,21 +1,25 @@
 package org.odk.clinic.android.database;
 
+import java.io.DataInputStream;
 import java.io.File;
-import java.util.ArrayList;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 
+import org.odk.clinic.android.listeners.DownloadListener;
+import org.odk.clinic.android.openmrs.ActivityLog;
 import org.odk.clinic.android.openmrs.Cohort;
+import org.odk.clinic.android.openmrs.Constants;
 import org.odk.clinic.android.openmrs.Form;
 import org.odk.clinic.android.openmrs.FormInstance;
 import org.odk.clinic.android.openmrs.Observation;
 import org.odk.clinic.android.openmrs.Patient;
-import org.odk.clinic.android.tasks.ActivityLog;
 import org.odk.clinic.android.utilities.FileUtils;
 
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.database.DatabaseUtils;
 import android.database.SQLException;
+import android.database.DatabaseUtils.InsertHelper;
 import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
@@ -73,15 +77,18 @@ public class ClinicAdapter {
 	// private String mZeroDate = "0000-00-00 00:00:00";
 
 	// louis.fazen is putting in new events table...
-	private static final String ACTIVITY_START_NAME = "start_activity";
-	private static final String ACTIVITY_STOP_NAME = "stop_activity";
-	private static final String ACTIVITY_PARAM_NAME = "parameter";
-	private static final String ACTIVITY_START_TIME = "start_time";
-	private static final String ACTIVITY_STOP_TIME = "stop_time";
-	private static final String ACTIVITY_TABLE = "activity_log";
+	private static final String PROVIDER_ID = "provider";
+	private static final String PATIENT_ID = "patient";
+	private static final String FORM_PRIORITY_BOOLEAN = "form_priority";
+	private static final String FORM_NAME = "form_name";
+	private static final String FORM_START_TIME = "start_time";
+	private static final String FORM_STOP_TIME = "stop_time";
+	private static final String FORM_LOG_TABLE = "form_log";
 
 	private DatabaseHelper mDbHelper;
 	private SQLiteDatabase mDb;
+
+	private DownloadListener mStateListener;
 
 	private static final String DATABASE_NAME = "clinic.sqlite3";
 	private static final String PATIENTS_TABLE = "patients";
@@ -98,6 +105,30 @@ public class ClinicAdapter {
 	// + KEY_MIDDLE_NAME + " text, " + KEY_BIRTH_DATE + " text, " + KEY_GENDER +
 	// " text);";
 
+	private static boolean updateIndices = true;
+	// Patient Table
+	// static int ptIdIndex_pt = indexcursor.getColumnIndex(KEY_PATIENT_ID_PT);
+	private static int ptIdentifierIndex = 0;
+	private static int ptGivenIndex = 0;
+	private static int ptFamilyIndex = 0;
+	private static int ptMiddleIndex = 0;
+	private static int ptBirthIndex = 0;
+	private static int ptGenderIndex = 0;
+	private static int ptFormIndex = 0;
+	private static int ptFormNumberIndex = 0;
+
+	// Obs Table
+	// note that the KEY_PATIENT_ID has the same Index in all Tables, so this
+	// seems to be how Yaw has coded it...?!
+	private static int ptIdIndex = 0;
+	private static int obsTextIndex = 0;
+	private static int obsNumIndex = 0;
+	private static int obsDateIndex = 0;
+	private static int obsIntIndex = 0;
+	private static int obsFieldIndex = 0;
+	private static int obsTypeIndex = 0;
+	private static int obsEncDateIndex = 0;
+
 	private static final String CREATE_PATIENTS_TABLE = "create table " + PATIENTS_TABLE + " (_id integer primary key autoincrement, " + KEY_PATIENT_ID + " integer not null, " + KEY_IDENTIFIER + " text, " + KEY_GIVEN_NAME + " text, " + KEY_FAMILY_NAME + " text, "
 			+ KEY_MIDDLE_NAME + " text, " + KEY_BIRTH_DATE + " text, " + KEY_GENDER + " text, " + KEY_PRIORITY_FORM_NUMBER + " integer, " + KEY_PRIORITY_FORM_NAMES + " text);";
 
@@ -111,8 +142,8 @@ public class ClinicAdapter {
 	private static final String CREATE_FORMINSTANCES_TABLE = "create table " + FORMINSTANCES_TABLE + " (_id integer primary key autoincrement, " + KEY_PATIENT_ID + " integer not null, " + KEY_FORM_ID + " integer not null, " + KEY_FORMINSTANCE_DISPLAY + " text, "
 			+ KEY_FORMINSTANCE_STATUS + " text, " + KEY_PATH + " text);";
 
-	private static final String CREATE_ACTIVITY_TABLE = "create table " + ACTIVITY_TABLE + " (_id integer primary key autoincrement, " + ACTIVITY_START_NAME + " text, " + ACTIVITY_PARAM_NAME + " text, " + ACTIVITY_START_TIME + " integer, " + ACTIVITY_STOP_NAME + " text, "
-			+ ACTIVITY_STOP_TIME + " integer);";
+	private static final String CREATE_FORM_LOG_TABLE = "create table " + FORM_LOG_TABLE + " (_id integer primary key autoincrement, " + PATIENT_ID + " text, " + PROVIDER_ID + " text, " + FORM_NAME + " text, " + FORM_START_TIME + " integer, " + FORM_STOP_TIME + " integer, "
+			+ FORM_PRIORITY_BOOLEAN + " text);";
 
 	private static class DatabaseHelper extends ODKSQLiteOpenHelper {
 
@@ -128,7 +159,7 @@ public class ClinicAdapter {
 			db.execSQL(CREATE_COHORTS_TABLE);
 			db.execSQL(CREATE_FORMS_TABLE);
 			db.execSQL(CREATE_FORMINSTANCES_TABLE);
-			db.execSQL(CREATE_ACTIVITY_TABLE);
+			db.execSQL(CREATE_FORM_LOG_TABLE);
 		}
 
 		@Override
@@ -140,14 +171,18 @@ public class ClinicAdapter {
 			db.execSQL("DROP TABLE IF EXISTS " + FORMS_TABLE);
 			db.execSQL("DROP TABLE IF EXISTS " + FORMINSTANCES_TABLE);
 
-			db.execSQL("DROP TABLE IF EXISTS " + ACTIVITY_TABLE);
+			db.execSQL("DROP TABLE IF EXISTS " + FORM_LOG_TABLE);
 			onCreate(db);
 		}
 	}
 
 	public ClinicAdapter open() throws SQLException {
+
 		mDbHelper = new DatabaseHelper();
 		mDb = mDbHelper.getWritableDatabase();
+		if (updateIndices)
+			makeIndices();
+		Log.e(t, "open is called");
 		return this;
 	}
 
@@ -182,6 +217,41 @@ public class ClinicAdapter {
 	 * p.split(filename)[0] + ")"; }
 	 */
 
+	// (louis.fazen NOTE: Do NOT use this with Cursor indices in other code
+	// Cursor has different indices than IH b/c it does not include _id
+	// i.e. Cursor.getColumnIndex = (IH.getColumnIndex -1) drove me crazy!
+	// Also I tested & ih is 71% faster than Cursor (even w/ cursor limit=1)
+	public void makeIndices() {
+		// Define Column indices one time at open vs call for each download
+		// should save on internal getters/setters as per android suggestion?
+		InsertHelper patientIh = new InsertHelper(mDb, PATIENTS_TABLE);
+		ptIdentifierIndex = patientIh.getColumnIndex(KEY_IDENTIFIER);
+		ptGivenIndex = patientIh.getColumnIndex(KEY_GIVEN_NAME);
+		ptFamilyIndex = patientIh.getColumnIndex(KEY_FAMILY_NAME);
+		ptMiddleIndex = patientIh.getColumnIndex(KEY_MIDDLE_NAME);
+		ptBirthIndex = patientIh.getColumnIndex(KEY_BIRTH_DATE);
+		ptGenderIndex = patientIh.getColumnIndex(KEY_GENDER);
+		ptFormIndex = patientIh.getColumnIndex(KEY_PRIORITY_FORM_NAMES);
+		ptFormNumberIndex = patientIh.getColumnIndex(KEY_PRIORITY_FORM_NUMBER);
+		patientIh.close();
+
+		// Obs Table
+		// NB KEY_PATIENT_ID used as Index in all tables (happens to be same)
+		// seems problematic, but how Yaw has coded it... so i am keeping
+		InsertHelper obsIh = new InsertHelper(mDb, OBSERVATIONS_TABLE);
+		ptIdIndex = obsIh.getColumnIndex(KEY_PATIENT_ID);
+		obsTextIndex = obsIh.getColumnIndex(KEY_VALUE_TEXT);
+		obsNumIndex = obsIh.getColumnIndex(KEY_VALUE_NUMERIC);
+		obsDateIndex = obsIh.getColumnIndex(KEY_VALUE_DATE);
+		obsIntIndex = obsIh.getColumnIndex(KEY_VALUE_INT);
+		obsFieldIndex = obsIh.getColumnIndex(KEY_FIELD_NAME);
+		obsTypeIndex = obsIh.getColumnIndex(KEY_DATA_TYPE);
+		obsEncDateIndex = obsIh.getColumnIndex(KEY_ENCOUNTER_DATE);
+		obsIh.close();
+
+		updateIndices = false;
+	}
+
 	/**
 	 * Insert patient into the database.
 	 * 
@@ -190,6 +260,8 @@ public class ClinicAdapter {
 	 * @return database id of the new patient
 	 */
 	public long createPatient(Patient patient) {
+		long id = -1;
+
 		ContentValues cv = new ContentValues();
 
 		cv.put(KEY_PATIENT_ID, patient.getPatientId());
@@ -202,7 +274,6 @@ public class ClinicAdapter {
 		cv.put(KEY_BIRTH_DATE, patient.getBirthdate());
 		cv.put(KEY_GENDER, patient.getGender());
 
-		long id = -1;
 		try {
 			id = mDb.insert(PATIENTS_TABLE, null, cv);
 		} catch (SQLiteConstraintException e) {
@@ -213,6 +284,8 @@ public class ClinicAdapter {
 	}
 
 	public long createObservation(Observation obs) {
+		long id = -1;
+
 		ContentValues cv = new ContentValues();
 
 		cv.put(KEY_PATIENT_ID, obs.getPatientId());
@@ -228,7 +301,6 @@ public class ClinicAdapter {
 
 		cv.put(KEY_ENCOUNTER_DATE, obs.getEncounterDate());
 
-		long id = -1;
 		try {
 			id = mDb.insert(OBSERVATIONS_TABLE, null, cv);
 		} catch (SQLiteConstraintException e) {
@@ -255,13 +327,14 @@ public class ClinicAdapter {
 	}
 
 	public long createForm(Form form) {
+		long id = -1;
+
 		ContentValues cv = new ContentValues();
 
 		cv.put(KEY_FORM_ID, form.getFormId());
 		cv.put(KEY_NAME, form.getName());
 		cv.put(KEY_PATH, form.getPath());
 
-		long id = -1;
 		try {
 			id = mDb.insert(FORMS_TABLE, null, cv);
 		} catch (SQLiteConstraintException e) {
@@ -272,6 +345,7 @@ public class ClinicAdapter {
 	}
 
 	public long createFormInstance(FormInstance instance, String title) {
+
 		ContentValues cv = new ContentValues();
 
 		cv.put(KEY_PATIENT_ID, instance.getPatientId());
@@ -279,6 +353,8 @@ public class ClinicAdapter {
 		cv.put(KEY_FORMINSTANCE_STATUS, instance.getStatus());
 		cv.put(KEY_PATH, instance.getPath());
 		cv.put(KEY_FORMINSTANCE_DISPLAY, title);
+
+		Log.e("ClinicAdapter", "adding FormINstance cv string: " + cv.toString());
 		long id = -1;
 		try {
 			id = mDb.insert(FORMINSTANCES_TABLE, null, cv);
@@ -289,28 +365,32 @@ public class ClinicAdapter {
 		return id;
 	}
 
-	public void createActivityLog(ActivityLog activitylog) {
+	public Long createActivityLog(ActivityLog activitylog) {
+		long id = -1;
+
+		Log.e("ClinicAdapter", "adding newActivity to db!");
+		ContentValues cv = new ContentValues();
+		// Long now = Long.valueOf(System.currentTimeMillis());
+		cv.put(PROVIDER_ID, activitylog.getProviderId());
+		cv.put(PATIENT_ID, activitylog.getPatientId());
+		cv.put(FORM_NAME, activitylog.getFormId());
+		cv.put(FORM_PRIORITY_BOOLEAN, activitylog.getFormPriority());
+		cv.put(FORM_START_TIME, activitylog.getActivityStartTime());
+		cv.put(FORM_STOP_TIME, activitylog.getActivityStopTime());
+
+		Log.e("ClinicAdapter", "adding cv string: " + cv.toString());
+
+		mDb.beginTransaction();
 		try {
-			mDb.beginTransaction();
-
-			ContentValues cv = new ContentValues();
-			cv.put(ACTIVITY_START_TIME, activitylog.getActivityStartTime());
-			cv.put(ACTIVITY_STOP_TIME, activitylog.getActivityStopTime());
-			cv.put(ACTIVITY_START_NAME, activitylog.getStartActivity());
-			cv.put(ACTIVITY_PARAM_NAME, activitylog.getStartParam());
-
-			if (activitylog.getStartActivity() == activitylog.getStopActivity()) {
-				cv.put(ACTIVITY_STOP_NAME, activitylog.getStopActivity());
-
-			} else {
-				cv.put(ACTIVITY_STOP_NAME, "Error: " + activitylog.getStopActivity());
-			}
-
-			mDb.insert(ACTIVITY_TABLE, null, cv);
+			id = mDb.insert(FORM_LOG_TABLE, null, cv);
 			mDb.setTransactionSuccessful();
+		} catch (SQLiteConstraintException e) {
+			Log.e(t, "Caught SQLiteConstraitException: " + e);
+
 		} finally {
 			mDb.endTransaction();
 		}
+		return id;
 	}
 
 	/**
@@ -421,8 +501,8 @@ public class ClinicAdapter {
 
 	public Cursor fetchAllPatients() throws SQLException {
 		Cursor c = null;
-		c = mDb.query(true, PATIENTS_TABLE, new String[] { KEY_ID, KEY_PATIENT_ID, KEY_IDENTIFIER, KEY_GIVEN_NAME, KEY_FAMILY_NAME, KEY_MIDDLE_NAME, KEY_BIRTH_DATE, KEY_GENDER, KEY_PRIORITY_FORM_NAMES, KEY_PRIORITY_FORM_NUMBER }, null, null, null, null, 
-				KEY_PRIORITY_FORM_NUMBER + " DESC, " + KEY_FAMILY_NAME + " ASC", null);
+		c = mDb.query(true, PATIENTS_TABLE, new String[] { KEY_ID, KEY_PATIENT_ID, KEY_IDENTIFIER, KEY_GIVEN_NAME, KEY_FAMILY_NAME, KEY_MIDDLE_NAME, KEY_BIRTH_DATE, KEY_GENDER, KEY_PRIORITY_FORM_NAMES, KEY_PRIORITY_FORM_NUMBER }, null, null, null, null, KEY_PRIORITY_FORM_NUMBER
+				+ " DESC, " + KEY_FAMILY_NAME + " ASC", null);
 
 		if (c != null) {
 			c.moveToFirst();
@@ -563,6 +643,22 @@ public class ClinicAdapter {
 		c.close();
 
 	}
+	
+	public void updateLandmarkList() throws SQLException {
+		String subquery = SQLiteQueryBuilder.buildQueryString(
+				// include distinct
+				true,
+				// FROM tables
+		FORMS_TABLE + "," + OBSERVATIONS_TABLE,
+	// two columns (one of which is a group_concat()
+	new String[] { OBSERVATIONS_TABLE + "." + KEY_PATIENT_ID + ", group_concat(" + FORMS_TABLE + "." + KEY_FORM_NAME + ",\", \") AS " + KEY_PRIORITY_FORM_NAMES },
+	// where
+	OBSERVATIONS_TABLE + "." + KEY_FIELD_NAME + "=" + KEY_FIELD_FORM_VALUE + " AND " + FORMS_TABLE + "." + KEY_FORM_ID + "=" + OBSERVATIONS_TABLE + "." + KEY_VALUE_INT,
+	// group by
+	OBSERVATIONS_TABLE + "." + KEY_PATIENT_ID, null, null, null);
+	}
+	
+	
 
 	public void updatePatientFormNumbers() throws SQLException {
 
@@ -675,6 +771,148 @@ public class ClinicAdapter {
 				}
 				c.moveToNext();
 			}
+		}
+	}
+
+	// louis.fazen is following Yaw's logic here, but in actuality Patient Forms
+	// and Observations are both going into obs, and therefore, the code is
+	// identical...
+	// the only difference appears to be the progress update-> one says obs, the
+	// other forms?!
+
+	public void insertPatientForms(final DataInputStream zdis) throws Exception {
+
+		InsertHelper ih = new InsertHelper(mDb, OBSERVATIONS_TABLE);
+		mDb.beginTransaction();
+		try {
+			int icount = zdis.readInt();
+			Log.e(t, "insertPatients icount: " + icount);
+			for (int i = 1; i < icount + 1; i++) {
+
+				ih.prepareForInsert();
+
+				ih.bind(ptIdIndex, zdis.readInt());
+				ih.bind(obsFieldIndex, zdis.readUTF());
+				byte dataType = zdis.readByte();
+				if (dataType == Constants.TYPE_STRING) {
+					ih.bind(obsTextIndex, zdis.readUTF());
+				} else if (dataType == Constants.TYPE_INT) {
+					ih.bind(obsIntIndex, zdis.readInt());
+				} else if (dataType == Constants.TYPE_DOUBLE) {
+					ih.bind(obsNumIndex, zdis.readDouble());
+				} else if (dataType == Constants.TYPE_DATE) {
+					ih.bind(obsDateIndex, parseDate(zdis.readUTF()));
+				}
+
+				ih.bind(obsTypeIndex, dataType);
+				ih.bind(obsEncDateIndex, parseDate(zdis.readUTF()));
+
+				// Insert the row into the database.
+				ih.execute();
+				
+//				publishProgress("Processing Forms", Integer.valueOf(i).toString(), Integer.valueOf(icount).toString());
+			}
+			mDb.setTransactionSuccessful();
+		} finally {
+			ih.close();
+			mDb.endTransaction();
+		}
+
+	}
+
+	public void insertPatients(DataInputStream zdis) throws Exception {
+		InsertHelper ih = new InsertHelper(mDb, PATIENTS_TABLE);
+		if (updateIndices)
+			makeIndices();
+		mDb.beginTransaction();
+
+		try {
+			int icount = zdis.readInt();
+			Log.e(t, "insertObservations icount: " + icount);
+			for (int i = 1; i < icount + 1; i++) {
+
+				ih.prepareForInsert();
+
+				// Add the data for each column
+				Log.e(t, "ptIdIndex from insert pts=" + String.valueOf(ptIdIndex));
+				ih.bind(ptIdIndex, zdis.readInt());
+				ih.bind(ptFamilyIndex, zdis.readUTF());
+				ih.bind(ptMiddleIndex, zdis.readUTF());
+				ih.bind(ptGivenIndex, zdis.readUTF());
+				ih.bind(ptGenderIndex, zdis.readUTF());
+				ih.bind(ptBirthIndex, parseDate(zdis.readUTF()));
+				ih.bind(ptIdentifierIndex, zdis.readUTF());
+
+//				ih.bind(ptFormIndex, "");
+//				ih.bind(ptFormNumberIndex, "");
+
+				Log.e(t,
+						" ptIdIndex2: " + String.valueOf(ptIdIndex) + " ptFamilyIndex:5 " + String.valueOf(ptFamilyIndex) + " ptMiddleIndex:6 " + String.valueOf(ptMiddleIndex) + " ptGivenIndex:4 " + String.valueOf(ptGivenIndex) + " ptGenderIndex:8 "
+								+ String.valueOf(ptGenderIndex) + " ptBirthIndex:7 " + String.valueOf(ptBirthIndex) + " ptIdentifierIndex:3 " + String.valueOf(ptIdentifierIndex));
+
+				// Insert the row into the database.
+				ih.execute();
+
+
+			}
+			mDb.setTransactionSuccessful();
+		} finally {
+			ih.close();
+			mDb.endTransaction();
+		}
+
+	}
+
+	public void insertObservations(DataInputStream zdis) throws Exception {
+
+		InsertHelper ih = new InsertHelper(mDb, OBSERVATIONS_TABLE);
+		makeIndices();
+		mDb.beginTransaction();
+
+		try {
+			int icount = zdis.readInt();
+			Log.e(t, "insertObservations icount: " + icount);
+			for (int i = 1; i < icount + 1; i++) {
+
+				ih.prepareForInsert();
+
+				// Add the data for each column
+				ih.bind(ptIdIndex, zdis.readInt());
+				ih.bind(obsFieldIndex, zdis.readUTF());
+				byte dataType = zdis.readByte();
+				if (dataType == Constants.TYPE_STRING) {
+					ih.bind(obsTextIndex, zdis.readUTF());
+				} else if (dataType == Constants.TYPE_INT) {
+					ih.bind(obsIntIndex, zdis.readInt());
+				} else if (dataType == Constants.TYPE_DOUBLE) {
+					ih.bind(obsNumIndex, zdis.readDouble());
+				} else if (dataType == Constants.TYPE_DATE) {
+					ih.bind(obsDateIndex, parseDate(zdis.readUTF()));
+				}
+
+				ih.bind(obsTypeIndex, dataType);
+				ih.bind(obsEncDateIndex, parseDate(zdis.readUTF()));
+
+				// Insert the row into the database.
+				ih.execute();
+
+			}
+			mDb.setTransactionSuccessful();
+		} finally {
+			ih.close();
+			mDb.endTransaction();
+		}
+
+	}
+
+	private static String parseDate(String s) {
+		String date = s.split("T")[0];
+		SimpleDateFormat outputFormat = new SimpleDateFormat("MMM dd, yyyy");
+		SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd");
+		try {
+			return outputFormat.format(inputFormat.parse(date));
+		} catch (ParseException e) {
+			return "Unknown date";
 		}
 	}
 }

@@ -44,17 +44,6 @@ public class FormAdapter extends ArrayAdapter<Form> {
 			if (textView != null) {
 				textView.setText(form.getName());
 			}
-
-			
-//			ImageView imageView = (ImageView) v.findViewById(R.id.gender_image);
-//			if (imageView != null) {
-////				if (p.getFormId() == 31 || p.getFormId() == 28) {
-//				if (mFormPriority == true){
-//					imageView.setImageResource(R.drawable.arrow_red);
-//				} else {
-//					imageView.setImageResource(R.drawable.arrow_gray);
-//				}
-//			}
 		}
 		return v;
 	}

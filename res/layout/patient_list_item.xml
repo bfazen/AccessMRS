@@ -89,8 +89,8 @@
                 android:layout_alignTop="@+id/priority_image"
                 android:layout_margin="1dp"
                 android:gravity="center"
-                android:textColor="@color/white"
                 android:textSize="15sp"
+                android:textColor="@+color/white_color"
                 android:textStyle="bold" />
         </RelativeLayout>
     </RelativeLayout>

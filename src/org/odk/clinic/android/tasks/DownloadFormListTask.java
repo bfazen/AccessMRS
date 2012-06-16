@@ -55,7 +55,8 @@ public class DownloadFormListTask extends DownloadTask {
         
         NodeList formElements = doc.getElementsByTagName("xform");
         int count = formElements.getLength();
-
+        
+        
         for (int i = 0; i < count; i++) {
             Element n = (Element)formElements.item(i);
 

@@ -30,6 +30,7 @@
         <activity
             android:label="@string/app_name"
             android:name=".activities.DownloadFormActivity"
+                        android:theme="@android:style/Theme.NoDisplay"
             android:screenOrientation="portrait" />
         <activity
             android:label="@string/app_name"
@@ -38,6 +39,7 @@
         <activity
             android:label="@string/app_name"
             android:name=".activities.DownloadPatientActivity"
+                        android:theme="@android:style/Theme.NoDisplay"
             android:screenOrientation="portrait" />
        <!-- Customization by louis.fazen@gmail.com
 			Allow for PreferencesActivity to be called by external application intent        
@@ -68,6 +70,7 @@
             android:screenOrientation="portrait" />
         <activity
             android:label="@string/app_name"
+                        android:theme="@android:style/Theme.NoDisplay"
             android:name=".activities.InstanceUploaderActivity"
             android:screenOrientation="portrait" />
         
