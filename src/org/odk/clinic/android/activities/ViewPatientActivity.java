@@ -84,7 +84,9 @@ public class ViewPatientActivity extends ListActivity {
 
 		// TODO Check for invalid patient IDs
 		patientIdStr = getIntent().getStringExtra(Constants.KEY_PATIENT_ID);
-
+		Integer patientId = Integer.valueOf(patientIdStr);
+		mPatient = getPatient(patientId);
+		mPatient.setTotalCompletedForms(findPreviousEncounters());
 		
 
 		setTitle(getString(R.string.app_name) + " > " + getString(R.string.view_patient));
@@ -173,13 +175,6 @@ public class ViewPatientActivity extends ListActivity {
 			int birthDateIndex = c.getColumnIndex(ClinicAdapter.KEY_BIRTH_DATE);
 			int genderIndex = c.getColumnIndex(ClinicAdapter.KEY_GENDER);
 
-			// TODO: louis.fazen check all the other occurrences of get and
-			// setFamilyName and add get and set priority as well...
-			int priorityIndex = c.getColumnIndexOrThrow(ClinicAdapter.KEY_PRIORITY_FORM_NUMBER);
-			int priorityFormIndex = c.getColumnIndexOrThrow(ClinicAdapter.KEY_PRIORITY_FORM_NAMES);
-			int savedNumberIndex = c.getColumnIndexOrThrow(ClinicAdapter.KEY_SAVED_FORM_NUMBER);
-			int savedFormIndex = c.getColumnIndexOrThrow(ClinicAdapter.KEY_SAVED_FORM_NAMES);
-
 			p = new Patient();
 			p.setPatientId(c.getInt(patientIdIndex));
 			p.setIdentifier(c.getString(identifierIndex));
@@ -189,18 +184,6 @@ public class ViewPatientActivity extends ListActivity {
 			p.setBirthDate(c.getString(birthDateIndex));
 			p.setGender(c.getString(genderIndex));
 
-			// TODO: louis.fazen check all the other occurrences of get
-			// and setFamilyName and add get and set priority as well...
-			p.setPriorityNumber(c.getInt(priorityIndex));
-			p.setPriorityForms(c.getString(priorityFormIndex));
-			p.setSavedNumber(c.getInt(savedNumberIndex));
-			p.setSavedForms(c.getString(savedFormIndex));
-
-			if (c.getInt(priorityIndex) > 0) {
-
-				p.setPriority(true);
-
-			}
 		}
 
 		if (c != null) {
@@ -209,6 +192,40 @@ public class ViewPatientActivity extends ListActivity {
 		ca.close();
 
 		return p;
+	}
+	
+	private void getPatientForms(Integer patientId) {
+		Log.e("ViewPatientActivity", "ACTIVITY_LOG_END: " + "getPatientForms is called!");
+		ClinicAdapter ca = new ClinicAdapter();
+		ca.open();
+		Cursor c = ca.fetchPatient(patientId);
+
+		if (c != null && c.getCount() > 0) {
+			// TODO: louis.fazen check all the other occurrences...
+			int priorityIndex = c.getColumnIndexOrThrow(ClinicAdapter.KEY_PRIORITY_FORM_NUMBER);
+			int priorityFormIndex = c.getColumnIndexOrThrow(ClinicAdapter.KEY_PRIORITY_FORM_NAMES);
+			int savedNumberIndex = c.getColumnIndexOrThrow(ClinicAdapter.KEY_SAVED_FORM_NUMBER);
+			int savedFormIndex = c.getColumnIndexOrThrow(ClinicAdapter.KEY_SAVED_FORM_NAMES);
+
+			// TODO: louis.fazen check all the other occurrences of get
+			mPatient.setPriorityNumber(c.getInt(priorityIndex));
+			mPatient.setPriorityForms(c.getString(priorityFormIndex));
+			mPatient.setSavedNumber(c.getInt(savedNumberIndex));
+			mPatient.setSavedForms(c.getString(savedFormIndex));
+
+			if (c.getInt(priorityIndex) > 0) {
+				mPatient.setPriority(true);
+			} else {
+				mPatient.setPriority(false);
+			}
+			
+		}
+
+		if (c != null) {
+			c.close();
+		}
+		ca.close();
+
 	}
 
 	private void getAllObservations(Integer patientId) {
@@ -269,8 +286,6 @@ public class ViewPatientActivity extends ListActivity {
 
 			} while (c.moveToNext());
 		}
-
-		refreshView();
 
 		if (c != null) {
 			c.close();
@@ -486,17 +501,17 @@ public class ViewPatientActivity extends ListActivity {
 		super.onResume();
 		activityLogEnd = "onresume";
 		Log.e("ViewPatientActivity", "ACTIVITY_LOG_END: " + activityLogEnd);
-		if (patientIdStr != null) {
+		if (mPatient != null) {
 			// TODO Create more efficient SQL query to get only the latest
 			// observation values
 //			TODO this seems resource intensive to have to getAllObservations again and again?
-			Integer patientId = Integer.valueOf(patientIdStr);
-			mPatient = getPatient(patientId);
-			mPatient.setTotalCompletedForms(findPreviousEncounters());
 			getAllObservations(mPatient.getPatientId());
+			getPatientForms(mPatient.getPatientId());
+			refreshView();
+			Log.e("ViewPatientActivity", "ACTIVITY_LOG_END: " + "mPatient is not null");
 		}
 //		TODO: what if the if clause fails?
-
+		
 	}
 
 	@Override
