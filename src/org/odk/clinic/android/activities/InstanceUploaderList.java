@@ -140,10 +140,11 @@ public class InstanceUploaderList extends ListActivity {
             mRestored = false;
         }
         
-//        if (c!= null) {
-//        	c.close();
-//        }
-//        mCla.close();
+//    TODO: louis.fazen VERIFY is uncommenting this where the close of the cursor was commented out June 17th...
+        if (c!= null) {
+        	c.close();
+        }
+        mCla.close();
     }
 
 

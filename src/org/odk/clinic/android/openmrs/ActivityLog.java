@@ -8,6 +8,15 @@ public class ActivityLog {
 	private String priorityForm;
 	private Long activityStartTime;
 	private Long activityStopTime;
+    private String launchType = null;
+    
+    public String getFormType() {
+        return launchType;
+    }
+    
+    public void setFormType(String type) {
+        this.launchType = type;
+    }
 	
 	public void setActivityStartTime() {
 		activityStartTime = System.currentTimeMillis();

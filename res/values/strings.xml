@@ -93,5 +93,14 @@ the License.
     <string name="clinical_data_section">Clinical Data:</string>
     <string name="completed_form_section">Completed Forms:</string>
     <string name="saved_form_section">Incomplete Forms:</string>
+    <string name="view_only_form">This form is for viewing only.  Changes will not be saved.</string>
+    <string name="form_history_section">Your Previous Visits:</string>
+    
+    <string name="instances_last_day">Visits in the past day:</string>
+    <string name="instances_last_week">Visits in the past week:</string>
+    <string name="instances_last_month">Visits in the past month:</string>
+    <string name="instances_last_six_months">Visits in the past 6 months:</string>
+    <string name="instances_last_year">Visits in the past year:</string>
+    <string name="instances_unknown_gt_year">All other visits:</string>
 
 </resources>

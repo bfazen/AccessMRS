@@ -15,15 +15,14 @@
         android:layout_gravity="center_vertical"
         android:layout_weight="1.0"
         android:paddingLeft="8dip"
-        android:textColor="@color/dark_gray"
         android:textSize="18sp"
         android:textStyle="bold" />
 
     <ImageView
+        android:id="@+id/arrow_image"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:paddingLeft="3dip"
-        android:paddingTop="3dip"
-        android:src="@drawable/arrow_gray" />
+        android:paddingTop="3dip" />
 
 </LinearLayout>

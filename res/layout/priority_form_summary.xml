@@ -12,8 +12,8 @@
         android:id="@+id/priority_block"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:paddingTop="8dip" >
+        android:layout_centerVertical="true"
+        android:paddingBottom="10dip" >
 
         <ImageView
             android:id="@+id/priority_image"
@@ -30,8 +30,8 @@
             android:layout_alignTop="@+id/priority_image"
             android:layout_margin="1dp"
             android:gravity="center"
-            android:textSize="15sp"
             android:textColor="@color/white_color"
+            android:textSize="15sp"
             android:textStyle="bold" />
     </RelativeLayout>
 
@@ -62,13 +62,12 @@
         android:id="@+id/form_names"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
+        android:layout_centerVertical="true"
         android:layout_toRightOf="@+id/priority_block"
+        android:paddingBottom="10dip"
         android:paddingLeft="13dip"
-        android:paddingTop="8dip"
         android:textColor="@color/priority"
-        android:textSize="16sp"
- />
+        android:textSize="16sp" />
 
     <ImageView
         android:id="@+id/arrow_image"
@@ -76,7 +75,8 @@
         android:layout_height="wrap_content"
         android:layout_alignParentRight="true"
         android:layout_centerVertical="true"
+        android:paddingBottom="4dip"
         android:paddingLeft="3dip"
-        android:paddingTop="8dip" />
+        android:paddingTop="4dip" />
 
 </RelativeLayout>

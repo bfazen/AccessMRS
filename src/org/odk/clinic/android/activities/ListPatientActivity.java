@@ -57,6 +57,7 @@ import android.widget.Toast;
 // TODO Display patient view data
 // TODO Display ages instead of dates
 // TODO Optimize download patient task
+//TODO: louis.fazen: ha! just seeing this right now on June 16th!  I think this is all the stuff I have been working on... TODO: delete Yaw's To Dos!
 
 public class ListPatientActivity extends ListActivity implements UploadFormListener {
 
@@ -321,6 +322,7 @@ public class ListPatientActivity extends ListActivity implements UploadFormListe
 		alert.show();
 	}
 
+	//TODO: but this seems like the best way to do it...as he seems to be inserting the FormInstance after the fact?!
 	private void launchFormEntry(String jrFormId) {
 
 		int id = -1;
@@ -400,7 +402,7 @@ public class ListPatientActivity extends ListActivity implements UploadFormListe
 			}
 		}
 
-		//louis.fazen jun 15, 2012 this would need to be changed depending on whether the form is complete or not...
+		//TODO: TODO: louis.fazen jun 15, 2012 this would need to be changed depending on whether the form is complete or not...
 		if (requestCode == FILL_BLANK_FORM && intent != null) {
 
 			Uri u = intent.getData();
@@ -420,6 +422,8 @@ public class ListPatientActivity extends ListActivity implements UploadFormListe
 				mCursor.close();
 			}
 
+			//TODO: but this seems like the best way to do it...best he seems to be inserting the FormInstance after the fact after a query to the Collect Instances Db?!
+//			TODO: if completed vs. if incomplete...
 			FormInstance fi = new FormInstance();
 			fi.setPatientId(-1);
 			fi.setFormId(Integer.parseInt(dbjrFormId));
@@ -525,6 +529,7 @@ public class ListPatientActivity extends ListActivity implements UploadFormListe
 		mPatientAdapter = new PatientAdapter(this, R.layout.patient_list_item, mPatients);
 		setListAdapter(mPatientAdapter);
 
+//	TODO: louis.fazen	VERIFY	why is mCla never closed?!
 	}
 
 	@Override
@@ -610,13 +615,13 @@ public class ListPatientActivity extends ListActivity implements UploadFormListe
 
 	@Override
 	public void uploadComplete(ArrayList<String> result) {
-		// TODO Auto-generated method stub
+		//  Auto-generated method stub
 
 	}
 
 	@Override
 	public void progressUpdate(String message, int progress, int max) {
-		// TODO Auto-generated method stub
+		//  Auto-generated method stub
 
 	}
 }

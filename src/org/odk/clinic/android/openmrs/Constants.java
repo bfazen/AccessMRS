@@ -105,6 +105,10 @@ public class Constants {
 	public static final String KEY_PATIENT_ID = "PATIENT_ID";
 	public static final String KEY_PATIENT_NAME = "PATIENT_NAME";
 	public static final String KEY_PATIENT_IDENTIFIER = "PATIENT_IDENTIFIER";
+	public static final String KEY_PATIENT_GENDER = "PATIENT_GENDER";
+	public static final String KEY_PATIENT_DOB = "PATIENT_DOB";
+	
 	
 	public static final String KEY_OBSERVATION_FIELD_NAME = "KEY_OBSERVATION_FIELD_NAME";
+	
 }

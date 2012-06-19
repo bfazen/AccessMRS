@@ -25,6 +25,11 @@ public class Patient {
 	private Integer priorityFormNumber = null;
 	private String priorityForms = null;
 	
+	private Integer savedFormNumber = null;
+	private String savedForms = null;
+	
+	private Integer totalCompletedForms = null;
+	
 	public Patient() {
 
 	}
@@ -78,6 +83,17 @@ public class Patient {
 		return priorityForms;
 	}
 
+	public Integer getSavedNumber() {
+		return savedFormNumber;
+	}
+	
+	public String getSavedForms() {
+		return savedForms;
+	}
+	
+	
+	
+	
 	public void setPatientId(Integer pid) {
 		patientId = pid;
 	}
@@ -108,6 +124,22 @@ public class Patient {
 	
 	public void setPriorityForms(String forms) {
 		priorityForms = forms;
+	}
+	
+	public void setSavedNumber(Integer formNumber) {
+		savedFormNumber = formNumber;
+	}
+	
+	public void setSavedForms(String forms) {
+		savedForms = forms;
+	}
+	
+	public void setTotalCompletedForms(Integer totalforms) {
+		totalCompletedForms = totalforms;
+	}
+	
+	public Integer getTotalCompletedForms() {
+		return totalCompletedForms;
 	}
 	
 	public void setBirthDate(String date) {

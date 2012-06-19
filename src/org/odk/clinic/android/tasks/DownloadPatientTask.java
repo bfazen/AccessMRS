@@ -76,12 +76,19 @@ public class DownloadPatientTask extends DownloadTask {
 					zdis.close();
 					zipFile.delete();
 					publishProgress("Processing Forms", Integer.valueOf(step++).toString(), Integer.valueOf(totalstep).toString());
-					// TODO: louis.fazen is adding this...it is a bit of a hack.
-					insertFormIds();
 
+					// TODO: louis.fazen is adding this...it is a bit of hack of bringing the various db into sync					
+					mPatientDbAdapter.updatePriorityFormNumbers();
+					mPatientDbAdapter.updatePriorityFormList();
+					
+					publishProgress("Processing Forms", Integer.valueOf(step++).toString(), Integer.valueOf(totalstep).toString());
+					mPatientDbAdapter.updateSavedFormNumbers();
+					mPatientDbAdapter.updateSavedFormsList();
+					
+					publishProgress("Processing Forms", Integer.valueOf(step++).toString(), Integer.valueOf(totalstep).toString());
+					
 					// close db and stream
 					mPatientDbAdapter.close();
-
 				}
 			}
 
@@ -220,12 +227,6 @@ public class DownloadPatientTask extends DownloadTask {
 
 	}
 
-	private void insertFormIds() {
-
-		mPatientDbAdapter.updatePatientFormNumbers();
-		mPatientDbAdapter.updatePatientFormList();
-
-	}
 
 	private static String parseDate(String s) {
 		String date = s.split("T")[0];

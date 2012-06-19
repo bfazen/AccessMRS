@@ -9,14 +9,19 @@ import org.odk.clinic.android.database.ClinicAdapter;
 import org.odk.clinic.android.openmrs.Constants;
 import org.odk.clinic.android.openmrs.Observation;
 import org.odk.clinic.android.openmrs.Patient;
+import org.odk.clinic.android.utilities.App;
 import org.odk.clinic.android.utilities.FileUtils;
+import org.odk.collect.android.provider.InstanceProviderAPI;
+import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
 import android.app.ListActivity;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Gravity;
@@ -27,6 +32,7 @@ import android.view.Window;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -43,6 +49,9 @@ public class ViewPatientActivity extends ListActivity {
 	private Button mActionButton;
 
 	private static Patient mPatient;
+
+	private static View mFormView;
+	private static View mFormHistoryView;
 
 	private ArrayList<Integer> mSelectedForms = new ArrayList<Integer>();
 
@@ -77,6 +86,8 @@ public class ViewPatientActivity extends ListActivity {
 		patientIdStr = getIntent().getStringExtra(Constants.KEY_PATIENT_ID);
 		Integer patientId = Integer.valueOf(patientIdStr);
 		mPatient = getPatient(patientId);
+		mPatient.setTotalCompletedForms(findPreviousEncounters());
+		
 
 		setTitle(getString(R.string.app_name) + " > " + getString(R.string.view_patient));
 
@@ -168,6 +179,8 @@ public class ViewPatientActivity extends ListActivity {
 			// setFamilyName and add get and set priority as well...
 			int priorityIndex = c.getColumnIndexOrThrow(ClinicAdapter.KEY_PRIORITY_FORM_NUMBER);
 			int priorityFormIndex = c.getColumnIndexOrThrow(ClinicAdapter.KEY_PRIORITY_FORM_NAMES);
+			int savedNumberIndex = c.getColumnIndexOrThrow(ClinicAdapter.KEY_SAVED_FORM_NUMBER);
+			int savedFormIndex = c.getColumnIndexOrThrow(ClinicAdapter.KEY_SAVED_FORM_NAMES);
 
 			p = new Patient();
 			p.setPatientId(c.getInt(patientIdIndex));
@@ -182,6 +195,8 @@ public class ViewPatientActivity extends ListActivity {
 			// and setFamilyName and add get and set priority as well...
 			p.setPriorityNumber(c.getInt(priorityIndex));
 			p.setPriorityForms(c.getString(priorityFormIndex));
+			p.setSavedNumber(c.getInt(savedNumberIndex));
+			p.setSavedForms(c.getString(savedFormIndex));
 
 			if (c.getInt(priorityIndex) > 0) {
 
@@ -290,13 +305,22 @@ public class ViewPatientActivity extends ListActivity {
 	private void refreshView() {
 
 		MergeAdapter adapter = new MergeAdapter();
+
 		mObservationAdapter = new ObservationAdapter(this, R.layout.observation_list_item, mObservations);
+		mFormView = formView();
 
 		adapter.addView(buildSectionLabel(getString(R.string.clinical_form_section)));
-		adapter.addView(formView());
+		adapter.addView(mFormView);
 
 		adapter.addView(buildSectionLabel(getString(R.string.clinical_data_section)));
 		adapter.addAdapter(mObservationAdapter);
+
+		Log.e("louis.fazen", "totalCompletedForms=" + mPatient.getTotalCompletedForms());
+		if (mPatient.getTotalCompletedForms() > 0) {
+			adapter.addView(buildSectionLabel(getString(R.string.form_history_section)));
+			adapter.addView(formHistoryView());
+		}
+
 		setListAdapter(adapter);
 	}
 
@@ -304,22 +328,20 @@ public class ViewPatientActivity extends ListActivity {
 		View v;
 		LayoutInflater vi = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 		v = vi.inflate(R.layout.section_label, null);
-		
-		if ((section == getString(R.string.clinical_form_section))  && mPatient.getPriority()) {
+
+		if ((section == getString(R.string.clinical_form_section)) && mPatient.getPriority()) {
 			v.setBackgroundResource(R.color.priority);
 		} else {
 
 			v.setBackgroundResource(R.color.medium_gray);
 		}
-		
+
 		TextView textView = (TextView) v.findViewById(R.id.name_text);
 		textView.setText(section);
-		
+
 		return (v);
 	}
 
-	
-	
 	private View formView() {
 
 		View formsSummary;
@@ -343,10 +365,16 @@ public class ViewPatientActivity extends ListActivity {
 		ImageView priorityImage = (ImageView) formsSummary.findViewById(R.id.priority_image);
 		TextView priorityNumber = (TextView) formsSummary.findViewById(R.id.priority_number);
 		TextView allFormTitle = (TextView) formsSummary.findViewById(R.id.all_form_title);
-//		 TextView formTitle = (TextView) formsSummary.findViewById(R.id.no_form_title);
-		// formsSummary.findViewById(R.id.form_title);
-		
 		TextView formNames = (TextView) formsSummary.findViewById(R.id.form_names);
+
+		// ImageView savedImage = (ImageView)
+		// formsSummary.findViewById(R.id.saved_image);
+		// TextView savedNumber = (TextView)
+		// formsSummary.findViewById(R.id.saved_number);
+		// // TextView allFormTitle = (TextView)
+		// formsSummary.findViewById(R.id.all_form_title);
+		// TextView savedFormNames = (TextView)
+		// formsSummary.findViewById(R.id.saved_form_names);
 
 		priorityImage.setImageDrawable(res.getDrawable(R.drawable.priority_icon_blank));
 		formNames.setTextColor(res.getColor(R.color.dark_gray));
@@ -377,6 +405,69 @@ public class ViewPatientActivity extends ListActivity {
 					priorityImage.setVisibility(View.GONE);
 				}
 
+			}
+		}
+
+		return (formsSummary);
+	}
+
+	private Integer findPreviousEncounters() {
+		Integer completedForms = 0;
+		String patientIdStr = String.valueOf(mPatient.getPatientId());
+		String selection = "(" + InstanceColumns.STATUS + "=? or " + InstanceColumns.STATUS + "=? ) and " + InstanceColumns.PATIENT_ID + "=?";
+		String selectionArgs[] = { InstanceProviderAPI.STATUS_COMPLETE, InstanceProviderAPI.STATUS_SUBMITTED, patientIdStr };
+		Cursor c = App.getApp().getContentResolver().query(InstanceColumns.CONTENT_URI, new String[] { InstanceColumns.PATIENT_ID, "count(*) as count" }, selection, selectionArgs, null);
+
+		if (c.moveToFirst()) {
+
+//			if (patientIdStr == c.getString(c.getColumnIndex(InstanceColumns.PATIENT_ID))) {
+				completedForms = c.getInt(c.getColumnIndex("count"));
+//			}
+		}
+
+		c.close();
+		return completedForms;
+	}
+
+	private View formHistoryView() {
+
+		View formsSummary;
+		LayoutInflater vi = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+		formsSummary = vi.inflate(R.layout.priority_form_summary, null);
+		formsSummary.setClickable(true);
+
+		formsSummary.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				if (checkForForms()) {
+					Intent i = new Intent(getApplicationContext(), ViewCompletedForms.class);
+					i.putExtra(Constants.KEY_PATIENT_ID, patientIdStr);
+					startActivity(i);
+				} else {
+					showCustomToast(getString(R.string.no_forms));
+				}
+			}
+		});
+
+		ImageView priorityArrow = (ImageView) formsSummary.findViewById(R.id.arrow_image);
+		ImageView priorityImage = (ImageView) formsSummary.findViewById(R.id.priority_image);
+		RelativeLayout priorityBlock = (RelativeLayout) formsSummary.findViewById(R.id.priority_block);
+		TextView priorityNumber = (TextView) formsSummary.findViewById(R.id.priority_number);
+		TextView allFormTitle = (TextView) formsSummary.findViewById(R.id.all_form_title);
+		TextView formNames = (TextView) formsSummary.findViewById(R.id.form_names);
+
+		if (priorityArrow != null && formNames != null && allFormTitle != null) {
+			priorityImage.setImageDrawable(res.getDrawable(R.drawable.ic_gray_block));
+			priorityBlock.setPadding(0, 0, 0, 0);
+			
+			priorityArrow.setImageResource(R.drawable.arrow_gray);
+			formNames.setVisibility(View.GONE);
+			allFormTitle.setTextColor(res.getColor(R.color.dark_gray));
+
+			allFormTitle.setText("View All Forms");
+
+			if (priorityNumber != null && priorityImage != null) {
+				priorityNumber.setText(mPatient.getTotalCompletedForms().toString());
+				priorityImage.setVisibility(View.VISIBLE);
 			}
 		}
 

@@ -50,7 +50,11 @@ public final class InstanceProviderAPI {
         public static final String SUBMISSION_URI = "submissionUri";
         public static final String INSTANCE_FILE_PATH = "instanceFilePath";
         public static final String JR_FORM_ID = "jrFormId";
-        //public static final String FORM_ID = "formId";
+        
+        
+//        louis.fazen is adding these two columns because they were not provided originally...
+        public static final String PATIENT_ID = "patientId";
+        public static final String FORM_NAME = "formName";
         
         // these are generated for you (but you can insert something else if you want)
         public static final String STATUS = "status";
