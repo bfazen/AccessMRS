@@ -739,7 +739,7 @@ public class ClinicAdapter {
 				} while (c.moveToNext());
 			} else {
 //			} else if (c.isNull(c.getColumnIndex(InstanceColumns.PATIENT_ID))){
-				cv.put(KEY_PRIORITY_FORM_NUMBER, "");
+				cv.putNull(KEY_PRIORITY_FORM_NUMBER);
 				mDb.update(PATIENTS_TABLE, cv, KEY_PATIENT_ID + "=" + updatePatientId, null);
 				
 			}
@@ -772,7 +772,7 @@ public class ClinicAdapter {
 					} while (cname.moveToNext());
 				} else {
 //				} else if (cname.isNull(c.getColumnIndex(InstanceColumns.PATIENT_ID))){
-					cvname.put(KEY_PRIORITY_FORM_NAMES, "");
+					cvname.putNull(KEY_PRIORITY_FORM_NAMES);
 					mDb.update(PATIENTS_TABLE, cvname, KEY_PATIENT_ID + "=" + updatePatientId, null);
 					
 				}
@@ -856,7 +856,7 @@ public class ClinicAdapter {
 			} while (c.moveToNext());
 		} else {
 //		} else if (c.isNull(c.getColumnIndex(InstanceColumns.PATIENT_ID))){
-			cv.put(KEY_SAVED_FORM_NAMES, "");
+			cv.putNull(KEY_SAVED_FORM_NAMES);
 			mDb.update(PATIENTS_TABLE, cv, KEY_PATIENT_ID + "=" + updatePatientId, null);
 			
 		}
@@ -883,7 +883,7 @@ public class ClinicAdapter {
 			} while (c.moveToNext());
 		} else 
 			{
-			cv.put(KEY_SAVED_FORM_NUMBER, "");
+			cv.putNull(KEY_SAVED_FORM_NUMBER);
 			mDb.update(PATIENTS_TABLE, cv, KEY_PATIENT_ID + "=" + updatePatientId, null);
 			
 		}
