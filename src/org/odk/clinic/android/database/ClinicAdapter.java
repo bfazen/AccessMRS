@@ -905,16 +905,6 @@ public class ClinicAdapter {
 		return count;
 	}
 
-	public int getSavedFormNumbers() throws SQLException {
-		int count = 0;
-		Cursor c = null;
-		c = mDb.query(PATIENTS_TABLE, new String[] { "total(" + KEY_PRIORITY_FORM_NUMBER + ")" }, KEY_PRIORITY_FORM_NUMBER + " IS NOT NULL", null, null, null, null);
-		c.moveToFirst();
-		count = c.getInt(c.getColumnIndex(KEY_PRIORITY_FORM_NUMBER));
-		c.close();
-		return count;
-	}
-
 	public int countAllSavedFormNumbers() throws SQLException {
 		int count = 0;
 		Cursor c = null;
@@ -931,14 +921,21 @@ public class ClinicAdapter {
 		int count = 0;
 		count = (int) DatabaseUtils.queryNumEntries(mDb, FORMINSTANCES_TABLE);
 		return count;
-
-		// louis.fazen TODO: delete:
-		// Cursor c = null;
-		// c = mDb.query(FORMINSTANCES_TABLE, new String[] {"count(*)", KEY_ID +
-		// " IS NOT NULL", null, null, null, null);
-		// count = c.getInt(c.getColumnIndex(KEY_SAVED_FORM_NUMBER));
-		// c.close();
 	}
+	
+	public int countAllPatients() throws SQLException {
+		int count = 0;
+		count = (int) DatabaseUtils.queryNumEntries(mDb, PATIENTS_TABLE);
+		return count;
+	}
+	
+	public int countAllForms() throws SQLException {
+		int count = 0;
+		count = (int) DatabaseUtils.queryNumEntries(mDb, FORMS_TABLE);
+		return count;
+	}
+	
+	
 
 	public boolean updateFormInstance(String path, String status) {
 

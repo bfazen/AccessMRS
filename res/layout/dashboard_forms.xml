@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:clickable="true"
+    android:orientation="vertical"
+    android:paddingBottom="10dip"
+    android:paddingLeft="8dip"
+    android:paddingRight="8dip"
+    android:paddingTop="10dip"
+    android:background="@color/white_color" >
+
+    <TextView
+        android:id="@+id/form_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/arrow_image"
+        android:paddingBottom="4dip"
+        android:paddingLeft="13dip"
+        android:text="Fill Blank Forms"
+        android:textColor="@color/dark_gray"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <RelativeLayout
+        android:id="@+id/form_number_block"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/form_title"
+        android:layout_marginLeft="10dip"
+        android:layout_marginTop="5dip"
+        android:paddingBottom="1dip"
+        android:paddingLeft="2dip"
+        android:paddingRight="2dip"
+        android:paddingTop="1dip" >
+
+        <TextView
+            android:id="@+id/form_number"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:textColor="@color/white_color"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+    </RelativeLayout>
+
+    <TextView
+        android:id="@+id/form_subtext"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/form_title"
+        android:layout_toRightOf="@+id/form_number_block"
+        android:paddingLeft="13dip"
+        android:textColor="@color/medium_gray"
+        android:textSize="16sp" />
+
+    <ImageView
+        android:id="@+id/arrow_image"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
+        android:paddingBottom="4dip"
+        android:paddingLeft="3dip"
+        android:paddingRight="12dip"
+        android:paddingTop="4dip"
+        android:src="@drawable/arrow_gray" >
+    </ImageView>
+
+</RelativeLayout>

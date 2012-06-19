@@ -76,7 +76,6 @@ public class FormAdapter extends ArrayAdapter<Form> {
 					displayName.setText(form.getDisplayName());
 				if (completedDate != null)
 					completedDate.setText(form.getDisplaySubtext());
-
 			}
 
 		}

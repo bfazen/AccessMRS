@@ -487,7 +487,6 @@ public class FormPriorityList extends ListActivity {
 
 				int dbid = mCursor.getInt(mCursor.getColumnIndex(FormsColumns._ID));
 				String dbjrFormId = mCursor.getString(mCursor.getColumnIndex(FormsColumns.JR_FORM_ID));
-
 				formPath = mCursor.getString(mCursor.getColumnIndex(FormsColumns.FORM_FILE_PATH));
 
 				if (jrFormId.equalsIgnoreCase(dbjrFormId)) {
@@ -502,7 +501,7 @@ public class FormPriorityList extends ListActivity {
 
 			if (id != -1) {
 
-				// create instance
+				// create instance in Collect
 				int instanceId = createFormInstance(formPath, jrFormId, formname);
 
 				if (instanceId != -1) {
@@ -807,8 +806,9 @@ public class FormPriorityList extends ListActivity {
 		if (c != null) {
 			c.close();
 		}
-		completedAdapter = new FormAdapter(this, R.layout.default_form_item, completedForms, false);
-
+		completedAdapter = new FormAdapter(this, R.layout.saved_instances, completedForms, false);
+		
+		
 		// 2 and 3. SEPARATE PRIORITY & NONPRIORITY forms from the recent
 		// download:
 		//all logging
@@ -892,7 +892,7 @@ public class FormPriorityList extends ListActivity {
 			csave.close();
 
 		ca.close();
-		savedAdapter = new FormAdapter(this, R.layout.default_form_item, savedForms, false);
+		savedAdapter = new FormAdapter(this, R.layout.saved_instances, savedForms, false);
 
 		// end of gathering data... add everything to the view:
 		adapter = new MergeAdapter();

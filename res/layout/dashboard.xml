@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="@color/medium_gray"
+    android:orientation="vertical" >
+
+    <RelativeLayout
+        android:id="@+id/provider_section"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:background="@color/medium_gray"
+        android:paddingBottom="8dip"
+        android:paddingLeft="8dip"
+        android:paddingTop="8dip" >
+
+        <TextView
+            android:id="@+id/provider_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_centerVertical="true"
+            android:text="Mother Baby Health Network"
+            android:textColor="@color/white_color"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/provider_number"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:paddingLeft="3dip"
+            android:paddingRight="10dip"
+            android:text="18"
+            android:textColor="@color/white_color"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <ImageView
+            android:id="@+id/id_image"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@+id/provider_number"
+            android:layout_toLeftOf="@+id/provider_number"
+            android:src="@drawable/id_icon_inverse" />
+
+    </RelativeLayout>
+
+    <View
+        android:layout_width="fill_parent"
+        android:layout_height="1dp"
+        android:layout_alignParentTop="true"
+        android:background="@color/medium_gray" />
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/light_gray"
+        android:paddingBottom="8dip"
+        android:paddingLeft="20dip"
+        android:paddingTop="8dip" >
+
+        <TextView
+            android:id="@+id/task_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Tasks:"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <!-- ToDo Forms -->
+
+        <RelativeLayout
+            android:id="@+id/todo_block"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/task_title"
+            android:layout_margin="5dip"
+            android:background="@drawable/priority"
+            android:paddingLeft="2dip"
+            android:paddingRight="2dip" >
+
+            <TextView
+                android:id="@+id/todo_number"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:textColor="@color/white_color"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+        </RelativeLayout>
+
+        <TextView
+            android:id="@+id/todo_forms"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignTop="@+id/todo_block"
+            android:layout_toRightOf="@+id/todo_block"
+            android:paddingLeft="20dip"
+            android:text="Suggested Forms to Fill"
+            android:textSize="18sp" />
+
+        <!-- Incomplete Forms -->
+
+        <RelativeLayout
+            android:id="@+id/incomplete_block"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/todo_block"
+            android:layout_margin="5dip"
+            android:background="@drawable/incomplete"
+
+            android:paddingLeft="2dip"
+            android:paddingRight="2dip"
+      >
+
+            <TextView
+                android:id="@+id/incomplete_number"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:textColor="@color/white_color"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+        </RelativeLayout>
+
+        <TextView
+            android:id="@+id/incomplete_forms"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignTop="@+id/incomplete_block"
+            android:layout_toRightOf="@+id/incomplete_block"
+            android:paddingLeft="20dip"
+            android:text="Incomplete Forms"
+            android:textSize="18sp" />
+
+        <!-- Saved Forms -->
+
+        <RelativeLayout
+            android:id="@+id/saved_block"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/incomplete_block"
+            android:layout_margin="5dip"
+            android:background="@drawable/completed"
+ 
+            android:paddingLeft="2dip"
+            android:paddingRight="2dip"
+  >
+
+            <TextView
+                android:id="@+id/saved_number"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:textColor="@color/white_color"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+        </RelativeLayout>
+
+        <TextView
+            android:id="@+id/saved_forms"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignTop="@+id/saved_block"
+            android:layout_toRightOf="@+id/incomplete_block"
+            android:paddingLeft="20dip"
+            android:text="Saved Forms to Upload"
+            android:textSize="18sp" />
+    </RelativeLayout>
+
+    <View
+        android:layout_width="fill_parent"
+        android:layout_height="1dp"
+        android:layout_alignParentTop="true"
+        android:background="@color/medium_gray" />
+
+    <include
+        android:id="@+id/refresh"
+        layout="@layout/dashboard_refresh" />
+
+    <View
+        android:layout_width="fill_parent"
+        android:layout_height="1dp"
+        android:layout_alignParentTop="true"
+        android:background="@color/medium_gray" />
+
+    <include
+        android:id="@+id/load_patients"
+        layout="@layout/dashboard_patients" />
+
+    <View
+        android:layout_width="fill_parent"
+        android:layout_height="1dp"
+        android:layout_alignParentTop="true"
+        android:background="@color/medium_gray" />
+
+    <include
+        android:id="@+id/load_blank_forms"
+        layout="@layout/dashboard_forms" />
+
+    <View
+        android:layout_width="fill_parent"
+        android:layout_height="1dp"
+        android:layout_alignParentTop="true"
+        android:background="@color/medium_gray" />
+
+</LinearLayout>

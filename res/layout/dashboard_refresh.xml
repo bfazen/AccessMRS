@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:clickable="true"
+    android:orientation="vertical"
+    android:paddingBottom="4dip"
+    android:paddingLeft="8dip"
+    android:paddingRight="8dip"
+    android:paddingTop="4dip"
+    android:background="@color/white_color" >
+
+    <TextView
+        android:id="@+id/refresh_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:paddingBottom="20dip"
+        android:paddingLeft="13dip"
+        android:textColor="@color/dark_gray"
+        android:textSize="18sp"
+        android:textStyle="bold" 
+        android:text="Refresh Data Now"/>
+
+    <TextView
+        android:id="@+id/refresh_subtext_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/refresh_title"
+        android:paddingLeft="13dip"
+        android:textColor="@color/dark_gray"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/refresh_subtext"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/refresh_title"
+        android:layout_toRightOf="@+id/refresh_subtext_title"
+        android:paddingLeft="13dip"
+        android:textColor="@color/medium_gray"
+        android:textStyle="italic"
+        android:textSize="16sp" />
+
+    <ImageView
+        android:id="@+id/refresh_image"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
+        android:paddingBottom="4dip"
+        android:paddingLeft="3dip"
+        android:paddingTop="4dip"
+        android:src="@drawable/ic_menu_refresh" >
+    </ImageView>
+
+</RelativeLayout>

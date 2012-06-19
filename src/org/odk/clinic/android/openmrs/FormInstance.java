@@ -6,6 +6,8 @@ public class FormInstance {
     private Integer formId = null;
     private String path = null;
     private String status = null;
+    private String formName = null;
+    
     
     @Override
     public String toString() {
@@ -42,5 +44,14 @@ public class FormInstance {
     
     public void setPath(String path) {
         this.path = path;
+    }
+    
+    
+    public String getName() {
+        return formName;
+    }
+    
+    public void setName(String formname) {
+        this.formName = formname;
     }
 }
