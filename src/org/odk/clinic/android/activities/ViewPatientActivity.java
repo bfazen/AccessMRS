@@ -84,9 +84,7 @@ public class ViewPatientActivity extends ListActivity {
 
 		// TODO Check for invalid patient IDs
 		patientIdStr = getIntent().getStringExtra(Constants.KEY_PATIENT_ID);
-		Integer patientId = Integer.valueOf(patientIdStr);
-		mPatient = getPatient(patientId);
-		mPatient.setTotalCompletedForms(findPreviousEncounters());
+
 		
 
 		setTitle(getString(R.string.app_name) + " > " + getString(R.string.view_patient));
@@ -488,11 +486,17 @@ public class ViewPatientActivity extends ListActivity {
 		super.onResume();
 		activityLogEnd = "onresume";
 		Log.e("ViewPatientActivity", "ACTIVITY_LOG_END: " + activityLogEnd);
-		if (mPatient != null) {
+		if (patientIdStr != null) {
 			// TODO Create more efficient SQL query to get only the latest
 			// observation values
+//			TODO this seems resource intensive to have to getAllObservations again and again?
+			Integer patientId = Integer.valueOf(patientIdStr);
+			mPatient = getPatient(patientId);
+			mPatient.setTotalCompletedForms(findPreviousEncounters());
 			getAllObservations(mPatient.getPatientId());
 		}
+//		TODO: what if the if clause fails?
+
 	}
 
 	@Override
