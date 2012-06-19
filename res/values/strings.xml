@@ -89,7 +89,7 @@ the License.
     <string name="priority_form_section">To Do Forms:</string>
     <string name="nonpriority_form_section">Additional Forms:</string>
     <string name="all_form_section">All Available Forms:</string>
-    <string name="clinical_form_section">Clinical Forms:</string>
+    <string name="clinical_form_section">Fill Forms:</string>
     <string name="clinical_data_section">Clinical Data:</string>
     <string name="completed_form_section">Completed Forms:</string>
     <string name="saved_form_section">Incomplete Forms:</string>

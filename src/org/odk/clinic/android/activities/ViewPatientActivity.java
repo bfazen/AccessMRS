@@ -396,10 +396,13 @@ public class ViewPatientActivity extends ListActivity {
 
 			if (mPatient.getPriority()) {
 				priorityArrow.setImageResource(R.drawable.arrow_red);
-				formNames.setText(mPatient.getPriorityForms());
-				formNames.setTextColor(R.color.priority);
+//				formNames.setText(mPatient.getPriorityForms());
+//				formNames.setTextColor(R.color.priority);
 				// formTitle.setText("Suggested Forms:");
-				allFormTitle.setVisibility(View.GONE);
+//				allFormTitle.setVisibility(View.GONE);
+				formNames.setVisibility(View.GONE);
+				allFormTitle.setText(mPatient.getPriorityForms());
+				allFormTitle.setTextColor(R.color.priority);
 				if (priorityNumber != null && priorityImage != null) {
 					priorityNumber.setText(mPatient.getPriorityNumber().toString());
 					priorityImage.setVisibility(View.VISIBLE);

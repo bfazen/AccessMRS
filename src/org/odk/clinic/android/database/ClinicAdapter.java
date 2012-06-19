@@ -69,7 +69,7 @@ public class ClinicAdapter {
 
 	// form columns
 	public static final String KEY_FORM_ID = "form_id";
-	public static final String KEY_FORM_NAME = "form_id";
+	public static final String KEY_FORM_NAME = "name";
 
 	// instance columns
 	public static final String KEY_FORMINSTANCE_STATUS = "status";
