@@ -2,13 +2,13 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
+    android:background="@color/white_color"
     android:clickable="true"
     android:orientation="vertical"
     android:paddingBottom="10dip"
     android:paddingLeft="8dip"
     android:paddingRight="8dip"
-    android:paddingTop="10dip"
-    android:background="@color/white_color" >
+    android:paddingTop="10dip" >
 
     <TextView
         android:id="@+id/form_title"
@@ -48,11 +48,12 @@
         android:id="@+id/form_subtext"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/form_title"
+        android:layout_alignBottom="@+id/form_number_block"
         android:layout_toRightOf="@+id/form_number_block"
         android:paddingLeft="13dip"
         android:textColor="@color/medium_gray"
-        android:textSize="16sp" />
+        android:textSize="18sp"
+        android:textStyle="italic" />
 
     <ImageView
         android:id="@+id/arrow_image"

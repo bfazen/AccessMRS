@@ -4,6 +4,7 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import org.odk.clinic.android.listeners.DownloadListener;
 import org.odk.clinic.android.openmrs.ActivityLog;
@@ -16,6 +17,7 @@ import org.odk.clinic.android.openmrs.Patient;
 import org.odk.clinic.android.utilities.App;
 import org.odk.clinic.android.utilities.FileUtils;
 import org.odk.collect.android.provider.InstanceProviderAPI;
+import org.odk.collect.android.provider.FormsProviderAPI.FormsColumns;
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
 import android.content.ContentValues;
@@ -98,12 +100,15 @@ public class ClinicAdapter {
 
 	private DownloadListener mStateListener;
 
+	private static final String DOWNLOAD_TIME = "download_time";
+
 	private static final String DATABASE_NAME = "clinic.sqlite3";
 	private static final String PATIENTS_TABLE = "patients";
 	private static final String OBSERVATIONS_TABLE = "observations";
 	private static final String COHORTS_TABLE = "cohorts";
 	private static final String FORMS_TABLE = "forms";
 	private static final String FORMINSTANCES_TABLE = "instances";
+	private static final String DOWNLOAD_LOG_TABLE = "download_log";
 	private static final int DATABASE_VERSION = 8;
 
 	// private static final String CREATE_PATIENTS_TABLE = "create table " +
@@ -153,6 +158,8 @@ public class ClinicAdapter {
 	private static final String CREATE_FORM_LOG_TABLE = "create table " + FORM_LOG_TABLE + " (_id integer primary key autoincrement, " + PATIENT_ID + " text, " + PROVIDER_ID + " text, " + FORM_NAME + " text, " + FORM_START_TIME + " integer, " + FORM_STOP_TIME + " integer, "
 			+ FORM_LAUNCH_TYPE + " text, " + FORM_PRIORITY_BOOLEAN + " text);";
 
+	private static final String CREATE_DOWNLOAD_LOG_TABLE = "create table " + DOWNLOAD_LOG_TABLE + " (_id integer primary key autoincrement, " + DOWNLOAD_TIME + " integer);";
+
 	private static class DatabaseHelper extends ODKSQLiteOpenHelper {
 
 		DatabaseHelper() {
@@ -168,6 +175,7 @@ public class ClinicAdapter {
 			db.execSQL(CREATE_FORMS_TABLE);
 			db.execSQL(CREATE_FORMINSTANCES_TABLE);
 			db.execSQL(CREATE_FORM_LOG_TABLE);
+			db.execSQL(CREATE_DOWNLOAD_LOG_TABLE);
 		}
 
 		@Override
@@ -180,6 +188,7 @@ public class ClinicAdapter {
 			db.execSQL("DROP TABLE IF EXISTS " + FORMINSTANCES_TABLE);
 
 			db.execSQL("DROP TABLE IF EXISTS " + FORM_LOG_TABLE);
+			db.execSQL("DROP TABLE IF EXISTS " + DOWNLOAD_LOG_TABLE);
 			onCreate(db);
 		}
 	}
@@ -653,6 +662,40 @@ public class ClinicAdapter {
 		return c;
 	}
 
+	public void createDownloadLog() {
+		Long downloadTime = Long.valueOf(System.currentTimeMillis());
+		ContentValues cv = new ContentValues();
+
+		cv.put(DOWNLOAD_TIME, downloadTime);
+
+		try {
+			mDb.insert(DOWNLOAD_LOG_TABLE, null, cv);
+		} catch (SQLiteConstraintException e) {
+			Log.e(t, "Caught SQLiteConstraitException: " + e);
+		}
+
+	}
+
+	public String fetchMostRecentDownload() {
+		Cursor c = null;
+		int datetime = 0;
+		c = mDb.query(DOWNLOAD_LOG_TABLE, new String[] { "MAX(" + KEY_ID + ")" }, null, null, null, null, null);
+
+		if (c != null) {
+			if (c.moveToFirst()) {
+				do{
+				datetime = c.getInt(c.getColumnIndex(DOWNLOAD_TIME));
+			 } while (c.moveToNext());
+			}
+			c.close();
+		}
+		Date date = new Date();
+		date.setTime(datetime);
+		String dateString = new SimpleDateFormat("EEE, MMM dd, yyyy 'at' HH:mm").format(date);
+		return dateString;
+
+	}
+
 	// PRIORITY FORMS SECTION //
 	// TODO: Verify this functionality...
 	public void updatePriorityFormList() throws SQLException {
@@ -717,67 +760,71 @@ public class ClinicAdapter {
 	}
 
 	public void updatePriorityFormsByPatientId(String updatePatientId, String formId) throws SQLException {
-//		int deleted = mDb.delete(OBSERVATIONS_TABLE, KEY_PATIENT_ID + "=? AND " + KEY_FIELD_NAME + "=? AND " + KEY_VALUE_INT + "=?", new String[] { updatePatientId, KEY_FIELD_FORM_VALUE, formId });
+		// int deleted = mDb.delete(OBSERVATIONS_TABLE, KEY_PATIENT_ID +
+		// "=? AND " + KEY_FIELD_NAME + "=? AND " + KEY_VALUE_INT + "=?", new
+		// String[] { updatePatientId, KEY_FIELD_FORM_VALUE, formId });
 		int deleted = mDb.delete(OBSERVATIONS_TABLE, KEY_PATIENT_ID + "=" + updatePatientId + " AND " + KEY_FIELD_NAME + "=" + KEY_FIELD_FORM_VALUE + " AND " + KEY_VALUE_INT + "=" + formId, null);
 		Log.e("UpdatePatientFormIDs", "updatePriorityFormsByPatientId patientId=" + updatePatientId + " and formId: " + formId);
 		Log.e("updatePriorityFormsByPatientId", "updatePriorityFormsByPatientId deleted=" + deleted);
 		if (deleted > 0) {
 
 			Cursor c = null;
-//			1. Update the PriorityFormNumbers
+			// 1. Update the PriorityFormNumbers
 			c = mDb.query(OBSERVATIONS_TABLE, new String[] { KEY_PATIENT_ID, "count(*) as " + KEY_PRIORITY_FORM_NUMBER }, KEY_FIELD_NAME + "=? AND " + KEY_PATIENT_ID + "=?", new String[] { KEY_FIELD_FORM_VALUE, updatePatientId }, KEY_PATIENT_ID, null, null);
 			ContentValues cv = new ContentValues();
 			if (c.moveToFirst()) {
 				do {
 					String patientId = c.getString(c.getColumnIndex(KEY_PATIENT_ID));
 					int formNumber = c.getInt(c.getColumnIndex(KEY_PRIORITY_FORM_NUMBER));
-					
+
 					cv.put(KEY_PRIORITY_FORM_NUMBER, formNumber);
 					mDb.update(PATIENTS_TABLE, cv, KEY_PATIENT_ID + "=" + patientId, null);
 
 					Log.e("updatePriorityFormsByPatientId", "updatePriorityFormsByPatientId content values: " + cv + " and formNumber: " + formNumber);
 				} while (c.moveToNext());
 			} else {
-//			} else if (c.isNull(c.getColumnIndex(InstanceColumns.PATIENT_ID))){
+				// } else if
+				// (c.isNull(c.getColumnIndex(InstanceColumns.PATIENT_ID))){
 				cv.putNull(KEY_PRIORITY_FORM_NUMBER);
 				mDb.update(PATIENTS_TABLE, cv, KEY_PATIENT_ID + "=" + updatePatientId, null);
-				
-			}
-			
-			c.close();
-		
-//		2. Update the PriorityFormNames
-		Cursor cname = null;
-		String subquery = SQLiteQueryBuilder.buildQueryString(
-				// include distinct
-						true,
-						// FROM tables
-						FORMS_TABLE + "," + OBSERVATIONS_TABLE,
-						// two columns (one of which is a group_concat()
-						new String[] { OBSERVATIONS_TABLE + "." + KEY_PATIENT_ID + ", group_concat(" + FORMS_TABLE + "." + KEY_FORM_NAME + ",\", \") AS " + KEY_PRIORITY_FORM_NAMES },
-						// where
-						OBSERVATIONS_TABLE + "." + KEY_FIELD_NAME + "=" + KEY_FIELD_FORM_VALUE + " AND " + FORMS_TABLE + "." + KEY_FORM_ID + "=" + OBSERVATIONS_TABLE + "." + KEY_VALUE_INT + " AND " + OBSERVATIONS_TABLE + "." + KEY_PATIENT_ID + "=" + updatePatientId,
-						// group by
-						OBSERVATIONS_TABLE + "." + KEY_PATIENT_ID, null, null, null);
 
-				cname = mDb.rawQuery(subquery, null);
-				ContentValues cvname = new ContentValues();
-				if (cname.moveToFirst()) {
-					do {
-						String patientId = cname.getString(c.getColumnIndex(KEY_PATIENT_ID));
-						String formName = cname.getString(c.getColumnIndex(KEY_PRIORITY_FORM_NAMES));
-						
-						cvname.put(KEY_PRIORITY_FORM_NAMES, formName);
-						mDb.update(PATIENTS_TABLE, cvname, KEY_PATIENT_ID + "=" + patientId, null);
-					} while (cname.moveToNext());
-				} else {
-//				} else if (cname.isNull(c.getColumnIndex(InstanceColumns.PATIENT_ID))){
-					cvname.putNull(KEY_PRIORITY_FORM_NAMES);
-					mDb.update(PATIENTS_TABLE, cvname, KEY_PATIENT_ID + "=" + updatePatientId, null);
-					
-				}
-				
-				cname.close();
+			}
+
+			c.close();
+
+			// 2. Update the PriorityFormNames
+			Cursor cname = null;
+			String subquery = SQLiteQueryBuilder.buildQueryString(
+			// include distinct
+					true,
+					// FROM tables
+					FORMS_TABLE + "," + OBSERVATIONS_TABLE,
+					// two columns (one of which is a group_concat()
+					new String[] { OBSERVATIONS_TABLE + "." + KEY_PATIENT_ID + ", group_concat(" + FORMS_TABLE + "." + KEY_FORM_NAME + ",\", \") AS " + KEY_PRIORITY_FORM_NAMES },
+					// where
+					OBSERVATIONS_TABLE + "." + KEY_FIELD_NAME + "=" + KEY_FIELD_FORM_VALUE + " AND " + FORMS_TABLE + "." + KEY_FORM_ID + "=" + OBSERVATIONS_TABLE + "." + KEY_VALUE_INT + " AND " + OBSERVATIONS_TABLE + "." + KEY_PATIENT_ID + "=" + updatePatientId,
+					// group by
+					OBSERVATIONS_TABLE + "." + KEY_PATIENT_ID, null, null, null);
+
+			cname = mDb.rawQuery(subquery, null);
+			ContentValues cvname = new ContentValues();
+			if (cname.moveToFirst()) {
+				do {
+					String patientId = cname.getString(c.getColumnIndex(KEY_PATIENT_ID));
+					String formName = cname.getString(c.getColumnIndex(KEY_PRIORITY_FORM_NAMES));
+
+					cvname.put(KEY_PRIORITY_FORM_NAMES, formName);
+					mDb.update(PATIENTS_TABLE, cvname, KEY_PATIENT_ID + "=" + patientId, null);
+				} while (cname.moveToNext());
+			} else {
+				// } else if
+				// (cname.isNull(c.getColumnIndex(InstanceColumns.PATIENT_ID))){
+				cvname.putNull(KEY_PRIORITY_FORM_NAMES);
+				mDb.update(PATIENTS_TABLE, cvname, KEY_PATIENT_ID + "=" + updatePatientId, null);
+
+			}
+
+			cname.close();
 		}
 	}
 
@@ -802,7 +849,7 @@ public class ClinicAdapter {
 
 				mDb.update(PATIENTS_TABLE, cv, KEY_PATIENT_ID + "=" + patientId, null);
 			} while (c.moveToNext());
-		} 
+		}
 
 		c.close();
 
@@ -855,10 +902,11 @@ public class ClinicAdapter {
 				mDb.update(PATIENTS_TABLE, cv, KEY_PATIENT_ID + "=" + patientId, null);
 			} while (c.moveToNext());
 		} else {
-//		} else if (c.isNull(c.getColumnIndex(InstanceColumns.PATIENT_ID))){
+			// } else if
+			// (c.isNull(c.getColumnIndex(InstanceColumns.PATIENT_ID))){
 			cv.putNull(KEY_SAVED_FORM_NAMES);
 			mDb.update(PATIENTS_TABLE, cv, KEY_PATIENT_ID + "=" + updatePatientId, null);
-			
+
 		}
 
 		c.close();
@@ -881,11 +929,10 @@ public class ClinicAdapter {
 
 				mDb.update(PATIENTS_TABLE, cv, KEY_PATIENT_ID + "=" + patientId, null);
 			} while (c.moveToNext());
-		} else 
-			{
+		} else {
 			cv.putNull(KEY_SAVED_FORM_NUMBER);
 			mDb.update(PATIENTS_TABLE, cv, KEY_PATIENT_ID + "=" + updatePatientId, null);
-			
+
 		}
 
 		c.close();
@@ -898,44 +945,59 @@ public class ClinicAdapter {
 	public int countAllPriorityFormNumbers() throws SQLException {
 		int count = 0;
 		Cursor c = null;
-		c = mDb.query(PATIENTS_TABLE, new String[] { "total(" + KEY_PRIORITY_FORM_NUMBER + ")" }, KEY_PRIORITY_FORM_NUMBER + " IS NOT NULL", null, null, null, null);
-		c.moveToFirst();
-		count = c.getInt(c.getColumnIndex(KEY_PRIORITY_FORM_NUMBER));
-		c.close();
+		c = mDb.query(PATIENTS_TABLE, new String[] { "total(" + KEY_PRIORITY_FORM_NUMBER + ") AS " + KEY_PRIORITY_FORM_NUMBER }, KEY_PRIORITY_FORM_NUMBER + " IS NOT NULL", null, null, null, null);
+		if (c != null) {
+			if (c.moveToFirst()) {
+				count = c.getInt(c.getColumnIndex(KEY_PRIORITY_FORM_NUMBER));
+			}
+			c.close();
+		}
 		return count;
 	}
 
 	public int countAllSavedFormNumbers() throws SQLException {
 		int count = 0;
 		Cursor c = null;
-		c = mDb.query(PATIENTS_TABLE, new String[] { "sum(" + KEY_SAVED_FORM_NUMBER + ")" }, KEY_SAVED_FORM_NUMBER + " IS NOT NULL", null, null, null, null);
-		c.moveToFirst();
-		count = c.getInt(c.getColumnIndex(KEY_SAVED_FORM_NUMBER));
-		c.close();
+		c = mDb.query(PATIENTS_TABLE, new String[] { "sum(" + KEY_SAVED_FORM_NUMBER + ") AS " + KEY_SAVED_FORM_NUMBER }, KEY_SAVED_FORM_NUMBER + " IS NOT NULL", null, null, null, null);
+		if (c != null) {
+			if (c.moveToFirst()) {
+				count = c.getInt(c.getColumnIndex(KEY_SAVED_FORM_NUMBER));
+			}
+			c.close();
+		}
+
 		return count;
 	}
 
 	// All Unsent Completed Forms should all be in the clinic.sqlite
 	// FORMINSTANCES table, so just count
 	public int countAllCompletedUnsentForms() throws SQLException {
-		int count = 0;
-		count = (int) DatabaseUtils.queryNumEntries(mDb, FORMINSTANCES_TABLE);
-		return count;
+		long count = 0;
+		count = DatabaseUtils.queryNumEntries(mDb, FORMINSTANCES_TABLE);
+		int intcount = safeLongToInt(count);
+		return intcount;
 	}
-	
+
 	public int countAllPatients() throws SQLException {
-		int count = 0;
-		count = (int) DatabaseUtils.queryNumEntries(mDb, PATIENTS_TABLE);
-		return count;
+		long count = 0;
+		count = DatabaseUtils.queryNumEntries(mDb, PATIENTS_TABLE);
+		int intcount = safeLongToInt(count);
+		return intcount;
 	}
-	
+
 	public int countAllForms() throws SQLException {
-		int count = 0;
-		count = (int) DatabaseUtils.queryNumEntries(mDb, FORMS_TABLE);
-		return count;
+		long count = 0;
+		count = DatabaseUtils.queryNumEntries(mDb, FORMS_TABLE);
+		int intcount = safeLongToInt(count);
+		return intcount;
 	}
-	
-	
+
+	public static int safeLongToInt(long l) {
+		if (l < Integer.MIN_VALUE || l > Integer.MAX_VALUE) {
+			throw new IllegalArgumentException(l + "is outside the bounds of int");
+		}
+		return (int) l;
+	}
 
 	public boolean updateFormInstance(String path, String status) {
 

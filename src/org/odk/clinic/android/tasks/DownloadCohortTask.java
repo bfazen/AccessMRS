@@ -4,6 +4,8 @@ import java.io.DataInputStream;
 
 import org.odk.clinic.android.openmrs.Cohort;
 
+import android.util.Log;
+
 public class DownloadCohortTask extends DownloadTask {
 
 	public static final String KEY_ERROR = "error";
@@ -11,7 +13,7 @@ public class DownloadCohortTask extends DownloadTask {
 
 	@Override
 	protected String doInBackground(String... values) {
-
+Log.e("louis.fazen", "downloadcohorttask is called");
 		String url = values[0];
 		String username = values[1];
 		String password = values[2];
@@ -23,6 +25,7 @@ public class DownloadCohortTask extends DownloadTask {
 				// open db and clean entries
 				mPatientDbAdapter.open();
 				mPatientDbAdapter.deleteAllCohorts();
+				
 				
 				// download and insert patients and obs
 				insertCohorts(zdis);
@@ -44,7 +47,7 @@ public class DownloadCohortTask extends DownloadTask {
 
 	private void insertCohorts(DataInputStream zdis)
 			throws Exception {
-
+		Log.e("louis.fazen", "insert Cohorts is called");
 		int count = zdis.readInt();
 		
 		for (int i = 1; i < count + 1; i++) {

@@ -88,7 +88,10 @@ public class DownloadPatientTask extends DownloadTask {
 					publishProgress("Processing Forms", Integer.valueOf(step++).toString(), Integer.valueOf(totalstep).toString());
 					
 					// close db and stream
+					mPatientDbAdapter.createDownloadLog();
 					mPatientDbAdapter.close();
+					
+					
 				}
 			}
 

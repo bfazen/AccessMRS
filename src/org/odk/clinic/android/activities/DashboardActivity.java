@@ -41,9 +41,9 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 
 	private static final String DOWNLOAD_PATIENT_CANCELED_KEY = "downloadPatientCanceled";
 
-	private Button mDownloadButton;
-	private Button mCreateButton;
-	private Button mViewPatientsButton;
+	private RelativeLayout mDownloadButton;
+	private RelativeLayout mCreateButton;
+	private RelativeLayout mViewPatientsButton;
 
 	private ClinicAdapter mCla;
 
@@ -78,13 +78,13 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
 		mProviderId = settings.getString(PreferencesActivity.KEY_PROVIDER, "0");
 		providerNumber.setText(mProviderId);
-		
+
 		if (!FileUtils.storageReady()) {
 			showCustomToast(getString(R.string.error, getString(R.string.storage_error)));
 			finish();
 		}
 
-		mDownloadButton = (Button) findViewById(R.id.refresh);
+		mDownloadButton = (RelativeLayout) findViewById(R.id.refresh);
 		mDownloadButton.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
 
@@ -95,13 +95,13 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 			}
 		});
 
-		mCreateButton = (Button) findViewById(R.id.load_blank_forms);
+		mCreateButton = (RelativeLayout) findViewById(R.id.load_blank_forms);
 		mCreateButton.setOnClickListener(new OnClickListener() {
 
 			public void onClick(View arg0) {
 
 				// branch of id of form to fill...
-				if (mForms.size() > 0) {
+				if (forms > 0) {
 					Intent i = new Intent(mContext, AllFormList.class);
 					startActivity(i);
 
@@ -112,19 +112,14 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 
 		});
 
-		mViewPatientsButton = (Button) findViewById(R.id.load_patients);
+		mViewPatientsButton = (RelativeLayout) findViewById(R.id.load_patients);
 		mViewPatientsButton.setOnClickListener(new OnClickListener() {
 
 			public void onClick(View arg0) {
 
-				// branch of id of form to fill...
-				if (mForms.size() > 0) {
-					Intent i = new Intent(mContext, ListPatientActivity.class);
-					startActivity(i);
+				Intent i = new Intent(mContext, ListPatientActivity.class);
+				startActivity(i);
 
-				} else {
-					showCustomToast(getString(R.string.no_forms));
-				}
 			}
 
 		});
@@ -165,6 +160,7 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 			mCla.open();
 		} else {
 			mCla = new ClinicAdapter();
+			mCla.open();
 		}
 
 		patients = mCla.countAllPatients();
@@ -172,16 +168,22 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 		completedForms = mCla.countAllCompletedUnsentForms();
 		priorityToDoForms = mCla.countAllPriorityFormNumbers();
 		forms = mCla.countAllForms();
-		
+//		String refreshtime = mCla.fetchMostRecentDownload();
 		mCla.close();
 		
-		//Patient Section
+
+		//Download Section
+		TextView refreshTitle = (TextView) findViewById(R.id.refresh_subtext_title);
+		TextView refreshSubtext = (TextView) findViewById(R.id.refresh_subtext);
+		 refreshTitle.setText("Last Update");
+		 refreshSubtext.setText("Jun 16 2012 at 09:38");
+		 
+		// Patient Section
 		RelativeLayout patientRL = (RelativeLayout) findViewById(R.id.patients_number_block);
 		TextView patientNumber = (TextView) findViewById(R.id.patients_number);
 		TextView patientSubtext = (TextView) findViewById(R.id.patients_subtext);
 
 		if (patients > 0) {
-
 			patientRL.setBackgroundResource(R.drawable.gray);
 			patientNumber.setText(String.valueOf(patients));
 			if (patients > 1) {
@@ -195,8 +197,8 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 			patientNumber.setVisibility(View.GONE);
 			patientSubtext.setVisibility(View.GONE);
 		}
-		
-		//Form Section
+
+		// Form Section
 		RelativeLayout formRL = (RelativeLayout) findViewById(R.id.form_number_block);
 		TextView formNumber = (TextView) findViewById(R.id.form_number);
 		TextView formSubtext = (TextView) findViewById(R.id.form_subtext);
@@ -217,14 +219,20 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 			formSubtext.setVisibility(View.GONE);
 		}
 
-//		//Priority Form Section
+		// //Priority Form Section
 		RelativeLayout todoRL = (RelativeLayout) findViewById(R.id.todo_block);
 		TextView todoNumber = (TextView) findViewById(R.id.todo_number);
 		TextView todoText = (TextView) findViewById(R.id.todo_forms);
 
 		if (priorityToDoForms > 0) {
 
+			int bottom = todoRL.getPaddingBottom();
+			int top = todoRL.getPaddingTop();
+			int right = todoRL.getPaddingRight();
+			int left = todoRL.getPaddingLeft();
+			Log.e("louis.fazen", "padding is:" + top + bottom + left + right);
 			todoRL.setBackgroundResource(R.drawable.priority);
+
 			todoNumber.setText(String.valueOf(priorityToDoForms));
 			if (priorityToDoForms > 1) {
 				todoText.setText(R.string.to_do_forms);
@@ -237,8 +245,8 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 			todoNumber.setVisibility(View.GONE);
 			todoText.setVisibility(View.GONE);
 		}
-		
-//		Completed Form Section
+
+		// Completed Form Section
 		RelativeLayout completedRL = (RelativeLayout) findViewById(R.id.completed_block);
 		TextView completedNumber = (TextView) findViewById(R.id.completed_number);
 		TextView completedText = (TextView) findViewById(R.id.completed_forms);
@@ -258,8 +266,8 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 			completedNumber.setVisibility(View.GONE);
 			completedText.setVisibility(View.GONE);
 		}
-		
-		//Incomplete/Saved Form Section
+
+		// Incomplete/Saved Form Section
 		RelativeLayout incompletedRL = (RelativeLayout) findViewById(R.id.saved_block);
 		TextView incompletedNumber = (TextView) findViewById(R.id.saved_number);
 		TextView incompletedText = (TextView) findViewById(R.id.saved_forms);

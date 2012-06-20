@@ -42,6 +42,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignBottom="@+id/provider_number"
+
             android:layout_toLeftOf="@+id/provider_number"
             android:src="@drawable/id_icon_inverse" />
     </RelativeLayout>
@@ -53,8 +54,6 @@
         android:paddingBottom="8dip"
         android:paddingLeft="20dip"
         android:paddingTop="8dip" >
-
-
 
         <TextView
             android:id="@+id/task_title"
@@ -71,9 +70,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@+id/task_title"
-            android:layout_margin="5dip"
-            android:paddingLeft="2dip"
-            android:paddingRight="2dip" >
+            android:layout_margin="5dip" >
 
             <TextView
                 android:id="@+id/todo_number"
@@ -101,9 +98,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@+id/completed_block"
-            android:layout_margin="5dip"
-            android:paddingLeft="2dip"
-            android:paddingRight="2dip" >
+            android:layout_margin="5dip" >
 
             <TextView
                 android:id="@+id/saved_number"
@@ -155,46 +150,41 @@
             android:textSize="18sp" />
     </RelativeLayout>
 
+    <View
+        android:layout_width="fill_parent"
+        android:layout_height="1dp"
+        android:background="@color/medium_gray" />
 
-        <View
-            android:layout_width="fill_parent"
-            android:layout_height="1dp"
+    <include
+        android:id="@+id/refresh"
+        layout="@layout/dashboard_refresh" />
 
-            android:background="@color/medium_gray" />
+    <View
+        android:layout_width="fill_parent"
+        android:layout_height="1dp"
+        android:layout_alignParentTop="true"
+        android:background="@color/medium_gray" />
 
-        <include
-            android:id="@+id/refresh"
-            layout="@layout/dashboard_refresh"
-             />
+    <include
+        android:id="@+id/load_patients"
+        android:layout_below="@+id/refresh"
+        layout="@layout/dashboard_patients" />
 
-        <View
-            android:layout_width="fill_parent"
-            android:layout_height="1dp"
-            android:layout_alignParentTop="true"
-            android:background="@color/medium_gray" />
+    <View
+        android:layout_width="fill_parent"
+        android:layout_height="1dp"
+        android:layout_alignParentTop="true"
+        android:background="@color/medium_gray" />
 
-        <include
-            android:id="@+id/load_patients"
-            layout="@layout/dashboard_patients" 
-            android:layout_below="@+id/refresh" />
+    <include
+        android:id="@+id/load_blank_forms"
+        android:layout_below="@+id/load_patients"
+        layout="@layout/dashboard_forms" />
 
-        <View
-            android:layout_width="fill_parent"
-            android:layout_height="1dp"
-            android:layout_alignParentTop="true"
-            android:background="@color/medium_gray" />
-
-        <include
-            android:id="@+id/load_blank_forms"
-            layout="@layout/dashboard_forms" 
-            android:layout_below="@+id/load_patients"/>
-
-        <View
-            android:layout_width="fill_parent"
-            android:layout_height="1dp"
-            android:layout_alignParentTop="true"
-            android:background="@color/medium_gray" />
-        
-
+    <View
+        android:layout_width="fill_parent"
+        android:layout_height="1dp"
+        android:layout_alignParentTop="true"
+        android:background="@color/medium_gray" />
 
 </LinearLayout>
