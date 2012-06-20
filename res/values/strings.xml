@@ -95,12 +95,23 @@ the License.
     <string name="saved_form_section">Incomplete Forms:</string>
     <string name="view_only_form">This form is for viewing only.  Changes will not be saved.</string>
     <string name="form_history_section">Your Previous Visits:</string>
-    
     <string name="instances_last_day">Visits in the past day:</string>
     <string name="instances_last_week">Visits in the past week:</string>
     <string name="instances_last_month">Visits in the past month:</string>
     <string name="instances_last_six_months">Visits in the past 6 months:</string>
     <string name="instances_last_year">Visits in the past year:</string>
     <string name="instances_unknown_gt_year">All other visits:</string>
+    <string name="current_patients">Current Clients</string>
+    <string name="current_patient">Current Client</string>
+    <string name="downloaded_forms">Available Forms</string>
+    <string name="downloaded_form">Available Form</string>
+    <string name="to_do_forms">Suggested Forms To Fill</string>
+    <string name="to_do_form">Suggested Forms To Fill</string>
+    <string name="completed_forms">Saved Forms To Upload</string>
+    <string name="completed_form">Saved Form To Upload</string>
+    <string name="incomplete_forms">Incomplete Forms</string>
+    <string name="incomplete_form">Incomplete Form</string>
+    <string name="dashboard_title">MotherBaby Health Network</string>    
+<string name="dashboard_task_title">Tasks:</string> 
 
 </resources>

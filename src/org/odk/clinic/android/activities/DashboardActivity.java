@@ -15,6 +15,7 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -24,6 +25,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
 import android.widget.Button;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -41,6 +43,7 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 
 	private Button mDownloadButton;
 	private Button mCreateButton;
+	private Button mViewPatientsButton;
 
 	private ClinicAdapter mCla;
 
@@ -49,34 +52,39 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 	private boolean mDownloadPatientCanceled = false;
 
 	private UploadInstanceTask mUploadFormTask;
-	
+
 	private int patients = 0;
 	private int forms = 0;
 	private int priorityToDoForms = 0;
 	private int completedForms = 0;
 	private int incompleteForms = 0;
 	private Context mContext;
+	private static String mProviderId;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		mContext = this;
-		
+
 		if (savedInstanceState != null) {
 			if (savedInstanceState.containsKey(DOWNLOAD_PATIENT_CANCELED_KEY)) {
 				mDownloadPatientCanceled = savedInstanceState.getBoolean(DOWNLOAD_PATIENT_CANCELED_KEY);
 			}
 		}
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
-		setContentView(R.layout.find_patient);
+		setContentView(R.layout.dashboard);
 		setTitle(getString(R.string.app_name) + " > " + getString(R.string.find_patient));
-
+		TextView providerNumber = (TextView) findViewById(R.id.provider_number);
+		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
+		mProviderId = settings.getString(PreferencesActivity.KEY_PROVIDER, "0");
+		providerNumber.setText(mProviderId);
+		
 		if (!FileUtils.storageReady()) {
 			showCustomToast(getString(R.string.error, getString(R.string.storage_error)));
 			finish();
 		}
 
-		mDownloadButton = (Button) findViewById(R.id.download_patients);
+		mDownloadButton = (Button) findViewById(R.id.refresh);
 		mDownloadButton.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
 
@@ -87,7 +95,7 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 			}
 		});
 
-		mCreateButton = (Button) findViewById(R.id.create_patient);
+		mCreateButton = (Button) findViewById(R.id.load_blank_forms);
 		mCreateButton.setOnClickListener(new OnClickListener() {
 
 			public void onClick(View arg0) {
@@ -96,13 +104,31 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 				if (mForms.size() > 0) {
 					Intent i = new Intent(mContext, AllFormList.class);
 					startActivity(i);
-					
+
 				} else {
 					showCustomToast(getString(R.string.no_forms));
 				}
 			}
 
 		});
+
+		mViewPatientsButton = (Button) findViewById(R.id.load_patients);
+		mViewPatientsButton.setOnClickListener(new OnClickListener() {
+
+			public void onClick(View arg0) {
+
+				// branch of id of form to fill...
+				if (mForms.size() > 0) {
+					Intent i = new Intent(mContext, ListPatientActivity.class);
+					startActivity(i);
+
+				} else {
+					showCustomToast(getString(R.string.no_forms));
+				}
+			}
+
+		});
+
 	}
 
 	@Override
@@ -111,24 +137,27 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 			mUploadFormTask.setUploadListener(this);
 		}
 		super.onResume();
-//		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
-//		boolean firstRun = settings.getBoolean(PreferencesActivity.KEY_FIRST_RUN, true);
-//		if (firstRun) {
-//			// Save first run status
-//			SharedPreferences.Editor editor = settings.edit();
-//			editor.putBoolean(PreferencesActivity.KEY_FIRST_RUN, false);
-//			editor.commit();
-//
-//			// Start preferences activity
-//			Intent ip = new Intent(getApplicationContext(), PreferencesActivity.class);
-//			startActivity(ip);
-//
-//		} else {
-		
-			updateNumbers();
-			refreshView();
+		// SharedPreferences settings =
+		// PreferenceManager.getDefaultSharedPreferences(getBaseContext());
+		// boolean firstRun =
+		// settings.getBoolean(PreferencesActivity.KEY_FIRST_RUN, true);
+		// if (firstRun) {
+		// // Save first run status
+		// SharedPreferences.Editor editor = settings.edit();
+		// editor.putBoolean(PreferencesActivity.KEY_FIRST_RUN, false);
+		// editor.commit();
+		//
+		// // Start preferences activity
+		// Intent ip = new Intent(getApplicationContext(),
+		// PreferencesActivity.class);
+		// startActivity(ip);
+		//
+		// } else {
 
-//		}
+		updateNumbers();
+		refreshView();
+
+		// }
 	}
 
 	private void updateNumbers() {
@@ -137,15 +166,122 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 		} else {
 			mCla = new ClinicAdapter();
 		}
+
 		patients = mCla.countAllPatients();
-		forms = mCla.countAllForms();
+		incompleteForms = mCla.countAllSavedFormNumbers();
 		completedForms = mCla.countAllCompletedUnsentForms();
 		priorityToDoForms = mCla.countAllPriorityFormNumbers();
-		incompleteForms = mCla.countAllSavedFormNumbers();
-
+		forms = mCla.countAllForms();
+		
 		mCla.close();
+		
+		//Patient Section
+		RelativeLayout patientRL = (RelativeLayout) findViewById(R.id.patients_number_block);
+		TextView patientNumber = (TextView) findViewById(R.id.patients_number);
+		TextView patientSubtext = (TextView) findViewById(R.id.patients_subtext);
+
+		if (patients > 0) {
+
+			patientRL.setBackgroundResource(R.drawable.gray);
+			patientNumber.setText(String.valueOf(patients));
+			if (patients > 1) {
+				patientSubtext.setText(R.string.current_patients);
+			} else {
+				patientSubtext.setText(R.string.current_patient);
+			}
+
+		} else {
+			patientRL.setVisibility(View.GONE);
+			patientNumber.setVisibility(View.GONE);
+			patientSubtext.setVisibility(View.GONE);
+		}
+		
+		//Form Section
+		RelativeLayout formRL = (RelativeLayout) findViewById(R.id.form_number_block);
+		TextView formNumber = (TextView) findViewById(R.id.form_number);
+		TextView formSubtext = (TextView) findViewById(R.id.form_subtext);
+
+		if (forms > 0) {
+
+			formRL.setBackgroundResource(R.drawable.gray);
+			formNumber.setText(String.valueOf(forms));
+			if (forms > 1) {
+				formSubtext.setText(R.string.downloaded_forms);
+			} else {
+				formSubtext.setText(R.string.downloaded_form);
+			}
+
+		} else {
+			formRL.setVisibility(View.GONE);
+			formNumber.setVisibility(View.GONE);
+			formSubtext.setVisibility(View.GONE);
+		}
+
+//		//Priority Form Section
+		RelativeLayout todoRL = (RelativeLayout) findViewById(R.id.todo_block);
+		TextView todoNumber = (TextView) findViewById(R.id.todo_number);
+		TextView todoText = (TextView) findViewById(R.id.todo_forms);
+
+		if (priorityToDoForms > 0) {
+
+			todoRL.setBackgroundResource(R.drawable.priority);
+			todoNumber.setText(String.valueOf(priorityToDoForms));
+			if (priorityToDoForms > 1) {
+				todoText.setText(R.string.to_do_forms);
+			} else {
+				todoText.setText(R.string.to_do_form);
+			}
+
+		} else {
+			todoRL.setVisibility(View.GONE);
+			todoNumber.setVisibility(View.GONE);
+			todoText.setVisibility(View.GONE);
+		}
+		
+//		Completed Form Section
+		RelativeLayout completedRL = (RelativeLayout) findViewById(R.id.completed_block);
+		TextView completedNumber = (TextView) findViewById(R.id.completed_number);
+		TextView completedText = (TextView) findViewById(R.id.completed_forms);
+
+		if (completedForms > 0) {
+
+			completedRL.setBackgroundResource(R.drawable.completed);
+			completedNumber.setText(String.valueOf(completedForms));
+			if (completedForms > 1) {
+				completedText.setText(R.string.completed_forms);
+			} else {
+				completedText.setText(R.string.completed_form);
+			}
+
+		} else {
+			completedRL.setVisibility(View.GONE);
+			completedNumber.setVisibility(View.GONE);
+			completedText.setVisibility(View.GONE);
+		}
+		
+		//Incomplete/Saved Form Section
+		RelativeLayout incompletedRL = (RelativeLayout) findViewById(R.id.saved_block);
+		TextView incompletedNumber = (TextView) findViewById(R.id.saved_number);
+		TextView incompletedText = (TextView) findViewById(R.id.saved_forms);
+
+		if (completedForms > 0) {
+
+			incompletedRL.setBackgroundResource(R.drawable.incomplete);
+			incompletedNumber.setText(String.valueOf(incompleteForms));
+			if (completedForms > 1) {
+				incompletedText.setText(R.string.incomplete_forms);
+			} else {
+				incompletedText.setText(R.string.incomplete_form);
+			}
+
+		} else {
+			incompletedRL.setVisibility(View.GONE);
+			incompletedNumber.setVisibility(View.GONE);
+			incompletedText.setVisibility(View.GONE);
+		}
+
 	}
-	
+
 	private void refreshView() {
 
 	}
