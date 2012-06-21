@@ -345,7 +345,6 @@ public class ViewPatientActivity extends ListActivity {
 		if ((section == getString(R.string.clinical_form_section)) && mPatient.getPriority()) {
 			v.setBackgroundResource(R.color.priority);
 		} else {
-
 			v.setBackgroundResource(R.color.medium_gray);
 		}
 
@@ -454,13 +453,10 @@ public class ViewPatientActivity extends ListActivity {
 
 		formsSummary.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
-				if (checkForForms()) {
 					Intent i = new Intent(getApplicationContext(), ViewCompletedForms.class);
 					i.putExtra(Constants.KEY_PATIENT_ID, patientIdStr);
 					startActivity(i);
-				} else {
-					showCustomToast(getString(R.string.no_forms));
-				}
+				
 			}
 		});
 

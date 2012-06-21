@@ -175,7 +175,7 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 		//Download Section
 		TextView refreshTitle = (TextView) findViewById(R.id.refresh_subtext_title);
 		TextView refreshSubtext = (TextView) findViewById(R.id.refresh_subtext);
-		 refreshTitle.setText("Last Update");
+		 refreshTitle.setText("Update:");
 		 refreshSubtext.setText("Jun 16 2012 at 09:38");
 		 
 		// Patient Section
@@ -252,7 +252,7 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 		TextView completedText = (TextView) findViewById(R.id.completed_forms);
 
 		if (completedForms > 0) {
-
+			Log.e("louis.fazen", "completedForms is not null with count " + completedForms);
 			completedRL.setBackgroundResource(R.drawable.completed);
 			completedNumber.setText(String.valueOf(completedForms));
 			if (completedForms > 1) {
@@ -262,6 +262,7 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 			}
 
 		} else {
+			Log.e("louis.fazen", "completedForms is now invisible");
 			completedRL.setVisibility(View.GONE);
 			completedNumber.setVisibility(View.GONE);
 			completedText.setVisibility(View.GONE);
@@ -272,11 +273,11 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 		TextView incompletedNumber = (TextView) findViewById(R.id.saved_number);
 		TextView incompletedText = (TextView) findViewById(R.id.saved_forms);
 
-		if (completedForms > 0) {
-
+		if (incompleteForms > 0) {
+			Log.e("louis.fazen", "incompleteForms is not null with count " + incompleteForms);
 			incompletedRL.setBackgroundResource(R.drawable.incomplete);
 			incompletedNumber.setText(String.valueOf(incompleteForms));
-			if (completedForms > 1) {
+			if (incompleteForms > 1) {
 				incompletedText.setText(R.string.incomplete_forms);
 			} else {
 				incompletedText.setText(R.string.incomplete_form);

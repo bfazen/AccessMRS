@@ -5,7 +5,7 @@ import java.io.DataInputStream;
 import org.odk.clinic.android.openmrs.Cohort;
 
 import android.util.Log;
-
+//TODO: louis.fazen delete this class
 public class DownloadCohortTask extends DownloadTask {
 
 	public static final String KEY_ERROR = "error";
@@ -13,7 +13,7 @@ public class DownloadCohortTask extends DownloadTask {
 
 	@Override
 	protected String doInBackground(String... values) {
-Log.e("louis.fazen", "downloadcohorttask is called");
+		Log.e("louis.fazen", "downloadcohorttask is called");
 		String url = values[0];
 		String username = values[1];
 		String password = values[2];

@@ -7,7 +7,7 @@ public class FormInstance {
     private String path = null;
     private String status = null;
     private String formName = null;
-    
+    private String completionSubtext = null;
     
     @Override
     public String toString() {
@@ -28,6 +28,14 @@ public class FormInstance {
     
     public void setFormId(Integer formId) {
         this.formId = formId;
+    }
+    
+    public String getCompletionSubtext() {
+        return completionSubtext;
+    }
+    
+    public void setCompletionSubtext(String date) {
+        this.completionSubtext = date;
     }
     
     public String getStatus() {

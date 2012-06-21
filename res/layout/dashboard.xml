@@ -42,7 +42,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignBottom="@+id/provider_number"
-
+			android:paddingBottom="1dip"
             android:layout_toLeftOf="@+id/provider_number"
             android:src="@drawable/id_icon_inverse" />
     </RelativeLayout>
@@ -70,7 +70,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@+id/task_title"
-            android:layout_margin="5dip" >
+            android:layout_margin="4dip" >
 
             <TextView
                 android:id="@+id/todo_number"
@@ -98,7 +98,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@+id/completed_block"
-            android:layout_margin="5dip" >
+            android:layout_margin="4dip" >
 
             <TextView
                 android:id="@+id/saved_number"
@@ -115,9 +115,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignTop="@+id/saved_block"
-            android:layout_toRightOf="@+id/completed_block"
+            android:layout_toRightOf="@+id/saved_block"
             android:paddingLeft="20dip"
-            android:textSize="18sp" />
+            android:textSize="17sp" />
 
         <!-- Incomplete Forms -->
 
@@ -126,9 +126,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@+id/todo_block"
-            android:layout_margin="5dip"
-            android:paddingLeft="2dip"
-            android:paddingRight="2dip" >
+            android:layout_margin="4dip" >
 
             <TextView
                 android:id="@+id/completed_number"
@@ -147,7 +145,7 @@
             android:layout_alignTop="@+id/completed_block"
             android:layout_toRightOf="@+id/completed_block"
             android:paddingLeft="20dip"
-            android:textSize="18sp" />
+            android:textSize="17sp" />
     </RelativeLayout>
 
     <View

@@ -26,8 +26,6 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
-// TODO Merge this activity into FindPatientActivity
-
 public class DownloadPatientActivity extends Activity implements
 		DownloadListener {
 

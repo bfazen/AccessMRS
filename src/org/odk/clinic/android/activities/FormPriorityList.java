@@ -9,7 +9,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.regex.Matcher;
@@ -19,7 +18,6 @@ import org.kxml2.io.KXmlParser;
 import org.kxml2.io.KXmlSerializer;
 import org.kxml2.kdom.Document;
 import org.kxml2.kdom.Element;
-
 import org.odk.clinic.android.R;
 import org.odk.clinic.android.adapters.FormAdapter;
 import org.odk.clinic.android.adapters.MergeAdapter;
@@ -33,8 +31,8 @@ import org.odk.clinic.android.openmrs.Patient;
 import org.odk.clinic.android.tasks.ActivityLogTask;
 import org.odk.clinic.android.utilities.App;
 import org.odk.clinic.android.utilities.FileUtils;
-import org.odk.collect.android.provider.InstanceProviderAPI;
 import org.odk.collect.android.provider.FormsProviderAPI.FormsColumns;
+import org.odk.collect.android.provider.InstanceProviderAPI;
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
 import android.app.ListActivity;
@@ -47,7 +45,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.database.Cursor;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -55,10 +52,10 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListAdapter;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -109,7 +106,7 @@ public class FormPriorityList extends ListActivity {
 
 		getDownloadedForms();
 
-		// getPatient
+		// We should always have a patient here, so getPatient
 		String patientIdStr = getIntent().getStringExtra(Constants.KEY_PATIENT_ID);
 		Integer patientId = Integer.valueOf(patientIdStr);
 		mPatient = getPatient(patientId);
@@ -117,7 +114,7 @@ public class FormPriorityList extends ListActivity {
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
 		mProviderId = settings.getString(PreferencesActivity.KEY_PROVIDER, "0");
 
-		// set static Views
+		// set Header View
 		TextView textView = (TextView) findViewById(R.id.identifier_text);
 		if (textView != null) {
 			textView.setText(mPatient.getIdentifier());
@@ -161,10 +158,10 @@ public class FormPriorityList extends ListActivity {
 		// Log.e("louis.fazen", "string 2" + s2);
 		String type = null;
 		int priority = FILL_FORM;
-		if(mSelectedFormIds.contains(f.getFormId())){
+		if (mSelectedFormIds.contains(f.getFormId())) {
 			priority = FILL_PRIORITY_FORM;
 		}
-		
+
 		if (selectedAdapter == savedAdapter) {
 			launchSavedFormEntry(f.getInstanceId(), priority);
 			type = "Saved";
@@ -332,7 +329,6 @@ public class FormPriorityList extends ListActivity {
 	}
 
 	private static int createFormInstance(String formPath, String jrFormId, String formname) {
-		Log.e("louis.fazen", "CreateFormInstance jrformid: " + jrFormId);
 		// reading the form
 		Document doc = new Document();
 		KXmlParser formParser = new KXmlParser();
@@ -383,67 +379,12 @@ public class FormPriorityList extends ListActivity {
 			insertValues.put(InstanceColumns.INSTANCE_FILE_PATH, instanceFilePath);
 			insertValues.put(InstanceColumns.JR_FORM_ID, jrFormId);
 
-			// louis.fazen is adding these variables to be added to the
-			// Instances Db
+			// louis.fazen is adding new variables to Instances.Db
 			insertValues.put(InstanceColumns.PATIENT_ID, mPatient.getPatientId());
 			insertValues.put(InstanceColumns.FORM_NAME, formname);
-
-			Log.e("louis.fazen", "createFormInstance: adding insertValues: " + insertValues.toString());
+			insertValues.put(InstanceColumns.STATUS, "initialized");
 
 			Uri insertResult = App.getApp().getContentResolver().insert(InstanceColumns.CONTENT_URI, insertValues);
-
-			Log.e("louis.fazen", "createFormInstance has uri of insertResult: " + insertResult);
-
-			// TODO: louis.fazen jun 15, 2012 this would need to be changed
-			// depending on whether the form is complete or not... ?
-			// this is creating the form Instance with a status of it should be
-			// submitted...
-			// not that smart, as if it gets created and then not filled in...
-			// why submit?
-			// would be better to set the status as saved, but needs to be
-			// filled, no?
-			// the only issue with saved forms is how to delete them?!
-
-			// TODO: again, maybe we should not be doing this at this point? but
-			// rather at whatever point the form is changed in Collect
-			// or else we put it in the database with STATUS-WORKING for now..?
-			// but how do they then delete it if they go in to delete from
-			// Collect?
-			// maybe the best thing is to only insert when there are saved or
-			// complete changes? i.e. we just do an collectDbSyncTask asyntask
-			// database sync within the onresume of priority form list?
-
-			// TODO: louis.fazen says maybe we should not put this into Clinic
-			// quite yet? because otherwise we get a list of forms in the
-			// FormInstance table that may not be complete.
-			// given how things work between these two programs, maybe it is
-			// best to leave them in Collect and sync later
-
-			// TODO: Just let line 114 of Collect SaveToDiskTask do the work of
-			// figuring out the instances etc.
-			// Yaw does not manage the saved and unsaved instances in
-			// Clinic...he just keeps everything loaded in clinic and then
-			// uploads to server...
-			// but there is no delete or view old instances function at any
-			// point... this is what I need to add down the line
-			// This is also expensive because you are sending all sorts of Forms
-			// In addition, you can not go back to previously saved forms...
-
-			/*
-			 * louis.fazen is commenting this out, and placing in the
-			 * ActivityResult section:
-			 * 
-			 * // insert to clinic // Save form instance to db FormInstance fi =
-			 * new FormInstance(); fi.setPatientId(mPatient.getPatientId());
-			 * fi.setFormId(Integer.parseInt(jrFormId));
-			 * fi.setPath(instanceFilePath);
-			 * fi.setStatus(ClinicAdapter.STATUS_UNSUBMITTED);
-			 * 
-			 * ClinicAdapter ca = new ClinicAdapter(); ca.open();
-			 * ca.createFormInstance(fi, mPatient.getGivenName() + " " +
-			 * mPatient.getFamilyName()); ca.close();
-			 */
-
 			return Integer.valueOf(insertResult.getLastPathSegment());
 
 		} catch (IOException e) {
@@ -590,16 +531,33 @@ public class FormPriorityList extends ListActivity {
 
 				ClinicAdapter ca = new ClinicAdapter();
 				ca.open();
+				// update saved form numbers in the patients table (by Patient
+				// ID)... i.e. the per person form numbers
+				// this allows for faster queries with only the need to look at
+				// patient table to get all the patient info
+				// otherwise would need to query both patients table and the
+				// instances table,
+				// and the priority list in obs just to get all the various
+				// sources of patient data
 				ca.updateSavedFormNumbersByPatientId(mPatient.getPatientId().toString());
 				ca.updateSavedFormsListByPatientId(mPatient.getPatientId().toString());
 
 				if (status.equalsIgnoreCase(InstanceProviderAPI.STATUS_COMPLETE)) {
 					Log.e("lef-onActivityResult", "mCursor status:" + status + "=" + InstanceProviderAPI.STATUS_COMPLETE);
 					FormInstance fi = new FormInstance();
-					fi.setPatientId(mPatient.getPatientId());
+					fi.setPatientId(mPatient.getPatientId()); // TODO: why not
+																// take this
+																// from the
+																// Collect
+																// Database as
+																// well?
 					fi.setFormId(Integer.parseInt(dbjrFormId));
 					fi.setPath(filePath);
 					fi.setStatus(ClinicAdapter.STATUS_UNSUBMITTED);
+					Date date = new Date();
+					date.setTime(System.currentTimeMillis());
+					String dateString = "Completed on" + (new SimpleDateFormat("EEE, MMM dd, yyyy 'at' HH:mm").format(date));
+					fi.setCompletionSubtext(dateString);
 
 					ca.createFormInstance(fi, displayName);
 					if (requestCode == FILL_PRIORITY_FORM) {
@@ -684,69 +642,23 @@ public class FormPriorityList extends ListActivity {
 	protected void onResume() {
 		super.onResume();
 		if (mPatient != null) {
-			// TODO Create more efficient SQL query to get only the latest
-			// observation values
-			getAllObservations(mPatient.getPatientId());
+			getPriorityForms();
 		}
 	}
 
-	private void getAllObservations(Integer patientId) {
-		ArrayList<Integer> selectedFormIds = new ArrayList<Integer>();
+	private void getPriorityForms() {
+		int patientId = mPatient.getPatientId();
+		mSelectedFormIds = new ArrayList<Integer>();
 
 		ClinicAdapter ca = new ClinicAdapter();
 
 		ca.open();
-		Cursor c = ca.fetchPatientObservations(patientId);
+		Cursor c = ca.fetchPriorityFormIdByPatientId(patientId);
 
 		if (c != null && c.getCount() > 0) {
-			mObservations.clear();
-			int valueTextIndex = c.getColumnIndex(ClinicAdapter.KEY_VALUE_TEXT);
 			int valueIntIndex = c.getColumnIndex(ClinicAdapter.KEY_VALUE_INT);
-			int valueDateIndex = c.getColumnIndex(ClinicAdapter.KEY_VALUE_DATE);
-			int valueNumericIndex = c.getColumnIndex(ClinicAdapter.KEY_VALUE_NUMERIC);
-			int fieldNameIndex = c.getColumnIndex(ClinicAdapter.KEY_FIELD_NAME);
-			int encounterDateIndex = c.getColumnIndex(ClinicAdapter.KEY_ENCOUNTER_DATE);
-			int dataTypeIndex = c.getColumnIndex(ClinicAdapter.KEY_DATA_TYPE);
-
-			Observation obs;
-			String prevFieldName = null;
 			do {
-				String fieldName = c.getString(fieldNameIndex);
-
-				if (fieldName.equalsIgnoreCase("odkconnector.property.form"))
-					selectedFormIds.add(c.getInt(valueIntIndex));
-				else {
-					// We only want most recent observation, so only get first
-					// observation
-					if (!fieldName.equals(prevFieldName)) {
-
-						obs = new Observation();
-						obs.setFieldName(fieldName);
-						obs.setEncounterDate(c.getString(encounterDateIndex));
-
-						int dataType = c.getInt(dataTypeIndex);
-						obs.setDataType((byte) dataType);
-						switch (dataType) {
-						case Constants.TYPE_INT:
-							obs.setValueInt(c.getInt(valueIntIndex));
-							break;
-						case Constants.TYPE_DOUBLE:
-							obs.setValueNumeric(c.getDouble(valueNumericIndex));
-							break;
-						case Constants.TYPE_DATE:
-							obs.setValueDate(c.getString(valueDateIndex));
-
-							break;
-						default:
-							obs.setValueText(c.getString(valueTextIndex));
-						}
-
-						mObservations.add(obs);
-
-						prevFieldName = fieldName;
-					}
-				}
-
+				mSelectedFormIds.add(c.getInt(valueIntIndex));
 			} while (c.moveToNext());
 		}
 
@@ -754,22 +666,22 @@ public class FormPriorityList extends ListActivity {
 			c.close();
 		}
 		ca.close();
-		refreshView(selectedFormIds);
+		refreshView();
 	}
 
-	private void refreshView(ArrayList<Integer> selectedFormIds) {
+	private void refreshView() {
 
 		// 1. COMPLETED FORMS: gather the saved forms from the Clinic.db
 		ClinicAdapter ca = new ClinicAdapter();
 		ca.open();
 		boolean selectedIds = false;
-		mSelectedFormIds = selectedFormIds;
-		if (selectedFormIds != null && selectedFormIds.size() >0){
+		if (mSelectedFormIds != null && mSelectedFormIds.size() > 0) {
 			selectedIds = true;
 		}
-		
-		//Ven diagram where we have completed and selected subsets of Forms
-		//CompletedSelectedFormIds is their intersection and always smaller than both
+
+		// Venn diagram where we have completed and selected subsets of Forms
+		// CompletedSelectedFormIds is their intersection and always smaller
+		// than both
 		ArrayList<Integer> completedSelectedFormIds = new ArrayList<Integer>();
 		ArrayList<Form> completedForms = new ArrayList<Form>();
 
@@ -777,9 +689,10 @@ public class FormPriorityList extends ListActivity {
 		if (c != null && c.getCount() > 0) {
 			int formIdIndex = c.getColumnIndex(ClinicAdapter.KEY_FORM_ID);
 			int instanceIdIndex = c.getColumnIndex(ClinicAdapter.KEY_ID);
-			int subtextIndex = c.getColumnIndex(ClinicAdapter.KEY_FORMINSTANCE_DISPLAY);
+			int displayNameIndex = c.getColumnIndex(ClinicAdapter.KEY_FORMINSTANCE_DISPLAY);
 			int pathIndex = c.getColumnIndex(ClinicAdapter.KEY_PATH);
 			int nameIndex = c.getColumnIndex(ClinicAdapter.KEY_FORM_NAME);
+			int dateIndex = c.getColumnIndex(ClinicAdapter.KEY_FORMINSTANCE_SUBTEXT);
 
 			if (c.getCount() > 0) {
 				Form form;
@@ -788,15 +701,16 @@ public class FormPriorityList extends ListActivity {
 						form = new Form();
 						form.setFormId(c.getInt(formIdIndex));
 						form.setInstanceId(c.getInt(instanceIdIndex));
+						form.setDisplayName(c.getString(displayNameIndex));
 						form.setName(c.getString(nameIndex));
 						form.setPath(c.getString(pathIndex));
-						form.setDisplaySubtext(c.getString(subtextIndex));
-						
+						form.setDisplaySubtext(c.getString(dateIndex));
+
 						completedForms.add(form);
-						if (selectedIds && selectedFormIds.contains(form.getFormId())){
+						if (selectedIds && mSelectedFormIds.contains(form.getFormId())) {
 							completedSelectedFormIds.add(c.getInt(formIdIndex));
 						}
-						
+
 					}
 				} while (c.moveToNext());
 			}
@@ -807,24 +721,12 @@ public class FormPriorityList extends ListActivity {
 			c.close();
 		}
 		completedAdapter = new FormAdapter(this, R.layout.saved_instances, completedForms, false);
-		
-		
+
 		// 2 and 3. SEPARATE PRIORITY & NONPRIORITY forms from the recent
 		// download:
-		//all logging
-		int staritemssize = selectedFormIds.size() - completedSelectedFormIds.size();
-		int nonstaritemssize = (mTotalForms.size() - selectedFormIds.size()) + completedSelectedFormIds.size();
-		Log.e("louis.fazen", "allItems.size: " + mTotalForms.size());
-		Log.e("louis.fazen", "starItems.size: " + staritemssize);
-		Log.e("louis.fazen", "selectedFormIds.size: " +selectedFormIds.size());
-		Log.e("louis.fazen", "completedSelectedItems.size: " + completedSelectedFormIds.size());
-		Log.e("louis.fazen", "nonstarItems.size: " + nonstaritemssize);
-		//end of logging...
-		
-		
 		Form[] allItems = new Form[mTotalForms.size()];
-		Form[] starItems = new Form[selectedFormIds.size() - completedSelectedFormIds.size()];
-		Form[] nonStarItems = new Form[(mTotalForms.size() - selectedFormIds.size()) + completedSelectedFormIds.size()];
+		Form[] starItems = new Form[mSelectedFormIds.size() - completedSelectedFormIds.size()];
+		Form[] nonStarItems = new Form[(mTotalForms.size() - mSelectedFormIds.size()) + completedSelectedFormIds.size()];
 
 		if (selectedIds) {
 			int preferredCounter = 0;
@@ -833,7 +735,7 @@ public class FormPriorityList extends ListActivity {
 			for (Form form : mTotalForms) {
 				// Only non-completed priority forms are differentiated from
 				// general form pool
-				if (selectedFormIds.contains(form.getFormId()) && !completedSelectedFormIds.contains(form.getFormId())) {
+				if (mSelectedFormIds.contains(form.getFormId()) && !completedSelectedFormIds.contains(form.getFormId())) {
 					starItems[preferredCounter++] = form;
 				} else
 					// all other forms are added to the additional list
@@ -908,7 +810,11 @@ public class FormPriorityList extends ListActivity {
 		// saved...
 		if (!savedForms.isEmpty()) {
 			adapter.addView(buildSectionLabel(getString(R.string.saved_form_section)));
-			adapter.addAdapter(savedAdapter);
+			if (savedForms.size() < 6) {
+				adapter.addAdapter(savedAdapter);
+			} else {
+				adapter.addView(formSummaryView(savedForms.size()));
+			}
 		}
 
 		// completed...
@@ -977,6 +883,48 @@ public class FormPriorityList extends ListActivity {
 		}
 
 		return (v);
+	}
+
+	private View formSummaryView(int forms) {
+
+		View formsSummary;
+		LayoutInflater vi = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+		formsSummary = vi.inflate(R.layout.priority_form_summary, null);
+		formsSummary.setClickable(true);
+
+		formsSummary.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+
+				Intent i = new Intent(getApplicationContext(), ViewSavedForms.class);
+				i.putExtra(Constants.KEY_PATIENT_ID, mPatient.getPatientId());
+				startActivity(i);
+			}
+		});
+
+		ImageView priorityArrow = (ImageView) formsSummary.findViewById(R.id.arrow_image);
+		ImageView priorityImage = (ImageView) formsSummary.findViewById(R.id.priority_image);
+		RelativeLayout priorityBlock = (RelativeLayout) formsSummary.findViewById(R.id.priority_block);
+		TextView priorityNumber = (TextView) formsSummary.findViewById(R.id.priority_number);
+		TextView allFormTitle = (TextView) formsSummary.findViewById(R.id.all_form_title);
+		TextView formNames = (TextView) formsSummary.findViewById(R.id.form_names);
+
+		if (priorityArrow != null && formNames != null && allFormTitle != null) {
+			priorityImage.setImageDrawable(res.getDrawable(R.drawable.ic_gray_block));
+			priorityBlock.setPadding(0, 0, 0, 0);
+
+			priorityArrow.setImageResource(R.drawable.arrow_gray);
+			formNames.setVisibility(View.GONE);
+			allFormTitle.setTextColor(res.getColor(R.color.dark_gray));
+
+			allFormTitle.setText("View All Saved Forms");
+
+			if (priorityNumber != null && priorityImage != null) {
+				priorityNumber.setText(String.valueOf(forms));
+				priorityImage.setVisibility(View.VISIBLE);
+			}
+		}
+
+		return (formsSummary);
 	}
 
 	// NB... this != ViewCompletedForms.launchFormViewOnly()

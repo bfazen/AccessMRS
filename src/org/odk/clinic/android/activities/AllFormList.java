@@ -75,25 +75,19 @@ public class AllFormList extends ListActivity {
 	// public static final int FILL_BLANK_FORM = 3;
 	public static final int FILL_FORM = 3;
 	public static final int VIEW_FORM_ONLY = 4;
-	public static final int FILL_PRIORITY_FORM = 5;
-
-	public static final int FILL_BLANK_FORM = 6;
-
+	public static final String EDIT_FORM = "edit_form";
+	
 	private ArrayList<Form> mTotalForms = new ArrayList<Form>();
-	private static Patient mPatient;
 	private static String mProviderId;
-	private static HashMap<String, String> mInstanceValues = new HashMap<String, String>();
-	private static final DateFormat COLLECT_INSTANCE_NAME_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
-	private static ArrayList<Observation> mObservations = new ArrayList<Observation>();
-	private static Element mFormNode;
 	private Context mContext;
 	private ActivityLog mActivityLog;
 	private Resources res;
-	public static final String EDIT_FORM = "edit_form";
+
 	private MergeAdapter adapter = null;
 	private FormAdapter completedAdapter = null;
 	private FormAdapter savedAdapter = null;
 	private FormAdapter allFormsAdapter = null;
+	private int savedFormsSize = 0;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -110,10 +104,11 @@ public class AllFormList extends ListActivity {
 		setContentView(R.layout.all_form_list);
 		TextView textView = (TextView) findViewById(R.id.name_text);
 		ImageView sectionImage = (ImageView) findViewById(R.id.section_image);
-		RelativeLayout rl = (RelativeLayout) findViewById(R.id.section_relative_layout);
-		rl.setBackgroundResource(R.color.medium_gray);
-		textView.setText("Fill a Blank Form");
-		sectionImage.setImageDrawable(res.getDrawable(R.drawable.ic_additional));
+		View viewTitle = (View) findViewById(R.id.title);
+		viewTitle.setBackgroundResource(R.color.dark_gray);
+
+		textView.setText("Forms For New Clients");
+		sectionImage.setImageDrawable(res.getDrawable(R.drawable.icon));
 
 		getDownloadedForms();
 
@@ -126,29 +121,25 @@ public class AllFormList extends ListActivity {
 
 		ListAdapter selectedAdapter = adapter.getAdapter(position);
 		Form f = (Form) getListAdapter().getItem(position);
-
 		String type = null;
-		int priority = FILL_FORM;
 
 		if (selectedAdapter == savedAdapter) {
-			launchSavedFormEntry(f.getInstanceId(), priority);
+			launchSavedFormEntry(f.getInstanceId());
 			type = "Saved";
 		} else if (selectedAdapter == completedAdapter) {
 			launchFormViewOnly(f.getPath());
 			type = "Completed-Unsent";
 		} else {
-			launchFormEntry(f.getFormId().toString(), f.getName(), priority);
-			type = "New Form";
+			launchBlankFormEntry(f.getFormId().toString());
+			type = "New Blank Form";
 		}
 
 		SharedPreferences settings = getSharedPreferences("ChwSettings", MODE_PRIVATE);
 		if (settings.getBoolean("IsLoggingEnabled", true)) {
 			startActivityLog(f.getFormId().toString(), type);
 		}
-
 	}
 
-	// method excerpted from the ViewPatientActivity (delete from there?)
 	private void getDownloadedForms() {
 
 		ClinicAdapter ca = new ClinicAdapter();
@@ -172,6 +163,7 @@ public class AllFormList extends ListActivity {
 						form.setName(c.getString(nameIndex));
 						form.setPath(c.getString(pathIndex));
 						mTotalForms.add(form);
+
 					}
 				} while (c.moveToNext());
 			}
@@ -183,231 +175,20 @@ public class AllFormList extends ListActivity {
 		ca.close();
 	}
 
-	// below this line is all excerpted from the ViewPatientActivity (delete
-	// from there?)
-	private static String parseDate(String s) {
-		SimpleDateFormat inputFormat = new SimpleDateFormat("MMM dd, yyyy");
-		SimpleDateFormat outputFormat = new SimpleDateFormat("yyyy-MM-dd");
-		try {
-			return outputFormat.format(inputFormat.parse(s));
-		} catch (ParseException e) {
-			return "";
-		}
-	}
+	private void launchBlankFormEntry(String jrFormId) {
 
-	private static void traverseInstanceNodes(Element element) {
-
-		// extract 'WEIGHT (KG)' from '5089^WEIGHT (KG)^99DCT'
-		Pattern pattern = Pattern.compile("\\^.*\\^");
-		// Log.e("FormPriorityList", "Element number of children= " +
-		// element.getChildCount());
-		// loop through all the children of this element
-		for (int i = 0; i < element.getChildCount(); i++) {
-
-			Element childElement = element.getElement(i);
-			if (childElement != null) {
-
-				String childName = childElement.getName();
-
-				// patient id
-				if (childName.equalsIgnoreCase("patient.patient_id")) {
-					childElement.clear();
-					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mPatient.getPatientId().toString());
-				}
-				if (childName.equalsIgnoreCase("patient.birthdate")) {
-					childElement.clear();
-					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, parseDate(mPatient.getBirthdate()));
-				}
-				if (childName.equalsIgnoreCase("patient.family_name")) {
-					childElement.clear();
-					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mPatient.getFamilyName().toString());
-				}
-				if (childName.equalsIgnoreCase("patient.given_name")) {
-					childElement.clear();
-					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mPatient.getGivenName().toString());
-				}
-
-				if (childName.equalsIgnoreCase("patient.middle_name")) {
-					childElement.clear();
-					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mPatient.getMiddleName().toString());
-
-				}
-				if (childName.equalsIgnoreCase("patient.sex")) {
-					childElement.clear();
-					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mPatient.getGender().toString());
-
-				}
-				if (childName.equalsIgnoreCase("patient.medical_record_number")) {
-					childElement.clear();
-					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mPatient.getIdentifier().toString());
-
-				}
-
-				// provider id
-				if (childName.equalsIgnoreCase("encounter.provider_id")) {
-					childElement.clear();
-					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mProviderId.toString());
-				}
-
-				if (childName.equalsIgnoreCase("date") || childName.equalsIgnoreCase("time")) {
-					childElement.clear();
-
-				}
-
-				// value node
-				if (childName.equalsIgnoreCase("value")) {
-
-					childElement.clear();
-
-					// parent of value node
-					Element parentElement = ((Element) childElement.getParent());
-					String parentConcept = parentElement.getAttributeValue("", "openmrs_concept");
-
-					// match the text inside ^^
-					String match = null;
-					Matcher matcher = pattern.matcher(parentConcept);
-					while (matcher.find()) {
-						match = matcher.group(0).substring(1, matcher.group(0).length() - 1);
-					}
-
-					// write value into value n
-					String value = mInstanceValues.get(match);
-					if (value != null) {
-						childElement.addChild(0, org.kxml2.kdom.Node.TEXT, value.toString());
-					}
-				}
-
-				if (childElement.getChildCount() > 0) {
-					// Log.e("FormPriorityList", "childElement number= " +
-					// childElement.getChildCount());
-					traverseInstanceNodes(childElement);
-				}
-			}
-		}
-
-	}
-
-	private static void prepareInstanceValues() {
-
-		for (int i = 0; i < mObservations.size(); i++) {
-			Observation o = mObservations.get(i);
-			mInstanceValues.put(o.getFieldName(), o.toString());
-
-		}
-	}
-
-	private static int createFormInstance(String formPath, String jrFormId, String formname) {
-		Log.e("louis.fazen", "CreateFormInstance jrformid: " + jrFormId);
-		// reading the form
-		Document doc = new Document();
-		KXmlParser formParser = new KXmlParser();
-		try {
-			formParser.setInput(new FileReader(formPath));
-			doc.parse(formParser);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-		findFormNode(doc.getRootElement());
-		if (mFormNode != null) {
-			prepareInstanceValues();
-			traverseInstanceNodes(mFormNode);
-		} else {
-			return -1;
-		}
-
-		// writing the instance file
-		File formFile = new File(formPath);
-		String formFileName = formFile.getName();
-		String instanceName = "";
-		if (formFileName.endsWith(".xml")) {
-			instanceName = formFileName.substring(0, formFileName.length() - 4);
-		} else {
-			instanceName = jrFormId;
-		}
-		instanceName = instanceName + "_" + COLLECT_INSTANCE_NAME_DATE_FORMAT.format(new Date());
-
-		String instancePath = FileUtils.INSTANCES_PATH + instanceName;
-		(new File(instancePath)).mkdirs();
-		String instanceFilePath = instancePath + "/" + instanceName + ".xml";
-		File instanceFile = new File(instanceFilePath);
-
-		KXmlSerializer instanceSerializer = new KXmlSerializer();
-		try {
-			instanceFile.createNewFile();
-			FileWriter instanceWriter = new FileWriter(instanceFile);
-			instanceSerializer.setOutput(instanceWriter);
-			mFormNode.write(instanceSerializer);
-			instanceSerializer.endDocument();
-			instanceSerializer.flush();
-			instanceWriter.close();
-
-			// register into content provider
-			ContentValues insertValues = new ContentValues();
-			insertValues.put(InstanceColumns.DISPLAY_NAME, mPatient.getGivenName() + " " + mPatient.getFamilyName());
-			insertValues.put(InstanceColumns.INSTANCE_FILE_PATH, instanceFilePath);
-			insertValues.put(InstanceColumns.JR_FORM_ID, jrFormId);
-
-			// louis.fazen is adding these variables to be added to the
-			// Instances Db
-			insertValues.put(InstanceColumns.PATIENT_ID, mPatient.getPatientId());
-			insertValues.put(InstanceColumns.FORM_NAME, formname);
-
-			Log.e("louis.fazen", "createFormInstance: adding insertValues: " + insertValues.toString());
-
-			Uri insertResult = App.getApp().getContentResolver().insert(InstanceColumns.CONTENT_URI, insertValues);
-
-			Log.e("louis.fazen", "createFormInstance has uri of insertResult: " + insertResult);
-
-			return Integer.valueOf(insertResult.getLastPathSegment());
-
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return -1;
-
-	}
-
-	private static void findFormNode(Element element) {
-
-		// loop through all the children of this element
-		for (int i = 0; i < element.getChildCount(); i++) {
-
-			Element childElement = element.getElement(i);
-			if (childElement != null) {
-
-				String childName = childElement.getName();
-				if (childName.equalsIgnoreCase("form")) {
-					mFormNode = childElement;
-				}
-
-				if (childElement.getChildCount() > 0) {
-					findFormNode(childElement);
-				}
-			}
-		}
-
-	}
-
-	private void launchFormEntry(String jrFormId, String formname, int priority) {
-		String formPath = null;
 		int id = -1;
 		try {
-			// TODO: louis.fazen: Yaw's query seems inefficient--could just
-			// return one row
 			Cursor mCursor = App.getApp().getContentResolver().query(FormsColumns.CONTENT_URI, null, null, null, null);
 			mCursor.moveToPosition(-1);
 			while (mCursor.moveToNext()) {
 
 				int dbid = mCursor.getInt(mCursor.getColumnIndex(FormsColumns._ID));
 				String dbjrFormId = mCursor.getString(mCursor.getColumnIndex(FormsColumns.JR_FORM_ID));
-				formPath = mCursor.getString(mCursor.getColumnIndex(FormsColumns.FORM_FILE_PATH));
 
 				if (jrFormId.equalsIgnoreCase(dbjrFormId)) {
 					id = dbid;
 					break;
-
 				}
 			}
 			if (mCursor != null) {
@@ -416,20 +197,8 @@ public class AllFormList extends ListActivity {
 
 			if (id != -1) {
 
-				// create instance in Collect
-				int instanceId = createFormInstance(formPath, jrFormId, formname);
-
-				if (instanceId != -1) {
-					Intent intent = new Intent();
-					intent.setComponent(new ComponentName("org.odk.collect.android", "org.odk.collect.android.activities.FormEntryActivity"));
-					// TODO: louis.fazen changed this from ACTION_VIEW????
-					intent.setAction(Intent.ACTION_EDIT);
-					intent.setData(Uri.parse(InstanceColumns.CONTENT_URI + "/" + instanceId));
-					startActivityForResult(intent, priority);
-				} else {
-					Uri formUri = ContentUris.withAppendedId(FormsColumns.CONTENT_URI, id);
-					startActivityForResult(new Intent(Intent.ACTION_EDIT, formUri), priority);
-				}
+				Uri formUri = ContentUris.withAppendedId(FormsColumns.CONTENT_URI, id);
+				startActivityForResult(new Intent(Intent.ACTION_EDIT, formUri), FILL_FORM);
 
 			}
 
@@ -437,7 +206,7 @@ public class AllFormList extends ListActivity {
 			showCustomToast(getString(R.string.error, getString(R.string.odk_collect_error)));
 		}
 	}
-
+	
 	// NB... this != ViewCompletedForms.launchFormViewOnly()
 	private void launchFormViewOnly(String uriString) {
 		Intent intent = new Intent();
@@ -456,12 +225,12 @@ public class AllFormList extends ListActivity {
 		startActivityForResult(intent, VIEW_FORM_ONLY);
 	}
 
-	private void launchSavedFormEntry(int instanceId, int priority) {
+	private void launchSavedFormEntry(int instanceId) {
 		Intent intent = new Intent();
 		intent.setComponent(new ComponentName("org.odk.collect.android", "org.odk.collect.android.activities.FormEntryActivity"));
 		intent.setAction(Intent.ACTION_EDIT);
 		intent.setData(Uri.parse(InstanceColumns.CONTENT_URI + "/" + instanceId));
-		startActivityForResult(intent, priority);
+		startActivityForResult(intent, FILL_FORM);
 	}
 
 	@Override
@@ -476,8 +245,8 @@ public class AllFormList extends ListActivity {
 		ca.open();
 
 		// 1. SAVED FORMS: gather the saved forms from Collect Instances.Db
-		String selection = InstanceColumns.STATUS + "=? and " + InstanceColumns.PATIENT_ID + " IS NULL";
-		String selectionArgs[] = { InstanceProviderAPI.STATUS_INCOMPLETE };
+		String selection = InstanceColumns.STATUS + "=? and " + InstanceColumns.PATIENT_ID + "=?";
+		String selectionArgs[] = { InstanceProviderAPI.STATUS_INCOMPLETE, "-1" };
 		Cursor csave = App.getApp().getContentResolver()
 				.query(InstanceColumns.CONTENT_URI, new String[] { InstanceColumns._ID, InstanceColumns.JR_FORM_ID, InstanceColumns.DISPLAY_NAME, InstanceColumns.DISPLAY_SUBTEXT, InstanceColumns.FORM_NAME, InstanceColumns.INSTANCE_FILE_PATH }, selection, selectionArgs, null);
 		ArrayList<Form> savedForms = new ArrayList<Form>();
@@ -513,30 +282,38 @@ public class AllFormList extends ListActivity {
 
 		if (csave != null)
 			csave.close();
-
-		ca.close();
-
-		// 2. COMPLETED FORMS: gather the saved forms from Collect Instances.Db
+		savedFormsSize = savedForms.size();
+		
+		// 2. COMPLETED FORMS: gather the saved forms from Clinic Instances Table
 		ArrayList<Form> completedForms = new ArrayList<Form>();
 
 		Cursor c = ca.fetchCompletedByPatientId(-1);
 		if (c != null && c.getCount() > 0) {
 			int formIdIndex = c.getColumnIndex(ClinicAdapter.KEY_FORM_ID);
 			int instanceIdIndex = c.getColumnIndex(ClinicAdapter.KEY_ID);
-			int subtextIndex = c.getColumnIndex(ClinicAdapter.KEY_FORMINSTANCE_DISPLAY);
+			int displayNameIndex = c.getColumnIndex(ClinicAdapter.KEY_FORMINSTANCE_DISPLAY);
 			int pathIndex = c.getColumnIndex(ClinicAdapter.KEY_PATH);
 			int nameIndex = c.getColumnIndex(ClinicAdapter.KEY_FORM_NAME);
-
+			int dateIndex = c.getColumnIndex(ClinicAdapter.KEY_FORMINSTANCE_SUBTEXT);
+			Log.e("louis.fazen", "dateindex=" + dateIndex);
 			if (c.getCount() > 0) {
 				Form form;
 				do {
 					if (!c.isNull(instanceIdIndex)) {
 						form = new Form();
+						Log.e("louis.fazen", "displaysubtext from dateindex=" + c.getString(dateIndex));
+						Log.e("louis.fazen", "formIdIndex=" + c.getInt(formIdIndex));
+						Log.e("louis.fazen", "instanceId=" + c.getInt(instanceIdIndex));
+						Log.e("louis.fazen", "displayName=" + c.getString(displayNameIndex));
+						Log.e("louis.fazen", "formname=" + c.getString(nameIndex));
+						Log.e("louis.fazen", "pathname=" + c.getString(pathIndex));
+						
 						form.setFormId(c.getInt(formIdIndex));
 						form.setInstanceId(c.getInt(instanceIdIndex));
+						form.setDisplayName(c.getString(displayNameIndex));
 						form.setName(c.getString(nameIndex));
-						form.setPath(c.getString(pathIndex));
-						form.setDisplaySubtext(c.getString(subtextIndex));
+						form.setPath(c.getString(pathIndex));						
+						form.setDisplaySubtext(c.getString(dateIndex));
 						completedForms.add(form);
 					}
 				} while (c.moveToNext());
@@ -548,14 +325,20 @@ public class AllFormList extends ListActivity {
 			c.close();
 		}
 
+		ca.close();
+
 		// end of gathering data... add everything to the view:
 		adapter = new MergeAdapter();
-
 		// saved...
 		if (!savedForms.isEmpty()) {
+			if(savedForms.size() < 6){
 			savedAdapter = new FormAdapter(this, R.layout.saved_instances, savedForms, false);
 			adapter.addView(buildSectionLabel(getString(R.string.saved_form_section)));
 			adapter.addAdapter(savedAdapter);
+			} else {
+				adapter.addView(buildSectionLabel(getString(R.string.saved_form_section)));
+				adapter.addView(formSummaryView());
+			}
 		}
 
 		// completed...
@@ -570,8 +353,52 @@ public class AllFormList extends ListActivity {
 		allFormsAdapter = new FormAdapter(this, R.layout.default_form_item, mTotalForms, false);
 		adapter.addAdapter(allFormsAdapter);
 
+		setListAdapter(adapter);
 	}
 
+	private View formSummaryView() {
+
+		View formsSummary;
+		LayoutInflater vi = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+		formsSummary = vi.inflate(R.layout.priority_form_summary, null);
+		formsSummary.setClickable(true);
+
+		formsSummary.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				
+					Intent i = new Intent(getApplicationContext(), ViewSavedForms.class);
+					i.putExtra(Constants.KEY_PATIENT_ID, -1);
+					startActivity(i);
+			}
+		});
+
+		ImageView priorityArrow = (ImageView) formsSummary.findViewById(R.id.arrow_image);
+		ImageView priorityImage = (ImageView) formsSummary.findViewById(R.id.priority_image);
+		RelativeLayout priorityBlock = (RelativeLayout) formsSummary.findViewById(R.id.priority_block);
+		TextView priorityNumber = (TextView) formsSummary.findViewById(R.id.priority_number);
+		TextView allFormTitle = (TextView) formsSummary.findViewById(R.id.all_form_title);
+		TextView formNames = (TextView) formsSummary.findViewById(R.id.form_names);
+
+		if (priorityArrow != null && formNames != null && allFormTitle != null) {
+			priorityImage.setImageDrawable(res.getDrawable(R.drawable.ic_gray_block));
+			priorityBlock.setPadding(0, 0, 0, 0);
+			
+			priorityArrow.setImageResource(R.drawable.arrow_gray);
+			formNames.setVisibility(View.GONE);
+			allFormTitle.setTextColor(res.getColor(R.color.dark_gray));
+
+			allFormTitle.setText("View All Saved Forms");
+
+			if (priorityNumber != null && priorityImage != null) {
+				priorityNumber.setText(String.valueOf(savedFormsSize));
+				priorityImage.setVisibility(View.VISIBLE);
+			}
+		}
+
+		return (formsSummary);
+	}
+	
+	
 	private View buildSectionLabel(String sectionlabel) {
 		View v;
 		LayoutInflater vi = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
@@ -598,12 +425,11 @@ public class AllFormList extends ListActivity {
 	}
 
 	private void startActivityLog(String formId, String formType) {
-		String patientId = String.valueOf(mPatient.getPatientId());
-
+		
 		mActivityLog = new ActivityLog();
 		mActivityLog.setProviderId(mProviderId);
 		mActivityLog.setFormId(formId);
-		mActivityLog.setPatientId(patientId);
+		mActivityLog.setPatientId("New Patient");
 		mActivityLog.setActivityStartTime();
 		mActivityLog.setFormType(formType);
 		mActivityLog.setFormPriority("false");
@@ -625,11 +451,11 @@ public class AllFormList extends ListActivity {
 		// Collect.FormEntryActivity.finishReturnInstance() line1654
 		// Uri instance = Uri.withAppendedPath(InstanceColumns.CONTENT_URI, id);
 		// setResult(RESULT_OK, new Intent().setData(instance));
-		// BUT ListPatientActivity does not include it
+		// BUT Original ListPatientActivity does not include it
 
 		if (resultCode == RESULT_OK) {
 
-			if ((requestCode == FILL_BLANK_FORM) && intent != null) {
+			if ((requestCode == FILL_FORM) && intent != null) {
 
 				// 1. GET instance from Collect
 				Uri u = intent.getData();
@@ -650,25 +476,23 @@ public class AllFormList extends ListActivity {
 					mCursor.close();
 				}
 
-				// 2. updateSavedForm Numbers
+				// 2. updateSavedForm Numbers by Patient ID--Not necessary here, as we have no ID
 				ClinicAdapter ca = new ClinicAdapter();
 				ca.open();
-				ca.updateSavedFormNumbersByPatientId(mPatient.getPatientId().toString());
-				ca.updateSavedFormsListByPatientId(mPatient.getPatientId().toString());
 
-				// 3. Add to Clinic Db if complete
+				// 3. Add to Clinic Db if complete, even without ID
 				if (status.equalsIgnoreCase(InstanceProviderAPI.STATUS_COMPLETE)) {
 					Log.e("lef-onActivityResult", "mCursor status:" + status + "=" + InstanceProviderAPI.STATUS_COMPLETE);
 					FormInstance fi = new FormInstance();
-					fi.setPatientId(mPatient.getPatientId());
+					fi.setPatientId(-1); //TODO: should change this to look up the patient ID in Collect first, just in case...
 					fi.setFormId(Integer.parseInt(dbjrFormId));
 					fi.setPath(filePath);
 					fi.setStatus(ClinicAdapter.STATUS_UNSUBMITTED);
-
+					Date date = new Date();
+					date.setTime(System.currentTimeMillis());
+					String dateString = "Completed on" + (new SimpleDateFormat("EEE, MMM dd, yyyy 'at' HH:mm").format(date));
+					fi.setCompletionSubtext(dateString);
 					ca.createFormInstance(fi, displayName);
-					if (requestCode == FILL_PRIORITY_FORM) {
-						ca.updatePriorityFormsByPatientId(mPatient.getPatientId().toString(), dbjrFormId);
-					}
 				}
 
 				ca.close();

@@ -76,6 +76,7 @@ public class ClinicAdapter {
 	// instance columns
 	public static final String KEY_FORMINSTANCE_STATUS = "status";
 	public static final String KEY_FORMINSTANCE_DISPLAY = "display";
+	public static final String KEY_FORMINSTANCE_SUBTEXT = "date_subtext";
 
 	// status for instances
 	public static final String STATUS_UNSUBMITTED = "pending-sync";
@@ -152,7 +153,7 @@ public class ClinicAdapter {
 
 	private static final String CREATE_FORMS_TABLE = "create table " + FORMS_TABLE + " (_id integer primary key autoincrement, " + KEY_FORM_ID + " integer not null, " + KEY_NAME + " text, " + KEY_PATH + " text);";
 
-	private static final String CREATE_FORMINSTANCES_TABLE = "create table " + FORMINSTANCES_TABLE + " (_id integer primary key autoincrement, " + KEY_PATIENT_ID + " integer not null, " + KEY_FORM_ID + " integer not null, " + KEY_FORMINSTANCE_DISPLAY + " text, "
+	private static final String CREATE_FORMINSTANCES_TABLE = "create table " + FORMINSTANCES_TABLE + " (_id integer primary key autoincrement, " + KEY_PATIENT_ID + " integer not null, " + KEY_FORM_ID + " integer not null, " + KEY_FORMINSTANCE_DISPLAY + " text, " + KEY_FORMINSTANCE_SUBTEXT + " text, "
 			+ KEY_FORMINSTANCE_STATUS + " text, " + KEY_PATH + " text);";
 
 	private static final String CREATE_FORM_LOG_TABLE = "create table " + FORM_LOG_TABLE + " (_id integer primary key autoincrement, " + PATIENT_ID + " text, " + PROVIDER_ID + " text, " + FORM_NAME + " text, " + FORM_START_TIME + " integer, " + FORM_STOP_TIME + " integer, "
@@ -371,6 +372,7 @@ public class ClinicAdapter {
 		cv.put(KEY_FORMINSTANCE_STATUS, instance.getStatus());
 		cv.put(KEY_PATH, instance.getPath());
 		cv.put(KEY_FORMINSTANCE_DISPLAY, title);
+		cv.put(KEY_FORMINSTANCE_SUBTEXT, instance.getCompletionSubtext());
 
 		Log.e("ClinicAdapter", "CA is adding FormInstance cv string: " + cv.toString());
 		long id = -1;
@@ -600,7 +602,7 @@ public class ClinicAdapter {
 				// tables
 				FORMS_TABLE + ", " + FORMINSTANCES_TABLE,
 				// columns
-				new String[] { FORMINSTANCES_TABLE + "." + KEY_ID + ", " + FORMINSTANCES_TABLE + "." + KEY_FORM_ID + ", " + FORMINSTANCES_TABLE + "." + KEY_FORMINSTANCE_DISPLAY + ", " + FORMINSTANCES_TABLE + "." + KEY_PATH + ", " + FORMS_TABLE + "." + KEY_FORM_NAME },
+				new String[] { FORMINSTANCES_TABLE + "." + KEY_ID + ", " + FORMINSTANCES_TABLE + "." + KEY_FORM_ID + ", " + FORMINSTANCES_TABLE + "." + KEY_FORMINSTANCE_DISPLAY + ", " + FORMINSTANCES_TABLE + "." + KEY_PATH + ", " + FORMS_TABLE + "." + KEY_FORM_NAME + ", " + FORMINSTANCES_TABLE + "." + KEY_FORMINSTANCE_SUBTEXT },
 				// where
 				FORMINSTANCES_TABLE + "." + KEY_PATIENT_ID + "=" + patientId + " AND " + FORMS_TABLE + "." + KEY_FORM_ID + "=" + FORMINSTANCES_TABLE + "." + KEY_FORM_ID,
 				// group by, having
@@ -623,6 +625,18 @@ public class ClinicAdapter {
 		return c;
 	}
 
+	public Cursor fetchPriorityFormIdByPatientId(Integer patientId) throws SQLException {
+		Cursor c = null;
+		String selection = KEY_FIELD_NAME + "=? and " + KEY_PATIENT_ID + "=?";
+		String selectionArgs[] = {KEY_FIELD_FORM_VALUE, String.valueOf(patientId) };
+		c = mDb.query(true, OBSERVATIONS_TABLE, new String[] { KEY_VALUE_INT }, selection, selectionArgs, null, null, null, null);
+
+		if (c != null) {
+			c.moveToFirst();
+		}
+		return c;
+	}
+	
 	public Cursor fetchCompletedFormIdByPatientId(Integer patientId) throws SQLException {
 		Cursor c = null;
 		c = mDb.query(true, FORMINSTANCES_TABLE, new String[] { KEY_FORM_ID }, KEY_PATIENT_ID + "=" + patientId, null, null, null, null, null);
@@ -633,6 +647,7 @@ public class ClinicAdapter {
 		return c;
 	}
 
+	
 	public Cursor fetchFormInstance(long id) throws SQLException {
 		Cursor c = mDb.query(true, FORMINSTANCES_TABLE, new String[] { KEY_ID, KEY_FORM_ID, KEY_FORMINSTANCE_STATUS, KEY_PATH, KEY_FORMINSTANCE_DISPLAY }, KEY_ID + "= ?", new String[] { Long.toString(id) }, null, null, null, null);
 
@@ -683,17 +698,19 @@ public class ClinicAdapter {
 
 		if (c != null) {
 			if (c.moveToFirst()) {
-				do{
-				datetime = c.getInt(c.getColumnIndex(DOWNLOAD_TIME));
-			 } while (c.moveToNext());
+				do {
+					datetime = c.getInt(c.getColumnIndex(DOWNLOAD_TIME));
+				} while (c.moveToNext());
 			}
 			c.close();
 		}
+		
+		
 		Date date = new Date();
 		date.setTime(datetime);
 		String dateString = new SimpleDateFormat("EEE, MMM dd, yyyy 'at' HH:mm").format(date);
 		return dateString;
-
+		
 	}
 
 	// PRIORITY FORMS SECTION //
@@ -955,13 +972,18 @@ public class ClinicAdapter {
 		return count;
 	}
 
+	//All saved numbers come from the Collect.Instances.Db, otherwise, you would miss the saved instances where there are no identifiers.
 	public int countAllSavedFormNumbers() throws SQLException {
 		int count = 0;
 		Cursor c = null;
-		c = mDb.query(PATIENTS_TABLE, new String[] { "sum(" + KEY_SAVED_FORM_NUMBER + ") AS " + KEY_SAVED_FORM_NUMBER }, KEY_SAVED_FORM_NUMBER + " IS NOT NULL", null, null, null, null);
+		String selection = InstanceColumns.STATUS + "=?";
+		String selectionArgs[] = { InstanceProviderAPI.STATUS_INCOMPLETE };
+		c = App.getApp().getContentResolver().query(InstanceColumns.CONTENT_URI, new String[] { "count(*) as " + KEY_SAVED_FORM_NUMBER }, selection, selectionArgs, null);
+
 		if (c != null) {
 			if (c.moveToFirst()) {
 				count = c.getInt(c.getColumnIndex(KEY_SAVED_FORM_NUMBER));
+				Log.e("louis.fazen", "countAllSavedFormNumbers is not null with count of " + count);
 			}
 			c.close();
 		}
@@ -975,6 +997,7 @@ public class ClinicAdapter {
 		long count = 0;
 		count = DatabaseUtils.queryNumEntries(mDb, FORMINSTANCES_TABLE);
 		int intcount = safeLongToInt(count);
+		Log.e("louis.fazen", "countAllCompletedUnsentForms is not null with count of " + intcount);
 		return intcount;
 	}
 

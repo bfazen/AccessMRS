@@ -30,11 +30,12 @@ the License.
     <drawable name="translucent_background">#e0000000</drawable>
     <drawable name="transparent_background">#00000000</drawable>
     <drawable name="white">#ffffffff</drawable>
+
     <drawable name="yellow">#77ffff00</drawable>
 
     <color name="white_color">#ffffffff</color>
     <color name="chart_red">#d96666</color>
-
+    <color name="black">#ff000000</color>
     <color name="dark_gray">#4d4d4d</color>
     <color name="light_gray">#d3d3d3</color>
     <color name="medium_gray">#7b7d7b</color>

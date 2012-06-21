@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-   android:id="@+id/section_relative_layout"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical" >
@@ -31,7 +30,6 @@
         android:paddingTop="8dip"
         android:textColor="@color/white_color"
         android:textSize="18sp"
-        android:textStyle="bold"
-/>
+        android:textStyle="bold" />
 
 </RelativeLayout>
