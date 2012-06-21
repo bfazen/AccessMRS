@@ -177,7 +177,7 @@ public class ViewCompletedForms extends ListActivity {
 						//Submitted on vs. Saved on ... etc.
 						form.setDisplaySubtext(c.getString(displaySubtextIndex));
 						//used for splitting into date menus
-						form.setDate((int) c.getLong(dateIndex));
+						form.setDate(c.getLong(dateIndex));
 						mTotalForms.add(form);
 					}
 				} while (c.moveToNext());

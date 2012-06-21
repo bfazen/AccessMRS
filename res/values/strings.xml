@@ -105,13 +105,13 @@ the License.
     <string name="current_patient">Current Client</string>
     <string name="downloaded_forms">Available Forms</string>
     <string name="downloaded_form">Available Form</string>
-    <string name="to_do_forms">Suggested Forms To Fill</string>
-    <string name="to_do_form">Suggested Forms To Fill</string>
-    <string name="completed_forms">Saved Forms To Upload</string>
-    <string name="completed_form">Saved Form To Upload</string>
-    <string name="incomplete_forms">Incomplete Forms</string>
-    <string name="incomplete_form">Incomplete Form</string>
+    <string name="to_do_forms">Suggested</string>
+    <string name="to_do_form">Suggested</string>
+    <string name="completed_forms">Complete</string>
+    <string name="completed_form">Complete</string>
+    <string name="incomplete_forms">Incomplete</string>
+    <string name="incomplete_form">Incomplete</string>
     <string name="dashboard_title">MotherBaby Health Network</string>    
-<string name="dashboard_task_title">Tasks:</string> 
+<string name="dashboard_task_title">Forms:</string> 
 
 </resources>

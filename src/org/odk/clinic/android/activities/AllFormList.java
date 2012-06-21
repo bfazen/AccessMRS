@@ -331,7 +331,7 @@ public class AllFormList extends ListActivity {
 		adapter = new MergeAdapter();
 		// saved...
 		if (!savedForms.isEmpty()) {
-			if(savedForms.size() < 6){
+			if(savedForms.size() < 4){
 			savedAdapter = new FormAdapter(this, R.layout.saved_instances, savedForms, false);
 			adapter.addView(buildSectionLabel(getString(R.string.saved_form_section)));
 			adapter.addAdapter(savedAdapter);
@@ -490,7 +490,7 @@ public class AllFormList extends ListActivity {
 					fi.setStatus(ClinicAdapter.STATUS_UNSUBMITTED);
 					Date date = new Date();
 					date.setTime(System.currentTimeMillis());
-					String dateString = "Completed on" + (new SimpleDateFormat("EEE, MMM dd, yyyy 'at' HH:mm").format(date));
+					String dateString = "Completed: " + (new SimpleDateFormat("EEE, MMM dd, yyyy 'at' HH:mm").format(date));
 					fi.setCompletionSubtext(dateString);
 					ca.createFormInstance(fi, displayName);
 				}

@@ -210,7 +210,8 @@ public class ViewSavedForms extends ListActivity {
 						form.setPath(csave.getString(pathIndex));
 						form.setDisplaySubtext(csave.getString(subtextIndex));
 						form.setDisplayName(csave.getString(displayNameIndex));
-						form.setDate((int) csave.getLong(dateIndex));
+						form.setDate(csave.getLong(dateIndex));
+						
 						savedForms.add(form);
 					}
 				} while (csave.moveToNext());
@@ -219,7 +220,9 @@ public class ViewSavedForms extends ListActivity {
 		
 		if (csave != null)
 			csave.close();
-
+		
+		ca.close();
+		
 		mAdapter = new MergeAdapter();	
 		Collections.shuffle(savedForms);
 		buildDateSections(savedForms);
@@ -392,7 +395,7 @@ public class ViewSavedForms extends ListActivity {
 					fi.setStatus(ClinicAdapter.STATUS_UNSUBMITTED);
 					Date date = new Date();
 					date.setTime(System.currentTimeMillis());
-					String dateString = "Completed on" + (new SimpleDateFormat("EEE, MMM dd, yyyy 'at' HH:mm").format(date));
+					String dateString = "Completed: " + (new SimpleDateFormat("EEE, MMM dd, yyyy 'at' HH:mm").format(date));
 					fi.setCompletionSubtext(dateString);
 					ca.createFormInstance(fi, displayName);
 				

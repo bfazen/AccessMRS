@@ -11,7 +11,7 @@
         android:layout_height="wrap_content"
         android:background="@color/medium_gray"
         android:paddingBottom="8dip"
-        android:paddingLeft="8dip"
+        android:paddingLeft="4dip"
         android:paddingTop="8dip" >
 
         <TextView
@@ -52,15 +52,18 @@
         android:layout_height="wrap_content"
         android:background="@color/light_gray"
         android:paddingBottom="8dip"
-        android:paddingLeft="20dip"
+        android:paddingLeft="12dip"
         android:paddingTop="8dip" >
 
         <TextView
             android:id="@+id/task_title"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/dashboard_task_title"
             android:textSize="18sp"
+            android:paddingRight="16dip"
+            android:paddingLeft="5dip"
+            android:textColor="@color/dark_gray"
             android:textStyle="bold" />
 
         <!-- ToDo Forms -->
@@ -69,8 +72,8 @@
             android:id="@+id/todo_block"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/task_title"
-            android:layout_margin="4dip" >
+            android:layout_toRightOf="@+id/task_title"
+            android:layout_margin="3dip" >
 
             <TextView
                 android:id="@+id/todo_number"
@@ -88,7 +91,7 @@
             android:layout_height="wrap_content"
             android:layout_alignTop="@+id/todo_block"
             android:layout_toRightOf="@+id/todo_block"
-            android:paddingLeft="20dip"
+            android:paddingLeft="10dip"
             android:textSize="18sp" />
 
         <!-- Saved Forms -->
@@ -98,7 +101,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@+id/completed_block"
-            android:layout_margin="4dip" >
+            android:layout_toRightOf="@+id/task_title"
+            android:layout_margin="3dip" >
 
             <TextView
                 android:id="@+id/saved_number"
@@ -116,17 +120,18 @@
             android:layout_height="wrap_content"
             android:layout_alignTop="@+id/saved_block"
             android:layout_toRightOf="@+id/saved_block"
-            android:paddingLeft="20dip"
-            android:textSize="17sp" />
+            android:paddingLeft="10dip"
+            android:textSize="18sp" />
 
-        <!-- Incomplete Forms -->
+        <!-- Complete Forms -->
 
         <RelativeLayout
             android:id="@+id/completed_block"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@+id/todo_block"
-            android:layout_margin="4dip" >
+            android:layout_toRightOf="@+id/task_title"
+            android:layout_margin="3dip" >
 
             <TextView
                 android:id="@+id/completed_number"
@@ -144,8 +149,8 @@
             android:layout_height="wrap_content"
             android:layout_alignTop="@+id/completed_block"
             android:layout_toRightOf="@+id/completed_block"
-            android:paddingLeft="20dip"
-            android:textSize="17sp" />
+            android:paddingLeft="10dip"
+            android:textSize="18sp" />
     </RelativeLayout>
 
     <View

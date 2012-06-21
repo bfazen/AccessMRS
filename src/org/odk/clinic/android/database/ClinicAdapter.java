@@ -694,7 +694,7 @@ public class ClinicAdapter {
 	public String fetchMostRecentDownload() {
 		Cursor c = null;
 		int datetime = 0;
-		c = mDb.query(DOWNLOAD_LOG_TABLE, new String[] { "MAX(" + KEY_ID + ")" }, null, null, null, null, null);
+		c = mDb.query(DOWNLOAD_LOG_TABLE, new String[] { "MAX(" + DOWNLOAD_TIME + ") AS " + DOWNLOAD_TIME }, null, null, null, null, null);
 
 		if (c != null) {
 			if (c.moveToFirst()) {

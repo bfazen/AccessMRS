@@ -8,7 +8,7 @@ public class Form {
     private Integer formId = null;
     private String path = null;
     private String name = null;
-    private Integer date = null;
+    private Long date = null;
     private String displayName = null;
     private String displaySubtext = null;
 	
@@ -34,12 +34,12 @@ public class Form {
         this.formId = formid;
     }
     
-    public int getDate() {
+    public long getDate() {
         return date;
     }
     
-    public void setDate(Integer i) {
-        this.date = i;
+    public void setDate(long l) {
+        this.date = l;
     }
     
     

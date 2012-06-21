@@ -168,15 +168,15 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 		completedForms = mCla.countAllCompletedUnsentForms();
 		priorityToDoForms = mCla.countAllPriorityFormNumbers();
 		forms = mCla.countAllForms();
-//		String refreshtime = mCla.fetchMostRecentDownload();
+		String refreshtime = mCla.fetchMostRecentDownload();
 		mCla.close();
 		
 
 		//Download Section
-		TextView refreshTitle = (TextView) findViewById(R.id.refresh_subtext_title);
+//		TextView refreshTitle = (TextView) findViewById(R.id.refresh_subtext_title);
+//		 refreshTitle.setText("Update:");
 		TextView refreshSubtext = (TextView) findViewById(R.id.refresh_subtext);
-		 refreshTitle.setText("Update:");
-		 refreshSubtext.setText("Jun 16 2012 at 09:38");
+		 refreshSubtext.setText(refreshtime);
 		 
 		// Patient Section
 		RelativeLayout patientRL = (RelativeLayout) findViewById(R.id.patients_number_block);
@@ -246,28 +246,6 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 			todoText.setVisibility(View.GONE);
 		}
 
-		// Completed Form Section
-		RelativeLayout completedRL = (RelativeLayout) findViewById(R.id.completed_block);
-		TextView completedNumber = (TextView) findViewById(R.id.completed_number);
-		TextView completedText = (TextView) findViewById(R.id.completed_forms);
-
-		if (completedForms > 0) {
-			Log.e("louis.fazen", "completedForms is not null with count " + completedForms);
-			completedRL.setBackgroundResource(R.drawable.completed);
-			completedNumber.setText(String.valueOf(completedForms));
-			if (completedForms > 1) {
-				completedText.setText(R.string.completed_forms);
-			} else {
-				completedText.setText(R.string.completed_form);
-			}
-
-		} else {
-			Log.e("louis.fazen", "completedForms is now invisible");
-			completedRL.setVisibility(View.GONE);
-			completedNumber.setVisibility(View.GONE);
-			completedText.setVisibility(View.GONE);
-		}
-
 		// Incomplete/Saved Form Section
 		RelativeLayout incompletedRL = (RelativeLayout) findViewById(R.id.saved_block);
 		TextView incompletedNumber = (TextView) findViewById(R.id.saved_number);
@@ -288,6 +266,28 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 			incompletedNumber.setVisibility(View.GONE);
 			incompletedText.setVisibility(View.GONE);
 		}
+		
+		// Completed Form Section
+				RelativeLayout completedRL = (RelativeLayout) findViewById(R.id.completed_block);
+				TextView completedNumber = (TextView) findViewById(R.id.completed_number);
+				TextView completedText = (TextView) findViewById(R.id.completed_forms);
+
+				if (completedForms > 0) {
+					Log.e("louis.fazen", "completedForms is not null with count " + completedForms);
+					completedRL.setBackgroundResource(R.drawable.completed);
+					completedNumber.setText(String.valueOf(completedForms));
+					if (completedForms > 1) {
+						completedText.setText(R.string.completed_forms);
+					} else {
+						completedText.setText(R.string.completed_form);
+					}
+
+				} else {
+					Log.e("louis.fazen", "completedForms is now invisible");
+					completedRL.setVisibility(View.GONE);
+					completedNumber.setVisibility(View.GONE);
+					completedText.setVisibility(View.GONE);
+				}
 
 	}
 
