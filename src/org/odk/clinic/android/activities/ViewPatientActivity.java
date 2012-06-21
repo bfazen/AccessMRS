@@ -475,7 +475,7 @@ public class ViewPatientActivity extends ListActivity {
 			formNames.setVisibility(View.GONE);
 			allFormTitle.setTextColor(res.getColor(R.color.dark_gray));
 
-			allFormTitle.setText("View All Forms");
+			allFormTitle.setText("View All Visits");
 
 			if (priorityNumber != null && priorityImage != null) {
 				priorityNumber.setText(mPatient.getTotalCompletedForms().toString());

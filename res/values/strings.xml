@@ -111,7 +111,7 @@ the License.
     <string name="completed_form">Complete</string>
     <string name="incomplete_forms">Incomplete</string>
     <string name="incomplete_form">Incomplete</string>
-    <string name="dashboard_title">MotherBaby Health Network</string>    
-<string name="dashboard_task_title">Forms:</string> 
+    <string name="dashboard_title">MotherBaby Health Network</string>
+    <string name="dashboard_task_title">Forms:</string>
 
 </resources>

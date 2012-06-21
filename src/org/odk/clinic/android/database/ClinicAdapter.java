@@ -627,9 +627,8 @@ public class ClinicAdapter {
 
 	public Cursor fetchPriorityFormIdByPatientId(Integer patientId) throws SQLException {
 		Cursor c = null;
-		String selection = KEY_FIELD_NAME + "=? and " + KEY_PATIENT_ID + "=?";
-		String selectionArgs[] = {KEY_FIELD_FORM_VALUE, String.valueOf(patientId) };
-		c = mDb.query(true, OBSERVATIONS_TABLE, new String[] { KEY_VALUE_INT }, selection, selectionArgs, null, null, null, null);
+		String selection = KEY_FIELD_NAME + "=" + KEY_FIELD_FORM_VALUE + " and " + KEY_PATIENT_ID + "=" + patientId;
+		c = mDb.query(true, OBSERVATIONS_TABLE, new String[] { KEY_VALUE_INT }, selection, null, null, null, null, null);
 
 		if (c != null) {
 			c.moveToFirst();
@@ -693,13 +692,13 @@ public class ClinicAdapter {
 
 	public String fetchMostRecentDownload() {
 		Cursor c = null;
-		int datetime = 0;
+		long datetime = 0;
 		c = mDb.query(DOWNLOAD_LOG_TABLE, new String[] { "MAX(" + DOWNLOAD_TIME + ") AS " + DOWNLOAD_TIME }, null, null, null, null, null);
 
 		if (c != null) {
 			if (c.moveToFirst()) {
 				do {
-					datetime = c.getInt(c.getColumnIndex(DOWNLOAD_TIME));
+					datetime = c.getLong(c.getColumnIndex(DOWNLOAD_TIME));
 				} while (c.moveToNext());
 			}
 			c.close();

@@ -111,6 +111,7 @@ public class FormPriorityList extends ListActivity {
 		Integer patientId = Integer.valueOf(patientIdStr);
 		mPatient = getPatient(patientId);
 
+		Log.e("louis.fazen", "FormPriorityList.onCreate =" + patientId);
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
 		mProviderId = settings.getString(PreferencesActivity.KEY_PROVIDER, "0");
 
@@ -166,7 +167,7 @@ public class FormPriorityList extends ListActivity {
 			launchSavedFormEntry(f.getInstanceId(), priority);
 			type = "Saved";
 		} else if (selectedAdapter == completedAdapter) {
-			launchFormViewOnly(f.getPath());
+			launchFormViewOnly(f.getPath(), f.getFormId().toString());
 			type = "Completed-Unsent";
 		} else {
 			launchFormEntry(f.getFormId().toString(), f.getName(), priority);
@@ -482,6 +483,7 @@ public class FormPriorityList extends ListActivity {
 
 	}
 
+	
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
 		Log.e("lef-onActivityResult", "onActivityResult called with request=" + requestCode + " result=" + resultCode + " intent=" + intent);
@@ -592,7 +594,7 @@ public class FormPriorityList extends ListActivity {
 
 	// TODO: change this to pass a Parceable object from ViewPatientActivity
 	private Patient getPatient(Integer patientId) {
-
+		
 		Patient p = null;
 		ClinicAdapter ca = new ClinicAdapter();
 
@@ -624,17 +626,19 @@ public class FormPriorityList extends ListActivity {
 			// TODO: louis.fazen probably delete the following... not needed
 			p.setPriorityNumber(c.getInt(priorityIndex));
 			p.setPriorityForms(c.getString(priorityFormIndex));
-
+			
 			if (c.getInt(priorityIndex) > 0) {
 				p.setPriority(true);
 			}
+			
+			Log.e("louis.fazen", "FormPriorityList.getPatient =" + c.getInt(patientIdIndex));
 		}
 
 		if (c != null) {
 			c.close();
 		}
 		ca.close();
-
+		
 		return p;
 	}
 
@@ -642,23 +646,27 @@ public class FormPriorityList extends ListActivity {
 	protected void onResume() {
 		super.onResume();
 		if (mPatient != null) {
+			Log.e("louis.fazen", "FormPriorityList.onResume mPatient is Not null and Id=" + mPatient.getPatientId());
 			getPriorityForms();
+			refreshView();
 		}
 	}
 
 	private void getPriorityForms() {
 		int patientId = mPatient.getPatientId();
 		mSelectedFormIds = new ArrayList<Integer>();
-
+		Log.e("louis.fazen", "FormPriorityList.getPriorityForms is called");
 		ClinicAdapter ca = new ClinicAdapter();
 
 		ca.open();
 		Cursor c = ca.fetchPriorityFormIdByPatientId(patientId);
-
+		Log.e("louis.fazen", "FormPriorityList.getPriorityForms is c NUll?");
 		if (c != null && c.getCount() > 0) {
+			Log.e("louis.fazen", "FormPriorityList.getPriorityForms is c IS NOT NULL?");
 			int valueIntIndex = c.getColumnIndex(ClinicAdapter.KEY_VALUE_INT);
 			do {
 				mSelectedFormIds.add(c.getInt(valueIntIndex));
+				Log.e("louis.fazen", "getProrityForms Add Loop mSelectedFormIds.size(): " + mSelectedFormIds.size());
 			} while (c.moveToNext());
 		}
 
@@ -666,7 +674,7 @@ public class FormPriorityList extends ListActivity {
 			c.close();
 		}
 		ca.close();
-		refreshView();
+		
 	}
 
 	private void refreshView() {
@@ -678,7 +686,7 @@ public class FormPriorityList extends ListActivity {
 		if (mSelectedFormIds != null && mSelectedFormIds.size() > 0) {
 			selectedIds = true;
 		}
-
+		
 		// Venn diagram where we have completed and selected subsets of Forms
 		// CompletedSelectedFormIds is their intersection and always smaller
 		// than both
@@ -710,7 +718,7 @@ public class FormPriorityList extends ListActivity {
 						if (selectedIds && mSelectedFormIds.contains(form.getFormId())) {
 							completedSelectedFormIds.add(c.getInt(formIdIndex));
 						}
-
+						Log.e("louis.fazen", "refreshView.setPathIndex: " + c.getString(pathIndex));
 					}
 				} while (c.moveToNext());
 			}
@@ -896,7 +904,7 @@ public class FormPriorityList extends ListActivity {
 			public void onClick(View v) {
 
 				Intent i = new Intent(getApplicationContext(), ViewSavedForms.class);
-				i.putExtra(Constants.KEY_PATIENT_ID, mPatient.getPatientId());
+				i.putExtra(Constants.KEY_PATIENT_ID, mPatient.getPatientId().toString());
 				startActivity(i);
 			}
 		});
@@ -927,23 +935,22 @@ public class FormPriorityList extends ListActivity {
 		return (formsSummary);
 	}
 
-	// NB... this != ViewCompletedForms.launchFormViewOnly()
-	private void launchFormViewOnly(String uriString) {
+	// NB... this method = method in AllFormList, but != ViewCompletedForms.launchFormViewOnly() 
+	//	b/c it picks up data from a different DB when creating Form Object
+	// View CompletedForms queries the Collect.Instances Db whereas this picks up instances from the Clinic.Instances Db
+	private void launchFormViewOnly(String uriString, String formId) {
 		Intent intent = new Intent();
 		intent.setComponent(new ComponentName("org.odk.collect.android", "org.odk.collect.android.activities.FormEntryActivity"));
 
-		// TODO: The proper way to do this would be via using ACTION_VIEW
-		// as it allows for external apps to connect to Collect as ViewOnly
-		// Functionality, not just my version of Collect
+		// TODO: Could be improved... using ACTION_VIEW, etc.
 		intent.setAction(Intent.ACTION_VIEW);
 		intent.putExtra(EDIT_FORM, false);
-		intent.setData(Uri.parse(uriString));
-		showCustomToast(getString(R.string.view_only_form)); // difficult to see
-																// TODO: this
-																// should come
-																// from collect!
+		intent.putExtra("path_name", uriString);
+		intent.putExtra("form_id", formId);
 		startActivityForResult(intent, VIEW_FORM_ONLY);
 	}
+	
+	
 
 	private void launchSavedFormEntry(int instanceId, int priority) {
 		Intent intent = new Intent();

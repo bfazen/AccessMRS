@@ -1,24 +1,8 @@
 package org.odk.clinic.android.activities;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.text.DateFormat;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import org.kxml2.io.KXmlParser;
-import org.kxml2.io.KXmlSerializer;
-import org.kxml2.kdom.Document;
-import org.kxml2.kdom.Element;
 
 import org.odk.clinic.android.R;
 import org.odk.clinic.android.adapters.FormAdapter;
@@ -28,29 +12,22 @@ import org.odk.clinic.android.openmrs.ActivityLog;
 import org.odk.clinic.android.openmrs.Constants;
 import org.odk.clinic.android.openmrs.Form;
 import org.odk.clinic.android.openmrs.FormInstance;
-import org.odk.clinic.android.openmrs.Observation;
-import org.odk.clinic.android.openmrs.Patient;
 import org.odk.clinic.android.tasks.ActivityLogTask;
 import org.odk.clinic.android.utilities.App;
 import org.odk.clinic.android.utilities.FileUtils;
-import org.odk.collect.android.provider.InstanceProviderAPI;
 import org.odk.collect.android.provider.FormsProviderAPI.FormsColumns;
+import org.odk.collect.android.provider.InstanceProviderAPI;
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
-import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.ContentUris;
-import android.content.ContentValues;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteConstraintException;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -58,7 +35,6 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListAdapter;
 import android.widget.ListView;
@@ -127,7 +103,7 @@ public class AllFormList extends ListActivity {
 			launchSavedFormEntry(f.getInstanceId());
 			type = "Saved";
 		} else if (selectedAdapter == completedAdapter) {
-			launchFormViewOnly(f.getPath());
+			launchFormViewOnly(f.getPath(), f.getFormId().toString());
 			type = "Completed-Unsent";
 		} else {
 			launchBlankFormEntry(f.getFormId().toString());
@@ -208,20 +184,15 @@ public class AllFormList extends ListActivity {
 	}
 	
 	// NB... this != ViewCompletedForms.launchFormViewOnly()
-	private void launchFormViewOnly(String uriString) {
+	private void launchFormViewOnly(String uriString, String formId) {
 		Intent intent = new Intent();
 		intent.setComponent(new ComponentName("org.odk.collect.android", "org.odk.collect.android.activities.FormEntryActivity"));
 
-		// TODO: The proper way to do this would be via using ACTION_VIEW
-		// as it allows for external apps to connect to Collect as ViewOnly
-		// Functionality, not just my version of Collect
+		// TODO: Could be improved... using ACTION_VIEW, etc.
 		intent.setAction(Intent.ACTION_VIEW);
 		intent.putExtra(EDIT_FORM, false);
-		intent.setData(Uri.parse(uriString));
-		showCustomToast(getString(R.string.view_only_form)); // difficult to see
-																// TODO: this
-																// should come
-																// from collect!
+		intent.putExtra("path_name", uriString);
+		intent.putExtra("form_id", formId);
 		startActivityForResult(intent, VIEW_FORM_ONLY);
 	}
 
@@ -301,12 +272,6 @@ public class AllFormList extends ListActivity {
 				do {
 					if (!c.isNull(instanceIdIndex)) {
 						form = new Form();
-						Log.e("louis.fazen", "displaysubtext from dateindex=" + c.getString(dateIndex));
-						Log.e("louis.fazen", "formIdIndex=" + c.getInt(formIdIndex));
-						Log.e("louis.fazen", "instanceId=" + c.getInt(instanceIdIndex));
-						Log.e("louis.fazen", "displayName=" + c.getString(displayNameIndex));
-						Log.e("louis.fazen", "formname=" + c.getString(nameIndex));
-						Log.e("louis.fazen", "pathname=" + c.getString(pathIndex));
 						
 						form.setFormId(c.getInt(formIdIndex));
 						form.setInstanceId(c.getInt(instanceIdIndex));
@@ -367,7 +332,7 @@ public class AllFormList extends ListActivity {
 			public void onClick(View v) {
 				
 					Intent i = new Intent(getApplicationContext(), ViewSavedForms.class);
-					i.putExtra(Constants.KEY_PATIENT_ID, -1);
+					i.putExtra(Constants.KEY_PATIENT_ID, "-1");
 					startActivity(i);
 			}
 		});
@@ -482,7 +447,6 @@ public class AllFormList extends ListActivity {
 
 				// 3. Add to Clinic Db if complete, even without ID
 				if (status.equalsIgnoreCase(InstanceProviderAPI.STATUS_COMPLETE)) {
-					Log.e("lef-onActivityResult", "mCursor status:" + status + "=" + InstanceProviderAPI.STATUS_COMPLETE);
 					FormInstance fi = new FormInstance();
 					fi.setPatientId(-1); //TODO: should change this to look up the patient ID in Collect first, just in case...
 					fi.setFormId(Integer.parseInt(dbjrFormId));

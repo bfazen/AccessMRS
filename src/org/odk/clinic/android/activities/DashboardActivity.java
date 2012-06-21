@@ -146,16 +146,14 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 		// Intent ip = new Intent(getApplicationContext(),
 		// PreferencesActivity.class);
 		// startActivity(ip);
-		//
 		// } else {
 
-		updateNumbers();
 		refreshView();
 
-		// }
+
 	}
 
-	private void updateNumbers() {
+	private void refreshView() {
 		if (mCla != null) {
 			mCla.open();
 		} else {
@@ -170,8 +168,7 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 		forms = mCla.countAllForms();
 		String refreshtime = mCla.fetchMostRecentDownload();
 		mCla.close();
-		
-
+	
 		//Download Section
 //		TextView refreshTitle = (TextView) findViewById(R.id.refresh_subtext_title);
 //		 refreshTitle.setText("Update:");
@@ -184,6 +181,9 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 		TextView patientSubtext = (TextView) findViewById(R.id.patients_subtext);
 
 		if (patients > 0) {
+			patientRL.setVisibility(View.VISIBLE);
+			patientNumber.setVisibility(View.VISIBLE);
+			patientSubtext.setVisibility(View.VISIBLE);
 			patientRL.setBackgroundResource(R.drawable.gray);
 			patientNumber.setText(String.valueOf(patients));
 			if (patients > 1) {
@@ -204,7 +204,9 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 		TextView formSubtext = (TextView) findViewById(R.id.form_subtext);
 
 		if (forms > 0) {
-
+			formRL.setVisibility(View.VISIBLE);
+			formNumber.setVisibility(View.VISIBLE);
+			formSubtext.setVisibility(View.VISIBLE);
 			formRL.setBackgroundResource(R.drawable.gray);
 			formNumber.setText(String.valueOf(forms));
 			if (forms > 1) {
@@ -231,8 +233,11 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 			int right = todoRL.getPaddingRight();
 			int left = todoRL.getPaddingLeft();
 			Log.e("louis.fazen", "padding is:" + top + bottom + left + right);
+			
+			todoRL.setVisibility(View.VISIBLE);
+			todoNumber.setVisibility(View.VISIBLE);
+			todoText.setVisibility(View.VISIBLE);
 			todoRL.setBackgroundResource(R.drawable.priority);
-
 			todoNumber.setText(String.valueOf(priorityToDoForms));
 			if (priorityToDoForms > 1) {
 				todoText.setText(R.string.to_do_forms);
@@ -255,6 +260,9 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 			Log.e("louis.fazen", "incompleteForms is not null with count " + incompleteForms);
 			incompletedRL.setBackgroundResource(R.drawable.incomplete);
 			incompletedNumber.setText(String.valueOf(incompleteForms));
+			incompletedRL.setVisibility(View.VISIBLE);
+			incompletedNumber.setVisibility(View.VISIBLE);
+			incompletedText.setVisibility(View.VISIBLE);
 			if (incompleteForms > 1) {
 				incompletedText.setText(R.string.incomplete_forms);
 			} else {
@@ -274,6 +282,9 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 
 				if (completedForms > 0) {
 					Log.e("louis.fazen", "completedForms is not null with count " + completedForms);
+					completedRL.setVisibility(View.VISIBLE);
+					completedNumber.setVisibility(View.VISIBLE);
+					completedText.setVisibility(View.VISIBLE);
 					completedRL.setBackgroundResource(R.drawable.completed);
 					completedNumber.setText(String.valueOf(completedForms));
 					if (completedForms > 1) {
@@ -288,10 +299,6 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 					completedNumber.setVisibility(View.GONE);
 					completedText.setVisibility(View.GONE);
 				}
-
-	}
-
-	private void refreshView() {
 
 	}
 

@@ -71,7 +71,9 @@ public class ViewSavedForms extends ListActivity {
 		setTitle(getString(R.string.app_name) + " > " + "Previous Encounters");
 		mContext = this;
 		res = this.getResources();
-		mPatientId = getIntent().getIntExtra(Constants.KEY_PATIENT_ID, 0);
+		String patientIdString = getIntent().getStringExtra(Constants.KEY_PATIENT_ID);
+		mPatientId = Integer.valueOf(patientIdString);
+		
 		
 		if (mPatientId > 0) {
 			setContentView(R.layout.example_cw_main);
@@ -331,7 +333,7 @@ public class ViewSavedForms extends ListActivity {
 		intent.setAction(Intent.ACTION_EDIT);
 		intent.setData(Uri.parse(InstanceColumns.CONTENT_URI + "/" + instanceId));
 		startActivityForResult(intent, priority);
-		finish();
+		
 	}
 
 	@Override
@@ -408,9 +410,10 @@ public class ViewSavedForms extends ListActivity {
 				ca.close();
 
 			}
-			return;
+			
 		}
 		super.onActivityResult(requestCode, resultCode, intent);
+		finish();
 	}
 
 	private void startActivityLog(String formId, String formType) {

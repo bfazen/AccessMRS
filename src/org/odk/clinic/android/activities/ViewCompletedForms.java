@@ -173,6 +173,7 @@ public class ViewCompletedForms extends ListActivity {
 						form.setName(c.getString(formNameIndex));
 						// Final Form EditText (defaults to person or form name)
 						form.setDisplayName(c.getString(displayNameIndex));
+						
 						form.setPath(c.getString(formPathIndex));
 						//Submitted on vs. Saved on ... etc.
 						form.setDisplaySubtext(c.getString(displaySubtextIndex));
@@ -301,11 +302,8 @@ public class ViewCompletedForms extends ListActivity {
 		intent.setAction(Intent.ACTION_VIEW);
 		intent.putExtra(EDIT_FORM, false);
 		intent.setData(Uri.parse(InstanceColumns.CONTENT_URI + "/" + instanceId));
-		showCustomToast(getString(R.string.view_only_form));
 		startActivityForResult(intent, VIEW_FORM_ONLY);
 
-
-		// finish();
 	}
 
 	// Original Version:
