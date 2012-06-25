@@ -40,21 +40,21 @@
         android:title="@string/password" />
     <EditTextPreference
         android:id="@+id/provider"
-        android:defaultValue="0"
+        android:defaultValue="1"
         android:dialogTitle="@string/change_provider"
         android:inputType="phone"
         android:key="provider"
         android:title="@string/provider" />
     <EditTextPreference
         android:id="@+id/program"
-        android:defaultValue="0"
+        android:defaultValue="1"
         android:dialogTitle="@string/change_program"
         android:inputType="phone"
         android:key="program"
         android:title="@string/program" />
     <EditTextPreference
         android:id="@+id/saved_search"
-        android:defaultValue="0"
+        android:defaultValue="2"
         android:dialogTitle="@string/change_saved_search"
         android:inputType="phone"
         android:key="saved_search"

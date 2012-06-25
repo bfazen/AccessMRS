@@ -150,7 +150,6 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 
 		refreshView();
 
-
 	}
 
 	private void refreshView() {
@@ -168,13 +167,14 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 		forms = mCla.countAllForms();
 		String refreshtime = mCla.fetchMostRecentDownload();
 		mCla.close();
-	
-		//Download Section
-//		TextView refreshTitle = (TextView) findViewById(R.id.refresh_subtext_title);
-//		 refreshTitle.setText("Update:");
+
+		// Download Section
+		// TextView refreshTitle = (TextView)
+		// findViewById(R.id.refresh_subtext_title);
+		// refreshTitle.setText("Update:");
 		TextView refreshSubtext = (TextView) findViewById(R.id.refresh_subtext);
-		 refreshSubtext.setText(refreshtime);
-		 
+		refreshSubtext.setText(refreshtime);
+
 		// Patient Section
 		RelativeLayout patientRL = (RelativeLayout) findViewById(R.id.patients_number_block);
 		TextView patientNumber = (TextView) findViewById(R.id.patients_number);
@@ -233,7 +233,7 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 			int right = todoRL.getPaddingRight();
 			int left = todoRL.getPaddingLeft();
 			Log.e("louis.fazen", "padding is:" + top + bottom + left + right);
-			
+
 			todoRL.setVisibility(View.VISIBLE);
 			todoNumber.setVisibility(View.VISIBLE);
 			todoText.setVisibility(View.VISIBLE);
@@ -274,31 +274,31 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 			incompletedNumber.setVisibility(View.GONE);
 			incompletedText.setVisibility(View.GONE);
 		}
-		
+
 		// Completed Form Section
-				RelativeLayout completedRL = (RelativeLayout) findViewById(R.id.completed_block);
-				TextView completedNumber = (TextView) findViewById(R.id.completed_number);
-				TextView completedText = (TextView) findViewById(R.id.completed_forms);
+		RelativeLayout completedRL = (RelativeLayout) findViewById(R.id.completed_block);
+		TextView completedNumber = (TextView) findViewById(R.id.completed_number);
+		TextView completedText = (TextView) findViewById(R.id.completed_forms);
 
-				if (completedForms > 0) {
-					Log.e("louis.fazen", "completedForms is not null with count " + completedForms);
-					completedRL.setVisibility(View.VISIBLE);
-					completedNumber.setVisibility(View.VISIBLE);
-					completedText.setVisibility(View.VISIBLE);
-					completedRL.setBackgroundResource(R.drawable.completed);
-					completedNumber.setText(String.valueOf(completedForms));
-					if (completedForms > 1) {
-						completedText.setText(R.string.completed_forms);
-					} else {
-						completedText.setText(R.string.completed_form);
-					}
+		if (completedForms > 0) {
+			Log.e("louis.fazen", "completedForms is not null with count " + completedForms);
+			completedRL.setVisibility(View.VISIBLE);
+			completedNumber.setVisibility(View.VISIBLE);
+			completedText.setVisibility(View.VISIBLE);
+			completedRL.setBackgroundResource(R.drawable.completed);
+			completedNumber.setText(String.valueOf(completedForms));
+			if (completedForms > 1) {
+				completedText.setText(R.string.completed_forms);
+			} else {
+				completedText.setText(R.string.completed_form);
+			}
 
-				} else {
-					Log.e("louis.fazen", "completedForms is now invisible");
-					completedRL.setVisibility(View.GONE);
-					completedNumber.setVisibility(View.GONE);
-					completedText.setVisibility(View.GONE);
-				}
+		} else {
+			Log.e("louis.fazen", "completedForms is now invisible");
+			completedRL.setVisibility(View.GONE);
+			completedNumber.setVisibility(View.GONE);
+			completedText.setVisibility(View.GONE);
+		}
 
 	}
 
@@ -327,18 +327,18 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 		if (c != null && c.getCount() > 0) {
 			String s = c.getString(c.getColumnIndex(ClinicAdapter.KEY_PATH));
 			selectedInstances.add(s);
-
-			// bundle intent with upload files
-			Intent i = new Intent(this, InstanceUploaderActivity.class);
-			// i.putExtra(FormEntryActivity.KEY_INSTANCES, selectedInstances);
-			i.putExtra(ClinicAdapter.KEY_INSTANCES, selectedInstances);
-			startActivity(i);
 		}
 
 		if (c != null)
 			c.close();
 
 		mCla.close();
+
+		if (!selectedInstances.isEmpty()) {
+			Intent i = new Intent(this, InstanceUploaderActivity.class);
+			i.putExtra(ClinicAdapter.KEY_INSTANCES, selectedInstances);
+			startActivity(i);
+		}
 
 	}
 

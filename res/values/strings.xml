@@ -33,7 +33,7 @@ the License.
         Customization by louis.fazen@gmail.com
    		Setting to AMPATH Server Preferences
     -->
-    <string name="default_server">http://192.168.43.232:8080/openmrs</string>
+    <string name="default_server">http://192.168.43.155:8080/openmrs</string>
     <string name="default_username">admin</string>
     <string name="download">Download</string>
     <string name="download_forms">Update Data</string>
