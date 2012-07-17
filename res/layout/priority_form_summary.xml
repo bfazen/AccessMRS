@@ -1,41 +1,99 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="wrap_content"
+    android:layout_width="fill_parent"
     android:layout_height="wrap_content"
+    android:background="@color/white_color"
+    android:clickable="true"
     android:orientation="vertical"
-    android:paddingBottom="8dip"
+    android:paddingBottom="10dip"
     android:paddingLeft="8dip"
     android:paddingRight="8dip"
     android:paddingTop="8dip" >
 
-    <RelativeLayout
-        android:id="@+id/priority_block"
+    <TextView
+        android:id="@+id/all_form_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerVertical="true"
-        android:paddingBottom="10dip" >
+        android:layout_alignTop="@+id/arrow_image"
+        android:paddingBottom="4dip"
+        android:paddingLeft="8dip"
+        android:text="View All Forms"
+        android:textColor="@color/dark_gray"
+        android:textSize="18sp"
+        android:textStyle="bold" />
 
-        <ImageView
-            android:id="@+id/priority_image"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+    <RelativeLayout
+        android:id="@+id/suggested_number_block"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/all_form_title"
+        android:layout_marginLeft="6dip"
+        android:layout_marginTop="3dip" >
 
         <TextView
-            android:id="@+id/priority_number"
+            android:id="@+id/suggested_number"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignBottom="@+id/priority_image"
-            android:layout_alignLeft="@+id/priority_image"
-            android:layout_alignRight="@+id/priority_image"
-            android:layout_alignTop="@+id/priority_image"
-            android:layout_margin="1dp"
-            android:gravity="center"
+            android:layout_centerInParent="true"
             android:textColor="@color/white_color"
             android:textSize="15sp"
             android:textStyle="bold" />
     </RelativeLayout>
 
-    <!--
+    <TextView
+        android:id="@+id/suggested_subtext"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/suggested_number_block"
+        android:layout_toRightOf="@+id/suggested_number_block"
+        android:paddingLeft="7dip"
+        android:textColor="@color/medium_gray"
+        android:textSize="17sp"
+        android:textStyle="italic" />
+
+    <RelativeLayout
+        android:id="@+id/saved_number_block"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/suggested_number_block"
+        android:layout_marginLeft="6dip"
+        android:layout_marginTop="3dip" >
+
+        <TextView
+            android:id="@+id/saved_number"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:textColor="@color/white_color"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+    </RelativeLayout>
+
+    <TextView
+        android:id="@+id/saved_subtext"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/saved_number_block"
+        android:layout_toRightOf="@+id/saved_number_block"
+        android:paddingLeft="7dip"
+        android:textColor="@color/medium_gray"
+        android:textSize="17sp"
+        android:textStyle="italic" />
+
+    <ImageView
+        android:id="@+id/arrow_image"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
+        android:paddingBottom="4dip"
+        android:paddingLeft="3dip"
+        android:paddingRight="9dip"
+        android:paddingTop="4dip"
+        android:src="@drawable/arrow_red" >
+    </ImageView>
+
+</RelativeLayout><!--
     <TextView
         android:id="@+id/form_title"
         android:layout_width="wrap_content"
@@ -46,17 +104,7 @@
         android:paddingTop="8dip"
         android:textColor="@color/dark_gray"
         android:textSize="18sp"/>
-    -->
-
-    <TextView
-        android:id="@+id/all_form_title"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerVertical="true"
-        android:layout_toRightOf="@+id/priority_block"
-        android:paddingLeft="13dip"
-        android:textColor="@color/dark_gray"
-        android:textSize="18sp" />
+ 
 
     <TextView
         android:id="@+id/form_names"
@@ -68,15 +116,4 @@
         android:paddingLeft="13dip"
         android:textColor="@color/priority"
         android:textSize="16sp" />
-
-    <ImageView
-        android:id="@+id/arrow_image"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentRight="true"
-        android:layout_centerVertical="true"
-        android:paddingBottom="4dip"
-        android:paddingLeft="3dip"
-        android:paddingTop="4dip" />
-
-</RelativeLayout>
+-->

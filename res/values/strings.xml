@@ -61,7 +61,7 @@ the License.
     <string name="refresh">Refresh</string>
     <string name="use_saved_search">Use Saved Searches</string>
     <string name="saved_search_hint">Use Saved Searches instead of Cohorts</string>
-    <string name="search_hint">Enter name or identifier</string>
+    <string name="search_hint">Click to Search by Name or ID</string>
     <string name="select_cohort">Select Cohort</string>
     <string name="select_forms">Select Forms</string>
     <string name="server">URL</string>
@@ -93,6 +93,12 @@ the License.
     <string name="clinical_data_section">Clinical Data:</string>
     <string name="completed_form_section">Completed Forms:</string>
     <string name="saved_form_section">Incomplete Forms:</string>
+    
+    <string name="all_clients_section">All Available Clients</string>
+    <string name="incomplete_clients_section">Clients with Saved Forms</string>
+    <string name="completed_clients_section">Clients with Completed Forms</string>
+    <string name="suggested_clients_section">Clients with Suggested Forms</string>
+    
     <string name="view_only_form">This form is for viewing only.  Changes will not be saved.</string>
     <string name="form_history_section">Your Previous Visits:</string>
     <string name="instances_last_day">Visits in the past day:</string>
@@ -105,12 +111,12 @@ the License.
     <string name="current_patient">Current Client</string>
     <string name="downloaded_forms">Available Forms</string>
     <string name="downloaded_form">Available Form</string>
-    <string name="to_do_forms">Suggested</string>
-    <string name="to_do_form">Suggested</string>
-    <string name="completed_forms">Complete</string>
-    <string name="completed_form">Complete</string>
-    <string name="incomplete_forms">Incomplete</string>
-    <string name="incomplete_form">Incomplete</string>
+    <string name="to_do_forms">Suggested Forms To Fill</string>
+    <string name="to_do_form">Suggested Form To Fill</string>
+    <string name="completed_forms">Completed Forms To Be Sent</string>
+    <string name="completed_form">Completed Form To Be Sent</string>
+    <string name="incomplete_forms">Incomplete Forms To Fill</string>
+    <string name="incomplete_form">Incomplete Form To Fill</string>
     <string name="dashboard_title">MotherBaby Health Network</string>
     <string name="dashboard_task_title">Forms:</string>
 

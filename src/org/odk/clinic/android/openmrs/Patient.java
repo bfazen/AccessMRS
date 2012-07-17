@@ -25,6 +25,7 @@ public class Patient {
 	private Integer priorityFormNumber = null;
 	private String priorityForms = null;
 	
+	private Boolean savedStatus = false;
 	private Integer savedFormNumber = null;
 	private String savedForms = null;
 	
@@ -75,6 +76,10 @@ public class Patient {
 		return priorityStatus;
 	}
 	
+	public Boolean getSaved() {
+		return savedStatus;
+	}
+	
 	public Integer getPriorityNumber() {
 		return priorityFormNumber;
 	}
@@ -90,9 +95,6 @@ public class Patient {
 	public String getSavedForms() {
 		return savedForms;
 	}
-	
-	
-	
 	
 	public void setPatientId(Integer pid) {
 		patientId = pid;
@@ -117,6 +119,7 @@ public class Patient {
 	public void setPriority(Boolean priority) {
 		priorityStatus = priority;
 	}
+		
 	
 	public void setPriorityNumber(Integer formNumber) {
 		priorityFormNumber = formNumber;
@@ -124,6 +127,10 @@ public class Patient {
 	
 	public void setPriorityForms(String forms) {
 		priorityForms = forms;
+	}
+	
+	public void setSaved(Boolean saved) {
+		savedStatus = saved;
 	}
 	
 	public void setSavedNumber(Integer formNumber) {

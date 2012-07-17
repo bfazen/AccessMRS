@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
+    android:layout_height="wrap_content"
     android:background="@color/medium_gray"
-    android:orientation="vertical" >
+    android:orientation="vertical"
+     >
 
     <RelativeLayout
         android:id="@+id/provider_section"
@@ -42,41 +43,61 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignBottom="@+id/provider_number"
-			android:paddingBottom="1dip"
             android:layout_toLeftOf="@+id/provider_number"
+            android:paddingBottom="1dip"
             android:src="@drawable/id_icon_inverse" />
     </RelativeLayout>
 
+    <View
+        android:layout_width="fill_parent"
+        android:layout_height="1dp"
+        android:background="@color/medium_gray" />
+
+    <include
+        android:id="@+id/refresh"
+        layout="@layout/dashboard_refresh" />
+
+   
+    <View
+        android:layout_width="fill_parent"
+        android:layout_height="1dp"
+        android:background="@color/medium_gray" />
+
     <RelativeLayout
-        android:layout_width="match_parent"
+        android:id="@+id/suggested_block"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:background="@color/light_gray"
-        android:paddingBottom="8dip"
-        android:paddingLeft="12dip"
-        android:paddingTop="8dip" >
+        android:background="@color/white_color"
+        android:clickable="true"
+        android:orientation="vertical"
+        android:paddingBottom="10dip"
+        android:paddingLeft="6dip"
+        android:paddingRight="8dip"
+        android:paddingTop="10dip" >
 
         <TextView
-            android:id="@+id/task_title"
+            android:id="@+id/suggested_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/dashboard_task_title"
-            android:textSize="18sp"
-            android:paddingRight="16dip"
-            android:paddingLeft="5dip"
+            android:layout_alignTop="@+id/arrow_image"
+            android:paddingBottom="4dip"
+            android:paddingLeft="8dip"
+            android:text="View Suggested Clients"
             android:textColor="@color/dark_gray"
+            android:textSize="18sp"
             android:textStyle="bold" />
 
-        <!-- ToDo Forms -->
-
         <RelativeLayout
-            android:id="@+id/todo_block"
+            android:id="@+id/suggested_number_block"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_toRightOf="@+id/task_title"
-            android:layout_margin="3dip" >
+            android:layout_below="@+id/suggested_title"
+            android:layout_marginLeft="6dip"
+            android:layout_marginTop="3dip"
+          >
 
             <TextView
-                android:id="@+id/todo_number"
+                android:id="@+id/suggested_number"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
@@ -86,23 +107,70 @@
         </RelativeLayout>
 
         <TextView
-            android:id="@+id/todo_forms"
+            android:id="@+id/suggested_subtext"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignTop="@+id/todo_block"
-            android:layout_toRightOf="@+id/todo_block"
-            android:paddingLeft="10dip"
-            android:textSize="18sp" />
+            android:layout_alignBottom="@+id/suggested_number_block"
+            android:layout_toRightOf="@+id/suggested_number_block"
+            android:paddingLeft="7dip"
+            android:textColor="@color/medium_gray"
+            android:textSize="17sp"
+            android:textStyle="italic" />
 
-        <!-- Saved Forms -->
+        <ImageView
+            android:id="@+id/arrow_image"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:paddingBottom="4dip"
+            android:paddingLeft="3dip"
+            android:paddingRight="9dip"
+            android:paddingTop="4dip"
+            android:src="@drawable/arrow_red" >
+        </ImageView>
+    </RelativeLayout>
+
+    <View
+        android:layout_width="fill_parent"
+        android:layout_height="1dp"
+        android:background="@color/medium_gray" />
+
+    <RelativeLayout
+        android:id="@+id/saved_block"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/white_color"
+        android:clickable="true"
+        android:orientation="vertical"
+        android:paddingBottom="10dip"
+        android:paddingLeft="6dip"
+        android:paddingRight="8dip"
+        android:paddingTop="10dip" >
+
+        <TextView
+            android:id="@+id/saved_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignTop="@+id/arrow_image"
+            android:paddingBottom="4dip"
+            android:paddingLeft="8dip"
+            android:text="View Incomplete Clients"
+            android:textColor="@color/dark_gray"
+            android:textSize="18sp"
+            android:textStyle="bold" />
 
         <RelativeLayout
-            android:id="@+id/saved_block"
+            android:id="@+id/saved_number_block"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/completed_block"
-            android:layout_toRightOf="@+id/task_title"
-            android:layout_margin="3dip" >
+            android:layout_below="@+id/saved_title"
+            android:layout_marginLeft="6dip"
+            android:layout_marginTop="3dip"
+            android:paddingBottom="1dip"
+            android:paddingLeft="2dip"
+            android:paddingRight="2dip"
+            android:paddingTop="1dip" >
 
             <TextView
                 android:id="@+id/saved_number"
@@ -115,23 +183,69 @@
         </RelativeLayout>
 
         <TextView
-            android:id="@+id/saved_forms"
+            android:id="@+id/saved_subtext"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignTop="@+id/saved_block"
-            android:layout_toRightOf="@+id/saved_block"
-            android:paddingLeft="10dip"
-            android:textSize="18sp" />
+            android:layout_alignBottom="@+id/saved_number_block"
+            android:layout_toRightOf="@+id/saved_number_block"
+            android:paddingLeft="7dip"
+            android:textColor="@color/medium_gray"
+            android:textSize="17sp"
+            android:textStyle="italic" />
 
-        <!-- Complete Forms -->
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:paddingBottom="4dip"
+            android:paddingLeft="3dip"
+            android:paddingRight="9dip"
+            android:paddingTop="4dip"
+            android:src="@drawable/arrow_gray" >
+        </ImageView>
+    </RelativeLayout>
+
+    <View
+        android:layout_width="fill_parent"
+        android:layout_height="1dp"
+        android:background="@color/medium_gray" />
+
+    <RelativeLayout
+        android:id="@+id/completed_block"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/white_color"
+        android:clickable="true"
+        android:orientation="vertical"
+        android:paddingBottom="10dip"
+        android:paddingLeft="6dip"
+        android:paddingRight="8dip"
+        android:paddingTop="10dip" >
+
+        <TextView
+            android:id="@+id/completed_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignTop="@+id/arrow_image"
+            android:paddingBottom="4dip"
+            android:paddingLeft="8dip"
+            android:text="View Completed Clients"
+            android:textColor="@color/dark_gray"
+            android:textSize="18sp"
+            android:textStyle="bold" />
 
         <RelativeLayout
-            android:id="@+id/completed_block"
+            android:id="@+id/completed_number_block"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/todo_block"
-            android:layout_toRightOf="@+id/task_title"
-            android:layout_margin="3dip" >
+            android:layout_below="@+id/completed_title"
+            android:layout_marginLeft="6dip"
+            android:layout_marginTop="3dip"
+            android:paddingBottom="1dip"
+            android:paddingLeft="2dip"
+            android:paddingRight="2dip"
+            android:paddingTop="1dip" >
 
             <TextView
                 android:id="@+id/completed_number"
@@ -144,50 +258,115 @@
         </RelativeLayout>
 
         <TextView
-            android:id="@+id/completed_forms"
+            android:id="@+id/completed_subtext"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignTop="@+id/completed_block"
-            android:layout_toRightOf="@+id/completed_block"
-            android:paddingLeft="10dip"
-            android:textSize="18sp" />
+            android:layout_alignBottom="@+id/completed_number_block"
+            android:layout_toRightOf="@+id/completed_number_block"
+            android:paddingLeft="7dip"
+            android:textColor="@color/medium_gray"
+            android:textSize="17sp"
+            android:textStyle="italic" />
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:paddingBottom="4dip"
+            android:paddingLeft="3dip"
+            android:paddingRight="9dip"
+            android:paddingTop="4dip"
+            android:src="@drawable/arrow_gray" >
+        </ImageView>
     </RelativeLayout>
-
-    <View
+ <View
         android:layout_width="fill_parent"
         android:layout_height="1dp"
         android:background="@color/medium_gray" />
 
-    <include
-        android:id="@+id/refresh"
-        layout="@layout/dashboard_refresh" />
+    <RelativeLayout
+        android:id="@+id/patients_block"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/white_color"
+        android:clickable="true"
+        android:orientation="vertical"
+        android:paddingBottom="10dip"
+        android:paddingLeft="6dip"
+        android:paddingRight="8dip"
+        android:paddingTop="10dip" >
 
+        <TextView
+            android:id="@+id/patients_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignTop="@+id/arrow_image"
+            android:paddingBottom="4dip"
+            android:paddingLeft="8dip"
+            android:text="View All Clients"
+            android:textColor="@color/dark_gray"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <RelativeLayout
+            android:id="@+id/patients_number_block"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/patients_title"
+            android:layout_marginLeft="6dip"
+            android:layout_marginTop="3dip"
+            android:paddingBottom="1dip"
+            android:paddingLeft="2dip"
+            android:paddingRight="2dip"
+            android:paddingTop="1dip" >
+
+            <TextView
+                android:id="@+id/patients_number"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:textColor="@color/white_color"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+        </RelativeLayout>
+
+        <TextView
+            android:id="@+id/patients_subtext"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@+id/patients_number_block"
+            android:layout_toRightOf="@+id/patients_number_block"
+            android:paddingLeft="7dip"
+            android:textColor="@color/medium_gray"
+            android:textSize="17sp"
+            android:textStyle="italic" />
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:paddingBottom="4dip"
+            android:paddingLeft="3dip"
+            android:paddingRight="9dip"
+            android:paddingTop="4dip"
+            android:src="@drawable/arrow_gray" >
+        </ImageView>
+    </RelativeLayout>
+    
     <View
         android:layout_width="fill_parent"
         android:layout_height="1dp"
-        android:layout_alignParentTop="true"
-        android:background="@color/medium_gray" />
-
-    <include
-        android:id="@+id/load_patients"
-        android:layout_below="@+id/refresh"
-        layout="@layout/dashboard_patients" />
-
-    <View
-        android:layout_width="fill_parent"
-        android:layout_height="1dp"
-        android:layout_alignParentTop="true"
         android:background="@color/medium_gray" />
 
     <include
         android:id="@+id/load_blank_forms"
-        android:layout_below="@+id/load_patients"
         layout="@layout/dashboard_forms" />
 
     <View
         android:layout_width="fill_parent"
         android:layout_height="1dp"
-        android:layout_alignParentTop="true"
         android:background="@color/medium_gray" />
 
 </LinearLayout>

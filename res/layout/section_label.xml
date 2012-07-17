@@ -11,17 +11,18 @@
         android:background="@color/medium_gray" />
 
     <ImageView
+        android:contentDescription="icon"
         android:id="@+id/section_image"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerVertical="true"
         android:paddingBottom="2dip"
-        android:paddingLeft="8dip"
+        android:layout_marginLeft="8dip"
         android:paddingTop="2dip" />
 
     <TextView
         android:id="@+id/name_text"
-        android:layout_width="fill_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerVertical="true"
         android:layout_toRightOf="@+id/section_image"

@@ -17,7 +17,7 @@
         android:layout_alignTop="@+id/arrow_image"
         android:paddingBottom="4dip"
         android:paddingLeft="8dip"
-        android:text="View Your Current Clients"
+        android:text="View All Clients"
         android:textColor="@color/dark_gray"
         android:textSize="18sp"
         android:textStyle="bold" />

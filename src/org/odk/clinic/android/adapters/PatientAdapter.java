@@ -64,33 +64,60 @@ public class PatientAdapter extends ArrayAdapter<Patient> {
 			}
 
 			ImageView priorityArrow = (ImageView) v.findViewById(R.id.arrow_image);
+
 			ImageView priorityImage = (ImageView) v.findViewById(R.id.priority_image);
 			TextView priorityNumber = (TextView) v.findViewById(R.id.priority_number);
-			
-			priorityImage.setImageDrawable(res.getDrawable(R.drawable.priority_icon_blank));
+			priorityImage.setImageDrawable(res.getDrawable(R.drawable.priority));
 
-
+			ImageView savedImage = (ImageView) v.findViewById(R.id.saved_image);
+			TextView savedNumber = (TextView) v.findViewById(R.id.saved_number);
+			savedImage.setImageDrawable(res.getDrawable(R.drawable.incomplete));
 
 			if (priorityArrow != null && nameView != null) {
-				if (p.getPriority()) {
+				if (p.getPriority() && p.getSaved()) {
+					Log.e("louis.fazen", p.getFamilyName() + " has Priority");
 					priorityArrow.setImageResource(R.drawable.arrow_red);
-//					nameView.setTextColor(res.getColor(R.color.priority));
+					// nameView.setTextColor(res.getColor(R.color.priority));
 					nameView.setTextColor(res.getColor(R.color.dark_gray));
 
-					if (priorityNumber != null && priorityImage != null) {
+					if (priorityNumber != null && priorityImage != null && savedNumber != null && savedImage != null) {
 						priorityNumber.setText(p.getPriorityNumber().toString());
 						priorityImage.setVisibility(View.VISIBLE);
-						
-					}
+						savedNumber.setText(p.getSavedNumber().toString());
+						savedImage.setVisibility(View.VISIBLE);
 
+					}
+				} else if (p.getPriority() && !p.getSaved()) {
+					priorityArrow.setImageResource(R.drawable.arrow_red);
+					// nameView.setTextColor(res.getColor(R.color.priority));
+					nameView.setTextColor(res.getColor(R.color.dark_gray));
+					if (priorityNumber != null && priorityImage != null && savedNumber != null && savedImage != null) {
+						priorityNumber.setText(p.getPriorityNumber().toString());
+						priorityImage.setVisibility(View.VISIBLE);
+						savedNumber.setText(null);
+						savedImage.setVisibility(View.GONE);
+					}
+				} else if (!p.getPriority() && p.getSaved()) {
+					priorityArrow.setImageResource(R.drawable.arrow_gray);
+					// nameView.setTextColor(res.getColor(R.color.priority));
+					nameView.setTextColor(res.getColor(R.color.dark_gray));
+					if (priorityNumber != null && priorityImage != null && savedNumber != null && savedImage != null) {
+						priorityNumber.setText(null);
+						priorityImage.setVisibility(View.GONE);
+						savedNumber.setText(p.getSavedNumber().toString());
+						savedImage.setVisibility(View.VISIBLE);
+					}
 				} else {
+
+					Log.e("louis.fazen", p.getFamilyName() + " has neither saved nor priority");
 					priorityArrow.setImageResource(R.drawable.arrow_gray);
 					nameView.setTextColor(res.getColor(R.color.dark_gray));
-					
-					if (priorityNumber != null && priorityImage != null) {
-						priorityNumber.setText(null);
-						priorityImage.setVisibility(View.INVISIBLE);
 
+					if (priorityNumber != null && priorityImage != null && savedNumber != null && savedImage != null) {
+						priorityNumber.setText(null);
+						priorityImage.setVisibility(View.GONE);
+						savedNumber.setText(null);
+						savedImage.setVisibility(View.GONE);
 					}
 				}
 			}

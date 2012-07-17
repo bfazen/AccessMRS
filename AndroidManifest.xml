@@ -81,7 +81,7 @@
             android:theme="@android:style/Theme.NoDisplay" />
 
         <!-- louis.fazen@gmail.com Change View Menu Settings -->
-         <activity
+        <activity
             android:name=".activities.ViewSavedForms"
             android:label="@string/app_name"
             android:screenOrientation="portrait" />

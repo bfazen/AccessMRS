@@ -50,7 +50,10 @@ import android.view.Window;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -75,6 +78,8 @@ public class ListPatientActivity extends ListActivity implements UploadFormListe
 	private ArrayAdapter<Patient> mPatientAdapter;
 	private ArrayList<Patient> mPatients = new ArrayList<Patient>();
 
+	private int mListType;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -87,6 +92,8 @@ public class ListPatientActivity extends ListActivity implements UploadFormListe
 			showCustomToast(getString(R.string.error, getString(R.string.storage_error)));
 			finish();
 		}
+
+		mListType = getIntent().getIntExtra(DashboardActivity.LIST_TYPE, 1);
 
 		mFilterTextWatcher = new TextWatcher() {
 			@Override
@@ -109,6 +116,7 @@ public class ListPatientActivity extends ListActivity implements UploadFormListe
 
 		mSearchText = (EditText) findViewById(R.id.search_text);
 		mSearchText.addTextChangedListener(mFilterTextWatcher);
+
 		/*
 		 * mBarcodeButton = (ImageButton) findViewById(R.id.barcode_button);
 		 * mBarcodeButton.setOnClickListener(new OnClickListener() { public void
@@ -171,10 +179,9 @@ public class ListPatientActivity extends ListActivity implements UploadFormListe
 		ca.open();
 		Cursor c = null;
 		if (searchStr != null) {
-			c = ca.fetchPatients(searchStr, searchStr);
+			c = ca.fetchPatients(searchStr, searchStr, mListType);
 		} else {
-			c = ca.fetchAllPatients();
-
+			c = ca.fetchAllPatients(mListType);
 		}
 
 		if (c != null && c.getCount() >= 0) {
@@ -193,6 +200,9 @@ public class ListPatientActivity extends ListActivity implements UploadFormListe
 			// setFamilyName and add get and set priority as well...
 			int priorityIndex = c.getColumnIndexOrThrow(ClinicAdapter.KEY_PRIORITY_FORM_NUMBER);
 			int priorityFormIndex = c.getColumnIndexOrThrow(ClinicAdapter.KEY_PRIORITY_FORM_NAMES);
+			int savedIndex = c.getColumnIndexOrThrow(ClinicAdapter.KEY_SAVED_FORM_NUMBER);
+			int savedFormIndex = c.getColumnIndexOrThrow(ClinicAdapter.KEY_SAVED_FORM_NAMES);
+
 			if (c.getCount() > 0) {
 
 				Patient p;
@@ -210,11 +220,23 @@ public class ListPatientActivity extends ListActivity implements UploadFormListe
 					// and setFamilyName and add get and set priority as well...
 					p.setPriorityNumber(c.getInt(priorityIndex));
 					p.setPriorityForms(c.getString(priorityFormIndex));
+					p.setSavedNumber(c.getInt(savedIndex));
+					p.setSavedForms(c.getString(savedFormIndex));
 
 					if (c.getInt(priorityIndex) > 0) {
 
 						p.setPriority(true);
 
+					} else {
+						p.setPriority(false);
+					}
+
+					if (c.getInt(savedIndex) > 0) {
+
+						p.setSaved(true);
+
+					} else {
+						p.setSaved(false);
 					}
 
 					mPatients.add(p);
@@ -234,6 +256,33 @@ public class ListPatientActivity extends ListActivity implements UploadFormListe
 	}
 
 	private void refreshView() {
+
+		RelativeLayout listLayout = (RelativeLayout) findViewById(R.id.list_type);
+		TextView listText = (TextView) findViewById(R.id.name_text);
+		ImageView listIcon = (ImageView) findViewById(R.id.section_image);
+
+		switch (mListType) {
+		case DashboardActivity.LIST_SUGGESTED:
+			listLayout.setBackgroundResource(R.color.priority);
+			listIcon.setBackgroundResource(R.drawable.ic_priority);
+			listText.setText(R.string.suggested_clients_section);
+			break;
+		case DashboardActivity.LIST_INCOMPLETE:
+			listLayout.setBackgroundResource(R.color.saved);
+			listIcon.setBackgroundResource(R.drawable.ic_saved);
+			listText.setText(R.string.incomplete_clients_section);
+			break;
+		case DashboardActivity.LIST_COMPLETE:
+			listLayout.setBackgroundResource(R.color.completed);
+			listIcon.setBackgroundResource(R.drawable.ic_completed);
+			listText.setText(R.string.completed_clients_section);
+			break;
+		case DashboardActivity.LIST_ALL:
+			listLayout.setBackgroundResource(R.color.dark_gray);
+			listIcon.setBackgroundResource(R.drawable.ic_additional);
+			listText.setText(R.string.all_clients_section);
+			break;
+		}
 
 		if (mCla == null) {
 			mCla = new ClinicAdapter();

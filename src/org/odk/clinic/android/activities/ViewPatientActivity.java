@@ -87,7 +87,6 @@ public class ViewPatientActivity extends ListActivity {
 		Integer patientId = Integer.valueOf(patientIdStr);
 		mPatient = getPatient(patientId);
 		mPatient.setTotalCompletedForms(findPreviousEncounters());
-		
 
 		setTitle(getString(R.string.app_name) + " > " + getString(R.string.view_patient));
 
@@ -193,7 +192,7 @@ public class ViewPatientActivity extends ListActivity {
 
 		return p;
 	}
-	
+
 	private void getPatientForms(Integer patientId) {
 		Log.e("ViewPatientActivity", "ACTIVITY_LOG_END: " + "getPatientForms is called!");
 		ClinicAdapter ca = new ClinicAdapter();
@@ -218,7 +217,7 @@ public class ViewPatientActivity extends ListActivity {
 			} else {
 				mPatient.setPriority(false);
 			}
-			
+
 		}
 
 		if (c != null) {
@@ -374,11 +373,19 @@ public class ViewPatientActivity extends ListActivity {
 		});
 
 		ImageView priorityArrow = (ImageView) formsSummary.findViewById(R.id.arrow_image);
-		ImageView priorityImage = (ImageView) formsSummary.findViewById(R.id.priority_image);
-		TextView priorityNumber = (TextView) formsSummary.findViewById(R.id.priority_number);
+		
+
 		TextView allFormTitle = (TextView) formsSummary.findViewById(R.id.all_form_title);
 		TextView formNames = (TextView) formsSummary.findViewById(R.id.form_names);
+		
+		ImageView savedImage = (ImageView) formsSummary.findViewById(R.id.saved_image);
+		TextView savedNumber = (TextView) formsSummary.findViewById(R.id.saved_number);
 
+		RelativeLayout savedRL = (RelativeLayout) findViewById(R.id.saved_number_block);
+		
+		RelativeLayout suggestedRL = (RelativeLayout) findViewById(R.id.suggested_number_block);
+		TextView suggestedNumber = (TextView) formsSummary.findViewById(R.id.suggested_number);
+		TextView suggestedSubtext = (TextView) formsSummary.findViewById(R.id.suggested_subtext);
 		// ImageView savedImage = (ImageView)
 		// formsSummary.findViewById(R.id.saved_image);
 		// TextView savedNumber = (TextView)
@@ -390,37 +397,67 @@ public class ViewPatientActivity extends ListActivity {
 
 		priorityImage.setImageDrawable(res.getDrawable(R.drawable.priority_icon_blank));
 		formNames.setTextColor(res.getColor(R.color.dark_gray));
+		
+		savedRL.setVisibility(View.VISIBLE);
+		
+		suggestedRL.setVisibility(View.VISIBLE);
+		suggestedNumber.setVisibility(View.VISIBLE);
+		suggestedSubtext.setVisibility(View.VISIBLE);
+		
+		suggestedRL.setBackgroundResource(R.drawable.priority);
+		suggestedNumber.setText(String.valueOf(patients));
 
-		if (priorityArrow != null && formNames != null && allFormTitle != null) {
+		if (priorityArrow != null  && allFormTitle != null) {
 
-			if (mPatient.getPriority()) {
+			// formNames.setText(mPatient.getPriorityForms());
+			// formNames.setTextColor(R.color.priority);
+			// formTitle.setText("Suggested Forms:");
+			// allFormTitle.setVisibility(View.GONE);
+//			formNames.setVisibility(View.GONE);
+			allFormTitle.setText("View All Forms");
+
+			if (mPatient.getPriority() && mPatient.getSaved()) {
 				priorityArrow.setImageResource(R.drawable.arrow_red);
-//				formNames.setText(mPatient.getPriorityForms());
-//				formNames.setTextColor(R.color.priority);
-				// formTitle.setText("Suggested Forms:");
-//				allFormTitle.setVisibility(View.GONE);
-				formNames.setVisibility(View.GONE);
-				allFormTitle.setText(mPatient.getPriorityForms());
-				allFormTitle.setTextColor(R.color.priority);
-				if (priorityNumber != null && priorityImage != null) {
-					priorityNumber.setText(mPatient.getPriorityNumber().toString());
-					priorityImage.setVisibility(View.VISIBLE);
+//				allFormTitle.setText(mPatient.getPriorityForms());
+//				allFormTitle.setTextColor(R.color.priority);
+//				patientRL.setBackgroundResource(R.drawable.gray);
+
+				if (suggestedNumber != null && suggestedRL != null && savedNumber != null && savedRL != null) {
+					suggestedNumber.setText(mPatient.getPriorityNumber().toString());
+					suggestedRL.setVisibility(View.VISIBLE);
+					savedNumber.setText(mPatient.getSavedNumber().toString());
+					savedImage.setVisibility(View.VISIBLE);
 				}
 
-			} else {
+			} else if (mPatient.getPriority() && !mPatient.getSaved()) {
+				priorityArrow.setImageResource(R.drawable.arrow_red);
+				if (suggestedNumber != null && suggestedRL != null && savedNumber != null && savedImage != null) {
+					suggestedNumber.setText(mPatient.getPriorityNumber().toString());
+					suggestedRL.setVisibility(View.VISIBLE);
+					savedNumber.setText(null);
+					savedImage.setVisibility(View.GONE);
+				}
+			} else if (!mPatient.getPriority() && mPatient.getSaved()) {
 				priorityArrow.setImageResource(R.drawable.arrow_gray);
-				formNames.setVisibility(View.GONE);
-				// formNames.setText("No Outstanding Forms For " +
-				// mPatient.getGivenName() + " " + mPatient.getFamilyName());
-				allFormTitle.setText("View All Forms");
 
-				if (priorityNumber != null && priorityImage != null) {
-					priorityNumber.setText(null);
-					priorityNumber.setVisibility(View.GONE);
-					priorityImage.setVisibility(View.GONE);
+				if (suggestedNumber != null && suggestedRL != null && savedNumber != null && savedImage != null) {
+					suggestedNumber.setText(null);
+					suggestedRL.setVisibility(View.GONE);
+					savedNumber.setText(mPatient.getSavedNumber().toString());
+					savedImage.setVisibility(View.VISIBLE);
 				}
+			} else {
 
+				priorityArrow.setImageResource(R.drawable.arrow_gray);
+
+				if (suggestedNumber != null && suggestedRL != null && savedNumber != null && savedImage != null) {
+					suggestedNumber.setText(null);
+					suggestedRL.setVisibility(View.GONE);
+					savedNumber.setText(null);
+					savedImage.setVisibility(View.GONE);
+				}
 			}
+
 		}
 
 		return (formsSummary);
@@ -435,9 +472,10 @@ public class ViewPatientActivity extends ListActivity {
 
 		if (c.moveToFirst()) {
 
-//			if (patientIdStr == c.getString(c.getColumnIndex(InstanceColumns.PATIENT_ID))) {
-				completedForms = c.getInt(c.getColumnIndex("count"));
-//			}
+			// if (patientIdStr ==
+			// c.getString(c.getColumnIndex(InstanceColumns.PATIENT_ID))) {
+			completedForms = c.getInt(c.getColumnIndex("count"));
+			// }
 		}
 
 		c.close();
@@ -453,10 +491,10 @@ public class ViewPatientActivity extends ListActivity {
 
 		formsSummary.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
-					Intent i = new Intent(getApplicationContext(), ViewCompletedForms.class);
-					i.putExtra(Constants.KEY_PATIENT_ID, patientIdStr);
-					startActivity(i);
-				
+				Intent i = new Intent(getApplicationContext(), ViewCompletedForms.class);
+				i.putExtra(Constants.KEY_PATIENT_ID, patientIdStr);
+				startActivity(i);
+
 			}
 		});
 
@@ -470,7 +508,7 @@ public class ViewPatientActivity extends ListActivity {
 		if (priorityArrow != null && formNames != null && allFormTitle != null) {
 			priorityImage.setImageDrawable(res.getDrawable(R.drawable.ic_gray_block));
 			priorityBlock.setPadding(0, 0, 0, 0);
-			
+
 			priorityArrow.setImageResource(R.drawable.arrow_gray);
 			formNames.setVisibility(View.GONE);
 			allFormTitle.setTextColor(res.getColor(R.color.dark_gray));
@@ -503,14 +541,15 @@ public class ViewPatientActivity extends ListActivity {
 		if (mPatient != null) {
 			// TODO Create more efficient SQL query to get only the latest
 			// observation values
-//			TODO this seems resource intensive to have to getAllObservations again and again?
+			// TODO this seems resource intensive to have to getAllObservations
+			// again and again?
 			getAllObservations(mPatient.getPatientId());
 			getPatientForms(mPatient.getPatientId());
 			refreshView();
 			Log.e("ViewPatientActivity", "ACTIVITY_LOG_END: " + "mPatient is not null");
 		}
-//		TODO: what if the if clause fails?
-		
+		// TODO: what if the if clause fails?
+
 	}
 
 	@Override
