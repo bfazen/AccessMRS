@@ -98,6 +98,7 @@ the License.
     <string name="incomplete_clients_section">Clients with Saved Forms</string>
     <string name="completed_clients_section">Clients with Completed Forms</string>
     <string name="suggested_clients_section">Clients with Suggested Forms</string>
+    <string name="view_all_forms">View All Forms</string>
     
     <string name="view_only_form">This form is for viewing only.  Changes will not be saved.</string>
     <string name="form_history_section">Your Previous Visits:</string>
@@ -107,8 +108,8 @@ the License.
     <string name="instances_last_six_months">Visits in the past 6 months:</string>
     <string name="instances_last_year">Visits in the past year:</string>
     <string name="instances_unknown_gt_year">All other visits:</string>
-    <string name="current_patients">Current Clients</string>
-    <string name="current_patient">Current Client</string>
+    
+    <!-- Forms -->
     <string name="downloaded_forms">Available Forms</string>
     <string name="downloaded_form">Available Form</string>
     <string name="to_do_forms">Suggested Forms To Fill</string>
@@ -117,6 +118,18 @@ the License.
     <string name="completed_form">Completed Form To Be Sent</string>
     <string name="incomplete_forms">Incomplete Forms To Fill</string>
     <string name="incomplete_form">Incomplete Form To Fill</string>
+    
+    <!-- Clients -->
+    <string name="current_clients">All Current Clients</string>
+    <string name="current_client">Current Client</string>
+    <string name="to_do_clients">Suggested Clients</string>
+    <string name="to_do_client">Suggested Client</string>
+    <string name="completed_clients">Completed Clients</string>
+    <string name="completed_client">Completed Client</string>
+    <string name="incomplete_clients">Incomplete Clients</string>
+    <string name="incomplete_client">Incomplete Client</string>
+    
+    
     <string name="dashboard_title">MotherBaby Health Network</string>
     <string name="dashboard_task_title">Forms:</string>
 

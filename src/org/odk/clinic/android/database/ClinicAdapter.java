@@ -5,6 +5,7 @@ import java.io.File;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.UUID;
 
 import org.odk.clinic.android.activities.DashboardActivity;
 import org.odk.clinic.android.listeners.DownloadListener;
@@ -50,6 +51,8 @@ public class ClinicAdapter {
 	public static final String KEY_MIDDLE_NAME = "middle_name";
 	public static final String KEY_BIRTH_DATE = "birth_date";
 	public static final String KEY_GENDER = "gender";
+	public static final String KEY_CLIENT_CREATED = "client_created";
+	public static final String KEY_UUID = "uuid";
 	public static final String KEY_PRIORITY_FORM_NAMES = "priority_forms";
 	public static final String KEY_PRIORITY_FORM_NUMBER = "priority_number";
 	public static final String KEY_SAVED_FORM_NAMES = "saved_forms";
@@ -145,7 +148,7 @@ public class ClinicAdapter {
 	private static int obsEncDateIndex = 0;
 
 	private static final String CREATE_PATIENTS_TABLE = "create table " + PATIENTS_TABLE + " (_id integer primary key autoincrement, " + KEY_PATIENT_ID + " integer not null, " + KEY_IDENTIFIER + " text, " + KEY_GIVEN_NAME + " text, " + KEY_FAMILY_NAME + " text, "
-			+ KEY_MIDDLE_NAME + " text, " + KEY_BIRTH_DATE + " text, " + KEY_GENDER + " text, " + KEY_PRIORITY_FORM_NUMBER + " integer, " + KEY_PRIORITY_FORM_NAMES + " text, " + KEY_SAVED_FORM_NUMBER + " integer, " + KEY_SAVED_FORM_NAMES + " text);";
+			+ KEY_MIDDLE_NAME + " text, " + KEY_BIRTH_DATE + " text, " + KEY_GENDER + " text, " + KEY_CLIENT_CREATED + " integer, " + KEY_UUID + " text, " + KEY_PRIORITY_FORM_NUMBER + " integer, " + KEY_PRIORITY_FORM_NAMES + " text, " + KEY_SAVED_FORM_NUMBER + " integer, " + KEY_SAVED_FORM_NAMES + " text);";
 
 	private static final String CREATE_OBSERVATIONS_TABLE = "create table " + OBSERVATIONS_TABLE + " (_id integer primary key autoincrement, " + KEY_PATIENT_ID + " integer not null, " + KEY_DATA_TYPE + " integer not null, " + KEY_VALUE_TEXT + " text, " + KEY_VALUE_NUMERIC
 			+ " double, " + KEY_VALUE_DATE + " text, " + KEY_VALUE_INT + " integer, " + KEY_FIELD_NAME + " text not null, " + KEY_ENCOUNTER_DATE + " text not null);";
@@ -188,7 +191,6 @@ public class ClinicAdapter {
 			db.execSQL("DROP TABLE IF EXISTS " + COHORTS_TABLE);
 			db.execSQL("DROP TABLE IF EXISTS " + FORMS_TABLE);
 			db.execSQL("DROP TABLE IF EXISTS " + FORMINSTANCES_TABLE);
-
 			db.execSQL("DROP TABLE IF EXISTS " + FORM_LOG_TABLE);
 			db.execSQL("DROP TABLE IF EXISTS " + DOWNLOAD_LOG_TABLE);
 			onCreate(db);
@@ -279,11 +281,12 @@ public class ClinicAdapter {
 	 *            Patient object containing patient info
 	 * @return database id of the new patient
 	 */
+	//louis.fazen... This is no longer used for batch inserts of patients, and therefore I am only using it when a new patient is identified in the community
 	public long createPatient(Patient patient) {
 		long id = -1;
 
 		ContentValues cv = new ContentValues();
-
+        
 		cv.put(KEY_PATIENT_ID, patient.getPatientId());
 		cv.put(KEY_IDENTIFIER, patient.getIdentifier());
 
@@ -293,6 +296,9 @@ public class ClinicAdapter {
 
 		cv.put(KEY_BIRTH_DATE, patient.getBirthdate());
 		cv.put(KEY_GENDER, patient.getGender());
+		
+		cv.put(KEY_CLIENT_CREATED, patient.getCreateCode());
+		cv.put(KEY_UUID, patient.getUuid());
 
 		try {
 			id = mDb.insert(PATIENTS_TABLE, null, cv);
@@ -421,7 +427,7 @@ public class ClinicAdapter {
 	 * @return number of affected rows
 	 */
 	public boolean deleteAllPatients() {
-		return mDb.delete(PATIENTS_TABLE, null, null) > 0;
+		return mDb.delete(PATIENTS_TABLE, KEY_CLIENT_CREATED + "?", new String[] { " IS NULL" }) > 0;
 	}
 
 	public boolean deleteAllObservations() {
@@ -515,10 +521,10 @@ public class ClinicAdapter {
 
 			if (listtype == DashboardActivity.LIST_COMPLETE) {
 				c = mDb.query(true, PATIENTS_TABLE + ", " + FORMINSTANCES_TABLE, new String[] { PATIENTS_TABLE + "." + KEY_ID, PATIENTS_TABLE + "." + KEY_PATIENT_ID, KEY_IDENTIFIER, KEY_GIVEN_NAME, KEY_FAMILY_NAME, KEY_MIDDLE_NAME, KEY_BIRTH_DATE, KEY_GENDER,
-						KEY_PRIORITY_FORM_NAMES, KEY_PRIORITY_FORM_NUMBER, KEY_SAVED_FORM_NUMBER, KEY_SAVED_FORM_NAMES, KEY_FORMINSTANCE_SUBTEXT }, "(" + expr.toString() + ")" + listSelection, null, null, null, listOrder, null);
+						KEY_PRIORITY_FORM_NAMES, KEY_PRIORITY_FORM_NUMBER, KEY_SAVED_FORM_NUMBER, KEY_SAVED_FORM_NAMES, KEY_FORMINSTANCE_SUBTEXT, KEY_CLIENT_CREATED, KEY_UUID }, "(" + expr.toString() + ")" + listSelection, null, null, null, listOrder, null);
 			} else {
 				c = mDb.query(true, PATIENTS_TABLE,
-						new String[] { KEY_ID, KEY_PATIENT_ID, KEY_IDENTIFIER, KEY_GIVEN_NAME, KEY_FAMILY_NAME, KEY_MIDDLE_NAME, KEY_BIRTH_DATE, KEY_GENDER, KEY_PRIORITY_FORM_NAMES, KEY_PRIORITY_FORM_NUMBER, KEY_SAVED_FORM_NUMBER, KEY_SAVED_FORM_NAMES }, "(" + expr.toString()
+						new String[] { KEY_ID, KEY_PATIENT_ID, KEY_IDENTIFIER, KEY_GIVEN_NAME, KEY_FAMILY_NAME, KEY_MIDDLE_NAME, KEY_BIRTH_DATE, KEY_GENDER, KEY_PRIORITY_FORM_NAMES, KEY_PRIORITY_FORM_NUMBER, KEY_SAVED_FORM_NUMBER, KEY_SAVED_FORM_NAMES, KEY_CLIENT_CREATED, KEY_UUID }, "(" + expr.toString()
 								+ ")" + listSelection, null, null, null, listOrder, null);
 			}
 		} else if (identifier != null) {
@@ -531,10 +537,10 @@ public class ClinicAdapter {
 
 			if (listtype == DashboardActivity.LIST_COMPLETE) {
 				c = mDb.query(true, PATIENTS_TABLE + ", " + FORMINSTANCES_TABLE, new String[] { KEY_ID, KEY_PATIENT_ID, KEY_IDENTIFIER, KEY_GIVEN_NAME, KEY_FAMILY_NAME, KEY_MIDDLE_NAME, KEY_BIRTH_DATE, KEY_GENDER, KEY_PRIORITY_FORM_NAMES, KEY_PRIORITY_FORM_NUMBER,
-						KEY_SAVED_FORM_NUMBER, KEY_SAVED_FORM_NAMES, KEY_FORMINSTANCE_SUBTEXT }, KEY_IDENTIFIER + " LIKE '" + identifier + "%' ESCAPE '^'" + listSelection, null, null, null, listOrder, null);
+						KEY_SAVED_FORM_NUMBER, KEY_SAVED_FORM_NAMES, KEY_FORMINSTANCE_SUBTEXT, KEY_CLIENT_CREATED, KEY_UUID }, KEY_IDENTIFIER + " LIKE '" + identifier + "%' ESCAPE '^'" + listSelection, null, null, null, listOrder, null);
 			} else {
 				c = mDb.query(true, PATIENTS_TABLE,
-						new String[] { KEY_ID, KEY_PATIENT_ID, KEY_IDENTIFIER, KEY_GIVEN_NAME, KEY_FAMILY_NAME, KEY_MIDDLE_NAME, KEY_BIRTH_DATE, KEY_GENDER, KEY_PRIORITY_FORM_NAMES, KEY_PRIORITY_FORM_NUMBER, KEY_SAVED_FORM_NUMBER, KEY_SAVED_FORM_NAMES }, KEY_IDENTIFIER
+						new String[] { KEY_ID, KEY_PATIENT_ID, KEY_IDENTIFIER, KEY_GIVEN_NAME, KEY_FAMILY_NAME, KEY_MIDDLE_NAME, KEY_BIRTH_DATE, KEY_GENDER, KEY_PRIORITY_FORM_NAMES, KEY_PRIORITY_FORM_NUMBER, KEY_SAVED_FORM_NUMBER, KEY_SAVED_FORM_NAMES, KEY_CLIENT_CREATED, KEY_UUID }, KEY_IDENTIFIER
 								+ " LIKE '" + identifier + "%' ESCAPE '^'" + listSelection, null, null, null, listOrder, null);
 			}
 
@@ -548,8 +554,19 @@ public class ClinicAdapter {
 
 	public Cursor fetchPatient(Integer patientId) throws SQLException {
 		Cursor c = null;
-		c = mDb.query(true, PATIENTS_TABLE, new String[] { KEY_ID, KEY_PATIENT_ID, KEY_IDENTIFIER, KEY_GIVEN_NAME, KEY_FAMILY_NAME, KEY_MIDDLE_NAME, KEY_BIRTH_DATE, KEY_GENDER, KEY_PRIORITY_FORM_NAMES, KEY_PRIORITY_FORM_NUMBER, KEY_SAVED_FORM_NUMBER, KEY_SAVED_FORM_NAMES },
+		c = mDb.query(true, PATIENTS_TABLE, new String[] { KEY_ID, KEY_PATIENT_ID, KEY_IDENTIFIER, KEY_GIVEN_NAME, KEY_FAMILY_NAME, KEY_MIDDLE_NAME, KEY_BIRTH_DATE, KEY_GENDER, KEY_PRIORITY_FORM_NAMES, KEY_PRIORITY_FORM_NUMBER, KEY_SAVED_FORM_NUMBER, KEY_SAVED_FORM_NAMES, KEY_CLIENT_CREATED, KEY_UUID },
 				KEY_PATIENT_ID + "=" + patientId, null, null, null, KEY_PRIORITY_FORM_NUMBER + " DESC, " + KEY_FAMILY_NAME + " ASC", null);
+
+		if (c != null) {
+			c.moveToFirst();
+		}
+		return c;
+	}
+	
+	public Cursor fetchPatient(String uuidString) throws SQLException {
+		Cursor c = null;
+		c = mDb.query(true, PATIENTS_TABLE, new String[] { KEY_ID, KEY_PATIENT_ID, KEY_IDENTIFIER, KEY_GIVEN_NAME, KEY_FAMILY_NAME, KEY_MIDDLE_NAME, KEY_BIRTH_DATE, KEY_GENDER, KEY_PRIORITY_FORM_NAMES, KEY_PRIORITY_FORM_NUMBER, KEY_SAVED_FORM_NUMBER, KEY_SAVED_FORM_NAMES, KEY_CLIENT_CREATED, KEY_UUID },
+				KEY_UUID + "=" + uuidString, null, null, null, KEY_PRIORITY_FORM_NUMBER + " DESC, " + KEY_FAMILY_NAME + " ASC", null);
 
 		if (c != null) {
 			c.moveToFirst();
@@ -583,10 +600,9 @@ public class ClinicAdapter {
 
 		if (listtype == DashboardActivity.LIST_COMPLETE) {
 			c = mDb.query(true, PATIENTS_TABLE + ", " + FORMINSTANCES_TABLE, new String[] { PATIENTS_TABLE + "." + KEY_ID, PATIENTS_TABLE + "." + KEY_PATIENT_ID, KEY_IDENTIFIER, KEY_GIVEN_NAME, KEY_FAMILY_NAME, KEY_MIDDLE_NAME, KEY_BIRTH_DATE, KEY_GENDER,
-					KEY_PRIORITY_FORM_NAMES, KEY_PRIORITY_FORM_NUMBER, KEY_SAVED_FORM_NUMBER, KEY_SAVED_FORM_NAMES, KEY_FORMINSTANCE_SUBTEXT }, 
-					listSelection, null, null, null, listOrder, null);
+					KEY_PRIORITY_FORM_NAMES, KEY_PRIORITY_FORM_NUMBER, KEY_SAVED_FORM_NUMBER, KEY_SAVED_FORM_NAMES, KEY_FORMINSTANCE_SUBTEXT, KEY_CLIENT_CREATED, KEY_UUID }, listSelection, null, null, null, listOrder, null);
 		} else {
-			c = mDb.query(true, PATIENTS_TABLE, new String[] { KEY_ID, KEY_PATIENT_ID, KEY_IDENTIFIER, KEY_GIVEN_NAME, KEY_FAMILY_NAME, KEY_MIDDLE_NAME, KEY_BIRTH_DATE, KEY_GENDER, KEY_PRIORITY_FORM_NAMES, KEY_PRIORITY_FORM_NUMBER, KEY_SAVED_FORM_NUMBER, KEY_SAVED_FORM_NAMES },
+			c = mDb.query(true, PATIENTS_TABLE, new String[] { KEY_ID, KEY_PATIENT_ID, KEY_IDENTIFIER, KEY_GIVEN_NAME, KEY_FAMILY_NAME, KEY_MIDDLE_NAME, KEY_BIRTH_DATE, KEY_GENDER, KEY_PRIORITY_FORM_NAMES, KEY_PRIORITY_FORM_NUMBER, KEY_SAVED_FORM_NUMBER, KEY_SAVED_FORM_NAMES, KEY_CLIENT_CREATED, KEY_UUID },
 					listSelection, null, null, null, listOrder, null);
 		}
 		if (c != null) {
@@ -1018,12 +1034,19 @@ public class ClinicAdapter {
 	}
 
 	// COUNTING SECTION....
-	// Count from the patients.db TODO : test to see fi sum and total give the
+	// Count from the patients.db TODO : test to see if sum and total give the
 	// same... total should be the same... but better (its a convenience method)
 	public int countAllPriorityFormNumbers() throws SQLException {
 		int count = 0;
 		Cursor c = null;
-		c = mDb.query(PATIENTS_TABLE, new String[] { "total(" + KEY_PRIORITY_FORM_NUMBER + ") AS " + KEY_PRIORITY_FORM_NUMBER }, KEY_PRIORITY_FORM_NUMBER + " IS NOT NULL", null, null, null, null);
+		// counting total priority form number:
+		// c = mDb.query(PATIENTS_TABLE, new String[] { "total(" +
+		// KEY_PRIORITY_FORM_NUMBER + ") AS " + KEY_PRIORITY_FORM_NUMBER },
+		// KEY_PRIORITY_FORM_NUMBER + " IS NOT NULL", null, null, null, null);
+
+		// counting total patients with a priority form:
+		c = mDb.query(PATIENTS_TABLE, new String[] { "count(*) AS " + KEY_PRIORITY_FORM_NUMBER }, KEY_PRIORITY_FORM_NUMBER + " IS NOT NULL", null, null, null, null);
+
 		if (c != null) {
 			if (c.moveToFirst()) {
 				count = c.getInt(c.getColumnIndex(KEY_PRIORITY_FORM_NUMBER));
@@ -1033,14 +1056,22 @@ public class ClinicAdapter {
 		return count;
 	}
 
-	// All saved numbers come from the Collect.Instances.Db, otherwise, you
-	// would miss the saved instances where there are no identifiers.
 	public int countAllSavedFormNumbers() throws SQLException {
 		int count = 0;
 		Cursor c = null;
-		String selection = InstanceColumns.STATUS + "=?";
-		String selectionArgs[] = { InstanceProviderAPI.STATUS_INCOMPLETE };
-		c = App.getApp().getContentResolver().query(InstanceColumns.CONTENT_URI, new String[] { "count(*) as " + KEY_SAVED_FORM_NUMBER }, selection, selectionArgs, null);
+
+		// Count Total Saved Forms:
+		// All saved numbers come from the Collect.Instances.Db, otherwise, you
+		// would miss the saved instances where there are no identifiers.
+		// String selection = InstanceColumns.STATUS + "=?";
+		// String selectionArgs[] = { InstanceProviderAPI.STATUS_INCOMPLETE };
+		// c =
+		// App.getApp().getContentResolver().query(InstanceColumns.CONTENT_URI,
+		// new String[] { "count(*) as " + KEY_SAVED_FORM_NUMBER }, selection,
+		// selectionArgs, null);
+
+		// Count Total Patients with Saved Forms:
+		c = mDb.query(PATIENTS_TABLE, new String[] { "count(*) AS " + KEY_SAVED_FORM_NUMBER }, KEY_SAVED_FORM_NUMBER + " IS NOT NULL", null, null, null, null);
 
 		if (c != null) {
 			if (c.moveToFirst()) {
@@ -1053,14 +1084,48 @@ public class ClinicAdapter {
 		return count;
 	}
 
-	// All Unsent Completed Forms should all be in the clinic.sqlite
-	// FORMINSTANCES table, so just count
+	public int findLastClientCreatedId() throws SQLException {
+		int lowestNegativeId = 0;
+		Cursor c = null;
+		c = mDb.query(PATIENTS_TABLE, new String[] { "min(" + KEY_PATIENT_ID +") AS " + KEY_PATIENT_ID }, null, null, null, null, null);
+		if (c != null) {
+			if (c.moveToFirst()) {
+				lowestNegativeId = c.getInt(c.getColumnIndex(KEY_PATIENT_ID));
+			}
+			c.close();
+		}
+
+		return lowestNegativeId;
+		
+	}
+	// Count Completed Forms/Clients
 	public int countAllCompletedUnsentForms() throws SQLException {
-		long count = 0;
-		count = DatabaseUtils.queryNumEntries(mDb, FORMINSTANCES_TABLE);
-		int intcount = safeLongToInt(count);
-		Log.e("louis.fazen", "countAllCompletedUnsentForms is not null with count of " + intcount);
-		return intcount;
+		int count = 0;
+
+		// Count all Completed forms as entries in Db: All Unsent Completed
+		// Forms should all be in the clinic.sqlite
+		// FORMINSTANCES table, so just count:
+		// count = DatabaseUtils.queryNumEntries(mDb, FORMINSTANCES_TABLE);
+		// int intcount = safeLongToInt(count);
+		// Log.e("louis.fazen",
+		// "countAllCompletedUnsentForms is not null with count of " +
+		// intcount);
+		// return intcount;
+
+		// Count all patients with completed forms (i.e. group by patient id)
+		Cursor c = null;
+		c = mDb.query("(SELECT DISTINCT " + KEY_PATIENT_ID + " FROM " + FORMINSTANCES_TABLE + ")", new String[] { "count(" + KEY_PATIENT_ID + ") AS " + KEY_PATIENT_ID }, null, null, null, null, null);
+
+		if (c != null) {
+			if (c.moveToFirst()) {
+				count = c.getInt(c.getColumnIndex(KEY_PATIENT_ID));
+				Log.e("louis.fazen", "countAllCompletedNumbers is not null with count of " + count);
+			}
+			c.close();
+		}
+
+		return count;
+
 	}
 
 	public int countAllPatients() throws SQLException {

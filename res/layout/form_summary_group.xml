@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/vertical_container_rl"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:paddingBottom="10dip" >
+
+    <TextView
+        android:id="@+id/view_all_forms"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_marginBottom="2dip"
+        android:layout_marginLeft="12dip"
+        android:layout_marginTop="10dip"
+        android:text="@string/view_all_forms"
+        android:textColor="@color/dark_gray"
+        android:textSize="18sp" />
+
+    <LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/vertical_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/view_all_forms"
+        android:orientation="vertical"
+        android:paddingLeft="13dip"
+                android:layout_marginBottom="20dip" >
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/arrow_image"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
+        android:layout_marginBottom="10dip"
+        android:layout_marginTop="10dip"
+        android:paddingLeft="3dip"
+        android:paddingRight="9dip" />
+
+</RelativeLayout>

@@ -11,6 +11,8 @@ public class Patient {
 
 	private Integer patientId = null;
 	private String identifier = null;
+	
+	private String uuid = null;
 
 	private String givenName = null;
 	private String familyName = null;
@@ -20,6 +22,8 @@ public class Patient {
 	
 //	private String birthDateDb = null;
 	private String birthDate = null;
+	private String dbBirthDate = null;
+	
 	private String age = null;
 	private Boolean priorityStatus = false;
 	private Integer priorityFormNumber = null;
@@ -31,16 +35,20 @@ public class Patient {
 	
 	private Integer totalCompletedForms = null;
 	
+	//used to specify info about the reason for creating a new patient
+	private Integer createCode = null;
+	
 	public Patient() {
 
 	}
-
+	
 	@Override
 	public String toString() {
 		return givenName + " " + middleName + " " + familyName + " " + identifier;
 	}
 
 	public Integer getPatientId() {
+		Log.e("louis.fazen", "patient.getPatientId=" + patientId);
 		return patientId;
 	}
 
@@ -98,6 +106,14 @@ public class Patient {
 	
 	public void setPatientId(Integer pid) {
 		patientId = pid;
+		Log.e("louis.fazen", "patient.setPatientId=" + patientId);
+	}
+	
+	public void setCreateCode(Integer createcode) {
+		createCode = createcode;
+	}
+	public Integer getCreateCode() {
+		return createCode;
 	}
 
 	public void setIdentifier(String id) {
@@ -141,6 +157,15 @@ public class Patient {
 		savedForms = forms;
 	}
 	
+	public void setUuid(String n) {
+		uuid = n;
+	}
+	
+	public String getUuid() {
+		return uuid;
+	}
+	
+	
 	public void setTotalCompletedForms(Integer totalforms) {
 		totalCompletedForms = totalforms;
 	}
@@ -173,6 +198,14 @@ public class Patient {
 			outputAge = String.valueOf(years) + " yo";
 		}
 		age = outputAge;
+	}
+	
+	public void setDbBirthDate(String date) {
+		dbBirthDate = date;
+	}
+	
+	public String getDbBirthDate(){
+		return dbBirthDate;
 	}
 
 	public void setGender(String g) {

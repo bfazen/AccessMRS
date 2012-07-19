@@ -70,7 +70,7 @@ public class ViewCompletedForms extends ListActivity {
 		mPatientIdString = getIntent().getStringExtra(Constants.KEY_PATIENT_ID);
 		Integer patientId = Integer.valueOf(mPatientIdString);
 		
-		if (patientId > 0) {
+//		if (patientId > 0) {
 			setContentView(R.layout.example_cw_main);
 			mPatient = getPatient(patientId);
 
@@ -104,19 +104,19 @@ public class ViewCompletedForms extends ListActivity {
 					imageView.setImageResource(R.drawable.female_gray);
 				}
 			}
-		} else {
-			
-			setContentView(R.layout.all_form_list);
-			TextView textView = (TextView) findViewById(R.id.name_text);
-			ImageView sectionImage = (ImageView) findViewById(R.id.section_image);
-			View viewTitle = (View) findViewById(R.id.title);
-			viewTitle.setBackgroundResource(R.color.dark_gray);
-
-			textView.setText("Forms For New Clients");
-//			TODO: get rid of the need for res to be included here
-			sectionImage.setImageDrawable(res.getDrawable(R.drawable.icon));
-
-		}
+//		} else {
+//			
+//			setContentView(R.layout.all_form_list);
+//			TextView textView = (TextView) findViewById(R.id.name_text);
+//			ImageView sectionImage = (ImageView) findViewById(R.id.section_image);
+//			View viewTitle = (View) findViewById(R.id.title);
+//			viewTitle.setBackgroundResource(R.color.dark_gray);
+//
+//			textView.setText("Forms For New Clients");
+////			TODO: get rid of the need for res to be included here
+//			sectionImage.setImageDrawable(res.getDrawable(R.drawable.icon));
+//
+//		}
 	}
 
 	@Override

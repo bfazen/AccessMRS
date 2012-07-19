@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/form_summary_rl"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal" 
+    android:paddingLeft="5dip"
+    >
+
+    <ImageView
+        android:id="@+id/counter_image"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" 
+        android:padding="1dip"/>
+
+    <TextView
+        android:id="@+id/counter_number"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/counter_image"
+        android:layout_alignLeft="@+id/counter_image"
+        android:layout_alignRight="@+id/counter_image"
+        android:layout_alignTop="@+id/counter_image"
+        android:gravity="center"
+        android:textColor="@color/white_color"
+        android:textSize="14sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/counter_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toRightOf="@+id/counter_image"
+        android:paddingLeft="13dip"
+        android:textColor="@color/dark_gray"
+        android:textSize="16sp"
+        android:textStyle="italic" />
+
+</RelativeLayout>

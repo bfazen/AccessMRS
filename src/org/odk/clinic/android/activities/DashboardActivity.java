@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import org.odk.clinic.android.R;
 import org.odk.clinic.android.database.ClinicAdapter;
 import org.odk.clinic.android.listeners.UploadFormListener;
+import org.odk.clinic.android.openmrs.Constants;
 import org.odk.clinic.android.tasks.UploadInstanceTask;
 import org.odk.clinic.android.utilities.FileUtils;
 
@@ -22,9 +23,11 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.View.OnClickListener;
 import android.view.Window;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -112,64 +115,13 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 
 				// branch of id of form to fill...
 				if (forms > 0) {
-					Intent i = new Intent(mContext, AllFormList.class);
+					Intent i = new Intent(mContext, CreatePatientActivity.class);
+//					Intent i = new Intent(mContext, AllFormList.class);
 					startActivity(i);
 
 				} else {
 					showCustomToast(getString(R.string.no_forms));
 				}
-			}
-
-		});
-
-		mViewPatientsButton = (RelativeLayout) findViewById(R.id.patients_block);
-		mViewPatientsButton.setOnClickListener(new OnClickListener() {
-
-			public void onClick(View arg0) {
-
-				Intent i = new Intent(mContext, ListPatientActivity.class);
-				i.putExtra(LIST_TYPE, LIST_ALL);
-				startActivity(i);
-
-			}
-
-		});
-
-		mSuggestedPatientsButton = (RelativeLayout) findViewById(R.id.suggested_block);
-		mSuggestedPatientsButton.setOnClickListener(new OnClickListener() {
-
-			public void onClick(View arg0) {
-
-				Intent i = new Intent(mContext, ListPatientActivity.class);
-				i.putExtra(LIST_TYPE, LIST_SUGGESTED);
-				startActivity(i);
-
-			}
-
-		});
-
-		mIncompletePatientsButton = (RelativeLayout) findViewById(R.id.saved_block);
-		mIncompletePatientsButton.setOnClickListener(new OnClickListener() {
-
-			public void onClick(View arg0) {
-
-				Intent i = new Intent(mContext, ListPatientActivity.class);
-				i.putExtra(LIST_TYPE, LIST_INCOMPLETE);
-				startActivity(i);
-
-			}
-
-		});
-
-		mCompletePatientsButton = (RelativeLayout) findViewById(R.id.completed_block);
-		mCompletePatientsButton.setOnClickListener(new OnClickListener() {
-
-			public void onClick(View arg0) {
-
-				Intent i = new Intent(mContext, ListPatientActivity.class);
-				i.putExtra(LIST_TYPE, LIST_COMPLETE);
-				startActivity(i);
-
 			}
 
 		});
@@ -215,7 +167,7 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 		completedForms = mCla.countAllCompletedUnsentForms();
 		priorityToDoForms = mCla.countAllPriorityFormNumbers();
 		forms = mCla.countAllForms();
-		String refreshtime = mCla.fetchMostRecentDownload();
+		String refreshtime = mCla.fetchMostRecentDownload() + " ";
 		mCla.close();
 
 		// Download Section
@@ -224,32 +176,133 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 		// refreshTitle.setText("Update:");
 		TextView refreshSubtext = (TextView) findViewById(R.id.refresh_subtext);
 		refreshSubtext.setText(refreshtime);
+		
+		//Buttons Section
+		ViewGroup clientButtonGroup = (ViewGroup) findViewById(R.id.vertical_container);
+		LayoutInflater vi = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+		clientButtonGroup.removeAllViews();
 
-		// Patient Section
-		RelativeLayout patientRL = (RelativeLayout) findViewById(R.id.patients_number_block);
-		TextView patientNumber = (TextView) findViewById(R.id.patients_number);
-		TextView patientSubtext = (TextView) findViewById(R.id.patients_subtext);
-
-		if (patients > 0) {
-			mViewPatientsButton.setVisibility(View.VISIBLE);
-			patientRL.setVisibility(View.VISIBLE);
-			patientNumber.setVisibility(View.VISIBLE);
-			patientSubtext.setVisibility(View.VISIBLE);
-			patientRL.setBackgroundResource(R.drawable.gray);
-			patientNumber.setText(String.valueOf(patients));
-			if (patients > 1) {
-				patientSubtext.setText(R.string.current_patients);
+		// //Priority Form Section
+		if (priorityToDoForms > 0) {
+			View priorityButton = vi.inflate(R.layout.dashboard_patients, null);
+			priorityButton.setClickable(true);
+			priorityButton.setOnClickListener(new OnClickListener() {
+				public void onClick(View arg0) {
+					Intent i = new Intent(mContext, ListPatientActivity.class);
+					i.putExtra(LIST_TYPE, LIST_SUGGESTED);
+					startActivity(i);
+				}
+			});		
+			
+			RelativeLayout priorityRL = (RelativeLayout)  priorityButton.findViewById(R.id.number_block);
+			TextView priorityNumber = (TextView)  priorityButton.findViewById(R.id.number);
+			TextView priorityText = (TextView)  priorityButton.findViewById(R.id.text);
+			ImageView priorityArrow = (ImageView) priorityButton.findViewById(R.id.arrow_image);
+			
+			priorityRL.setBackgroundResource(R.drawable.priority);
+			priorityNumber.setText(String.valueOf(priorityToDoForms));
+			priorityArrow.setBackgroundResource(R.drawable.arrow_red);
+			if (priorityToDoForms > 1) {
+				priorityText.setText(R.string.to_do_clients);
 			} else {
-				patientSubtext.setText(R.string.current_patient);
+				priorityText.setText(R.string.to_do_client);
 			}
-
-		} else {
-			mViewPatientsButton.setVisibility(View.GONE);
-			patientRL.setVisibility(View.GONE);
-			patientNumber.setVisibility(View.GONE);
-			patientSubtext.setVisibility(View.GONE);
+			priorityText.append(" ");
+//			priorityText.setTextColor(R.color.priority);
+		
+			clientButtonGroup.addView(priorityButton);
 		}
 
+		// Incomplete/Saved Form Section
+		if (incompleteForms > 0) {
+			View incompleteButton = vi.inflate(R.layout.dashboard_patients, null);
+			incompleteButton.setClickable(true);
+			incompleteButton.setOnClickListener(new OnClickListener() {
+				public void onClick(View arg0) {
+					Intent i = new Intent(mContext, ListPatientActivity.class);
+					i.putExtra(LIST_TYPE, LIST_INCOMPLETE);
+					startActivity(i);
+				}
+			});		
+			
+			RelativeLayout incompleteRL = (RelativeLayout)  incompleteButton.findViewById(R.id.number_block);
+			TextView incompleteNumber = (TextView)  incompleteButton.findViewById(R.id.number);
+			TextView incompleteText = (TextView)  incompleteButton.findViewById(R.id.text);
+			ImageView incompleteArrow = (ImageView) incompleteButton.findViewById(R.id.arrow_image);
+			
+			incompleteRL.setBackgroundResource(R.drawable.incomplete);
+			incompleteNumber.setText(String.valueOf(incompleteForms));
+			incompleteArrow.setBackgroundResource(R.drawable.arrow_gray);
+			if (incompleteForms > 1) {
+				incompleteText.setText(R.string.incomplete_clients);
+			} else {
+				incompleteText.setText(R.string.incomplete_client);
+			}
+			incompleteText.append(" ");
+		
+			clientButtonGroup.addView(incompleteButton);
+		}
+		
+		// Completed Form Section	
+		if (completedForms > 0) {
+			View completedButton = vi.inflate(R.layout.dashboard_patients, null);
+			completedButton.setClickable(true);
+			completedButton.setOnClickListener(new OnClickListener() {
+				public void onClick(View arg0) {
+					Intent i = new Intent(mContext, ListPatientActivity.class);
+					i.putExtra(LIST_TYPE, LIST_COMPLETE);
+					startActivity(i);
+				}
+			});		
+			
+			RelativeLayout completedRL = (RelativeLayout)  completedButton.findViewById(R.id.number_block);
+			TextView completedNumber = (TextView)  completedButton.findViewById(R.id.number);
+			TextView completedText = (TextView)  completedButton.findViewById(R.id.text);
+			ImageView completedArrow = (ImageView) completedButton.findViewById(R.id.arrow_image);
+			
+			completedRL.setBackgroundResource(R.drawable.completed);
+			completedNumber.setText(String.valueOf(completedForms));
+			completedArrow.setBackgroundResource(R.drawable.arrow_gray);
+			if (completedForms > 1) {
+				completedText.setText(R.string.completed_clients);
+			} else {
+				completedText.setText(R.string.completed_client);
+			}
+			completedText.append(" ");
+		
+			clientButtonGroup.addView(completedButton);
+		}
+		
+		// Patient Section
+		if (patients > 0) {
+			View patientsButton = vi.inflate(R.layout.dashboard_patients, null);
+			patientsButton.setClickable(true);
+			patientsButton.setOnClickListener(new OnClickListener() {
+				public void onClick(View arg0) {
+					Intent i = new Intent(mContext, ListPatientActivity.class);
+					i.putExtra(LIST_TYPE, LIST_ALL);
+					startActivity(i);
+				}
+			});		
+			
+			RelativeLayout patientsRL = (RelativeLayout)  patientsButton.findViewById(R.id.number_block);
+			TextView patientsNumber = (TextView)  patientsButton.findViewById(R.id.number);
+			TextView patientsText = (TextView)  patientsButton.findViewById(R.id.text);
+			ImageView patientsArrow = (ImageView) patientsButton.findViewById(R.id.arrow_image);
+			
+			patientsRL.setBackgroundResource(R.drawable.gray);
+			patientsNumber.setText(String.valueOf(patients));
+			patientsArrow.setBackgroundResource(R.drawable.arrow_gray);
+			if (patients > 1) {
+				patientsText.setText(R.string.current_clients);
+			} else {
+				patientsText.setText(R.string.current_client);
+			}
+			patientsText.append(" ");
+		
+			clientButtonGroup.addView(patientsButton);
+		}
+		
 		// Form Section
 		RelativeLayout formRL = (RelativeLayout) findViewById(R.id.form_number_block);
 		TextView formNumber = (TextView) findViewById(R.id.form_number);
@@ -264,8 +317,10 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 			formNumber.setText(String.valueOf(forms));
 			if (forms > 1) {
 				formSubtext.setText(R.string.downloaded_forms);
+				formSubtext.append(" ");
 			} else {
 				formSubtext.setText(R.string.downloaded_form);
+				formSubtext.append(" ");
 			}
 
 		} else {
@@ -273,90 +328,6 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 			formRL.setVisibility(View.GONE);
 			formNumber.setVisibility(View.GONE);
 			formSubtext.setVisibility(View.GONE);
-		}
-
-		// //Priority Form Section
-		RelativeLayout todoRL = (RelativeLayout) findViewById(R.id.suggested_number_block);
-		TextView todoNumber = (TextView) findViewById(R.id.suggested_number);
-		TextView todoText = (TextView) findViewById(R.id.suggested_subtext);
-
-		if (priorityToDoForms > 0) {
-
-			int bottom = todoRL.getPaddingBottom();
-			int top = todoRL.getPaddingTop();
-			int right = todoRL.getPaddingRight();
-			int left = todoRL.getPaddingLeft();
-			Log.e("louis.fazen", "padding is:" + top + bottom + left + right);
-			mSuggestedPatientsButton.setVisibility(View.VISIBLE);
-			todoRL.setVisibility(View.VISIBLE);
-			todoNumber.setVisibility(View.VISIBLE);
-			todoText.setVisibility(View.VISIBLE);
-			todoRL.setBackgroundResource(R.drawable.priority);
-			todoNumber.setText(String.valueOf(priorityToDoForms));
-			if (priorityToDoForms > 1) {
-				todoText.setText(R.string.to_do_forms);
-			} else {
-				todoText.setText(R.string.to_do_form);
-			}
-
-		} else {
-			mSuggestedPatientsButton.setVisibility(View.GONE);
-			todoRL.setVisibility(View.GONE);
-			todoNumber.setVisibility(View.GONE);
-			todoText.setVisibility(View.GONE);
-		}
-
-		// Incomplete/Saved Form Section
-		RelativeLayout incompletedRL = (RelativeLayout) findViewById(R.id.saved_number_block);
-		TextView incompletedNumber = (TextView) findViewById(R.id.saved_number);
-		TextView incompletedText = (TextView) findViewById(R.id.saved_subtext);
-
-		if (incompleteForms > 0) {
-			Log.e("louis.fazen", "incompleteForms is not null with count " + incompleteForms);
-			mIncompletePatientsButton.setVisibility(View.VISIBLE);
-			incompletedRL.setBackgroundResource(R.drawable.incomplete);
-			incompletedNumber.setText(String.valueOf(incompleteForms));
-			incompletedRL.setVisibility(View.VISIBLE);
-			incompletedNumber.setVisibility(View.VISIBLE);
-			incompletedText.setVisibility(View.VISIBLE);
-			if (incompleteForms > 1) {
-				incompletedText.setText(R.string.incomplete_forms);
-			} else {
-				incompletedText.setText(R.string.incomplete_form);
-			}
-
-		} else {
-			mIncompletePatientsButton.setVisibility(View.GONE);
-			incompletedRL.setVisibility(View.GONE);
-			incompletedNumber.setVisibility(View.GONE);
-			incompletedText.setVisibility(View.GONE);
-		}
-
-		// Completed Form Section
-		RelativeLayout completedRL = (RelativeLayout) findViewById(R.id.completed_number_block);
-		TextView completedNumber = (TextView) findViewById(R.id.completed_number);
-		TextView completedText = (TextView) findViewById(R.id.completed_subtext);
-
-		if (completedForms > 0) {
-			Log.e("louis.fazen", "completedForms is not null with count " + completedForms);
-			mCompletePatientsButton.setVisibility(View.VISIBLE);
-			completedRL.setVisibility(View.VISIBLE);
-			completedNumber.setVisibility(View.VISIBLE);
-			completedText.setVisibility(View.VISIBLE);
-			completedRL.setBackgroundResource(R.drawable.completed);
-			completedNumber.setText(String.valueOf(completedForms));
-			if (completedForms > 1) {
-				completedText.setText(R.string.completed_forms);
-			} else {
-				completedText.setText(R.string.completed_form);
-			}
-
-		} else {
-			Log.e("louis.fazen", "completedForms is now invisible");
-			mCompletePatientsButton.setVisibility(View.GONE);
-			completedRL.setVisibility(View.GONE);
-			completedNumber.setVisibility(View.GONE);
-			completedText.setVisibility(View.GONE);
 		}
 
 	}

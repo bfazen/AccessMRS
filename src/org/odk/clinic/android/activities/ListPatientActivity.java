@@ -139,6 +139,13 @@ public class ListPatientActivity extends ListActivity implements UploadFormListe
 
 		Intent ip = new Intent(getApplicationContext(), ViewPatientActivity.class);
 		ip.putExtra(Constants.KEY_PATIENT_ID, patientIdStr);
+		
+		//for client created patients, use the UUID to identify them...
+		if (p.getPatientId() < 0) {
+			String uuidStr = p.getUuid();
+			ip.putExtra(Constants.KEY_UUID, uuidStr);
+		}
+
 		startActivity(ip);
 	}
 
@@ -202,6 +209,7 @@ public class ListPatientActivity extends ListActivity implements UploadFormListe
 			int priorityFormIndex = c.getColumnIndexOrThrow(ClinicAdapter.KEY_PRIORITY_FORM_NAMES);
 			int savedIndex = c.getColumnIndexOrThrow(ClinicAdapter.KEY_SAVED_FORM_NUMBER);
 			int savedFormIndex = c.getColumnIndexOrThrow(ClinicAdapter.KEY_SAVED_FORM_NAMES);
+			int uuidIndex = c.getColumnIndexOrThrow(ClinicAdapter.KEY_UUID);
 
 			if (c.getCount() > 0) {
 
@@ -222,19 +230,16 @@ public class ListPatientActivity extends ListActivity implements UploadFormListe
 					p.setPriorityForms(c.getString(priorityFormIndex));
 					p.setSavedNumber(c.getInt(savedIndex));
 					p.setSavedForms(c.getString(savedFormIndex));
+					p.setUuid(c.getString(savedFormIndex));
 
 					if (c.getInt(priorityIndex) > 0) {
-
 						p.setPriority(true);
-
 					} else {
 						p.setPriority(false);
 					}
 
 					if (c.getInt(savedIndex) > 0) {
-
 						p.setSaved(true);
-
 					} else {
 						p.setSaved(false);
 					}

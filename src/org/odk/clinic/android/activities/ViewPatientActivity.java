@@ -27,11 +27,15 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.View.OnClickListener;
+import android.view.ViewGroup.LayoutParams;
 import android.view.Window;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -66,6 +70,8 @@ public class ViewPatientActivity extends ListActivity {
 
 	private Resources res;
 
+	private MergeAdapter adapter;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		Log.e("ViewPatientActivity", "ACTIVITY_LOG_END: " + activityLogEnd);
@@ -84,7 +90,9 @@ public class ViewPatientActivity extends ListActivity {
 
 		// TODO Check for invalid patient IDs
 		patientIdStr = getIntent().getStringExtra(Constants.KEY_PATIENT_ID);
+		Log.e("louis.fazen", "ViewPatientActivity.patientIdStr=" + patientIdStr);
 		Integer patientId = Integer.valueOf(patientIdStr);
+
 		mPatient = getPatient(patientId);
 		mPatient.setTotalCompletedForms(findPreviousEncounters());
 
@@ -193,6 +201,42 @@ public class ViewPatientActivity extends ListActivity {
 		return p;
 	}
 
+	private Patient getPatient(String uuid) {
+
+		Patient p = null;
+		ClinicAdapter ca = new ClinicAdapter();
+
+		ca.open();
+		Cursor c = ca.fetchPatient(uuid);
+
+		if (c != null && c.getCount() > 0) {
+			int patientIdIndex = c.getColumnIndex(ClinicAdapter.KEY_PATIENT_ID);
+			int identifierIndex = c.getColumnIndex(ClinicAdapter.KEY_IDENTIFIER);
+			int givenNameIndex = c.getColumnIndex(ClinicAdapter.KEY_GIVEN_NAME);
+			int familyNameIndex = c.getColumnIndex(ClinicAdapter.KEY_FAMILY_NAME);
+			int middleNameIndex = c.getColumnIndex(ClinicAdapter.KEY_MIDDLE_NAME);
+			int birthDateIndex = c.getColumnIndex(ClinicAdapter.KEY_BIRTH_DATE);
+			int genderIndex = c.getColumnIndex(ClinicAdapter.KEY_GENDER);
+
+			p = new Patient();
+			p.setPatientId(c.getInt(patientIdIndex));
+			p.setIdentifier(c.getString(identifierIndex));
+			p.setGivenName(c.getString(givenNameIndex));
+			p.setFamilyName(c.getString(familyNameIndex));
+			p.setMiddleName(c.getString(middleNameIndex));
+			p.setBirthDate(c.getString(birthDateIndex));
+			p.setGender(c.getString(genderIndex));
+
+		}
+
+		if (c != null) {
+			c.close();
+		}
+		ca.close();
+
+		return p;
+	}
+
 	private void getPatientForms(Integer patientId) {
 		Log.e("ViewPatientActivity", "ACTIVITY_LOG_END: " + "getPatientForms is called!");
 		ClinicAdapter ca = new ClinicAdapter();
@@ -218,6 +262,12 @@ public class ViewPatientActivity extends ListActivity {
 				mPatient.setPriority(false);
 			}
 
+			if (c.getInt(savedNumberIndex) > 0) {
+				mPatient.setSaved(true);
+			} else {
+				mPatient.setSaved(false);
+			}
+
 		}
 
 		if (c != null) {
@@ -228,14 +278,14 @@ public class ViewPatientActivity extends ListActivity {
 	}
 
 	private void getAllObservations(Integer patientId) {
-
+		mObservations.clear();
+		
 		ClinicAdapter ca = new ClinicAdapter();
-
 		ca.open();
-		Cursor c = ca.fetchPatientObservations(patientId);
-
+		Cursor c = ca.fetchPatientObservations(patientId);	
+		
 		if (c != null && c.getCount() > 0) {
-			mObservations.clear();
+			
 			int valueTextIndex = c.getColumnIndex(ClinicAdapter.KEY_VALUE_TEXT);
 			int valueIntIndex = c.getColumnIndex(ClinicAdapter.KEY_VALUE_INT);
 			int valueDateIndex = c.getColumnIndex(ClinicAdapter.KEY_VALUE_DATE);
@@ -316,7 +366,7 @@ public class ViewPatientActivity extends ListActivity {
 
 	private void refreshView() {
 
-		MergeAdapter adapter = new MergeAdapter();
+		adapter = new MergeAdapter();
 
 		mObservationAdapter = new ObservationAdapter(this, R.layout.observation_list_item, mObservations);
 		mFormView = formView();
@@ -340,27 +390,19 @@ public class ViewPatientActivity extends ListActivity {
 		View v;
 		LayoutInflater vi = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 		v = vi.inflate(R.layout.section_label, null);
-
-		if ((section == getString(R.string.clinical_form_section)) && mPatient.getPriority()) {
-			v.setBackgroundResource(R.color.priority);
-		} else {
-			v.setBackgroundResource(R.color.medium_gray);
-		}
-
+		v.setBackgroundResource(R.color.medium_gray);
 		TextView textView = (TextView) v.findViewById(R.id.name_text);
 		textView.setText(section);
-
 		return (v);
 	}
 
 	private View formView() {
-
-		View formsSummary;
 		LayoutInflater vi = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-		formsSummary = vi.inflate(R.layout.priority_form_summary, null);
-		formsSummary.setClickable(true);
+		View formSummaryGroup = vi.inflate(R.layout.form_summary_group, null);
+		ViewGroup parent = (ViewGroup) formSummaryGroup.findViewById(R.id.vertical_container);
+		formSummaryGroup.setClickable(true);
 
-		formsSummary.setOnClickListener(new View.OnClickListener() {
+		formSummaryGroup.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
 				if (checkForForms()) {
 					Intent i = new Intent(getApplicationContext(), FormPriorityList.class);
@@ -372,95 +414,44 @@ public class ViewPatientActivity extends ListActivity {
 			}
 		});
 
-		ImageView priorityArrow = (ImageView) formsSummary.findViewById(R.id.arrow_image);
-		
+		ImageView formArrow = (ImageView) formSummaryGroup.findViewById(R.id.arrow_image);
 
-		TextView allFormTitle = (TextView) formsSummary.findViewById(R.id.all_form_title);
-		TextView formNames = (TextView) formsSummary.findViewById(R.id.form_names);
-		
-		ImageView savedImage = (ImageView) formsSummary.findViewById(R.id.saved_image);
-		TextView savedNumber = (TextView) formsSummary.findViewById(R.id.saved_number);
-
-		RelativeLayout savedRL = (RelativeLayout) findViewById(R.id.saved_number_block);
-		
-		RelativeLayout suggestedRL = (RelativeLayout) findViewById(R.id.suggested_number_block);
-		TextView suggestedNumber = (TextView) formsSummary.findViewById(R.id.suggested_number);
-		TextView suggestedSubtext = (TextView) formsSummary.findViewById(R.id.suggested_subtext);
-		// ImageView savedImage = (ImageView)
-		// formsSummary.findViewById(R.id.saved_image);
-		// TextView savedNumber = (TextView)
-		// formsSummary.findViewById(R.id.saved_number);
-		// // TextView allFormTitle = (TextView)
-		// formsSummary.findViewById(R.id.all_form_title);
-		// TextView savedFormNames = (TextView)
-		// formsSummary.findViewById(R.id.saved_form_names);
-
-		priorityImage.setImageDrawable(res.getDrawable(R.drawable.priority_icon_blank));
-		formNames.setTextColor(res.getColor(R.color.dark_gray));
-		
-		savedRL.setVisibility(View.VISIBLE);
-		
-		suggestedRL.setVisibility(View.VISIBLE);
-		suggestedNumber.setVisibility(View.VISIBLE);
-		suggestedSubtext.setVisibility(View.VISIBLE);
-		
-		suggestedRL.setBackgroundResource(R.drawable.priority);
-		suggestedNumber.setText(String.valueOf(patients));
-
-		if (priorityArrow != null  && allFormTitle != null) {
-
-			// formNames.setText(mPatient.getPriorityForms());
-			// formNames.setTextColor(R.color.priority);
-			// formTitle.setText("Suggested Forms:");
-			// allFormTitle.setVisibility(View.GONE);
-//			formNames.setVisibility(View.GONE);
-			allFormTitle.setText("View All Forms");
-
-			if (mPatient.getPriority() && mPatient.getSaved()) {
-				priorityArrow.setImageResource(R.drawable.arrow_red);
-//				allFormTitle.setText(mPatient.getPriorityForms());
-//				allFormTitle.setTextColor(R.color.priority);
-//				patientRL.setBackgroundResource(R.drawable.gray);
-
-				if (suggestedNumber != null && suggestedRL != null && savedNumber != null && savedRL != null) {
-					suggestedNumber.setText(mPatient.getPriorityNumber().toString());
-					suggestedRL.setVisibility(View.VISIBLE);
-					savedNumber.setText(mPatient.getSavedNumber().toString());
-					savedImage.setVisibility(View.VISIBLE);
+		if (formArrow != null) {
+			if (mPatient.getPriority()) {
+				formArrow.setImageResource(R.drawable.arrow_red);
+				View priorityCounter = vi.inflate(R.layout.form_summary, null);
+				ImageView priorityImage = (ImageView) priorityCounter.findViewById(R.id.counter_image);
+				priorityImage.setImageDrawable(res.getDrawable(R.drawable.priority));
+				TextView priorityNumber = (TextView) priorityCounter.findViewById(R.id.counter_number);
+				TextView priorityText = (TextView) priorityCounter.findViewById(R.id.counter_text);
+				if (priorityNumber != null && priorityText != null) {
+					priorityNumber.setText(mPatient.getPriorityNumber().toString());
+					priorityText.setText(R.string.to_do_forms);
+					priorityText.append(" ");
 				}
+				parent.addView(priorityCounter);
 
-			} else if (mPatient.getPriority() && !mPatient.getSaved()) {
-				priorityArrow.setImageResource(R.drawable.arrow_red);
-				if (suggestedNumber != null && suggestedRL != null && savedNumber != null && savedImage != null) {
-					suggestedNumber.setText(mPatient.getPriorityNumber().toString());
-					suggestedRL.setVisibility(View.VISIBLE);
-					savedNumber.setText(null);
-					savedImage.setVisibility(View.GONE);
-				}
-			} else if (!mPatient.getPriority() && mPatient.getSaved()) {
-				priorityArrow.setImageResource(R.drawable.arrow_gray);
-
-				if (suggestedNumber != null && suggestedRL != null && savedNumber != null && savedImage != null) {
-					suggestedNumber.setText(null);
-					suggestedRL.setVisibility(View.GONE);
-					savedNumber.setText(mPatient.getSavedNumber().toString());
-					savedImage.setVisibility(View.VISIBLE);
-				}
 			} else {
+				formArrow.setImageResource(R.drawable.arrow_gray);
 
-				priorityArrow.setImageResource(R.drawable.arrow_gray);
-
-				if (suggestedNumber != null && suggestedRL != null && savedNumber != null && savedImage != null) {
-					suggestedNumber.setText(null);
-					suggestedRL.setVisibility(View.GONE);
-					savedNumber.setText(null);
-					savedImage.setVisibility(View.GONE);
-				}
 			}
-
 		}
 
-		return (formsSummary);
+		if (mPatient.getSaved()) {
+			View savedCounter = vi.inflate(R.layout.form_summary, null);
+			ImageView savedImage = (ImageView) savedCounter.findViewById(R.id.counter_image);
+			savedImage.setImageDrawable(res.getDrawable(R.drawable.incomplete));
+			TextView savedNumber = (TextView) savedCounter.findViewById(R.id.counter_number);
+			TextView savedText = (TextView) savedCounter.findViewById(R.id.counter_text);
+			if (savedNumber != null && savedText != null) {
+				savedNumber.setText(mPatient.getSavedNumber().toString());
+				savedText.setText(R.string.incomplete_forms);
+				savedText.append(" ");
+			}
+			parent.addView(savedCounter);
+		}
+
+		return (formSummaryGroup);
 	}
 
 	private Integer findPreviousEncounters() {
