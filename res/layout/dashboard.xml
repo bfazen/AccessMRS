@@ -72,15 +72,7 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical" >
-
         </LinearLayout>
     </ScrollView>
-            <include
-                android:id="@+id/load_blank_forms"
-                layout="@layout/dashboard_forms" />
 
-            <View
-                android:layout_width="fill_parent"
-                android:layout_height="1dp"
-                android:background="@color/medium_gray" />
 </LinearLayout>

@@ -51,10 +51,16 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteException;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.preference.PreferenceManager;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.GestureDetector;
+import android.view.GestureDetector.OnGestureListener;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.DatePicker;
@@ -63,7 +69,7 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Toast;
 
-public class CreatePatientActivity extends Activity {
+public class CreatePatientActivity extends Activity implements OnGestureListener {
 	public static final Integer PERMANENT_NEW_CLIENT = 1;
 	public static final Integer TEMPORARY_NEW_CLIENT = 2;
 
@@ -90,6 +96,7 @@ public class CreatePatientActivity extends Activity {
 	// for launching the form into collect:
 	private ActivityLog mActivityLog;
 	private static final int REGISTRATION = 5;
+	private static final int VERIFY_SIMILAR_CLIENTS = 6;
 	private static final String REGISTRATION_FORM_PATH = "/mnt/sdcard/odk/clinic/forms/patient_registration.xml";
 
 	// brought in from Yaw's ViewPatient and my FormPriorityList
@@ -100,11 +107,16 @@ public class CreatePatientActivity extends Activity {
 	private static Patient mPatient;
 	private static HashMap<String, String> mInstanceValues = new HashMap<String, String>();
 	private static ArrayList<Observation> mObservations = new ArrayList<Observation>();
+	private ArrayList<Patient> mPatients = new ArrayList<Patient>();
+
+	private GestureDetector mGestureDetector;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.create_patient);
+		mGestureDetector = new GestureDetector(this);
+		mContext = this;
 
 		// check to see if form exists in Collect Db
 		String dbjrFormId = "no_registration_form";
@@ -113,10 +125,10 @@ public class CreatePatientActivity extends Activity {
 			do {
 				// if registration form does not exist, then create it
 				dbjrFormId = cursor.getString(cursor.getColumnIndex(FormsColumns.JR_FORM_ID));
-//				String neg = "-1";
-//				if (dbjrFormId.equals(neg)) {
-//
-//				}
+				// String neg = "-1";
+				// if (dbjrFormId.equals(neg)) {
+				//
+				// }
 			} while (cursor.moveToNext());
 
 			if (cursor != null) {
@@ -165,33 +177,47 @@ public class CreatePatientActivity extends Activity {
 					Toast.makeText(CreatePatientActivity.this, "Birthdate should not be in the future.", Toast.LENGTH_SHORT).show();
 				} else if (mCreateCode == null) {
 					Toast.makeText(CreatePatientActivity.this, "Please specify whether you wish to receive updates on this client in the future.", Toast.LENGTH_SHORT).show();
+				} else if (similarClientCheck()) {
+					Log.e("louis.fazen", "client is similar");
+					// ask provider for verification
+					Intent i = new Intent(mContext, ListPatientActivity.class);
+					i.putExtra(DashboardActivity.LIST_TYPE, DashboardActivity.LIST_SIMILAR_CLIENTS);
+					i.putExtra("search_name_string", mFirstName + " " + mLastName);
+					i.putExtra("search_id_string", mPatientID);
+					startActivityForResult(i, VERIFY_SIMILAR_CLIENTS);
 				} else {
-
-					// Data is OK: add client to db, create form, save to
-					// Collect
+					// Add client to db, create & save form to Collect
 					addClientToDb();
-					int instanceId = createFormInstance();
-					if (instanceId != -1) {
-						Intent intent = new Intent();
-						intent.setComponent(new ComponentName("org.odk.collect.android", "org.odk.collect.android.activities.FormEntryActivity"));
-						intent.setAction(Intent.ACTION_EDIT);
-						intent.setData(Uri.parse(InstanceColumns.CONTENT_URI + "/" + instanceId));
-						intent.putExtra("Client_Registration", true);
-						startActivityForResult(intent, REGISTRATION);
-					} else {
-						Toast.makeText(CreatePatientActivity.this, "Sorry, there was a problem saving this form.", Toast.LENGTH_SHORT).show();
-					}
-
-					SharedPreferences settings = getSharedPreferences("ChwSettings", MODE_PRIVATE);
-					if (settings.getBoolean("IsLoggingEnabled", true)) {
-						startActivityLog("-1", "Patient Registration");
-					}
-
+					addFormToCollect();
 				}
 
 			}
 
 		});
+
+	}
+
+	private boolean similarClientCheck() {
+		// Verify the client against the db
+		Log.e("louis.fazen", "similarClientCheck!!!!!!!!!!!!!!!!!!!!!!!!!!!  firstname=" + mFirstName + " lastname=" + mLastName + ", pid=" + mPatientID);
+		boolean similarFound = false;
+		ClinicAdapter ca = new ClinicAdapter();
+		ca.open();
+		Cursor c = null;
+		c = ca.fetchPatients(mFirstName + " " + mLastName, null, DashboardActivity.LIST_SIMILAR_CLIENTS);
+		if (c != null && c.getCount() > 0) {
+			Log.e("louis.fazen", "cursor is not null and count>0 client is similar");
+			similarFound = true;
+		} 
+		if (!similarFound && mPatientID != null && mPatientID.length() > 3){
+			c = ca.fetchPatients(null, mPatientID, DashboardActivity.LIST_SIMILAR_CLIENTS);
+			if (c != null && c.getCount() > 0) {
+				Log.e("louis.fazen", "cursor is not null and count>0 client is similar");
+				similarFound = true;
+			} 
+		}
+		ca.close();
+		return similarFound;
 
 	}
 
@@ -209,11 +235,6 @@ public class CreatePatientActivity extends Activity {
 
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
-		SharedPreferences settings = getSharedPreferences("ChwSettings", MODE_PRIVATE);
-		if (settings.getBoolean("IsLoggingEnabled", true)) {
-			mActivityLog.setActivityStopTime();
-			new ActivityLogTask(mActivityLog).execute();
-		}
 
 		if (resultCode == RESULT_CANCELED) {
 			return;
@@ -221,7 +242,16 @@ public class CreatePatientActivity extends Activity {
 
 		if (resultCode == RESULT_OK) {
 
-			if (requestCode == REGISTRATION && intent != null) {
+			if (requestCode == VERIFY_SIMILAR_CLIENTS) {
+				addClientToDb();
+				addFormToCollect();
+
+			} else if (requestCode == REGISTRATION && intent != null) {
+				SharedPreferences settings = getSharedPreferences("ChwSettings", MODE_PRIVATE);
+				if (settings.getBoolean("IsLoggingEnabled", true)) {
+					mActivityLog.setActivityStopTime();
+					new ActivityLogTask(mActivityLog).execute();
+				}
 
 				Uri u = intent.getData();
 				String dbjrFormId = null;
@@ -259,9 +289,10 @@ public class CreatePatientActivity extends Activity {
 					ca.createFormInstance(fi, displayName);
 					ca.close();
 				}
-			}
 
-			loadNewClientView();
+				loadNewClientView();
+
+			}
 			return;
 		}
 		super.onActivityResult(requestCode, resultCode, intent);
@@ -385,6 +416,26 @@ public class CreatePatientActivity extends Activity {
 
 		ca.createPatient(mPatient);
 		ca.close();
+	}
+
+	private void addFormToCollect() {
+		int instanceId = createFormInstance();
+		if (instanceId != -1) {
+			Intent intent = new Intent();
+			intent.setComponent(new ComponentName("org.odk.collect.android", "org.odk.collect.android.activities.FormEntryActivity"));
+			intent.setAction(Intent.ACTION_EDIT);
+			intent.setData(Uri.parse(InstanceColumns.CONTENT_URI + "/" + instanceId));
+			intent.putExtra("Client_Registration", true);
+			startActivityForResult(intent, REGISTRATION);
+		} else {
+			Toast.makeText(CreatePatientActivity.this, "Sorry, there was a problem saving this form.", Toast.LENGTH_SHORT).show();
+		}
+
+		SharedPreferences settings = getSharedPreferences("ChwSettings", MODE_PRIVATE);
+		if (settings.getBoolean("IsLoggingEnabled", true)) {
+			startActivityLog("-1", "Patient Registration");
+		}
+
 	}
 
 	// create a HasMap of mInstanceValues... but I know everything that should
@@ -618,7 +669,7 @@ public class CreatePatientActivity extends Activity {
 			values.put(FormsColumns.DISPLAY_NAME, "Client Registration Form");
 			values.put(FormsColumns.JR_FORM_ID, "-1");
 			values.put(FormsColumns.FORM_FILE_PATH, addMe.getAbsolutePath());
-			
+
 			boolean alreadyExists = false;
 
 			Cursor mCursor;
@@ -698,6 +749,29 @@ public class CreatePatientActivity extends Activity {
 		return formName;
 	}
 
+	@Override
+	public boolean onTouchEvent(MotionEvent me) {
+		return mGestureDetector.onTouchEvent(me);
+	}
+
+	@Override
+	public boolean dispatchTouchEvent(MotionEvent mv) {
+		boolean handled = mGestureDetector.onTouchEvent(mv);
+		if (!handled) {
+			return super.dispatchTouchEvent(mv);
+		}
+
+		return handled; // this is always true
+	}
+
+	@Override
+	public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+
+		InputMethodManager inputMM = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+		inputMM.toggleSoftInput(InputMethodManager.HIDE_IMPLICIT_ONLY, 0);
+		return false;
+	}
+
 	// private static String parseDate(String s) {
 	// SimpleDateFormat inputFormat = new SimpleDateFormat("MMM dd, yyyy");
 	// SimpleDateFormat outputFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -707,5 +781,40 @@ public class CreatePatientActivity extends Activity {
 	// return "";
 	// }
 	// }
+
+	@Override
+	public boolean onDown(MotionEvent e) {
+		// TODO Auto-generated method stub
+
+		// InputMethodManager inputMM = (InputMethodManager)
+		// mContext.getSystemService(Context.INPUT_METHOD_SERVICE);
+		// inputMM.hideSoftInputFromWindow(this.getCurrentFocus().getWindowToken(),
+		// InputMethodManager.HIDE_NOT_ALWAYS);
+		return false;
+	}
+
+	@Override
+	public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public void onLongPress(MotionEvent e) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void onShowPress(MotionEvent e) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public boolean onSingleTapUp(MotionEvent e) {
+		// TODO Auto-generated method stub
+		return false;
+	}
 
 }

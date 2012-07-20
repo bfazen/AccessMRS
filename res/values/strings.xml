@@ -61,7 +61,7 @@ the License.
     <string name="refresh">Refresh</string>
     <string name="use_saved_search">Use Saved Searches</string>
     <string name="saved_search_hint">Use Saved Searches instead of Cohorts</string>
-    <string name="search_hint">Click to Search by Name or ID</string>
+    <string name="search_hint">Click to Search Name or ID</string>
     <string name="select_cohort">Select Cohort</string>
     <string name="select_forms">Select Forms</string>
     <string name="server">URL</string>
@@ -98,6 +98,10 @@ the License.
     <string name="incomplete_clients_section">Clients with Saved Forms</string>
     <string name="completed_clients_section">Clients with Completed Forms</string>
     <string name="suggested_clients_section">Clients with Suggested Forms</string>
+    <string name="similar_clients_section">Similar Clients Found. Only create a new client if they are not listed below:</string>
+     <string name="similar_client_section">Similar Client Found. Only create a new client if they are not listed below:</string>
+    <string name="similar_client_button_text">New client is not listed. Proceed to make new client.</string>
+    
     <string name="view_all_forms">View All Forms</string>
     
     <string name="view_only_form">This form is for viewing only.  Changes will not be saved.</string>

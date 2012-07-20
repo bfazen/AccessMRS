@@ -48,6 +48,7 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 	public static final int LIST_SUGGESTED = 2;
 	public static final int LIST_INCOMPLETE = 3;
 	public static final int LIST_COMPLETE = 4;
+	public static final int LIST_SIMILAR_CLIENTS = 5;
 
 	private static final String DOWNLOAD_PATIENT_CANCELED_KEY = "downloadPatientCanceled";
 
@@ -106,24 +107,6 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 				downloadNewForms();
 
 			}
-		});
-
-		mCreateButton = (RelativeLayout) findViewById(R.id.load_blank_forms);
-		mCreateButton.setOnClickListener(new OnClickListener() {
-
-			public void onClick(View arg0) {
-
-				// branch of id of form to fill...
-				if (forms > 0) {
-					Intent i = new Intent(mContext, CreatePatientActivity.class);
-//					Intent i = new Intent(mContext, AllFormList.class);
-					startActivity(i);
-
-				} else {
-					showCustomToast(getString(R.string.no_forms));
-				}
-			}
-
 		});
 
 	}
@@ -273,7 +256,7 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 			clientButtonGroup.addView(completedButton);
 		}
 		
-		// Patient Section
+		// All Clients Section
 		if (patients > 0) {
 			View patientsButton = vi.inflate(R.layout.dashboard_patients, null);
 			patientsButton.setClickable(true);
@@ -304,31 +287,16 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 		}
 		
 		// Form Section
-		RelativeLayout formRL = (RelativeLayout) findViewById(R.id.form_number_block);
-		TextView formNumber = (TextView) findViewById(R.id.form_number);
-		TextView formSubtext = (TextView) findViewById(R.id.form_subtext);
-
-		if (forms > 0) {
-			mCreateButton.setVisibility(View.VISIBLE);
-			formRL.setVisibility(View.VISIBLE);
-			formNumber.setVisibility(View.VISIBLE);
-			formSubtext.setVisibility(View.VISIBLE);
-			formRL.setBackgroundResource(R.drawable.gray);
-			formNumber.setText(String.valueOf(forms));
-			if (forms > 1) {
-				formSubtext.setText(R.string.downloaded_forms);
-				formSubtext.append(" ");
-			} else {
-				formSubtext.setText(R.string.downloaded_form);
-				formSubtext.append(" ");
+		View addNewClientButton = vi.inflate(R.layout.dashboard_forms, null);
+		addNewClientButton.setClickable(true);
+		addNewClientButton.setOnClickListener(new OnClickListener() {
+			public void onClick(View arg0) {
+				Intent i = new Intent(mContext, CreatePatientActivity.class);
+				startActivity(i);
 			}
-
-		} else {
-			mCreateButton.setVisibility(View.GONE);
-			formRL.setVisibility(View.GONE);
-			formNumber.setVisibility(View.GONE);
-			formSubtext.setVisibility(View.GONE);
-		}
+		});
+	
+		clientButtonGroup.addView(addNewClientButton);
 
 	}
 

@@ -374,10 +374,11 @@ public class ViewPatientActivity extends ListActivity {
 		adapter.addView(buildSectionLabel(getString(R.string.clinical_form_section)));
 		adapter.addView(mFormView);
 
+		if (!mObservations.isEmpty()) {
 		adapter.addView(buildSectionLabel(getString(R.string.clinical_data_section)));
 		adapter.addAdapter(mObservationAdapter);
-
-		Log.e("louis.fazen", "totalCompletedForms=" + mPatient.getTotalCompletedForms());
+		}
+		
 		if (mPatient.getTotalCompletedForms() > 0) {
 			adapter.addView(buildSectionLabel(getString(R.string.form_history_section)));
 			adapter.addView(formHistoryView());

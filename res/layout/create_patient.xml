@@ -4,18 +4,33 @@
     android:layout_height="wrap_content"
     android:orientation="vertical" >
 
-    <TextView
-        android:id="@+id/add_client"
+    <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:background="@color/light_gray"
-        android:paddingBottom="10dip"
-        android:paddingLeft="8dip"
+        android:orientation="horizontal"
+        android:paddingBottom="3dip"
+        android:paddingLeft="20dip"
         android:paddingRight="8dip"
-        android:paddingTop="10dip"
-        android:text="Add Client Information:"
-        android:textSize="18sp"
-        android:textStyle="bold" />
+        android:paddingTop="10dip" >
+
+        <ImageView
+            android:id="@+id/add_client_image"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:src="@drawable/add_client" />
+
+        <TextView
+            android:id="@+id/add_client"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:paddingLeft="20dip"
+            android:text="Add New Client"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+    </LinearLayout>
 
     <View
         android:layout_width="fill_parent"
@@ -31,7 +46,7 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical" >
-
+  
             <View
                 android:layout_width="fill_parent"
                 android:layout_height="1dp"
@@ -41,7 +56,8 @@
                 android:id="@+id/id_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dip"
+                android:layout_marginTop="30dip"
+                android:paddingBottom="3dip"
                 android:paddingLeft="8dip"
                 android:paddingRight="8dip"
                 android:text="ID Number from AMRS Card:"
@@ -60,17 +76,17 @@
             <View
                 android:layout_width="fill_parent"
                 android:layout_height="1dp"
-                android:layout_marginTop="10dip"
+                android:layout_marginTop="30dip"
                 android:background="@color/medium_gray" />
 
             <TextView
                 android:id="@+id/first_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:paddingBottom="2dip"
+                android:paddingBottom="3dip"
                 android:paddingLeft="8dip"
                 android:paddingRight="8dip"
-                android:paddingTop="10dip"
+                android:paddingTop="30dip"
                 android:text="First Name:"
                 android:textSize="18sp"
                 android:textStyle="bold" />
@@ -90,10 +106,10 @@
                 android:id="@+id/middle_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:paddingBottom="2dip"
+                android:paddingBottom="3dip"
                 android:paddingLeft="8dip"
                 android:paddingRight="8dip"
-                android:paddingTop="10dip"
+                android:paddingTop="20dip"
                 android:text="Middle Name:"
                 android:textSize="18sp"
                 android:textStyle="bold" />
@@ -111,10 +127,10 @@
                 android:id="@+id/last_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:paddingBottom="2dip"
+                android:paddingBottom="3dip"
                 android:paddingLeft="8dip"
                 android:paddingRight="8dip"
-                android:paddingTop="10dip"
+                android:paddingTop="20dip"
                 android:text="Last Name:"
                 android:textSize="18sp"
                 android:textStyle="bold" />
@@ -131,17 +147,17 @@
             <View
                 android:layout_width="fill_parent"
                 android:layout_height="1dp"
-                android:layout_marginTop="10dip"
+                android:layout_marginTop="30dip"
                 android:background="@color/medium_gray" />
 
             <TextView
                 android:id="@+id/sex_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:paddingBottom="2dip"
+                android:paddingBottom="3dip"
                 android:paddingLeft="8dip"
                 android:paddingRight="8dip"
-                android:paddingTop="10dip"
+                android:paddingTop="25dip"
                 android:text="Sex:"
                 android:textSize="18sp"
                 android:textStyle="bold" />
@@ -150,12 +166,13 @@
                 android:id="@+id/sex_radio"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:paddingLeft="30dip" >
+                android:paddingLeft="70dip" >
 
                 <RadioButton
                     android:id="@+id/female"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:paddingLeft="55dip"
                     android:text="Female"
                     android:textSize="18sp" />
 
@@ -163,6 +180,7 @@
                     android:id="@+id/male"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:paddingLeft="55dip"
                     android:text="Male"
                     android:textSize="18sp" />
             </RadioGroup>
@@ -170,14 +188,14 @@
             <View
                 android:layout_width="fill_parent"
                 android:layout_height="1dp"
-                android:layout_marginTop="10dip"
+                android:layout_marginTop="25dip"
                 android:background="@color/medium_gray" />
 
             <TextView
                 android:id="@+id/birthdate_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dip"
+                android:layout_marginTop="30dip"
                 android:paddingLeft="8dip"
                 android:paddingRight="8dip"
                 android:text="Birth Date:"
@@ -188,9 +206,11 @@
                 android:id="@+id/estimated_dob"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dip"
-                android:paddingLeft="8dip"
-                android:text="This is an estimated date of birth"
+                android:layout_marginLeft="30dip"
+                android:layout_marginRight="30dip"
+                android:layout_marginTop="15dip"
+                android:paddingLeft="55dip"
+                android:text="This is an Estimated Date of Birth"
                 android:textSize="18sp" />
 
             <DatePicker
@@ -198,7 +218,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
-                android:layout_marginTop="10dip" />
+                android:layout_marginBottom="30dip"
+                android:layout_marginTop="30dip" />
+
             <!--
             <TextView
                 android:id="@+id/birthdate_text"
@@ -226,7 +248,7 @@
                 android:id="@+id/id_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dip"
+                android:layout_marginTop="30dip"
                 android:paddingLeft="8dip"
                 android:paddingRight="8dip"
                 android:text="Add Client to your list:"
@@ -237,30 +259,43 @@
                 android:id="@+id/temp_or_perm"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="15dip"
                 android:paddingLeft="10dip" >
-
-                <RadioButton
-                    android:id="@+id/permanent"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Permanently: Keep Me Updated on This Client"
-                    android:textSize="18sp" />
 
                 <RadioButton
                     android:id="@+id/temporary"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:paddingLeft="55dip"
                     android:text="For this visit only"
                     android:textSize="18sp" />
+
+                <RadioButton
+                    android:id="@+id/permanent"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dip"
+                    android:paddingLeft="55dip"
+                    android:text="Permanently: Keep Me Updated on This Client"
+                    android:textSize="18sp" />
             </RadioGroup>
+
+            <View
+                android:layout_width="fill_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="30dip"
+                android:background="@color/medium_gray" />
 
             <Button
                 android:id="@+id/btnSubmit"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
-                android:layout_marginTop="10dip"
-                android:text="Create New Patient" />
+                android:layout_marginTop="30dip"
+                android:layout_marginBottom="30dip"
+                android:padding="30dip"
+                android:text="Create New Client"
+                android:textSize="20sp" />
         </LinearLayout>
     </ScrollView>
 

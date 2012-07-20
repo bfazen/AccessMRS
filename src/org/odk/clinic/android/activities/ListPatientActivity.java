@@ -1,42 +1,21 @@
 package org.odk.clinic.android.activities;
 
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.TimeZone;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.odk.clinic.android.R;
 import org.odk.clinic.android.adapters.PatientAdapter;
 import org.odk.clinic.android.database.ClinicAdapter;
 import org.odk.clinic.android.listeners.UploadFormListener;
 import org.odk.clinic.android.openmrs.Constants;
-import org.odk.clinic.android.openmrs.FormInstance;
 import org.odk.clinic.android.openmrs.Patient;
-import org.odk.clinic.android.tasks.UpdateClockTask;
-import org.odk.clinic.android.tasks.UploadInstanceTask;
-import org.odk.clinic.android.utilities.App;
 import org.odk.clinic.android.utilities.FileUtils;
-import org.odk.collect.android.provider.FormsProviderAPI.FormsColumns;
-import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
-import android.app.AlertDialog;
 import android.app.ListActivity;
-import android.content.ActivityNotFoundException;
-import android.content.ContentUris;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.SystemClock;
-import android.preference.PreferenceManager;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -50,6 +29,7 @@ import android.view.Window;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -79,10 +59,18 @@ public class ListPatientActivity extends ListActivity implements UploadFormListe
 	private ArrayList<Patient> mPatients = new ArrayList<Patient>();
 
 	private int mListType;
+	private Context mContext;
+
+	private String mSearchPatientStr = null;
+	private String mSearchPatientId = null;
+	private Button mSimilarClientButton;
+	private LinearLayout mSearchBar;
+	private ImageButton mAddClientButton;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		mContext = this;
 
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.find_patient);
@@ -92,9 +80,13 @@ public class ListPatientActivity extends ListActivity implements UploadFormListe
 			showCustomToast(getString(R.string.error, getString(R.string.storage_error)));
 			finish();
 		}
-
+		// get intents
 		mListType = getIntent().getIntExtra(DashboardActivity.LIST_TYPE, 1);
-
+		if(mListType == DashboardActivity.LIST_SIMILAR_CLIENTS){
+			mSearchPatientStr = getIntent().getStringExtra("search_name_string");
+			mSearchPatientId = getIntent().getStringExtra("search_id_string");
+		}
+		
 		mFilterTextWatcher = new TextWatcher() {
 			@Override
 			public void onTextChanged(CharSequence s, int start, int before, int count) {
@@ -129,6 +121,30 @@ public class ListPatientActivity extends ListActivity implements UploadFormListe
 		 * t.setGravity(Gravity.CENTER_VERTICAL, 0, 0); t.show(); } } });
 		 */
 
+		mAddClientButton = (ImageButton) findViewById(R.id.add_client);
+		mAddClientButton.setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+
+				Intent i = new Intent(mContext, CreatePatientActivity.class);
+				startActivity(i);
+
+			}
+		});
+
+		
+		// Verify Similar Clients on Add New Client
+		mSimilarClientButton = (Button) findViewById(R.id.similar_client_button);
+		mSearchBar = (LinearLayout) findViewById(R.id.searchholder);
+		mSimilarClientButton.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				// TODO Auto-generated method stub
+				setResult(RESULT_OK);
+				finish();
+			}
+		});
+		mSimilarClientButton.setVisibility(View.GONE);
 	}
 
 	@Override
@@ -139,8 +155,8 @@ public class ListPatientActivity extends ListActivity implements UploadFormListe
 
 		Intent ip = new Intent(getApplicationContext(), ViewPatientActivity.class);
 		ip.putExtra(Constants.KEY_PATIENT_ID, patientIdStr);
-		
-		//for client created patients, use the UUID to identify them...
+
+		// for client created patients, use the UUID to identify them...
 		if (p.getPatientId() < 0) {
 			String uuidStr = p.getUuid();
 			ip.putExtra(Constants.KEY_UUID, uuidStr);
@@ -175,25 +191,40 @@ public class ListPatientActivity extends ListActivity implements UploadFormListe
 		}
 	}
 
-	private void getPatients() {
-		getPatients(null);
+	private void findPatients() {
+
+		if (mSearchPatientStr == null && mSearchPatientId == null) {
+			mPatients.clear();
+			getPatients(null, null);
+		} else {
+			mPatients.clear();
+			if (mSearchPatientStr != null) {
+				Log.e("louis.fazen", "findPatients mSearchPatientString is not null!=" + mSearchPatientStr);
+				getPatients(mSearchPatientStr, null);
+			}
+			if (mSearchPatientId != null && mSearchPatientId.length() > 3) {
+				Log.e("louis.fazen", "findPatients mSearchPatientId is not null! =" + mSearchPatientId + "=");
+				getPatients(null, mSearchPatientId);
+			}
+		}
+
+		refreshView();
 	}
 
-	private void getPatients(String searchStr) {
+	private void getPatients(String searchString, String patientId) {
 
 		ClinicAdapter ca = new ClinicAdapter();
 
 		ca.open();
 		Cursor c = null;
-		if (searchStr != null) {
-			c = ca.fetchPatients(searchStr, searchStr, mListType);
+		if (mSearchPatientStr != null || mSearchPatientId != null) {
+			Log.e("ListPatientActivity", "getPatients is called, search string is not null, about to call fetchPatients!");
+			c = ca.fetchPatients(searchString, patientId, mListType);
 		} else {
 			c = ca.fetchAllPatients(mListType);
 		}
 
 		if (c != null && c.getCount() >= 0) {
-
-			mPatients.clear();
 
 			int patientIdIndex = c.getColumnIndex(ClinicAdapter.KEY_PATIENT_ID);
 			int identifierIndex = c.getColumnIndex(ClinicAdapter.KEY_IDENTIFIER);
@@ -251,13 +282,10 @@ public class ListPatientActivity extends ListActivity implements UploadFormListe
 
 		}
 
-		refreshView();
-
 		if (c != null) {
 			c.close();
 		}
 		ca.close();
-
 	}
 
 	private void refreshView() {
@@ -281,6 +309,22 @@ public class ListPatientActivity extends ListActivity implements UploadFormListe
 			listLayout.setBackgroundResource(R.color.completed);
 			listIcon.setBackgroundResource(R.drawable.ic_completed);
 			listText.setText(R.string.completed_clients_section);
+			break;
+		case DashboardActivity.LIST_SIMILAR_CLIENTS:
+			listLayout.setBackgroundResource(R.color.priority);
+			listIcon.setBackgroundResource(R.drawable.ic_priority);
+			String similarClient;
+			if (mPatients.size() < 2){
+				similarClient = getString(R.string.similar_client_section);
+			} else {
+				similarClient = getString(R.string.similar_clients_section);
+			}
+			listText.setText(String.valueOf(mPatients.size()) + " " + similarClient);
+			mSearchText.setVisibility(View.GONE);
+			mAddClientButton.setVisibility(View.GONE);
+			mSearchBar.setVisibility(View.GONE);
+			mSimilarClientButton.setVisibility(View.VISIBLE);
+			
 			break;
 		case DashboardActivity.LIST_ALL:
 			listLayout.setBackgroundResource(R.color.dark_gray);
@@ -312,7 +356,7 @@ public class ListPatientActivity extends ListActivity implements UploadFormListe
 	@Override
 	protected void onResume() {
 		super.onResume();
-		getPatients();
+		findPatients();
 		mSearchText.setText(mSearchText.getText().toString());
 	}
 
