@@ -19,6 +19,10 @@ import com.commonsware.cwac.wakeful.WakefulIntentService;
  *         and download clients. After decision, this IntentService finishes.
  */
 
+//TODO:  However, this structure seems to work, 
+//but the whole point of this RefreshClientsService is in order to prevent the device from going to sleep until it runs through the whole of the Service
+//Loading the other intent will allow it to run in the background... I think I need to bind this service to the SignalStrengthService Intent if it is maximum
+// if not maximum, just let it go to sleep as it wishes...
 public class RefreshClientsService extends WakefulIntentService {
 
 	private Context mContext;
