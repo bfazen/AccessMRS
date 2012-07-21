@@ -16,6 +16,8 @@
 
 package org.odk.clinic.android.openmrs;
 
+import android.app.AlarmManager;
+
 
 /**
  * The constants used in multiple classes in this application.
@@ -109,6 +111,8 @@ public class Constants {
 	public static final String KEY_PATIENT_GENDER = "PATIENT_GENDER";
 	public static final String KEY_PATIENT_DOB = "PATIENT_DOB";
 	
+	public static final long MINIMUM_REFRESH_TIME = AlarmManager.INTERVAL_HOUR * 6;
+	public static final long MAXIMUM_REFRESH_TIME = AlarmManager.INTERVAL_DAY * 2;
 	
 	public static final String KEY_OBSERVATION_FIELD_NAME = "KEY_OBSERVATION_FIELD_NAME";
 	

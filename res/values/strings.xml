@@ -93,17 +93,14 @@ the License.
     <string name="clinical_data_section">Clinical Data:</string>
     <string name="completed_form_section">Completed Forms:</string>
     <string name="saved_form_section">Incomplete Forms:</string>
-    
     <string name="all_clients_section">All Available Clients</string>
     <string name="incomplete_clients_section">Clients with Saved Forms</string>
     <string name="completed_clients_section">Clients with Completed Forms</string>
     <string name="suggested_clients_section">Clients with Suggested Forms</string>
     <string name="similar_clients_section">Similar Clients Found. Only create a new client if they are not listed below:</string>
-     <string name="similar_client_section">Similar Client Found. Only create a new client if they are not listed below:</string>
+    <string name="similar_client_section">Similar Client Found. Only create a new client if they are not listed below:</string>
     <string name="similar_client_button_text">New client is not listed. Proceed to make new client.</string>
-    
     <string name="view_all_forms">View All Forms</string>
-    
     <string name="view_only_form">This form is for viewing only.  Changes will not be saved.</string>
     <string name="form_history_section">Your Previous Visits:</string>
     <string name="instances_last_day">Visits in the past day:</string>
@@ -112,7 +109,7 @@ the License.
     <string name="instances_last_six_months">Visits in the past 6 months:</string>
     <string name="instances_last_year">Visits in the past year:</string>
     <string name="instances_unknown_gt_year">All other visits:</string>
-    
+
     <!-- Forms -->
     <string name="downloaded_forms">Available Forms</string>
     <string name="downloaded_form">Available Form</string>
@@ -122,8 +119,9 @@ the License.
     <string name="completed_form">Completed Form To Be Sent</string>
     <string name="incomplete_forms">Incomplete Forms To Fill</string>
     <string name="incomplete_form">Incomplete Form To Fill</string>
-    
+
     <!-- Clients -->
+    <string name="provider_lists_section">Current Client Lists:</string>
     <string name="current_clients">All Current Clients</string>
     <string name="current_client">Current Client</string>
     <string name="to_do_clients">Suggested Clients</string>
@@ -132,8 +130,6 @@ the License.
     <string name="completed_client">Completed Client</string>
     <string name="incomplete_clients">Incomplete Clients</string>
     <string name="incomplete_client">Incomplete Client</string>
-    
-    
     <string name="dashboard_title">MotherBaby Health Network</string>
     <string name="dashboard_task_title">Forms:</string>
 

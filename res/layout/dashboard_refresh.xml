@@ -1,47 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="wrap_content"
+    android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-    android:background="@color/white_color"
+    android:background="@color/priority"
     android:clickable="true"
     android:orientation="vertical"
-    android:paddingBottom="4dip"
-    android:paddingLeft="6dip"
-    android:paddingRight="4dip"
     android:paddingTop="4dip" >
 
     <TextView
         android:id="@+id/refresh_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:paddingBottom="3dip"
-        android:paddingLeft="8dip"
-        android:paddingTop="5dip"
-        android:text="Refresh Data Now"
-        android:textColor="@color/dark_gray"
+        android:layout_centerVertical="true"
+        android:paddingLeft="10dip"
+         android:paddingBottom="4dip"
+        android:text="Click to Refresh Client Data"
+        android:textColor="@color/white_color"
         android:textSize="18sp"
         android:textStyle="bold" />
-
-    <ImageView
-        android:id="@+id/clock_image"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_below="@+id/refresh_title"
-        android:paddingBottom="8dip"
-        android:paddingLeft="8dip"
-        android:src="@drawable/ic_clock2" />
-    <!--
-    <TextView
-        android:id="@+id/refresh_subtext_title"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/refresh_title"
-        android:paddingLeft="13dip"
-        android:textColor="@color/dark_gray"
-        android:textSize="16sp" 
-        android:textStyle="bold"/>
-    -->
 
     <ImageView
         android:id="@+id/refresh_image"
@@ -50,17 +26,13 @@
         android:layout_alignParentRight="true"
         android:layout_centerVertical="true"
         android:paddingLeft="3dip"
-        android:src="@drawable/ic_menu_refresh" />
+        android:paddingRight="4dip"
+        android:src="@drawable/ic_refresh_white" />
 
-    <TextView
-        android:id="@+id/refresh_subtext"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignTop="@+id/clock_image"
-        android:layout_toRightOf="@+id/clock_image"
-        android:paddingLeft="7dip"
-        android:textColor="@color/medium_gray"
-        android:textSize="17sp"
-        android:textStyle="italic" />
+        <View
+            android:layout_width="fill_parent"
+            android:layout_height="1dp"
+            android:layout_below="@+id/refresh_image"
+            android:background="@color/medium_gray" />
 
 </RelativeLayout>

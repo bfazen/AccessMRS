@@ -58,7 +58,7 @@ public class ListPatientActivity extends ListActivity implements UploadFormListe
 	private ArrayAdapter<Patient> mPatientAdapter;
 	private ArrayList<Patient> mPatients = new ArrayList<Patient>();
 
-	private int mListType;
+	public static int mListType;
 	private Context mContext;
 
 	private String mSearchPatientStr = null;

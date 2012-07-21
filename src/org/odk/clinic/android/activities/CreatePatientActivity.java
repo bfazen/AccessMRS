@@ -14,9 +14,6 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.w3c.dom.Attr;
-import org.w3c.dom.NamedNodeMap;
-import org.w3c.dom.NodeList;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
@@ -34,8 +31,8 @@ import org.odk.clinic.android.openmrs.Patient;
 import org.odk.clinic.android.tasks.ActivityLogTask;
 import org.odk.clinic.android.utilities.App;
 import org.odk.clinic.android.utilities.FileUtils;
-import org.odk.collect.android.provider.InstanceProviderAPI;
 import org.odk.collect.android.provider.FormsProviderAPI.FormsColumns;
+import org.odk.collect.android.provider.InstanceProviderAPI;
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 import org.w3c.dom.Attr;
 import org.w3c.dom.NamedNodeMap;
@@ -51,9 +48,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteException;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.preference.PreferenceManager;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.GestureDetector.OnGestureListener;
@@ -118,6 +113,7 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 		mGestureDetector = new GestureDetector(this);
 		mContext = this;
 
+		
 		// check to see if form exists in Collect Db
 		String dbjrFormId = "no_registration_form";
 		Cursor cursor = App.getApp().getContentResolver().query(FormsColumns.CONTENT_URI, new String[] { FormsColumns.JR_FORM_ID }, FormsColumns.JR_FORM_ID + "=?", new String[] { "-1" }, null);
@@ -215,6 +211,10 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 				Log.e("louis.fazen", "cursor is not null and count>0 client is similar");
 				similarFound = true;
 			} 
+		}
+		
+		if(c != null){
+			c.close();
 		}
 		ca.close();
 		return similarFound;
@@ -342,6 +342,7 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 		CheckBox estimatedDob = (CheckBox) findViewById(R.id.estimated_dob);
 		if (estimatedDob.isChecked())
 			mEstimatedDob = "1";
+		else mEstimatedDob = "0";
 
 		mYear = mBirthDatePicker.getYear();
 		mMonth = mBirthDatePicker.getMonth();
@@ -400,6 +401,7 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 		mPatient.setGivenName(mFirstName);
 		mPatient.setGender(mSex);
 		mPatient.setBirthDate(mBirthString);
+		mPatient.setbirthEstimated(mEstimatedDob);
 		mPatient.setDbBirthDate(mDbBirthString); // does not go into db
 
 		if (mPatientID != null) {
@@ -559,6 +561,10 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 					childElement.clear();
 					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mPatient.getDbBirthDate().toString());
 				}
+				if (childName.equalsIgnoreCase("patient.birthdate_estimated")) {
+					childElement.clear();
+					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mPatient.getbirthEstimated().toString());
+				}
 				if (childName.equalsIgnoreCase("patient.family_name")) {
 					childElement.clear();
 					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mPatient.getFamilyName().toString());
@@ -578,6 +584,11 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mPatient.getGender().toString());
 
 				}
+				if (childName.equalsIgnoreCase("patient.uuid")) {
+					childElement.clear();
+					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mPatient.getUuid().toString());
+
+				}
 				if (childName.equalsIgnoreCase("patient.medical_record_number")) {
 					childElement.clear();
 					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mPatient.getIdentifier().toString());
@@ -588,6 +599,27 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 				if (childName.equalsIgnoreCase("encounter.provider_id")) {
 					childElement.clear();
 					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mProviderId.toString());
+				}
+				
+				if (childName.equalsIgnoreCase("encounter.location_id")) {
+					childElement.clear();
+					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, "CHV Mobile Form Entry");
+				}
+				
+				if (childName.equalsIgnoreCase("encounter.encounter_datetime")) {
+					childElement.clear();
+					Date date = new Date();
+					date.setTime(System.currentTimeMillis());
+					String dateString = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(date);
+					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, dateString);
+				}
+				
+				if (childName.equalsIgnoreCase("chv_provider_list")) {
+					childElement.clear();
+					String addClient = "";
+					if(mPatient.getCreateCode() == PERMANENT_NEW_CLIENT) addClient = "Add Client to CHV Provider List";
+					else if (mPatient.getCreateCode() == TEMPORARY_NEW_CLIENT) addClient = "Temporary Visit Only";
+					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, addClient);
 				}
 
 				if (childName.equalsIgnoreCase("date") || childName.equalsIgnoreCase("time")) {
@@ -768,7 +800,8 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 	public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
 
 		InputMethodManager inputMM = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-		inputMM.toggleSoftInput(InputMethodManager.HIDE_IMPLICIT_ONLY, 0);
+//		inputMM.toggleSoftInput(InputMethodManager.HIDE_IMPLICIT_ONLY, 0); // this version worked, but was slow...
+		inputMM.hideSoftInputFromWindow(mBirthDatePicker.getWindowToken(), 0);
 		return false;
 	}
 

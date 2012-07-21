@@ -12,25 +12,34 @@
         android:background="@color/medium_gray"
         android:paddingBottom="8dip"
         android:paddingLeft="4dip"
-        android:paddingTop="8dip" >
+        android:paddingTop="5dip" >
 
         <TextView
             android:id="@+id/provider_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentLeft="true"
-            android:layout_centerVertical="true"
             android:text="@string/dashboard_title"
             android:textColor="@color/white_color"
             android:textSize="16sp"
+            android:paddingBottom="6dip"
+            android:paddingLeft="8dip"
             android:textStyle="bold" />
+
+        <ImageView
+            android:id="@+id/id_image"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/provider_text"
+            android:paddingBottom="3dip"
+            android:paddingLeft="6dip"
+            android:src="@drawable/id_icon_inverse" />
 
         <TextView
             android:id="@+id/provider_number"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentRight="true"
-            android:layout_centerVertical="true"
+            android:layout_toRightOf="@+id/id_image"
+            android:layout_alignBottom="@+id/id_image"
             android:paddingLeft="3dip"
             android:paddingRight="10dip"
             android:textColor="@color/white_color"
@@ -38,13 +47,25 @@
             android:textStyle="bold" />
 
         <ImageView
-            android:id="@+id/id_image"
+            android:id="@+id/clock_image"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignBottom="@+id/provider_number"
-            android:layout_toLeftOf="@+id/provider_number"
-            android:paddingBottom="1dip"
-            android:src="@drawable/id_icon_inverse" />
+            android:layout_alignBottom="@+id/id_image"
+            android:layout_toLeftOf="@+id/refresh_subtext"
+            android:paddingLeft="8dip"
+            android:src="@drawable/ic_clock2" />
+
+        <TextView
+            android:id="@+id/refresh_subtext"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_alignTop="@+id/clock_image"
+            android:paddingLeft="7dip"
+            android:paddingRight="8dip"
+            android:textColor="@color/white_color"
+            android:textSize="16sp"
+            android:textStyle="italic" />
     </RelativeLayout>
 
     <View
@@ -52,9 +73,27 @@
         android:layout_height="1dp"
         android:background="@color/medium_gray" />
 
-    <include
-        android:id="@+id/refresh"
-        layout="@layout/dashboard_refresh" />
+    <LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/vertical_refresh_container"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical" >
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/provider_lists"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:background="@color/light_gray"
+        android:paddingTop="6dip"
+        android:paddingBottom="6dip"
+        android:paddingLeft="8dip"
+        android:text="@string/provider_lists_section"
+        android:textColor="@color/dark_gray"
+        android:textSize="18sp"
+        android:textStyle="bold" />
 
     <View
         android:layout_width="fill_parent"

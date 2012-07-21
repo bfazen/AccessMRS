@@ -1,6 +1,8 @@
 package org.odk.clinic.android.activities;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 import org.odk.clinic.android.R;
 import org.odk.clinic.android.database.ClinicAdapter;
@@ -8,6 +10,9 @@ import org.odk.clinic.android.listeners.UploadFormListener;
 import org.odk.clinic.android.openmrs.Constants;
 import org.odk.clinic.android.tasks.UploadInstanceTask;
 import org.odk.clinic.android.utilities.FileUtils;
+
+import com.commonsware.cwac.wakeful.AlarmListener;
+import com.commonsware.cwac.wakeful.WakefulIntentService;
 
 import android.app.Activity;
 import android.content.Context;
@@ -36,7 +41,8 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 
 	// Menu ID's
 	private static final int MENU_PREFERENCES = Menu.FIRST;
-
+	private static final int MENU_REFRESH = 2;
+	
 	// Request codes
 	public static final int DOWNLOAD_PATIENT = 1;
 	public static final int BARCODE_CAPTURE = 2;
@@ -51,13 +57,6 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 	public static final int LIST_SIMILAR_CLIENTS = 5;
 
 	private static final String DOWNLOAD_PATIENT_CANCELED_KEY = "downloadPatientCanceled";
-
-	private RelativeLayout mDownloadButton;
-	private RelativeLayout mCreateButton;
-	private RelativeLayout mViewPatientsButton;
-	private RelativeLayout mIncompletePatientsButton;
-	private RelativeLayout mCompletePatientsButton;
-	private RelativeLayout mSuggestedPatientsButton;
 
 	private ClinicAdapter mCla;
 
@@ -80,6 +79,12 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 		super.onCreate(savedInstanceState);
 		mContext = this;
 
+		//Establish background service for downloading clients
+		//We do not reestablish existing alarms (set force to false), 
+		// b/c every force reset (force=true) requires alarm to go off, so alarms would go off every time this OnCreate is called
+	    WakefulIntentService.scheduleAlarms(new AlarmListener(), mContext, true);
+	    Log.e("louis.fazen", "DashboardActivity WakefulIntentService.schedule alarms  is called");
+	    
 		if (savedInstanceState != null) {
 			if (savedInstanceState.containsKey(DOWNLOAD_PATIENT_CANCELED_KEY)) {
 				mDownloadPatientCanceled = savedInstanceState.getBoolean(DOWNLOAD_PATIENT_CANCELED_KEY);
@@ -87,7 +92,7 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 		}
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.dashboard);
-		setTitle(getString(R.string.app_name) + " > " + getString(R.string.find_patient));
+//		setTitle(getString(R.string.app_name) + " > " + getString(R.string.find_patient));
 		TextView providerNumber = (TextView) findViewById(R.id.provider_number);
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
 		mProviderId = settings.getString(PreferencesActivity.KEY_PROVIDER, "0");
@@ -97,17 +102,6 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 			showCustomToast(getString(R.string.error, getString(R.string.storage_error)));
 			finish();
 		}
-
-		mDownloadButton = (RelativeLayout) findViewById(R.id.refresh);
-		mDownloadButton.setOnClickListener(new OnClickListener() {
-			public void onClick(View v) {
-
-				uploadAllForms();
-				updateAllPatients();
-				downloadNewForms();
-
-			}
-		});
 
 	}
 
@@ -150,19 +144,39 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 		completedForms = mCla.countAllCompletedUnsentForms();
 		priorityToDoForms = mCla.countAllPriorityFormNumbers();
 		forms = mCla.countAllForms();
-		String refreshtime = mCla.fetchMostRecentDownload() + " ";
+		long refreshDate = mCla.fetchMostRecentDownload();
 		mCla.close();
 
 		// Download Section
 		// TextView refreshTitle = (TextView)
 		// findViewById(R.id.refresh_subtext_title);
 		// refreshTitle.setText("Update:");
+		Date date = new Date();
+		date.setTime(refreshDate);
+		String refreshDateString = new SimpleDateFormat("MMM dd, 'at' HH:mm").format(date) + " ";
 		TextView refreshSubtext = (TextView) findViewById(R.id.refresh_subtext);
-		refreshSubtext.setText(refreshtime);
+		refreshSubtext.setText(refreshDateString);
+				
 		
 		//Buttons Section
-		ViewGroup clientButtonGroup = (ViewGroup) findViewById(R.id.vertical_container);
 		LayoutInflater vi = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+		
+		ViewGroup refreshButtonGroup = (ViewGroup) findViewById(R.id.vertical_refresh_container);
+		refreshButtonGroup.removeAllViews();
+		
+		long timeSinceRefresh = System.currentTimeMillis() - refreshDate;
+		if(timeSinceRefresh > Constants.MAXIMUM_REFRESH_TIME){
+			View downloadButton = vi.inflate(R.layout.dashboard_refresh, null);
+			downloadButton.setClickable(true);
+			downloadButton.setOnClickListener(new OnClickListener() {
+				public void onClick(View arg0) {
+					updateClientsAndForms();
+				}
+			});	
+			refreshButtonGroup.addView(downloadButton);
+		}
+		
+		ViewGroup clientButtonGroup = (ViewGroup) findViewById(R.id.vertical_container);	
 		clientButtonGroup.removeAllViews();
 
 		// //Priority Form Section
@@ -301,6 +315,11 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 	}
 
 	// BUTTONS....
+	private void updateClientsAndForms(){
+		uploadAllForms();
+		updateAllPatients();
+		downloadNewForms();
+	}
 	private void downloadNewForms() {
 		Intent id = new Intent(getApplicationContext(), DownloadFormActivity.class);
 		startActivity(id);
@@ -343,7 +362,8 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		super.onCreateOptionsMenu(menu);
-
+		menu.add(0, MENU_REFRESH, 0, getString(R.string.download_patients)).setIcon(R.drawable.ic_menu_refresh);
+		
 		SharedPreferences settings = getSharedPreferences("ChwSettings", MODE_PRIVATE);
 		Log.e("Dashboard", "OnCreateOptionsMenu called with IsMenuEnabled= " + settings.getBoolean("IsMenuEnabled", true));
 		if (settings.getBoolean("IsMenuEnabled", true) == false) {
@@ -352,6 +372,8 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 			menu.add(0, MENU_PREFERENCES, 0, getString(R.string.server_preferences)).setIcon(android.R.drawable.ic_menu_preferences);
 			return true;
 		}
+		
+		
 	}
 
 	@Override
@@ -360,6 +382,9 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 		case MENU_PREFERENCES:
 			Intent ip = new Intent(getApplicationContext(), PreferencesActivity.class);
 			startActivity(ip);
+			return true;
+		case MENU_REFRESH:
+			updateClientsAndForms();
 			return true;
 		default:
 			return super.onOptionsItemSelected(item);

@@ -12,7 +12,7 @@ public class Patient {
 	private Integer patientId = null;
 	private String identifier = null;
 	
-	private String uuid = null;
+
 
 	private String givenName = null;
 	private String familyName = null;
@@ -35,6 +35,9 @@ public class Patient {
 	
 	private Integer totalCompletedForms = null;
 	
+	//For Client Registration Forms:
+	private String uuid = null;
+	private String birthdayEstimated = null;
 	//used to specify info about the reason for creating a new patient
 	private Integer createCode = null;
 	
@@ -165,6 +168,13 @@ public class Patient {
 		return uuid;
 	}
 	
+	public void setbirthEstimated(String birth) {
+		birthdayEstimated = birth;
+	}
+	
+	public String getbirthEstimated() {
+		return birthdayEstimated;
+	}
 	
 	public void setTotalCompletedForms(Integer totalforms) {
 		totalCompletedForms = totalforms;

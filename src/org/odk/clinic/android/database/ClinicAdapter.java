@@ -791,7 +791,7 @@ public class ClinicAdapter {
 
 	}
 
-	public String fetchMostRecentDownload() {
+	public long fetchMostRecentDownload() {
 		Cursor c = null;
 		long datetime = 0;
 		c = mDb.query(DOWNLOAD_LOG_TABLE, new String[] { "MAX(" + DOWNLOAD_TIME + ") AS " + DOWNLOAD_TIME }, null, null, null, null, null);
@@ -805,11 +805,7 @@ public class ClinicAdapter {
 			c.close();
 		}
 
-		Date date = new Date();
-		date.setTime(datetime);
-		String dateString = new SimpleDateFormat("EEE, MMM dd, yyyy 'at' HH:mm").format(date);
-		return dateString;
-
+		return datetime;
 	}
 
 	// PRIORITY FORMS SECTION //
