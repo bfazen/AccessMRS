@@ -143,18 +143,20 @@ public class SignalStrengthService extends Service {
 			info = i.next();
 			// If Collect is visible, set refreshClients to false
 			if (info.importance == RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
-				
-				if (info.processName.equals(collectPackage)) 
+
+				if (info.processName.equals(collectPackage))
 					refreshClients = false;
-				
+
 				if (info.processName.equals(clinicPackage)) {
 					ComponentName foreGround = getActivityForApp(info);
-					// if (isStillActive(info, foreGround)) { 
-					if (foreGround.getClassName().equals(createPatientClass))
-						refreshClients = false;
-					else if (foreGround.getClassName().equals(listPatientClass) && ListPatientActivity.mListType == DashboardActivity.LIST_SIMILAR_CLIENTS)
-						refreshClients = false;
+					// if (isStillActive(info, foreGround)) {
+					if (foreGround != null) {
+						if (foreGround.getClassName().equals(createPatientClass))
+							refreshClients = false;
+						else if (foreGround.getClassName().equals(listPatientClass) && ListPatientActivity.mListType == DashboardActivity.LIST_SIMILAR_CLIENTS)
+							refreshClients = false;
 
+					}
 				}
 			}
 
