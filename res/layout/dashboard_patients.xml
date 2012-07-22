@@ -3,7 +3,7 @@
     android:id="@+id/patients_summary"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-    android:background="@color/white_color"
+    android:background="@drawable/list_selector_background"
     android:clickable="true"
     android:orientation="vertical" >
 

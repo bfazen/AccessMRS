@@ -130,7 +130,7 @@ the License.
     <string name="completed_client">Completed Client</string>
     <string name="incomplete_clients">Incomplete Clients</string>
     <string name="incomplete_client">Incomplete Client</string>
-    <string name="dashboard_title">MotherBaby Health Network</string>
+    <string name="dashboard_title">Clinic For CHWs</string>
     <string name="dashboard_task_title">Forms:</string>
 
 </resources>

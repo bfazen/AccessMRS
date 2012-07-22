@@ -11,7 +11,7 @@
 
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <item android:drawable="@android:color/transparent" android:state_window_focused="false"/>
+    <item android:drawable="@color/priority" android:state_window_focused="false"/>
 
     <!--
          Even though these two point to the same resource, have two states so 
@@ -28,9 +28,9 @@
 		items otherwise it will throw NPE on Android 1.6
     -->
 
-    <item android:drawable="@android:color/transparent" android:state_checkable="false"/>
-    <item android:drawable="@android:color/transparent" android:state_window_focused="false"/>
-    <item android:alwaysDrawnWithCache="false" android:drawable="@android:color/transparent"/>
-    <item android:animationCache="false" android:drawable="@android:color/transparent"/>
+    <item android:animationCache="true" android:drawable="@color/priority"/>
+    <item android:animationCache="false" android:drawable="@color/priority"/>
+    <item android:alwaysDrawnWithCache="false" android:drawable="@color/priority"/>
+    <item android:alwaysDrawnWithCache="true" android:drawable="@color/priority"/>
 
 </selector>

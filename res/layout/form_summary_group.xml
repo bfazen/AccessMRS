@@ -3,6 +3,7 @@
     android:id="@+id/vertical_container_rl"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
+    android:background="@drawable/list_selector_background"
     android:paddingBottom="10dip" >
 
     <TextView
@@ -23,9 +24,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@+id/view_all_forms"
+        android:layout_marginBottom="20dip"
         android:orientation="vertical"
-        android:paddingLeft="13dip"
-                android:layout_marginBottom="20dip" >
+        android:paddingLeft="13dip" >
     </LinearLayout>
 
     <ImageView
