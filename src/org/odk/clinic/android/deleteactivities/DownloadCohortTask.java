@@ -1,8 +1,9 @@
-package org.odk.clinic.android.tasks;
+package org.odk.clinic.android.deleteactivities;
 
 import java.io.DataInputStream;
 
 import org.odk.clinic.android.openmrs.Cohort;
+import org.odk.clinic.android.tasks.DownloadTask;
 
 import android.util.Log;
 //TODO: louis.fazen delete this class

@@ -8,7 +8,7 @@ import org.odk.clinic.android.R;
 import org.odk.clinic.android.database.ClinicAdapter;
 import org.odk.clinic.android.listeners.UploadFormListener;
 import org.odk.clinic.android.openmrs.Constants;
-import org.odk.clinic.android.tasks.UploadInstanceTask;
+import org.odk.clinic.android.tasks.UploadDataTask;
 import org.odk.clinic.android.utilities.FileUtils;
 
 import com.commonsware.cwac.wakeful.AlarmListener;
@@ -64,7 +64,7 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 
 	private boolean mDownloadPatientCanceled = false;
 
-	private UploadInstanceTask mUploadFormTask;
+	private UploadDataTask mUploadFormTask;
 
 	private int patients = 0;
 	private int forms = 0;
@@ -170,7 +170,7 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 			downloadButton.setClickable(true);
 			downloadButton.setOnClickListener(new OnClickListener() {
 				public void onClick(View arg0) {
-					updateClientsAndForms();
+					refreshData();
 				}
 			});	
 			refreshButtonGroup.addView(downloadButton);
@@ -315,48 +315,9 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 	}
 
 	// BUTTONS....
-	private void updateClientsAndForms(){
-		uploadAllForms();
-		updateAllPatients();
-		downloadNewForms();
-	}
-	private void downloadNewForms() {
-		Intent id = new Intent(getApplicationContext(), DownloadFormActivity.class);
+	private void refreshData(){
+		Intent id = new Intent(getApplicationContext(), RefreshDataActivity.class);
 		startActivity(id);
-	}
-
-	private void updateAllPatients() {
-		Intent id = new Intent(getApplicationContext(), DownloadPatientActivity.class);
-		startActivity(id);
-	}
-
-	private void uploadAllForms() {
-
-		if (mCla != null) {
-			mCla.open();
-		} else {
-			mCla = new ClinicAdapter();
-		}
-		Cursor c = mCla.fetchFormInstancesByStatus(ClinicAdapter.STATUS_UNSUBMITTED);
-		startManagingCursor(c);
-		ArrayList<String> selectedInstances = new ArrayList<String>();
-
-		if (c != null && c.getCount() > 0) {
-			String s = c.getString(c.getColumnIndex(ClinicAdapter.KEY_PATH));
-			selectedInstances.add(s);
-		}
-
-		if (c != null)
-			c.close();
-
-		mCla.close();
-
-		if (!selectedInstances.isEmpty()) {
-			Intent i = new Intent(this, InstanceUploaderActivity.class);
-			i.putExtra(ClinicAdapter.KEY_INSTANCES, selectedInstances);
-			startActivity(i);
-		}
-
 	}
 
 	@Override
@@ -384,7 +345,7 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 			startActivity(ip);
 			return true;
 		case MENU_REFRESH:
-			updateClientsAndForms();
+			refreshData();
 			return true;
 		default:
 			return super.onOptionsItemSelected(item);

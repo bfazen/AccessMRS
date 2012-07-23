@@ -1,4 +1,4 @@
-package org.odk.clinic.android.listeners;
+package org.odk.clinic.android.deleteactivities;
 
 public interface InstanceLoaderListener {
     void loadingComplete(String result);

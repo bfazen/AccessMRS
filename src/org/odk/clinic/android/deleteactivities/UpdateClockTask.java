@@ -1,4 +1,4 @@
-package org.odk.clinic.android.tasks;
+package org.odk.clinic.android.deleteactivities;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -14,7 +14,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
 
-import org.odk.clinic.android.tasks.UpdateClockTask.ExecShell.SHELL_CMD;
+import org.odk.clinic.android.deleteactivities.UpdateClockTask.ExecShell.SHELL_CMD;
 
 import android.os.AsyncTask;
 import android.os.SystemClock;

@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="fill_parent"
+    android:background="@color/medium_gray"
     android:orientation="vertical" >
 
     <RelativeLayout
@@ -17,11 +18,11 @@
             android:id="@+id/provider_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:paddingBottom="6dip"
+            android:paddingLeft="8dip"
             android:text="@string/dashboard_title"
             android:textColor="@color/white_color"
             android:textSize="16sp"
-            android:paddingBottom="6dip"
-            android:paddingLeft="8dip"
             android:textStyle="bold" />
 
         <ImageView
@@ -37,8 +38,8 @@
             android:id="@+id/provider_number"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_toRightOf="@+id/id_image"
             android:layout_alignBottom="@+id/id_image"
+            android:layout_toRightOf="@+id/id_image"
             android:paddingLeft="3dip"
             android:paddingRight="10dip"
             android:textColor="@color/white_color"
@@ -86,9 +87,9 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center_vertical"
         android:background="@color/light_gray"
-        android:paddingTop="6dip"
         android:paddingBottom="6dip"
         android:paddingLeft="8dip"
+        android:paddingTop="6dip"
         android:text="@string/provider_lists_section"
         android:textColor="@color/dark_gray"
         android:textSize="18sp"
@@ -102,7 +103,8 @@
     <ScrollView
         android:id="@+id/scroll"
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content" >
+        android:layout_height="wrap_content"
+        android:background="@color/white_color" >
 
         <LinearLayout
             xmlns:android="http://schemas.android.com/apk/res/android"

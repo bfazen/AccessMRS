@@ -1,4 +1,4 @@
-package org.odk.clinic.android.tasks;
+package org.odk.clinic.android.deleteactivities;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -16,7 +16,6 @@ import org.javarosa.core.services.transport.payload.ByteArrayPayload;
 import org.javarosa.model.xform.XFormSerializingVisitor;
 import org.javarosa.xform.parse.XFormParseException;
 import org.javarosa.xform.util.XFormUtils;
-import org.odk.clinic.android.listeners.InstanceLoaderListener;
 import org.odk.clinic.android.utilities.FileUtils;
 
 import android.os.AsyncTask;

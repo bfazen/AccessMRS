@@ -1,10 +1,12 @@
-package org.odk.clinic.android.activities;
+package org.odk.clinic.android.deleteactivities;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
 import org.odk.clinic.android.R;
+import org.odk.clinic.android.activities.PreferencesActivity;
+import org.odk.clinic.android.activities.ViewSavedForms;
 import org.odk.clinic.android.adapters.FormAdapter;
 import org.odk.clinic.android.adapters.MergeAdapter;
 import org.odk.clinic.android.database.ClinicAdapter;

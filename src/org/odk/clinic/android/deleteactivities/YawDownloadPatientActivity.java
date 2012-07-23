@@ -1,13 +1,12 @@
-package org.odk.clinic.android.activities;
+package org.odk.clinic.android.deleteactivities;
 
 import java.util.ArrayList;
 
 import org.odk.clinic.android.R;
+import org.odk.clinic.android.activities.PreferencesActivity;
 import org.odk.clinic.android.listeners.DownloadListener;
 import org.odk.clinic.android.openmrs.Cohort;
 import org.odk.clinic.android.openmrs.Constants;
-import org.odk.clinic.android.tasks.DownloadCohortTask;
-import org.odk.clinic.android.tasks.DownloadPatientTask;
 import org.odk.clinic.android.tasks.DownloadTask;
 import org.odk.clinic.android.utilities.FileUtils;
 
@@ -26,7 +25,7 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class DownloadPatientActivity extends Activity implements
+public class YawDownloadPatientActivity extends Activity implements
 		DownloadListener {
 
 	private final static int COHORT_DIALOG = 1;
@@ -87,7 +86,7 @@ public class DownloadPatientActivity extends Activity implements
 		String savedSearch = String.valueOf(settings.getBoolean(PreferencesActivity.KEY_USE_SAVED_SEARCHES, false));
 
 		mDownloadTask = new DownloadCohortTask();
-		mDownloadTask.setDownloadListener(DownloadPatientActivity.this);
+		mDownloadTask.setDownloadListener(YawDownloadPatientActivity.this);
 		mDownloadTask.execute(url, username, password, savedSearch);
 	}
 	
@@ -116,7 +115,7 @@ public class DownloadPatientActivity extends Activity implements
 		String programId = settings.getString(PreferencesActivity.KEY_PROGRAM, "0");
 		
 		mDownloadTask = new DownloadPatientTask();
-		mDownloadTask.setDownloadListener(DownloadPatientActivity.this);
+		mDownloadTask.setDownloadListener(YawDownloadPatientActivity.this);
 		mDownloadTask.execute(url, username, password, savedSearch, cohortId, programId);
 	}
 	

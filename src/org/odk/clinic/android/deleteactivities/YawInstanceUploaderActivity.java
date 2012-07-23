@@ -1,12 +1,13 @@
-package org.odk.clinic.android.activities;
+package org.odk.clinic.android.deleteactivities;
 
 import java.util.ArrayList;
 
 import org.odk.clinic.android.R;
+import org.odk.clinic.android.activities.PreferencesActivity;
 import org.odk.clinic.android.database.ClinicAdapter;
 import org.odk.clinic.android.listeners.UploadFormListener;
 import org.odk.clinic.android.openmrs.Constants;
-import org.odk.clinic.android.tasks.UploadInstanceTask;
+import org.odk.clinic.android.tasks.UploadDataTask;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -30,13 +31,13 @@ import android.widget.Toast;
  * @author Samuel Mbugua
  *
  */
-public class InstanceUploaderActivity extends Activity implements UploadFormListener {
+public class YawInstanceUploaderActivity extends Activity implements UploadFormListener {
 
     private final static int PROGRESS_DIALOG = 1;
     private ProgressDialog mProgressDialog;
     private AlertDialog mAlertDialog;
 
-    private UploadInstanceTask mInstanceUploaderTask;
+    private UploadDataTask mInstanceUploaderTask;
     private int totalCount = -1;
 
 
@@ -75,7 +76,7 @@ public class InstanceUploaderActivity extends Activity implements UploadFormList
 
         // convert array list to an array
         String[] sa = instances.toArray(new String[totalCount]);
-        mInstanceUploaderTask = new UploadInstanceTask();
+        mInstanceUploaderTask = new UploadDataTask();
         mInstanceUploaderTask.setUploadListener(this);
         mInstanceUploaderTask.setUploadServer(url.toString());
         mInstanceUploaderTask.execute(sa);

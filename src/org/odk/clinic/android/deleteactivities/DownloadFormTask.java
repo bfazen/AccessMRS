@@ -1,6 +1,7 @@
-package org.odk.clinic.android.tasks;
+package org.odk.clinic.android.deleteactivities;
 
 import org.odk.clinic.android.database.ClinicAdapter;
+import org.odk.clinic.android.tasks.DownloadTask;
 import org.odk.clinic.android.utilities.App;
 import org.odk.clinic.android.utilities.FileUtils;
 import org.odk.collect.android.provider.FormsProviderAPI.FormsColumns;
@@ -46,16 +47,15 @@ public class DownloadFormTask extends DownloadTask {
 					try {
 						String formId = values[i];
 						publishProgress("forms", Integer.valueOf(i).toString(), Integer.valueOf(count).toString());
-						//publishProgress("form " + formId, Integer.valueOf(i)
-						//		.toString(), Integer.valueOf(count).toString());
+						// publishProgress("form " + formId, Integer.valueOf(i)
+						// .toString(), Integer.valueOf(count).toString());
 
 						StringBuilder url = new StringBuilder(baseUrl);
 						url.append("&formId=");
 						url.append(formId);
 
 						URL u = new URL(url.toString());
-						HttpURLConnection c = (HttpURLConnection) u
-								.openConnection();
+						HttpURLConnection c = (HttpURLConnection) u.openConnection();
 						InputStream is = c.getInputStream();
 
 						String path = FileUtils.FORMS_PATH + formId + ".xml";
@@ -71,14 +71,12 @@ public class DownloadFormTask extends DownloadTask {
 						os.close();
 						is.close();
 
-						mPatientDbAdapter.updateFormPath(
-								Integer.valueOf(formId), path);
+						mPatientDbAdapter.updateFormPath(Integer.valueOf(formId), path);
 
 						// insert path into collect db
 						if (!insertSingleForm(path)) {
 							return "ODK Collect not initialized.";
 						}
-						
 
 					} catch (Exception e) {
 						e.printStackTrace();
@@ -88,9 +86,9 @@ public class DownloadFormTask extends DownloadTask {
 				mPatientDbAdapter.close();
 			} catch (Exception e) {
 				e.printStackTrace();
-	            if (mPatientDbAdapter != null) {
-	            	mPatientDbAdapter.close();
-	            }
+				if (mPatientDbAdapter != null) {
+					mPatientDbAdapter.close();
+				}
 				return e.getLocalizedMessage();
 			}
 		}
@@ -119,7 +117,7 @@ public class DownloadFormTask extends DownloadTask {
 			}
 		}
 
-		if (c != null) 
+		if (c != null)
 			c.close();
 
 		ca.close();
@@ -132,12 +130,9 @@ public class DownloadFormTask extends DownloadTask {
 		File addMe = new File(formPath);
 
 		// Ignore invisible files that start with periods.
-		if (!addMe.getName().startsWith(".")
-				&& (addMe.getName().endsWith(".xml") || addMe.getName()
-						.endsWith(".xhtml"))) {
+		if (!addMe.getName().startsWith(".") && (addMe.getName().endsWith(".xml") || addMe.getName().endsWith(".xhtml"))) {
 
-			DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory
-					.newInstance();
+			DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
 			DocumentBuilder documentBuilder = null;
 			Document document = null;
 
@@ -185,59 +180,46 @@ public class DownloadFormTask extends DownloadTask {
 
 			Cursor mCursor;
 			try {
-				mCursor = App
-						.getApp()
-						.getContentResolver()
-						.query(FormsColumns.CONTENT_URI, null, null, null, null);
+				mCursor = App.getApp().getContentResolver().query(FormsColumns.CONTENT_URI, null, null, null, null);
 			} catch (SQLiteException e) {
 				Log.e("DownloadFormTask", e.getLocalizedMessage());
 				return false;
 				// TODO: handle exception
 			}
-			
+
 			if (mCursor == null) {
 				System.out.println("Something bad happened");
 				mPatientDbAdapter.open();
 				mPatientDbAdapter.deleteAllForms();
 				mPatientDbAdapter.close();
 				return false;
-			}		
-			
+			}
+
 			mCursor.moveToPosition(-1);
 			while (mCursor.moveToNext()) {
 
-				String dbmd5 = mCursor.getString(mCursor
-						.getColumnIndex(FormsColumns.MD5_HASH));
-				String dbFormId = mCursor.getString(mCursor
-						.getColumnIndex(FormsColumns.JR_FORM_ID));
+				String dbmd5 = mCursor.getString(mCursor.getColumnIndex(FormsColumns.MD5_HASH));
+				String dbFormId = mCursor.getString(mCursor.getColumnIndex(FormsColumns.JR_FORM_ID));
 
 				// if the exact form exists, leave it be. else, insert it.
-				if (dbmd5.equalsIgnoreCase(md5)
-						&& dbFormId.equalsIgnoreCase(id + "")) {
+				if (dbmd5.equalsIgnoreCase(md5) && dbFormId.equalsIgnoreCase(id + "")) {
 					alreadyExists = true;
 				}
 
 			}
 
 			if (!alreadyExists) {
-				App.getApp()
-						.getContentResolver()
-						.delete(FormsColumns.CONTENT_URI, "md5Hash=?",
-								new String[]{md5});
-				App.getApp()
-						.getContentResolver()
-						.delete(FormsColumns.CONTENT_URI, "jrFormId=?",
-								new String[]{id + ""});
-				App.getApp().getContentResolver()
-						.insert(FormsColumns.CONTENT_URI, values);
+				App.getApp().getContentResolver().delete(FormsColumns.CONTENT_URI, "md5Hash=?", new String[] { md5 });
+				App.getApp().getContentResolver().delete(FormsColumns.CONTENT_URI, "jrFormId=?", new String[] { id + "" });
+				App.getApp().getContentResolver().insert(FormsColumns.CONTENT_URI, values);
 			}
 
 			if (mCursor != null) {
 				mCursor.close();
 			}
-			
+
 		}
-		
+
 		return true;
 
 	}

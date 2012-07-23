@@ -20,7 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class UploadInstanceTask extends AsyncTask<String, String, ArrayList<String>> {
+public class UploadDataTask extends AsyncTask<String, String, ArrayList<String>> {
     private static String tag = "UploadFormTask";
     
     private static final int CONNECTION_TIMEOUT = 30000;
@@ -129,6 +129,7 @@ public class UploadInstanceTask extends AsyncTask<String, String, ArrayList<Stri
 
     @Override
     protected void onProgressUpdate(String... values) {
+    	Log.e("louis.fazen", "UploadInstanceTask.onProgressUpdate=" + values[0] + ", " + values[1] + ", " + values[2] + ", ");
         synchronized (this) {
             if (mStateListener != null) {
                 // update progress and total
@@ -141,6 +142,7 @@ public class UploadInstanceTask extends AsyncTask<String, String, ArrayList<Stri
 
     @Override
     protected void onPostExecute(ArrayList<String> result) {
+    	Log.e("louis.fazen", "UploadInstanceTask.onPostExecute Result=" + result);
         synchronized (this) {
             if (mStateListener != null)
                 mStateListener.uploadComplete(result);

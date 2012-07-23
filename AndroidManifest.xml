@@ -18,6 +18,8 @@
     
     
     
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.GET_TASKS" />
     <!--
     Why is it after the application tag?
     Do I need any of the following.... louis.fazen

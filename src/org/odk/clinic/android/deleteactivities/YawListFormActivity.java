@@ -1,4 +1,4 @@
-package org.odk.clinic.android.activities;
+package org.odk.clinic.android.deleteactivities;
 
 import java.io.File;
 import java.io.FileReader;
@@ -15,11 +15,9 @@ import org.kxml2.kdom.Document;
 import org.kxml2.kdom.Element;
 import org.odk.clinic.android.R;
 import org.odk.clinic.android.database.ClinicAdapter;
-import org.odk.clinic.android.listeners.InstanceLoaderListener;
 import org.odk.clinic.android.openmrs.Constants;
 import org.odk.clinic.android.openmrs.Form;
 import org.odk.clinic.android.openmrs.FormInstance;
-import org.odk.clinic.android.tasks.InstanceLoaderTask;
 import org.odk.clinic.android.utilities.App;
 import org.odk.clinic.android.utilities.FileUtils;
 import org.odk.collect.android.provider.FormsProviderAPI.FormsColumns;
@@ -48,7 +46,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class ListFormActivity extends ListActivity
+public class YawListFormActivity extends ListActivity
 		implements
 			InstanceLoaderListener {
 	public static final String tag = "ListFormActivity";
@@ -526,7 +524,7 @@ public class ListFormActivity extends ListActivity
 				} else {
 					// Launch Instance uploader instance
 					Intent iu = new Intent(getApplicationContext(),
-							InstanceUploaderList.class);
+							YawInstanceUploaderList.class);
 					startActivity(iu);
 					finish();
 				}

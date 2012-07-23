@@ -12,7 +12,7 @@
  * the License.
  */
 
-package org.odk.clinic.android.views;
+package org.odk.clinic.android.deleteactivities;
 
 import org.odk.clinic.android.R;
 

@@ -1,4 +1,4 @@
-package org.odk.clinic.android.tasks;
+package org.odk.clinic.android.deleteactivities;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -14,6 +14,7 @@ import java.text.SimpleDateFormat;
 import org.odk.clinic.android.openmrs.Constants;
 import org.odk.clinic.android.openmrs.Observation;
 import org.odk.clinic.android.openmrs.Patient;
+import org.odk.clinic.android.tasks.DownloadTask;
 
 import android.os.Environment;
 import android.util.Log;

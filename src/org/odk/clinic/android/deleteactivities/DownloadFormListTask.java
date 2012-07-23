@@ -1,4 +1,4 @@
-package org.odk.clinic.android.tasks;
+package org.odk.clinic.android.deleteactivities;
 
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -8,6 +8,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.odk.clinic.android.openmrs.Form;
+import org.odk.clinic.android.tasks.DownloadTask;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;

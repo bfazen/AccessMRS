@@ -1,8 +1,9 @@
-package org.odk.clinic.android.activities;
+package org.odk.clinic.android.deleteactivities;
 
 import java.util.ArrayList;
 
 import org.odk.clinic.android.R;
+import org.odk.clinic.android.activities.PreferencesActivity;
 import org.odk.clinic.android.database.ClinicAdapter;
 
 import android.app.ListActivity;
@@ -23,7 +24,7 @@ import android.widget.Toast;
  * @author Samuel Mbugua
  *
  */
-public class InstanceUploaderList extends ListActivity {
+public class YawInstanceUploaderList extends ListActivity {
 
     private static final String BUNDLE_SELECTED_ITEMS_KEY = "selected_items";
     private static final String BUNDLE_TOGGLED_KEY = "toggled";
@@ -161,7 +162,7 @@ public class InstanceUploaderList extends ListActivity {
         }
 
         // bundle intent with upload files
-        Intent i = new Intent(this, InstanceUploaderActivity.class);
+        Intent i = new Intent(this, YawInstanceUploaderActivity.class);
         //i.putExtra(FormEntryActivity.KEY_INSTANCES, selectedInstances);
         i.putExtra(ClinicAdapter.KEY_INSTANCES, selectedInstances);
         startActivityForResult(i, INSTANCE_UPLOADER);

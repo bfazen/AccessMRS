@@ -160,7 +160,8 @@ public class ClinicAdapter {
 
 	private static final String CREATE_FORMINSTANCES_TABLE = "create table " + FORMINSTANCES_TABLE + " (_id integer primary key autoincrement, " + KEY_PATIENT_ID + " integer not null, " + KEY_FORM_ID + " integer not null, " + KEY_FORMINSTANCE_DISPLAY + " text, "
 			+ KEY_FORMINSTANCE_SUBTEXT + " text, " + KEY_FORMINSTANCE_STATUS + " text, " + KEY_PATH + " text);";
-
+	
+	
 	private static final String CREATE_FORM_LOG_TABLE = "create table " + FORM_LOG_TABLE + " (_id integer primary key autoincrement, " + PATIENT_ID + " text, " + PROVIDER_ID + " text, " + FORM_NAME + " text, " + FORM_START_TIME + " integer, " + FORM_STOP_TIME + " integer, "
 			+ FORM_LAUNCH_TYPE + " text, " + FORM_PRIORITY_BOOLEAN + " text);";
 
@@ -430,7 +431,7 @@ public class ClinicAdapter {
 	 * @return number of affected rows
 	 */
 	public boolean deleteAllPatients() {
-		return mDb.delete(PATIENTS_TABLE, KEY_CLIENT_CREATED + "?", new String[] { " IS NULL" }) > 0;
+		return mDb.delete(PATIENTS_TABLE, KEY_CLIENT_CREATED + " IS NULL OR " + KEY_CLIENT_CREATED + "=?", new String[] {"2"}) > 0;
 	}
 
 	public boolean deleteAllObservations() {
@@ -759,6 +760,7 @@ public class ClinicAdapter {
 
 	public Cursor fetchFormInstancesByStatus(String status) throws SQLException {
 		Cursor c = null;
+		Log.e("louis.fazen", "fetchforminstacesbystatus where status=" + status);
 		c = mDb.query(true, FORMINSTANCES_TABLE, new String[] { KEY_ID, KEY_PATIENT_ID, KEY_PATH, KEY_FORMINSTANCE_DISPLAY, KEY_FORMINSTANCE_STATUS }, KEY_FORMINSTANCE_STATUS + "='" + status + "'", null, null, null, null, null);
 
 		if (c != null) {

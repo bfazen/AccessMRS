@@ -1,5 +1,4 @@
-package org.odk.clinic.android.activities;
-
+package org.odk.clinic.android.deleteactivities;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -7,12 +6,12 @@ import java.util.HashSet;
 import java.util.Iterator;
 
 import org.odk.clinic.android.R;
+import org.odk.clinic.android.activities.PreferencesActivity;
 import org.odk.clinic.android.database.ClinicAdapter;
 import org.odk.clinic.android.listeners.DownloadListener;
 import org.odk.clinic.android.openmrs.Constants;
 import org.odk.clinic.android.openmrs.Form;
-import org.odk.clinic.android.tasks.DownloadFormListTask;
-import org.odk.clinic.android.tasks.DownloadFormTask;
+
 import org.odk.clinic.android.tasks.DownloadTask;
 import org.odk.clinic.android.utilities.App;
 import org.odk.clinic.android.utilities.FileUtils;
