@@ -28,6 +28,7 @@ import org.odk.clinic.android.openmrs.Form;
 import org.odk.clinic.android.openmrs.FormInstance;
 import org.odk.clinic.android.openmrs.Observation;
 import org.odk.clinic.android.openmrs.Patient;
+import org.odk.clinic.android.tasks.ActivityLogTask;
 import org.odk.clinic.android.utilities.App;
 import org.odk.clinic.android.utilities.FileUtils;
 import org.odk.collect.android.provider.FormsProviderAPI.FormsColumns;
@@ -490,12 +491,13 @@ public class FormPriorityList extends ListActivity {
 		SharedPreferences settings = getSharedPreferences("ChwSettings", MODE_PRIVATE);
 		if (settings.getBoolean("IsLoggingEnabled", true)) {
 			mActivityLog.setActivityStopTime();
-			ClinicAdapter ca = new ClinicAdapter();
-			ca.open();
-			ca.createActivityLog(mActivityLog);
-			ca.close();
+			// if (requestCode != patientAndFormCode) {
+			// mActivityLog.setFormId("Error: StartCode=" + patientAndFormCode +
+			// " EndCode=" + requestCode);
+			// }
+			new ActivityLogTask(mActivityLog).execute();
 		}
-		
+
 		if (resultCode == RESULT_CANCELED) {
 			return;
 		}

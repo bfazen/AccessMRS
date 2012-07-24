@@ -15,6 +15,7 @@ import org.odk.clinic.android.openmrs.Constants;
 import org.odk.clinic.android.openmrs.Form;
 import org.odk.clinic.android.openmrs.FormInstance;
 import org.odk.clinic.android.openmrs.Patient;
+import org.odk.clinic.android.tasks.ActivityLogTask;
 import org.odk.clinic.android.utilities.App;
 import org.odk.collect.android.provider.InstanceProviderAPI;
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
@@ -30,11 +31,14 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 /**
  * Displays all the Saved forms from Collect instances.db.  
@@ -335,13 +339,9 @@ public class ViewSavedForms extends ListActivity {
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
 		SharedPreferences settings = getSharedPreferences("ChwSettings", MODE_PRIVATE);
-		
 		if (settings.getBoolean("IsLoggingEnabled", true)) {
 			mActivityLog.setActivityStopTime();
-			ClinicAdapter ca = new ClinicAdapter();
-			ca.open();
-			ca.createActivityLog(mActivityLog);
-			ca.close();
+			new ActivityLogTask(mActivityLog).execute();
 		}
 
 		if (resultCode == RESULT_CANCELED) {

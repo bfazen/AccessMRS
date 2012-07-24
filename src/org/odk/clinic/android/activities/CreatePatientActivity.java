@@ -28,6 +28,7 @@ import org.odk.clinic.android.openmrs.Constants;
 import org.odk.clinic.android.openmrs.FormInstance;
 import org.odk.clinic.android.openmrs.Observation;
 import org.odk.clinic.android.openmrs.Patient;
+import org.odk.clinic.android.tasks.ActivityLogTask;
 import org.odk.clinic.android.utilities.App;
 import org.odk.clinic.android.utilities.FileUtils;
 import org.odk.collect.android.provider.FormsProviderAPI.FormsColumns;
@@ -249,10 +250,7 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 				SharedPreferences settings = getSharedPreferences("ChwSettings", MODE_PRIVATE);
 				if (settings.getBoolean("IsLoggingEnabled", true)) {
 					mActivityLog.setActivityStopTime();
-					ClinicAdapter ca = new ClinicAdapter();
-					ca.open();
-					ca.createActivityLog(mActivityLog);
-					ca.close();
+					new ActivityLogTask(mActivityLog).execute();
 				}
 
 				Uri u = intent.getData();
