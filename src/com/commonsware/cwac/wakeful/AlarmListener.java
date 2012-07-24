@@ -59,10 +59,10 @@ public class AlarmListener implements WakefulIntentService.AlarmListener {
 
 		//establishes threshold for Setting Alarm Frequency
 		if (timeSinceRefresh < Constants.MAXIMUM_REFRESH_TIME) {
-			mgr.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + 100000, 300000, pi);
+			mgr.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + 10000, 30000, pi);
 			Log.e("louis.fazen", "Regular pace of alarms");
 		} else {
-			mgr.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + 100000, 300000, pi);
+			mgr.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + 10000, 30000, pi);
 			Log.e("louis.fazen", "We have not updated in long time, so let's check more frequently");
 		}
 		

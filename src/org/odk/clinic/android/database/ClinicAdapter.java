@@ -171,8 +171,9 @@ public class ClinicAdapter {
 	public static class DatabaseHelper extends ODKSQLiteOpenHelper {
 //		private static class DatabaseHelper extends ODKSQLiteOpenHelper {
 		
+		//we create this once from the App singleton
 		public DatabaseHelper(Context context) {
-//			DatabaseHelper(Context context) {
+//			DatabaseHelper() {
 			super(FileUtils.DATABASE_PATH, DATABASE_NAME, null, DATABASE_VERSION);
 			createStorage();
 		}
@@ -203,20 +204,23 @@ public class ClinicAdapter {
 	}
 
 	public ClinicAdapter open() throws SQLException {		
-//		mDbHelper = new DatabaseHelper();
+//		mDbHelper = new DatabaseHelper();  //this is the problem with Yaws code... many DbHelpers...!
 //		mDb = mDbHelper.getWritableDatabase();
 		
-		mDb = App.getDB();
+		mDb = App.getDB(); 
 		Log.e(t, "open is called");
 		return this;
 	}
 
+//	TODO: go through code and delete all instances of close(), but for now, this suffices!
 	public void close() {
-		mDbHelper = App.getHelper();
-		if (mDbHelper != null) {
-			mDbHelper.close();
-			Log.e(t, "closed is called");
-		}
+//		mDbHelper = App.getHelper();
+		
+		//the following should always be null, so we comment out & never close! 
+//		if (mDbHelper != null) {
+//			mDbHelper.close();
+//			Log.e(t, "closed is called");
+//		}
 	}
 
 	// TODO Remove the need to pass in Patient/Observation objects. Saves object

@@ -12,8 +12,6 @@ import org.odk.clinic.android.tasks.DownloadTask;
 import org.odk.clinic.android.tasks.UploadDataTask;
 import org.odk.clinic.android.utilities.FileUtils;
 
-import com.alphabetbloc.clinic.services.SignalStrengthService;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -25,16 +23,26 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.PowerManager;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.alphabetbloc.clinic.services.SignalStrengthService;
+
+//TODO: FIX ANR!!!!!! happens as a result of losing track of the view when there is an update and clinic is running at same time
+//1. May need to make this a public class just like ClinicAdapter so that its methods can be called from a service without loading an Activity 
+//	This may mean that when Dashboard clicks a button, then it start signal strength service and recreates the alarms... i.e. everything goes through SSS
+//	 This may also mean that the SSS manages all the progress update etc.  essentially, we make this class into a service rather than a static class?
+// But can we have toasts and progress dialogs coming from a non-activity?! What happens on configuration changes?
+//2. Implement a broadcast receiver that listens for when the app loads (regardless of resuming to activity A or B), and then the broadcast receiver 
+//	puts up a dialog using getApplicationBaseContext to flag that there is a download in progress and please be patient
+//TODO: Also may need to reset the alarm, i.e. call schedule alarms after having success here, but then again, it may not matter very much, as that would only be
+//	effective for slowing down a fast alarm, but presumably that would happen eventually on next boot or power connected, and it is not as urgent, because
+//though it does drain battery to keep pinging the service and the database to see if it should run.... so yes, should do that.
 public class RefreshDataActivity extends Activity implements UploadFormListener, DownloadListener {
 
 	// private final static int COHORTS_PROGRESS_DIALOG = 2;
