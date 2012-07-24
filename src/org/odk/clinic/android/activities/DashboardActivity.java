@@ -317,6 +317,7 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 	// BUTTONS....
 	private void refreshData(){
 		Intent id = new Intent(getApplicationContext(), RefreshDataActivity.class);
+		id.putExtra(RefreshDataActivity.DIALOG, RefreshDataActivity.DIRECT_TO_DOWNLOAD);
 		startActivity(id);
 	}
 

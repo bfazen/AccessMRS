@@ -93,7 +93,8 @@ public class DownloadDataTask extends DownloadTask {
 					mPatientDbAdapter.deleteAllPatients();
 					mPatientDbAdapter.deleteAllObservations();
 					mPatientDbAdapter.deleteAllFormInstances();
-
+					
+					mPatientDbAdapter.makeIndices();
 					// download and insert patients and obs
 					publishProgress("Processing Clients", Integer.valueOf(step++).toString(), Integer.valueOf(totalstep).toString());
 					mPatientDbAdapter.insertPatients(zdis);
@@ -285,8 +286,8 @@ public class DownloadDataTask extends DownloadTask {
 						e.printStackTrace();
 					}
 
-				} else {
-					System.out.println("Form " + formId + " already downloaded");
+//				} else {
+//					System.out.println("Form " + formId + " already downloaded");
 				}
 			}
 			mPatientDbAdapter.close();
@@ -446,7 +447,6 @@ public class DownloadDataTask extends DownloadTask {
 			while ((count = inputStream.read(buffer)) > 0) {
 				stream.write(buffer, 0, count);
 				progress++;
-				Log.i("ODK clinic", "progresss:" + progress);
 				// publishProgress("Downloading Data", Integer.valueOf(progress)
 				// .toString(), Integer.valueOf(totalSize).toString());
 

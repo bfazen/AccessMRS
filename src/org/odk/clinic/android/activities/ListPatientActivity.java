@@ -82,11 +82,11 @@ public class ListPatientActivity extends ListActivity implements UploadFormListe
 		}
 		// get intents
 		mListType = getIntent().getIntExtra(DashboardActivity.LIST_TYPE, 1);
-		if(mListType == DashboardActivity.LIST_SIMILAR_CLIENTS){
+		if (mListType == DashboardActivity.LIST_SIMILAR_CLIENTS) {
 			mSearchPatientStr = getIntent().getStringExtra("search_name_string");
 			mSearchPatientId = getIntent().getStringExtra("search_id_string");
 		}
-		
+
 		mFilterTextWatcher = new TextWatcher() {
 			@Override
 			public void onTextChanged(CharSequence s, int start, int before, int count) {
@@ -131,7 +131,6 @@ public class ListPatientActivity extends ListActivity implements UploadFormListe
 			}
 		});
 
-		
 		// Verify Similar Clients on Add New Client
 		mSimilarClientButton = (Button) findViewById(R.id.similar_client_button);
 		mSearchBar = (LinearLayout) findViewById(R.id.searchholder);
@@ -170,7 +169,6 @@ public class ListPatientActivity extends ListActivity implements UploadFormListe
 		super.onCreateOptionsMenu(menu);
 
 		SharedPreferences settings = getSharedPreferences("ChwSettings", MODE_PRIVATE);
-		Log.e("Dashboard", "OnCreateOptionsMenu called with IsMenuEnabled= " + settings.getBoolean("IsMenuEnabled", true));
 		if (settings.getBoolean("IsMenuEnabled", true) == false) {
 			return false;
 		} else {
@@ -199,11 +197,11 @@ public class ListPatientActivity extends ListActivity implements UploadFormListe
 		} else {
 			mPatients.clear();
 			if (mSearchPatientStr != null) {
-				Log.e("louis.fazen", "findPatients mSearchPatientString is not null!=" + mSearchPatientStr);
+
 				getPatients(mSearchPatientStr, null);
 			}
 			if (mSearchPatientId != null && mSearchPatientId.length() > 3) {
-				Log.e("louis.fazen", "findPatients mSearchPatientId is not null! =" + mSearchPatientId + "=");
+
 				getPatients(null, mSearchPatientId);
 			}
 		}
@@ -218,7 +216,7 @@ public class ListPatientActivity extends ListActivity implements UploadFormListe
 		ca.open();
 		Cursor c = null;
 		if (mSearchPatientStr != null || mSearchPatientId != null) {
-			Log.e("ListPatientActivity", "getPatients is called, search string is not null, about to call fetchPatients!");
+			
 			c = ca.fetchPatients(searchString, patientId, mListType);
 		} else {
 			c = ca.fetchAllPatients(mListType);
@@ -314,7 +312,7 @@ public class ListPatientActivity extends ListActivity implements UploadFormListe
 			listLayout.setBackgroundResource(R.color.priority);
 			listIcon.setBackgroundResource(R.drawable.ic_priority);
 			String similarClient;
-			if (mPatients.size() < 2){
+			if (mPatients.size() < 2) {
 				similarClient = getString(R.string.similar_client_section);
 			} else {
 				similarClient = getString(R.string.similar_clients_section);
@@ -324,7 +322,7 @@ public class ListPatientActivity extends ListActivity implements UploadFormListe
 			mAddClientButton.setVisibility(View.GONE);
 			mSearchBar.setVisibility(View.GONE);
 			mSimilarClientButton.setVisibility(View.VISIBLE);
-			
+
 			break;
 		case DashboardActivity.LIST_ALL:
 			listLayout.setBackgroundResource(R.color.dark_gray);

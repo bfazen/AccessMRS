@@ -75,7 +75,6 @@ public class PatientAdapter extends ArrayAdapter<Patient> {
 
 			if (priorityArrow != null && nameView != null) {
 				if (p.getPriority() && p.getSaved()) {
-					Log.e("louis.fazen", p.getFamilyName() + " has Priority");
 					priorityArrow.setImageResource(R.drawable.arrow_red);
 					// nameView.setTextColor(res.getColor(R.color.priority));
 					nameView.setTextColor(res.getColor(R.color.dark_gray));

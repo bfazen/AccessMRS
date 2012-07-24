@@ -167,9 +167,12 @@ public class ClinicAdapter {
 
 	private static final String CREATE_DOWNLOAD_LOG_TABLE = "create table " + DOWNLOAD_LOG_TABLE + " (_id integer primary key autoincrement, " + DOWNLOAD_TIME + " integer);";
 
-	private static class DatabaseHelper extends ODKSQLiteOpenHelper {
 
-		DatabaseHelper() {
+	public static class DatabaseHelper extends ODKSQLiteOpenHelper {
+//		private static class DatabaseHelper extends ODKSQLiteOpenHelper {
+		
+		public DatabaseHelper(Context context) {
+//			DatabaseHelper(Context context) {
 			super(FileUtils.DATABASE_PATH, DATABASE_NAME, null, DATABASE_VERSION);
 			createStorage();
 		}
@@ -199,17 +202,17 @@ public class ClinicAdapter {
 		}
 	}
 
-	public ClinicAdapter open() throws SQLException {
-
-		mDbHelper = new DatabaseHelper();
-		mDb = mDbHelper.getWritableDatabase();
-		if (updateIndices)
-			makeIndices();
+	public ClinicAdapter open() throws SQLException {		
+//		mDbHelper = new DatabaseHelper();
+//		mDb = mDbHelper.getWritableDatabase();
+		
+		mDb = App.getDB();
 		Log.e(t, "open is called");
 		return this;
 	}
 
 	public void close() {
+		mDbHelper = App.getHelper();
 		if (mDbHelper != null) {
 			mDbHelper.close();
 			Log.e(t, "closed is called");
@@ -385,7 +388,6 @@ public class ClinicAdapter {
 		cv.put(KEY_FORMINSTANCE_DISPLAY, title);
 		cv.put(KEY_FORMINSTANCE_SUBTEXT, instance.getCompletionSubtext());
 
-		Log.e("ClinicAdapter", "CA is adding FormInstance cv string: " + cv.toString());
 		long id = -1;
 		try {
 			id = mDb.insert(FORMINSTANCES_TABLE, null, cv);
@@ -409,8 +411,6 @@ public class ClinicAdapter {
 		cv.put(FORM_START_TIME, activitylog.getActivityStartTime());
 		cv.put(FORM_STOP_TIME, activitylog.getActivityStopTime());
 		cv.put(FORM_LAUNCH_TYPE, activitylog.getFormType());
-
-		Log.e("ClinicAdapter", "adding cv string: " + cv.toString());
 
 		mDb.beginTransaction();
 		try {
@@ -474,7 +474,6 @@ public class ClinicAdapter {
 	 */
 	public Cursor fetchPatients(String name, String identifier, int listtype) throws SQLException {
 		Cursor c = null;
-		Log.e("louis.fazen", "ClinicAdpater fetchpatients is called name=" + name + ", id=" + identifier);
 		String listSelection = "";
 		String listOrder = "";
 		switch (listtype) {
@@ -503,7 +502,7 @@ public class ClinicAdapter {
 		if (name != null) {
 			// search using name
 			// remove all wildcard characters
-			Log.e("louis.fazen", "ClinicAdpater fetchpatients name is not null.... name=" + name + ", id=" + identifier);
+//			Log.e("louis.fazen", "ClinicAdpater fetchpatients name is not null.... name=" + name + ", id=" + identifier);
 			
 			name = name.replaceAll("\\*", "");
 			name = name.replaceAll("%", "");
@@ -513,7 +512,6 @@ public class ClinicAdapter {
 			name = name.replace(", ", " ");
 			String[] names = name.split(" ");
 
-			Log.e("louis.fazen", "names are:" + names);
 			StringBuilder expr = new StringBuilder();
 
 			expr.append("(");
@@ -522,10 +520,10 @@ public class ClinicAdapter {
 				if (n != null && n.length() > 0) {
 					if (listtype == DashboardActivity.LIST_SIMILAR_CLIENTS) {
 						if (i == 0) {
-							Log.e("louis.fazen", "i ==0 and name is=" + n);
+							
 							expr.append(KEY_GIVEN_NAME + " LIKE '" + n + "%'");
 						} else if (i == 1) {
-							Log.e("louis.fazen", "i ==1 and name is=" + n);
+							
 							expr.append(" AND ");
 							expr.append(KEY_FAMILY_NAME + " LIKE '" + n + "%'");
 						}
@@ -542,7 +540,6 @@ public class ClinicAdapter {
 			}
 			expr.append(")");
 			
-			Log.e("louis.fazen", "query expression is: WHERE " + expr.toString());
 
 			if (listtype == DashboardActivity.LIST_COMPLETE) {
 				c = mDb.query(true, PATIENTS_TABLE + ", " + FORMINSTANCES_TABLE, new String[] { PATIENTS_TABLE + "." + KEY_ID, PATIENTS_TABLE + "." + KEY_PATIENT_ID, KEY_IDENTIFIER, KEY_GIVEN_NAME, KEY_FAMILY_NAME, KEY_MIDDLE_NAME, KEY_BIRTH_DATE, KEY_GENDER,
@@ -760,7 +757,6 @@ public class ClinicAdapter {
 
 	public Cursor fetchFormInstancesByStatus(String status) throws SQLException {
 		Cursor c = null;
-		Log.e("louis.fazen", "fetchforminstacesbystatus where status=" + status);
 		c = mDb.query(true, FORMINSTANCES_TABLE, new String[] { KEY_ID, KEY_PATIENT_ID, KEY_PATH, KEY_FORMINSTANCE_DISPLAY, KEY_FORMINSTANCE_STATUS }, KEY_FORMINSTANCE_STATUS + "='" + status + "'", null, null, null, null, null);
 
 		if (c != null) {
@@ -840,11 +836,6 @@ public class ClinicAdapter {
 				ContentValues cv = new ContentValues();
 				cv.put(KEY_PRIORITY_FORM_NAMES, formName);
 
-				// DatabaseUtils.cursorRowToContentValues(c, form_row);
-				// ptIdFormValues.add(map);
-				Log.e("UpdatePatientFormIDs", "form_row content values: " + cv + " and formNames: " + formName);
-				// mDb.update(PATIENTS_TABLE, cv, "patient_id=" + patientId,
-				// null);
 				mDb.update(PATIENTS_TABLE, cv, KEY_PATIENT_ID + "=" + patientId, null);
 			} while (c.moveToNext());
 		}
@@ -863,9 +854,6 @@ public class ClinicAdapter {
 				ContentValues cv = new ContentValues();
 				cv.put(KEY_PRIORITY_FORM_NUMBER, formNumber);
 
-				// DatabaseUtils.cursorRowToContentValues(c, form_row);
-				// ptIdFormValues.add(map);
-				Log.e("UpdatePatientFormIDs", "priority_number content values: " + cv + " and formNumber: " + formNumber);
 				mDb.update(PATIENTS_TABLE, cv, KEY_PATIENT_ID + "=" + patientId, null);
 
 			} while (c.moveToNext());
@@ -878,8 +866,6 @@ public class ClinicAdapter {
 		// "=? AND " + KEY_FIELD_NAME + "=? AND " + KEY_VALUE_INT + "=?", new
 		// String[] { updatePatientId, KEY_FIELD_FORM_VALUE, formId });
 		int deleted = mDb.delete(OBSERVATIONS_TABLE, KEY_PATIENT_ID + "=" + updatePatientId + " AND " + KEY_FIELD_NAME + "=" + KEY_FIELD_FORM_VALUE + " AND " + KEY_VALUE_INT + "=" + formId, null);
-		Log.e("UpdatePatientFormIDs", "updatePriorityFormsByPatientId patientId=" + updatePatientId + " and formId: " + formId);
-		Log.e("updatePriorityFormsByPatientId", "updatePriorityFormsByPatientId deleted=" + deleted);
 		if (deleted > 0) {
 
 			Cursor c = null;
@@ -894,7 +880,6 @@ public class ClinicAdapter {
 					cv.put(KEY_PRIORITY_FORM_NUMBER, formNumber);
 					mDb.update(PATIENTS_TABLE, cv, KEY_PATIENT_ID + "=" + patientId, null);
 
-					Log.e("updatePriorityFormsByPatientId", "updatePriorityFormsByPatientId content values: " + cv + " and formNumber: " + formNumber);
 				} while (c.moveToNext());
 			} else {
 				// } else if
@@ -979,16 +964,10 @@ public class ClinicAdapter {
 		if (c.moveToFirst()) {
 			do {
 				String patientId = c.getString(c.getColumnIndex(InstanceColumns.PATIENT_ID));
-				Log.e("UpdateSavedFormNumbers", "patientId " + patientId);
 				int formNumber = c.getInt(c.getColumnIndex(InstanceColumns.STATUS));
 				ContentValues cv = new ContentValues();
 				cv.put(KEY_SAVED_FORM_NUMBER, formNumber);
 
-				// DatabaseUtils.cursorRowToContentValues(c, form_row);
-				// ptIdFormValues.add(map);
-				Log.e("UpdateSavedFormNumbers", "savedform content values: " + cv + " and savedformNumber: " + formNumber);
-				// mDb.update(PATIENTS_TABLE, cv, "patient_id=" + patientId,
-				// null);
 				mDb.update(PATIENTS_TABLE, cv, KEY_PATIENT_ID + "=" + patientId, null);
 			} while (c.moveToNext());
 		}
@@ -1037,7 +1016,6 @@ public class ClinicAdapter {
 		if (c.moveToFirst()) {
 			do {
 				String patientId = c.getString(c.getColumnIndex(InstanceColumns.PATIENT_ID));
-				Log.e("UpdateSavedFormNumbers", "patientId " + patientId);
 				int formNumber = c.getInt(c.getColumnIndex(InstanceColumns.STATUS));
 				cv.put(KEY_SAVED_FORM_NUMBER, formNumber);
 
@@ -1096,7 +1074,6 @@ public class ClinicAdapter {
 		if (c != null) {
 			if (c.moveToFirst()) {
 				count = c.getInt(c.getColumnIndex(KEY_SAVED_FORM_NUMBER));
-				Log.e("louis.fazen", "countAllSavedFormNumbers is not null with count of " + count);
 			}
 			c.close();
 		}
@@ -1140,7 +1117,6 @@ public class ClinicAdapter {
 		if (c != null) {
 			if (c.moveToFirst()) {
 				count = c.getInt(c.getColumnIndex(KEY_PATIENT_ID));
-				Log.e("louis.fazen", "countAllCompletedNumbers is not null with count of " + count);
 			}
 			c.close();
 		}
@@ -1323,7 +1299,6 @@ public class ClinicAdapter {
 				ih.prepareForInsert();
 
 				// Add the data for each column
-				Log.e(t, "ptIdIndex from insert pts=" + String.valueOf(ptIdIndex));
 				ih.bind(ptIdIndex, zdis.readInt());
 				ih.bind(ptFamilyIndex, zdis.readUTF());
 				ih.bind(ptMiddleIndex, zdis.readUTF());
@@ -1335,9 +1310,9 @@ public class ClinicAdapter {
 				// ih.bind(ptFormIndex, "");
 				// ih.bind(ptFormNumberIndex, "");
 
-				Log.e(t,
-						" ptIdIndex2: " + String.valueOf(ptIdIndex) + " ptFamilyIndex:5 " + String.valueOf(ptFamilyIndex) + " ptMiddleIndex:6 " + String.valueOf(ptMiddleIndex) + " ptGivenIndex:4 " + String.valueOf(ptGivenIndex) + " ptGenderIndex:8 "
-								+ String.valueOf(ptGenderIndex) + " ptBirthIndex:7 " + String.valueOf(ptBirthIndex) + " ptIdentifierIndex:3 " + String.valueOf(ptIdentifierIndex));
+//				Log.e(t,
+//						" ptIdIndex2: " + String.valueOf(ptIdIndex) + " ptFamilyIndex:5 " + String.valueOf(ptFamilyIndex) + " ptMiddleIndex:6 " + String.valueOf(ptMiddleIndex) + " ptGivenIndex:4 " + String.valueOf(ptGivenIndex) + " ptGenderIndex:8 "
+//								+ String.valueOf(ptGenderIndex) + " ptBirthIndex:7 " + String.valueOf(ptBirthIndex) + " ptIdentifierIndex:3 " + String.valueOf(ptIdentifierIndex));
 
 				// Insert the row into the database.
 				ih.execute();

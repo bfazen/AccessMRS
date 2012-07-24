@@ -12,21 +12,26 @@ import org.odk.clinic.android.tasks.DownloadTask;
 import org.odk.clinic.android.tasks.UploadDataTask;
 import org.odk.clinic.android.utilities.FileUtils;
 
+import com.alphabetbloc.clinic.services.SignalStrengthService;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -35,6 +40,11 @@ public class RefreshDataActivity extends Activity implements UploadFormListener,
 	// private final static int COHORTS_PROGRESS_DIALOG = 2;
 	// private final static int PATIENTS_PROGRESS_DIALOG = 3;
 	private final static int PROGRESS_DIALOG = 1;
+	public final static int ASK_TO_DOWNLOAD = 1;
+	public final static int DIRECT_TO_DOWNLOAD = 2;
+	public final static int DONT_SHOW_PROGRESS = 3;
+	public final static String DIALOG = "showdialog";
+
 	private ProgressDialog mProgressDialog;
 	private AlertDialog mAlertDialog;
 
@@ -54,11 +64,13 @@ public class RefreshDataActivity extends Activity implements UploadFormListener,
 	private ClinicAdapter mCla;
 	private int totalCount = -1;
 	private boolean mUploadComplete;
+	private Context mContext;
+	private int showProgress;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-
+		mContext = this;
 		setTitle(getString(R.string.app_name) + " > " + getString(R.string.download_patients));
 
 		if (!FileUtils.storageReady()) {
@@ -66,7 +78,9 @@ public class RefreshDataActivity extends Activity implements UploadFormListener,
 			setResult(RESULT_CANCELED);
 			finish();
 		}
-		
+
+		showProgress = ASK_TO_DOWNLOAD;
+		showProgress = getIntent().getIntExtra(DIALOG, ASK_TO_DOWNLOAD);
 
 		// get the task if we've changed orientations. If it's null, open up the
 		// cohort selection dialog
@@ -74,10 +88,13 @@ public class RefreshDataActivity extends Activity implements UploadFormListener,
 		mDownloadTask = (DownloadTask) getLastNonConfigurationInstance();
 		if (mUploadTask == null && mDownloadTask == null) {
 			buildUrls();
-			//keep same dialog through upload and download:
-			showDialog(PROGRESS_DIALOG);
-			if(uploadInstances())
-				downloadPatientsAndForms();;
+			// keep same dialog through upload and download:
+			if (showProgress != DONT_SHOW_PROGRESS)
+				showDialog(showProgress);
+			if (showProgress != ASK_TO_DOWNLOAD) {
+				if (uploadInstances())
+					downloadPatientsAndForms();
+			}
 		}
 	}
 
@@ -188,29 +205,77 @@ public class RefreshDataActivity extends Activity implements UploadFormListener,
 			// dismissDialog(PROGRESS_DIALOG);
 		}
 
-		if (result != null) {
+		if (result != null)
 			showCustomToast(getString(R.string.error, result));
-			finish();
-		}
 
-		else {
+		else
 			// both upload and download should be okay by this point, so:
 			setResult(RESULT_OK);
-			finish();
-		}
 
 		mDownloadTask = null;
+		stopRefreshDataActivity();
 	}
 
 	// DIALOG SECTION
 	@Override
 	protected Dialog onCreateDialog(int id) {
-		// may need to switch return type to ProgressDialog?
+		if (mProgressDialog != null && mProgressDialog.isShowing()) {
+			mProgressDialog.dismiss();
+		}
+		if (mAlertDialog != null && mAlertDialog.isShowing()) {
+			mAlertDialog.dismiss();
+		}
+		
+		// if you are seeing this, then you either
+		// 1. received an alarm or have plugged in while using clinic
+		switch (id) {
+		case ASK_TO_DOWNLOAD:
+			mAlertDialog = createAskDialog();
+			return mAlertDialog;
+			// 2. or pressed update manually
+		case DIRECT_TO_DOWNLOAD:
+			mProgressDialog = createDownloadDialog();
+			return mProgressDialog;
+		default:
+			mAlertDialog = createAskDialog();
+			return mAlertDialog;
+		}
+	}
 
-		mProgressDialog = new ProgressDialog(this);
+	private AlertDialog createAskDialog() {
+		DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				switch (which) {
+				case DialogInterface.BUTTON_POSITIVE:
+					dialog.dismiss();
+					showDialog(DIRECT_TO_DOWNLOAD);
+					if (uploadInstances())
+						downloadPatientsAndForms();
+					break;
+
+				case DialogInterface.BUTTON_NEGATIVE:
+					stopRefreshDataActivity();
+					break;
+				}
+			}
+		};
+
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setIcon(android.R.drawable.ic_dialog_info);
+		builder.setTitle(getString(R.string.refresh_clients_title));
+		builder.setMessage(getString(R.string.refresh_clients_text));
+		builder.setPositiveButton(getString(R.string.refresh), dialogClickListener);
+		builder.setNegativeButton(getString(R.string.cancel), dialogClickListener);
+		return builder.create();
+	}
+
+	private ProgressDialog createDownloadDialog() {
+		ProgressDialog pD = new ProgressDialog(this);
 		DialogInterface.OnClickListener loadingButtonListener = new DialogInterface.OnClickListener() {
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
+				// TODO: redundant code, no?
 				dialog.dismiss();
 				if (mUploadTask != null) {
 					mUploadTask.setUploadListener(null);
@@ -221,20 +286,17 @@ public class RefreshDataActivity extends Activity implements UploadFormListener,
 					mDownloadTask.setDownloadListener(null);
 					mDownloadTask.cancel(true);
 				}
-
-				setResult(RESULT_CANCELED);
-				finish();
+				stopRefreshDataActivity();
 			}
 		};
 		// initialize dialog to the upload text:
-		mProgressDialog.setIcon(android.R.drawable.ic_dialog_info);
-		mProgressDialog.setTitle(getString(R.string.uploading_patients));
-		mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-		mProgressDialog.setIndeterminate(false);
-		mProgressDialog.setCancelable(false);
-		mProgressDialog.setButton(getString(R.string.cancel), loadingButtonListener);
-		return mProgressDialog;
-
+		pD.setIcon(android.R.drawable.ic_dialog_info);
+		pD.setTitle(getString(R.string.uploading_patients));
+		pD.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+		pD.setIndeterminate(false);
+		pD.setCancelable(false);
+		pD.setButton(getString(R.string.cancel), loadingButtonListener);
+		return pD;
 	}
 
 	// deleting this because it is different than the onCreateDialog...?
@@ -249,10 +311,13 @@ public class RefreshDataActivity extends Activity implements UploadFormListener,
 
 	@Override
 	public void progressUpdate(String message, int progress, int max) {
-		Log.e("louis.fazen", "calling progressupdate with mProgressDialog=" + mProgressDialog);
-		mProgressDialog.setMax(max);
-		mProgressDialog.setProgress(progress);
-		mProgressDialog.setTitle(getString(R.string.downloading, message));
+		if (showProgress != DONT_SHOW_PROGRESS && mProgressDialog != null) {
+			Log.e("louis.fazen", "calling progressupdate with mProgressDialog=" + mProgressDialog + ", showProgress=" + showProgress);
+			mProgressDialog.setMax(max);
+			mProgressDialog.setProgress(progress);
+			mProgressDialog.setTitle(getString(R.string.downloading, message));
+		}
+		// else run in background
 	}
 
 	@Override
@@ -265,8 +330,24 @@ public class RefreshDataActivity extends Activity implements UploadFormListener,
 		return null;
 	}
 
+	private void stopRefreshDataActivity() {
+//		setResult(RESULT_CANCELED);
+		Intent i = new Intent(getApplicationContext(), SignalStrengthService.class);
+		stopService(i);
+		finish();
+
+	}
+
 	@Override
 	protected void onDestroy() {
+		Log.e("louis.fazen", "RefreshDataActivity.onDestroy is called and about to call stopService()");
+
+		if (mProgressDialog != null && mProgressDialog.isShowing()) {
+			mProgressDialog.dismiss();
+		}
+		if (mAlertDialog != null && mAlertDialog.isShowing()) {
+			mAlertDialog.dismiss();
+		}
 		if (mUploadTask != null) {
 			mUploadTask.setUploadListener(null);
 			if (mUploadTask.getStatus() == AsyncTask.Status.FINISHED)
@@ -294,6 +375,7 @@ public class RefreshDataActivity extends Activity implements UploadFormListener,
 		if (mProgressDialog != null && !mProgressDialog.isShowing()) {
 			mProgressDialog.show();
 		}
+
 	}
 
 	@Override
@@ -314,28 +396,32 @@ public class RefreshDataActivity extends Activity implements UploadFormListener,
 	}
 
 	private void showCustomToast(String message) {
-		LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-		View view = inflater.inflate(R.layout.toast_view, null);
+		if (showProgress != DONT_SHOW_PROGRESS) {
+			LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+			View view = inflater.inflate(R.layout.toast_view, null);
 
-		// set the text in the view
-		TextView tv = (TextView) view.findViewById(R.id.message);
-		tv.setText(message);
+			// set the text in the view
+			TextView tv = (TextView) view.findViewById(R.id.message);
+			tv.setText(message);
 
-		Toast t = new Toast(this);
-		t.setView(view);
-		t.setDuration(Toast.LENGTH_LONG);
-		t.setGravity(Gravity.BOTTOM, 0, -20);
-		t.show();
+			Toast t = new Toast(this);
+			t.setView(view);
+			t.setDuration(Toast.LENGTH_LONG);
+			t.setGravity(Gravity.BOTTOM, 0, -20);
+			t.show();
+		}
+		// else = DONT_SHOW_PROGRESS so do nothing
 	}
-	
-	//the other way to do this would simply be to pass the AsyncTask the context, then build them there
+
+	// the other way to do this would simply be to pass the AsyncTask the
+	// context, then build them there
 	private void buildUrls() {
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
 		String serverUrl = settings.getString(PreferencesActivity.KEY_SERVER, getString(R.string.default_server));
 		username = settings.getString(PreferencesActivity.KEY_USERNAME, getString(R.string.default_username));
 		password = settings.getString(PreferencesActivity.KEY_PASSWORD, getString(R.string.default_password));
 		String userpwd = "&uname=" + username + "&pw=" + password;
-		
+
 		savedSearch = String.valueOf(settings.getBoolean(PreferencesActivity.KEY_USE_SAVED_SEARCHES, false));
 		cohortId = settings.getString(PreferencesActivity.KEY_SAVED_SEARCH, "0");
 		programId = settings.getString(PreferencesActivity.KEY_PROGRAM, "0");
@@ -345,17 +431,17 @@ public class RefreshDataActivity extends Activity implements UploadFormListener,
 		uploadUrl.append(Constants.INSTANCE_UPLOAD_URL);
 		uploadUrl.append(userpwd);
 		formUploadUrl = uploadUrl.toString();
-		
+
 		StringBuilder formlistUrl = new StringBuilder(serverUrl);
 		formlistUrl.append(Constants.FORMLIST_DOWNLOAD_URL);
 		formlistUrl.append(userpwd);
 		formlistDownloadUrl = formlistUrl.toString();
-		
+
 		StringBuilder formUrl = new StringBuilder(serverUrl);
 		formUrl.append(Constants.FORM_DOWNLOAD_URL);
 		formUrl.append(userpwd);
 		formDownloadUrl = formUrl.toString();
-		
+
 	}
 
 }

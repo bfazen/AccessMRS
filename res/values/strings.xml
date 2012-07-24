@@ -133,4 +133,12 @@ the License.
     <string name="dashboard_title">Clinic For CHWs</string>
     <string name="dashboard_task_title">Forms:</string>
 
+    <string name="ss_service_connected">Trying to Update Clients</string>
+    <string name="ss_service_disconnected">Stopped Updating Clients</string>
+    <string name="ss_service_started">Update Clients Started</string>
+    <string name="ss_service_stopped">Update Clients Stopped</string>
+    <string name="ss_service_label">Update Client List</string>
+    <string name="refresh_clients_title">Refresh Client List</string>
+    <string name="refresh_clients_text">Your client list is out of date. Please refresh data now.</string>
+    
 </resources>

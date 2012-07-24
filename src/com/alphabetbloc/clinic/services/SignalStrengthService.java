@@ -3,26 +3,32 @@ package com.alphabetbloc.clinic.services;
 import java.util.Iterator;
 import java.util.List;
 
+import org.odk.clinic.android.R;
 import org.odk.clinic.android.activities.DashboardActivity;
-import org.odk.clinic.android.activities.DownloadPatientActivity;
 import org.odk.clinic.android.activities.ListPatientActivity;
-import org.odk.clinic.android.database.ClinicAdapter;
+import org.odk.clinic.android.activities.RefreshDataActivity;
 
 import android.app.ActivityManager;
-import android.app.Service;
 import android.app.ActivityManager.RunningAppProcessInfo;
 import android.app.ActivityManager.RunningServiceInfo;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.app.Service;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.IBinder;
+import android.os.PowerManager;
+import android.os.SystemClock;
 import android.telephony.PhoneStateListener;
 import android.telephony.ServiceState;
 import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.widget.Toast;
 
 /**
  * 
@@ -39,34 +45,59 @@ public class SignalStrengthService extends Service {
 	private PhoneStateListener mPhoneStateListener;
 	private static final String TAG = "SignalStrengthService";
 
+	private static volatile PowerManager.WakeLock lockStatic = null;
+	static final String NAME = "com.alphabetbloc.clinic.android.RefreshDataActivity";
+
+	private NotificationManager mNM;
+	private int NOTIFICATION = 1;
+	private static int countN;
+	private static int countS;
+
 	@Override
 	public IBinder onBind(Intent intent) {
-		// We don't want to bind; return null.
 		return null;
 	}
 
 	@Override
 	public void onCreate() {
 		Log.e(TAG, "SignalStrengthService Created");
+		// Display a notification about us starting. We put an icon in the
+		// status bar.
+		mNM = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+		// showNotification();
+
+		CharSequence text = getText(R.string.ss_service_started);
+		Notification notification = new Notification(R.drawable.icon, text, System.currentTimeMillis());
+		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, new Intent(this, DashboardActivity.class), Intent.FLAG_ACTIVITY_NEW_TASK);
+		notification.setLatestEventInfo(this, getText(R.string.ss_service_label), text, contentIntent);
+		mNM.notify(NOTIFICATION, notification);
+
+		Log.e(TAG, "text=" + text);
+		if (notification != null) {
+			// startForeground(NOTIFICATION, notification);
+			Log.e(TAG, "SignalStrengthService Started in Foreground");
+		}
+
 		mTelephonyManager = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
 		mPhoneStateListener = new PhoneStateListener() {
 			@Override
 			public void onSignalStrengthsChanged(SignalStrength signalStrength) {
 				int asu = signalStrength.getGsmSignalStrength();
-				// if (asu >= 8 && asu < 32) {
-				// TODO: bring this back in with the ASU
-				// TODO: change the activity that is started...
-				Log.e(TAG, "asu=" + asu);
-				if (networkAvailable()) {
-					Log.e(TAG, "network available");
-					if (refreshClientsNow()) {
-						Log.e(TAG, "refresh now okay");
-						Intent id = new Intent(getApplicationContext(), DownloadPatientActivity.class);
-						id.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-						startActivity(id);
-					}
-					// }
-				}
+
+				if (asu >= 7 && asu < 32) {
+					if (networkAvailable())
+						refreshClientsNow();
+					else if (countN++ > 5)
+						updateService();
+				} else if (asu < 1 || asu > 32 || countS++ > 8)
+					stopSelf();
+
+				// if (countN < 10 && countN > 5)
+				// updateService();
+				// if (count > 10)
+				// stopSelf();
+
+				Log.e(TAG, "asu=" + asu + " countN=" + countN + " countS=" + countS);
 				super.onSignalStrengthsChanged(signalStrength);
 			}
 
@@ -89,11 +120,11 @@ public class SignalStrengthService extends Service {
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
-		Log.e(TAG, "SignalStrengthService Started");
-		boolean max = intent.getBooleanExtra("maximum", false);
-		Log.e(TAG, "boolean extra =" + max);
+		Log.e(TAG, "SignalStrengthService Started with start id " + startId + ": " + intent);
+
 		// Register the listener, which effectively starts the service
 		mTelephonyManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_SIGNAL_STRENGTHS | PhoneStateListener.LISTEN_SERVICE_STATE);
+
 		return super.onStartCommand(intent, flags, startId);
 	}
 
@@ -120,16 +151,42 @@ public class SignalStrengthService extends Service {
 
 	}
 
+	private void showNotification() {
+		// In this sample, we'll use the same text for the ticker and the
+		// expanded notification
+		CharSequence text = getText(R.string.ss_service_started);
+
+		// Set the icon, scrolling text and timestamp
+		Notification notification = new Notification(R.drawable.icon, text, System.currentTimeMillis());
+
+		// The PendingIntent to launch our activity if the user selects this
+		// notification
+		// TODO: check this, as I am creating a new, and potentially second
+		// dashboard activity... maybe need to return a singleton?
+		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, new Intent(this, DashboardActivity.class), Intent.FLAG_ACTIVITY_NEW_TASK);
+
+		// Set the info for the views that show in the notification panel.
+		notification.setLatestEventInfo(this, getText(R.string.ss_service_label), text, contentIntent);
+
+		// Send the notification.
+		mNM.notify(NOTIFICATION, notification);
+	}
+
 	@Override
 	public void onDestroy() {
 		Log.d(TAG, "Shutting down the Service" + TAG);
+		mNM.cancel(NOTIFICATION);
 		mTelephonyManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_NONE);
+		countS = 0;
+		countN = 0;
 		super.onDestroy();
 	}
 
-	private boolean refreshClientsNow() {
+	private void refreshClientsNow() {
+		Log.e(TAG, "RefreshNow Called");
 		RunningAppProcessInfo info = null;
 		boolean refreshClients = true;
+		int aDialog = RefreshDataActivity.DONT_SHOW_PROGRESS;
 		String collectPackage = "org.odk.collect.android";
 		String clinicPackage = "org.odk.clinic.android";
 		String createPatientClass = "org.odk.clinic.android.activities.CreatePatientActivity";
@@ -155,13 +212,23 @@ public class SignalStrengthService extends Service {
 							refreshClients = false;
 						else if (foreGround.getClassName().equals(listPatientClass) && ListPatientActivity.mListType == DashboardActivity.LIST_SIMILAR_CLIENTS)
 							refreshClients = false;
+						else
+							aDialog = RefreshDataActivity.ASK_TO_DOWNLOAD;
+					} else
+						aDialog = RefreshDataActivity.ASK_TO_DOWNLOAD;
 
-					}
 				}
 			}
 
 		}
-		return refreshClients;
+
+		if (refreshClients) {
+			Log.e(TAG, "RefreshClient starting RefreshDataActivity with dialog=" + aDialog);
+			Intent id = new Intent(getApplicationContext(), RefreshDataActivity.class);
+			id.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+			id.putExtra(RefreshDataActivity.DIALOG, aDialog);
+			startActivity(id);
+		}
 	}
 
 	private RunningAppProcessInfo getForegroundApp() {
@@ -247,6 +314,37 @@ public class SignalStrengthService extends Service {
 		}
 
 		return false;
+	}
+
+	private void createWakeLock() {
+		// first call:
+		if (lockStatic == null) {
+			PowerManager mgr = (PowerManager) getSystemService(Context.POWER_SERVICE);
+			lockStatic = mgr.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, NAME);
+			lockStatic.setReferenceCounted(true);
+			lockStatic.acquire();
+
+			Log.e("louis.fazen", "lockStatic.acquire()=" + lockStatic.toString());
+
+			// PowerManager pm = (PowerManager)
+			// getSystemService(Context.POWER_SERVICE);
+			// lockStatic =
+			// mgr.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK|PowerManager.ACQUIRE_CAUSES_WAKEUP,
+			// "bbbb");
+			// lockStatic.acquire();
+
+			// may need:
+			// getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN |
+			// WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
+			// WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
+		}
+
+		// then call:
+		if (lockStatic.isHeld()) {
+
+			lockStatic.release();
+			Log.e("louis.fazen", "Called lockStatic.release()=" + lockStatic.toString());
+		}
 	}
 
 }

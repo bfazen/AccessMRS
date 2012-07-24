@@ -30,6 +30,15 @@ import com.commonsware.cwac.wakeful.WakefulIntentService.AlarmListener;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
+/**
+ * @author Louis Fazen (louis.fazen@gmail.com), commonsware
+ * 
+ * NB: On Connection to AC or USB power is a convenient time to check for an update:
+ * 1. it may mean you are closer to a power source and signal is better
+ * 2. it means we do not need to worry about battery dying mid-update
+ * 3. the user is probably not planning on using the phone while connected
+ * the more updates occur on battery connection, the fewer occur when not connected (saving battery later)
+ */
 public class AlarmReceiver extends BroadcastReceiver {
   private static final String WAKEFUL_META_DATA="com.commonsware.cwac.wakeful";
   

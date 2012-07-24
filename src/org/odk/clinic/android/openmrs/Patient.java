@@ -5,8 +5,6 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
-import android.util.Log;
-
 public class Patient {
 
 	private Integer patientId = null;
@@ -51,7 +49,6 @@ public class Patient {
 	}
 
 	public Integer getPatientId() {
-		Log.e("louis.fazen", "patient.getPatientId=" + patientId);
 		return patientId;
 	}
 
@@ -109,7 +106,6 @@ public class Patient {
 	
 	public void setPatientId(Integer pid) {
 		patientId = pid;
-		Log.e("louis.fazen", "patient.setPatientId=" + patientId);
 	}
 	
 	public void setCreateCode(Integer createcode) {
