@@ -12,7 +12,6 @@ import org.odk.clinic.android.openmrs.ActivityLog;
 import org.odk.clinic.android.openmrs.Constants;
 import org.odk.clinic.android.openmrs.Form;
 import org.odk.clinic.android.openmrs.Patient;
-import org.odk.clinic.android.tasks.ActivityLogTask;
 import org.odk.clinic.android.utilities.App;
 import org.odk.collect.android.provider.InstanceProviderAPI;
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
@@ -310,12 +309,18 @@ public class ViewCompletedForms extends ListActivity {
 
 	protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
 		super.onActivityResult(requestCode, resultCode, intent);
-		mActivityLog.setActivityStopTime();
 		// if (requestCode != patientAndFormCode) {
 		// mActivityLog.setFormId("Error: StartCode=" + patientAndFormCode +
 		// " EndCode=" + requestCode);
 		// }
-		new ActivityLogTask(mActivityLog).execute();
+		SharedPreferences settings = getSharedPreferences("ChwSettings", MODE_PRIVATE);
+		if (settings.getBoolean("IsLoggingEnabled", true)) {
+			mActivityLog.setActivityStopTime();
+			ClinicAdapter ca = new ClinicAdapter();
+			ca.open();
+			ca.createActivityLog(mActivityLog);
+			ca.close();
+		}
 	}
 
 	private void startActivityLog(String formId, String formType) {

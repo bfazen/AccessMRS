@@ -328,8 +328,8 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 		
 		SharedPreferences settings = getSharedPreferences("ChwSettings", MODE_PRIVATE);
 		Log.e("Dashboard", "OnCreateOptionsMenu called with IsMenuEnabled= " + settings.getBoolean("IsMenuEnabled", true));
-		if (settings.getBoolean("IsMenuEnabled", true) == false) {
-			return false;
+		if (!settings.getBoolean("IsMenuEnabled", true)) {
+			return true;
 		} else {
 			menu.add(0, MENU_PREFERENCES, 0, getString(R.string.server_preferences)).setIcon(android.R.drawable.ic_menu_preferences);
 			return true;
