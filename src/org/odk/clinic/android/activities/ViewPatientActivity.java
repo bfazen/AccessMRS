@@ -14,15 +14,20 @@ import org.odk.clinic.android.utilities.FileUtils;
 import org.odk.collect.android.provider.InstanceProviderAPI;
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
+import com.alphabetbloc.clinic.services.RefreshDataService;
+
 import android.app.ListActivity;
+import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -64,8 +69,6 @@ public class ViewPatientActivity extends ListActivity {
 
 	private String patientIdStr;
 
-	private String activityLogEnd = "";
-
 	private Context mContext;
 
 	private Resources res;
@@ -74,7 +77,6 @@ public class ViewPatientActivity extends ListActivity {
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		Log.e("ViewPatientActivity", "ACTIVITY_LOG_END: " + activityLogEnd);
 		super.onCreate(savedInstanceState);
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.view_patient);
@@ -145,9 +147,6 @@ public class ViewPatientActivity extends ListActivity {
 		// }
 		//
 		// });
-
-		activityLogEnd = "oncreate";
-		Log.e("ViewPatientActivity", "ACTIVITY_LOG_END: " + activityLogEnd);
 	}
 
 	private boolean checkForForms() {
@@ -238,7 +237,7 @@ public class ViewPatientActivity extends ListActivity {
 	}
 
 	private void getPatientForms(Integer patientId) {
-		Log.e("ViewPatientActivity", "ACTIVITY_LOG_END: " + "getPatientForms is called!");
+
 		ClinicAdapter ca = new ClinicAdapter();
 		ca.open();
 		Cursor c = ca.fetchPatient(patientId);
@@ -518,18 +517,14 @@ public class ViewPatientActivity extends ListActivity {
 
 	@Override
 	protected void onDestroy() {
-		Log.e("ViewPatientActivity", "ACTIVITY_LOG_END: " + activityLogEnd);
 		super.onDestroy();
-		activityLogEnd = "onDestroy";
-		Log.e("ViewPatientActivity", "ACTIVITY_LOG_END: " + activityLogEnd);
 	}
 
 	@Override
 	protected void onResume() {
-		Log.e("ViewPatientActivity", "ACTIVITY_LOG_END: " + activityLogEnd);
 		super.onResume();
-		activityLogEnd = "onresume";
-		Log.e("ViewPatientActivity", "ACTIVITY_LOG_END: " + activityLogEnd);
+		IntentFilter filter = new IntentFilter(RefreshDataService.REFRESH_BROADCAST);
+		LocalBroadcastManager.getInstance(this).registerReceiver(onNotice, filter);
 		if (mPatient != null) {
 			// TODO Create more efficient SQL query to get only the latest
 			// observation values
@@ -538,7 +533,7 @@ public class ViewPatientActivity extends ListActivity {
 			getAllObservations(mPatient.getPatientId());
 			getPatientForms(mPatient.getPatientId());
 			refreshView();
-			Log.e("ViewPatientActivity", "ACTIVITY_LOG_END: " + "mPatient is not null");
+			
 		}
 		// TODO: what if the if clause fails?
 
@@ -546,19 +541,23 @@ public class ViewPatientActivity extends ListActivity {
 
 	@Override
 	protected void onPause() {
-		Log.e("ViewPatientActivity", "ACTIVITY_LOG_END: " + activityLogEnd);
 		super.onPause();
-		activityLogEnd = "onpause";
-		Log.e("ViewPatientActivity", "ACTIVITY_LOG_END: " + activityLogEnd);
-
+		LocalBroadcastManager.getInstance(this).unregisterReceiver(onNotice);
 	}
+
+	private BroadcastReceiver onNotice = new BroadcastReceiver() {
+		public void onReceive(Context ctxt, Intent i) {
+
+			Intent intent = new Intent(mContext, RefreshDataActivity.class);
+			intent.putExtra(RefreshDataActivity.DIALOG, RefreshDataActivity.ASK_TO_DOWNLOAD);
+			startActivity(intent);
+
+		}
+	};
 
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
-		activityLogEnd = "onsaveInstanceState";
-		Log.e("ViewPatientActivity", "ACTIVITY_LOG_END: " + activityLogEnd);
-
 	}
 
 	private void showCustomToast(String message) {

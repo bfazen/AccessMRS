@@ -35,19 +35,24 @@ import org.odk.collect.android.provider.FormsProviderAPI.FormsColumns;
 import org.odk.collect.android.provider.InstanceProviderAPI;
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
+import com.alphabetbloc.clinic.services.RefreshDataService;
+
 import android.app.ListActivity;
 import android.content.ActivityNotFoundException;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -483,7 +488,6 @@ public class FormPriorityList extends ListActivity {
 
 	}
 
-	
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
 		Log.e("lef-onActivityResult", "onActivityResult called with request=" + requestCode + " result=" + resultCode + " intent=" + intent);
@@ -594,7 +598,7 @@ public class FormPriorityList extends ListActivity {
 
 	// TODO: change this to pass a Parceable object from ViewPatientActivity
 	private Patient getPatient(Integer patientId) {
-		
+
 		Patient p = null;
 		ClinicAdapter ca = new ClinicAdapter();
 
@@ -626,11 +630,11 @@ public class FormPriorityList extends ListActivity {
 			// TODO: louis.fazen probably delete the following... not needed
 			p.setPriorityNumber(c.getInt(priorityIndex));
 			p.setPriorityForms(c.getString(priorityFormIndex));
-			
+
 			if (c.getInt(priorityIndex) > 0) {
 				p.setPriority(true);
 			}
-			
+
 			Log.e("louis.fazen", "FormPriorityList.getPatient =" + c.getInt(patientIdIndex));
 		}
 
@@ -638,19 +642,38 @@ public class FormPriorityList extends ListActivity {
 			c.close();
 		}
 		ca.close();
-		
+
 		return p;
 	}
 
 	@Override
 	protected void onResume() {
 		super.onResume();
+		IntentFilter filter = new IntentFilter(RefreshDataService.REFRESH_BROADCAST);
+		LocalBroadcastManager.getInstance(this).registerReceiver(onNotice, filter);
 		if (mPatient != null) {
 			Log.e("louis.fazen", "FormPriorityList.onResume mPatient is Not null and Id=" + mPatient.getPatientId());
 			getPriorityForms();
 			refreshView();
 		}
+
 	}
+
+	@Override
+	protected void onPause() {
+		super.onPause();
+		LocalBroadcastManager.getInstance(this).unregisterReceiver(onNotice);
+	}
+
+	private BroadcastReceiver onNotice = new BroadcastReceiver() {
+		public void onReceive(Context ctxt, Intent i) {
+
+			Intent intent = new Intent(mContext, RefreshDataActivity.class);
+			intent.putExtra(RefreshDataActivity.DIALOG, RefreshDataActivity.ASK_TO_DOWNLOAD);
+			startActivity(intent);
+
+		}
+	};
 
 	private void getPriorityForms() {
 		int patientId = mPatient.getPatientId();
@@ -674,7 +697,7 @@ public class FormPriorityList extends ListActivity {
 			c.close();
 		}
 		ca.close();
-		
+
 	}
 
 	private void refreshView() {
@@ -686,7 +709,7 @@ public class FormPriorityList extends ListActivity {
 		if (mSelectedFormIds != null && mSelectedFormIds.size() > 0) {
 			selectedIds = true;
 		}
-		
+
 		// Venn diagram where we have completed and selected subsets of Forms
 		// CompletedSelectedFormIds is their intersection and always smaller
 		// than both
@@ -935,9 +958,11 @@ public class FormPriorityList extends ListActivity {
 		return (formsSummary);
 	}
 
-	// NB... this method = method in AllFormList, but != ViewCompletedForms.launchFormViewOnly() 
-	//	b/c it picks up data from a different DB when creating Form Object
-	// View CompletedForms queries the Collect.Instances Db whereas this picks up instances from the Clinic.Instances Db
+	// NB... this method = method in AllFormList, but !=
+	// ViewCompletedForms.launchFormViewOnly()
+	// b/c it picks up data from a different DB when creating Form Object
+	// View CompletedForms queries the Collect.Instances Db whereas this picks
+	// up instances from the Clinic.Instances Db
 	private void launchFormViewOnly(String uriString, String formId) {
 		Intent intent = new Intent();
 		intent.setComponent(new ComponentName("org.odk.collect.android", "org.odk.collect.android.activities.FormEntryActivity"));
@@ -949,8 +974,6 @@ public class FormPriorityList extends ListActivity {
 		intent.putExtra("form_id", formId);
 		startActivityForResult(intent, VIEW_FORM_ONLY);
 	}
-	
-	
 
 	private void launchSavedFormEntry(int instanceId, int priority) {
 		Intent intent = new Intent();

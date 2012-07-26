@@ -1,49 +1,46 @@
 package org.odk.clinic.android.activities;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 
 import org.odk.clinic.android.R;
 import org.odk.clinic.android.database.ClinicAdapter;
-import org.odk.clinic.android.listeners.UploadFormListener;
 import org.odk.clinic.android.openmrs.Constants;
-import org.odk.clinic.android.tasks.UploadDataTask;
 import org.odk.clinic.android.utilities.FileUtils;
 
-import com.commonsware.cwac.wakeful.AlarmListener;
-import com.commonsware.cwac.wakeful.WakefulIntentService;
-
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.database.Cursor;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.View.OnClickListener;
+import android.view.ViewGroup;
 import android.view.Window;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.alphabetbloc.clinic.services.RefreshDataService;
+import com.commonsware.cwac.wakeful.AlarmListener;
+import com.commonsware.cwac.wakeful.WakefulIntentService;
 
-public class DashboardActivity extends Activity implements UploadFormListener {
+public class DashboardActivity extends Activity {
 
 	// Menu ID's
 	private static final int MENU_PREFERENCES = Menu.FIRST;
 	private static final int MENU_REFRESH = 2;
-	
+
 	// Request codes
 	public static final int DOWNLOAD_PATIENT = 1;
 	public static final int BARCODE_CAPTURE = 2;
@@ -57,18 +54,8 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 	public static final int LIST_COMPLETE = 4;
 	public static final int LIST_SIMILAR_CLIENTS = 5;
 
-	private static final String DOWNLOAD_PATIENT_CANCELED_KEY = "downloadPatientCanceled";
-
 	private ClinicAdapter mCla;
-
-	private ArrayList<String> mForms = new ArrayList<String>();
-
-	private boolean mDownloadPatientCanceled = false;
-
-	private UploadDataTask mUploadFormTask;
-
 	private int patients = 0;
-	private int forms = 0;
 	private int priorityToDoForms = 0;
 	private int completedForms = 0;
 	private int incompleteForms = 0;
@@ -80,20 +67,12 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 		super.onCreate(savedInstanceState);
 		mContext = this;
 
-		//Establish background service for downloading clients
-		//We do not reestablish existing alarms (set force to false), 
-		// b/c every force reset (force=true) requires alarm to go off, so alarms would go off every time this OnCreate is called
-	    WakefulIntentService.scheduleAlarms(new AlarmListener(), mContext, true);
-	    Log.e("louis.fazen", "DashboardActivity WakefulIntentService.schedule alarms  is called");
-	    
-		if (savedInstanceState != null) {
-			if (savedInstanceState.containsKey(DOWNLOAD_PATIENT_CANCELED_KEY)) {
-				mDownloadPatientCanceled = savedInstanceState.getBoolean(DOWNLOAD_PATIENT_CANCELED_KEY);
-			}
-		}
+		// Establish background service for downloading clients
+		WakefulIntentService.scheduleAlarms(new AlarmListener(), mContext, true);
+
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.dashboard);
-//		setTitle(getString(R.string.app_name) + " > " + getString(R.string.find_patient));
+
 		TextView providerNumber = (TextView) findViewById(R.id.provider_number);
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
 		mProviderId = settings.getString(PreferencesActivity.KEY_PROVIDER, "0");
@@ -103,32 +82,22 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 			showCustomToast(getString(R.string.error, getString(R.string.storage_error)));
 			finish();
 		}
-
 	}
 
 	@Override
 	protected void onResume() {
-		if (mUploadFormTask != null) {
-			mUploadFormTask.setUploadListener(this);
-		}
 		super.onResume();
-		// SharedPreferences settings =
-		// PreferenceManager.getDefaultSharedPreferences(getBaseContext());
-		// boolean firstRun =
-		// settings.getBoolean(PreferencesActivity.KEY_FIRST_RUN, true);
+		IntentFilter filter = new IntentFilter(RefreshDataService.REFRESH_BROADCAST);
+		LocalBroadcastManager.getInstance(this).registerReceiver(onNotice, filter);
+		refreshView();
+		
+		// SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
+		// boolean firstRun = settings.getBoolean(PreferencesActivity.KEY_FIRST_RUN, true);
 		// if (firstRun) {
 		// // Save first run status
 		// SharedPreferences.Editor editor = settings.edit();
 		// editor.putBoolean(PreferencesActivity.KEY_FIRST_RUN, false);
 		// editor.commit();
-		//
-		// // Start preferences activity
-		// Intent ip = new Intent(getApplicationContext(),
-		// PreferencesActivity.class);
-		// startActivity(ip);
-		// } else {
-
-		refreshView();
 
 	}
 
@@ -144,43 +113,37 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 		incompleteForms = mCla.countAllSavedFormNumbers();
 		completedForms = mCla.countAllCompletedUnsentForms();
 		priorityToDoForms = mCla.countAllPriorityFormNumbers();
-		forms = mCla.countAllForms();
 		long refreshDate = mCla.fetchMostRecentDownload();
 		mCla.close();
 
-		// Download Section
-		// TextView refreshTitle = (TextView)
-		// findViewById(R.id.refresh_subtext_title);
-		// refreshTitle.setText("Update:");
+		// REFRESH TIME
 		Date date = new Date();
 		date.setTime(refreshDate);
 		String refreshDateString = new SimpleDateFormat("MMM dd, 'at' HH:mm").format(date) + " ";
 		TextView refreshSubtext = (TextView) findViewById(R.id.refresh_subtext);
 		refreshSubtext.setText(refreshDateString);
-				
-		
-		//Buttons Section
+
+		// BUTTONS
 		LayoutInflater vi = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-		
 		ViewGroup refreshButtonGroup = (ViewGroup) findViewById(R.id.vertical_refresh_container);
 		refreshButtonGroup.removeAllViews();
-		
+
 		long timeSinceRefresh = System.currentTimeMillis() - refreshDate;
-		if(timeSinceRefresh > Constants.MAXIMUM_REFRESH_TIME){
+		if (timeSinceRefresh > Constants.MAXIMUM_REFRESH_TIME) {
 			View downloadButton = vi.inflate(R.layout.dashboard_refresh, null);
 			downloadButton.setClickable(true);
 			downloadButton.setOnClickListener(new OnClickListener() {
 				public void onClick(View arg0) {
 					refreshData();
 				}
-			});	
+			});
 			refreshButtonGroup.addView(downloadButton);
 		}
-		
-		ViewGroup clientButtonGroup = (ViewGroup) findViewById(R.id.vertical_container);	
+
+		ViewGroup clientButtonGroup = (ViewGroup) findViewById(R.id.vertical_container);
 		clientButtonGroup.removeAllViews();
 
-		// //Priority Form Section
+		// Suggested / Priority Forms
 		if (priorityToDoForms > 0) {
 			View priorityButton = vi.inflate(R.layout.dashboard_patients, null);
 			priorityButton.setClickable(true);
@@ -190,13 +153,13 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 					i.putExtra(LIST_TYPE, LIST_SUGGESTED);
 					startActivity(i);
 				}
-			});		
-			
-			RelativeLayout priorityRL = (RelativeLayout)  priorityButton.findViewById(R.id.number_block);
-			TextView priorityNumber = (TextView)  priorityButton.findViewById(R.id.number);
-			TextView priorityText = (TextView)  priorityButton.findViewById(R.id.text);
+			});
+
+			RelativeLayout priorityRL = (RelativeLayout) priorityButton.findViewById(R.id.number_block);
+			TextView priorityNumber = (TextView) priorityButton.findViewById(R.id.number);
+			TextView priorityText = (TextView) priorityButton.findViewById(R.id.text);
 			ImageView priorityArrow = (ImageView) priorityButton.findViewById(R.id.arrow_image);
-			
+
 			priorityRL.setBackgroundResource(R.drawable.priority);
 			priorityNumber.setText(String.valueOf(priorityToDoForms));
 			priorityArrow.setBackgroundResource(R.drawable.arrow_red);
@@ -206,8 +169,8 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 				priorityText.setText(R.string.to_do_client);
 			}
 			priorityText.append(" ");
-//			priorityText.setTextColor(R.color.priority);
-		
+			// priorityText.setTextColor(R.color.priority);
+
 			clientButtonGroup.addView(priorityButton);
 		}
 
@@ -221,13 +184,13 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 					i.putExtra(LIST_TYPE, LIST_INCOMPLETE);
 					startActivity(i);
 				}
-			});		
-			
-			RelativeLayout incompleteRL = (RelativeLayout)  incompleteButton.findViewById(R.id.number_block);
-			TextView incompleteNumber = (TextView)  incompleteButton.findViewById(R.id.number);
-			TextView incompleteText = (TextView)  incompleteButton.findViewById(R.id.text);
+			});
+
+			RelativeLayout incompleteRL = (RelativeLayout) incompleteButton.findViewById(R.id.number_block);
+			TextView incompleteNumber = (TextView) incompleteButton.findViewById(R.id.number);
+			TextView incompleteText = (TextView) incompleteButton.findViewById(R.id.text);
 			ImageView incompleteArrow = (ImageView) incompleteButton.findViewById(R.id.arrow_image);
-			
+
 			incompleteRL.setBackgroundResource(R.drawable.incomplete);
 			incompleteNumber.setText(String.valueOf(incompleteForms));
 			incompleteArrow.setBackgroundResource(R.drawable.arrow_gray);
@@ -237,11 +200,11 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 				incompleteText.setText(R.string.incomplete_client);
 			}
 			incompleteText.append(" ");
-		
+
 			clientButtonGroup.addView(incompleteButton);
 		}
-		
-		// Completed Form Section	
+
+		// Completed Form Section
 		if (completedForms > 0) {
 			View completedButton = vi.inflate(R.layout.dashboard_patients, null);
 			completedButton.setClickable(true);
@@ -251,13 +214,13 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 					i.putExtra(LIST_TYPE, LIST_COMPLETE);
 					startActivity(i);
 				}
-			});		
-			
-			RelativeLayout completedRL = (RelativeLayout)  completedButton.findViewById(R.id.number_block);
-			TextView completedNumber = (TextView)  completedButton.findViewById(R.id.number);
-			TextView completedText = (TextView)  completedButton.findViewById(R.id.text);
+			});
+
+			RelativeLayout completedRL = (RelativeLayout) completedButton.findViewById(R.id.number_block);
+			TextView completedNumber = (TextView) completedButton.findViewById(R.id.number);
+			TextView completedText = (TextView) completedButton.findViewById(R.id.text);
 			ImageView completedArrow = (ImageView) completedButton.findViewById(R.id.arrow_image);
-			
+
 			completedRL.setBackgroundResource(R.drawable.completed);
 			completedNumber.setText(String.valueOf(completedForms));
 			completedArrow.setBackgroundResource(R.drawable.arrow_gray);
@@ -267,10 +230,10 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 				completedText.setText(R.string.completed_client);
 			}
 			completedText.append(" ");
-		
+
 			clientButtonGroup.addView(completedButton);
 		}
-		
+
 		// All Clients Section
 		if (patients > 0) {
 			View patientsButton = vi.inflate(R.layout.dashboard_patients, null);
@@ -281,13 +244,13 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 					i.putExtra(LIST_TYPE, LIST_ALL);
 					startActivity(i);
 				}
-			});		
-			
-			RelativeLayout patientsRL = (RelativeLayout)  patientsButton.findViewById(R.id.number_block);
-			TextView patientsNumber = (TextView)  patientsButton.findViewById(R.id.number);
-			TextView patientsText = (TextView)  patientsButton.findViewById(R.id.text);
+			});
+
+			RelativeLayout patientsRL = (RelativeLayout) patientsButton.findViewById(R.id.number_block);
+			TextView patientsNumber = (TextView) patientsButton.findViewById(R.id.number);
+			TextView patientsText = (TextView) patientsButton.findViewById(R.id.text);
 			ImageView patientsArrow = (ImageView) patientsButton.findViewById(R.id.arrow_image);
-			
+
 			patientsRL.setBackgroundResource(R.drawable.gray);
 			patientsNumber.setText(String.valueOf(patients));
 			patientsArrow.setBackgroundResource(R.drawable.arrow_gray);
@@ -297,10 +260,10 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 				patientsText.setText(R.string.current_client);
 			}
 			patientsText.append(" ");
-		
+
 			clientButtonGroup.addView(patientsButton);
 		}
-		
+
 		// Form Section
 		View addNewClientButton = vi.inflate(R.layout.dashboard_forms, null);
 		addNewClientButton.setClickable(true);
@@ -310,13 +273,13 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 				startActivity(i);
 			}
 		});
-	
+
 		clientButtonGroup.addView(addNewClientButton);
 
 	}
 
 	// BUTTONS....
-	private void refreshData(){
+	private void refreshData() {
 		Intent id = new Intent(getApplicationContext(), RefreshDataActivity.class);
 		id.putExtra(RefreshDataActivity.DIALOG, RefreshDataActivity.DIRECT_TO_DOWNLOAD);
 		startActivity(id);
@@ -326,7 +289,7 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 	public boolean onCreateOptionsMenu(Menu menu) {
 		super.onCreateOptionsMenu(menu);
 		menu.add(0, MENU_REFRESH, 0, getString(R.string.download_patients)).setIcon(R.drawable.ic_menu_refresh);
-		
+
 		SharedPreferences settings = getSharedPreferences("ChwSettings", MODE_PRIVATE);
 		Log.e("Dashboard", "OnCreateOptionsMenu called with IsMenuEnabled= " + settings.getBoolean("IsMenuEnabled", true));
 		if (!settings.getBoolean("IsMenuEnabled", true)) {
@@ -335,8 +298,7 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 			menu.add(0, MENU_PREFERENCES, 0, getString(R.string.server_preferences)).setIcon(android.R.drawable.ic_menu_preferences);
 			return true;
 		}
-		
-		
+
 	}
 
 	@Override
@@ -355,40 +317,30 @@ public class DashboardActivity extends Activity implements UploadFormListener {
 	}
 
 	// LIFECYCLE
-	@Override
-	protected void onDestroy() {
-		if (mUploadFormTask != null) {
-			mUploadFormTask.setUploadListener(null);
-			if (mUploadFormTask.getStatus() == AsyncTask.Status.FINISHED) {
-				mUploadFormTask.cancel(true);
-			}
-		}
-		super.onDestroy();
-	}
+	private BroadcastReceiver onNotice = new BroadcastReceiver() {
+		public void onReceive(Context ctxt, Intent i) {
 
+			Intent intent = new Intent(mContext, RefreshDataActivity.class);
+			intent.putExtra(RefreshDataActivity.DIALOG, RefreshDataActivity.ASK_TO_DOWNLOAD);
+			startActivity(intent);
+
+		}
+	};
+	
 	@Override
 	protected void onPause() {
 		super.onPause();
-
+		LocalBroadcastManager.getInstance(this).unregisterReceiver(onNotice);
 	}
-
+	
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
-
-		outState.putBoolean(DOWNLOAD_PATIENT_CANCELED_KEY, mDownloadPatientCanceled);
 	}
-
+	
 	@Override
-	public void uploadComplete(ArrayList<String> result) {
-		// Auto-generated method stub
-
-	}
-
-	@Override
-	public void progressUpdate(String message, int progress, int max) {
-		// Auto-generated method stub
-
+	protected void onDestroy() {
+		super.onDestroy();
 	}
 
 	private void showCustomToast(String message) {

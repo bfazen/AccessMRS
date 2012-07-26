@@ -7,40 +7,45 @@
     <uses-permission
         xmlns:android="http://schemas.android.com/apk/res/android"
         android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.SET_TIME" />
-    <uses-permission android:name="android.permission.SET_TIME_ZONE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
+
+    <!-- For Receivers -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.DEVICE_POWER" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.GET_TASKS" />
 
     <!--
-    Why is it after the application tag?
-    Do I need any of the following.... louis.fazen
-    
-    <uses-permission android:name="android.permission.INTERNET"/> 
-  <uses-permission android:name="android.permission.WRITE_SETTINGS" /> 
-    <uses-permission 
-android:name="android.permission.WRITE_SECURE_SETTINGS" /> 
-     <uses-permission 
-android:name="android.permission.CHANGE_CONFIGURATION" /> 
-     <uses-permission 
-android:name="com.android.launcher.permission.READ_SETTINGS" /> 
-     <uses-permission 
-android:name="com.android.launcher.permission.WRITE_SETTINGS" /> 
+    For Clock Updates 
+    <uses-permission android:name="android.permission.SET_TIME" />
+    <uses-permission android:name="android.permission.SET_TIME_ZONE" />
+    <uses-permission android:name="android.permission.CHANGE_CONFIGURATION" />
     -->
+
+    <!-- Used for the 2G/3G Toggle -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
+
+    <!-- Others...
+    <uses-permission android:name="android.permission.WRITE_SETTINGS" />
+    <uses-permission android:name="com.android.launcher.permission.READ_SETTINGS" />
+    <uses-permission android:name="com.android.launcher.permission.WRITE_SETTINGS" />
+    -->
+    <!-- testing with CM... -->
+    <uses-permission android:name="com.alphabetbloc.android.permission.TOGGLE_INTERNET"/>
 
     <application
         android:name=".utilities.App"
         android:icon="@drawable/icon"
         android:label="@string/app_name"
         android:theme="@android:style/Theme.Light.NoTitleBar.Fullscreen" >
+
+        <!-- Activities -->
         <activity
             android:name=".activities.DashboardActivity"
             android:label="@string/app_name"
+            android:launchMode="singleTop"
             android:screenOrientation="portrait" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -59,32 +64,14 @@ android:name="com.android.launcher.permission.WRITE_SETTINGS" />
             android:label="@string/app_name"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".activities.ListFormActivity"
-            android:label="@string/app_name"
-            android:screenOrientation="portrait" />
-        <activity
-            android:name=".activities.DownloadFormActivity"
-            android:label="@string/app_name"
-            android:screenOrientation="portrait"
-            android:theme="@android:style/Theme.NoDisplay" />
-        <activity
             android:name=".activities.FormPriorityList"
             android:label="@string/app_name"
             android:screenOrientation="portrait" />
-        <activity
-            android:name=".activities.DownloadPatientActivity"
-            android:label="@string/app_name"
-            android:screenOrientation="portrait"
-            android:theme="@android:style/Theme.NoDisplay" />
         <activity
             android:name=".activities.RefreshDataActivity"
             android:label="@string/app_name"
             android:screenOrientation="portrait"
             android:theme="@android:style/Theme.NoDisplay" />
-        <!--
-            Customization by louis.fazen@gmail.com
-			Allow for PreferencesActivity to be called by external application intent        
-        -->
         <activity
             android:name=".activities.PreferencesActivity"
             android:label="@string/app_name" >
@@ -105,17 +92,6 @@ android:name="com.android.launcher.permission.WRITE_SETTINGS" />
             android:label="@string/app_name"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".activities.InstanceUploaderList"
-            android:label="@string/app_name"
-            android:screenOrientation="portrait" />
-        <activity
-            android:name=".activities.InstanceUploaderActivity"
-            android:label="@string/app_name"
-            android:screenOrientation="portrait"
-            android:theme="@android:style/Theme.NoDisplay" />
-
-        <!-- louis.fazen@gmail.com Change View Menu Settings -->
-        <activity
             android:name=".activities.ViewSavedForms"
             android:label="@string/app_name"
             android:screenOrientation="portrait" />
@@ -125,10 +101,6 @@ android:name="com.android.launcher.permission.WRITE_SETTINGS" />
             android:screenOrientation="portrait" />
         <activity
             android:name=".activities.ViewCompletedForms"
-            android:label="@string/app_name"
-            android:screenOrientation="portrait" />
-        <activity
-            android:name=".activities.AllFormList"
             android:label="@string/app_name"
             android:screenOrientation="portrait" />
         <activity
@@ -142,15 +114,7 @@ android:name="com.android.launcher.permission.WRITE_SETTINGS" />
             </intent-filter>
         </activity>
 
-        <!-- Is this service necessary to have in manifest like this? -->
-        <service
-            android:name="com.alphabetbloc.clinic.services.SignalStrengthService"
-            android:label="SignalStrengthService" >
-            <intent-filter>
-                <action android:name="com.alphabetbloc.clinic.services.SignalStrengthService" />
-            </intent-filter>
-        </service>
-
+        <!-- Receivers -->
         <receiver android:name="com.commonsware.cwac.wakeful.AlarmReceiver" >
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
@@ -164,7 +128,15 @@ android:name="com.android.launcher.permission.WRITE_SETTINGS" />
                 android:resource="@xml/wakeful" />
         </receiver>
 
-        <service android:name="com.alphabetbloc.clinic.services.RefreshClientsService" >
+        <!-- Services -->
+        <service
+            android:name="com.alphabetbloc.clinic.services.RefreshDataService"
+            android:label="RefreshDataService" >
+            <intent-filter>
+                <action android:name="com.alphabetbloc.clinic.services.RefreshDataService" />
+            </intent-filter>
+        </service>
+        <service android:name="com.alphabetbloc.clinic.services.AlarmIntentService" >
         </service>
     </application>
 

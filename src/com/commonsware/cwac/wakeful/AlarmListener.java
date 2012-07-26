@@ -23,7 +23,7 @@ import android.content.Context;
 import android.os.SystemClock;
 import android.util.Log;
 
-import com.alphabetbloc.clinic.services.RefreshClientsService;
+import com.alphabetbloc.clinic.services.AlarmIntentService;
 import com.commonsware.cwac.wakeful.WakefulIntentService;
 
 public class AlarmListener implements WakefulIntentService.AlarmListener {
@@ -72,7 +72,7 @@ public class AlarmListener implements WakefulIntentService.AlarmListener {
 	public void sendWakefulWork(Context ctxt) {
 		// to run the business logic in a background thread, call service
 		Log.e("louis.fazen", "sendWakefulWork is called");
-		WakefulIntentService.sendWakefulWork(ctxt, RefreshClientsService.class);
+		WakefulIntentService.sendWakefulWork(ctxt, AlarmIntentService.class);
 	}
 
 	public long getMaxAge() {

@@ -1,18 +1,13 @@
 package com.alphabetbloc.clinic.services;
 
-import org.odk.clinic.android.R;
 import org.odk.clinic.android.database.ClinicAdapter;
 import org.odk.clinic.android.openmrs.Constants;
 
-import android.app.AlarmManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.ServiceConnection;
-import android.os.IBinder;
 import android.os.SystemClock;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.commonsware.cwac.wakeful.WakefulIntentService;
 
@@ -22,27 +17,16 @@ import com.commonsware.cwac.wakeful.WakefulIntentService;
  *         IntentService is called by AlarmListener at periodic intervals.
  *         Decides whether or not to start ongoing service to monitor
  *         SignalStrength and download clients. After decision, this
- *         IntentService finishes.
+ *         IntentService finishes. Holds wakelock.
  */
 
-// TODO: However, this structure seems to work,
-// but the whole point of this RefreshClientsService is in order to prevent the
-// device from going to sleep until it runs through the whole of the Service
-// Loading the other intent will allow it to run in the background... I think I
-// need to bind this service to the SignalStrengthService Intent if it is
-// maximum
-// if not maximum, just let it go to sleep as it wishes...
-public class RefreshClientsService extends WakefulIntentService {
+public class AlarmIntentService extends WakefulIntentService {
 
 	private Context mContext;
 	private static final String TAG = "RefreshClientService";
-	private ServiceConnection mConnection;
-	private SignalStrengthService mBoundService;
-	private boolean mIsBound = false;
 
-	public RefreshClientsService() {
+	public AlarmIntentService() {
 		super("AppService");
-
 	}
 
 	@Override
@@ -59,7 +43,7 @@ public class RefreshClientsService extends WakefulIntentService {
 
 		if (timeSinceRefresh > Constants.MINIMUM_REFRESH_TIME) {
 			Log.e(TAG, "RefreshClientService about to start SS service");
-			ComponentName comp = new ComponentName(mContext.getPackageName(), SignalStrengthService.class.getName());
+			ComponentName comp = new ComponentName(mContext.getPackageName(), RefreshDataService.class.getName());
 			Intent i = new Intent();
 			i.setComponent(comp);
 			ComponentName service = mContext.startService(i);
@@ -70,7 +54,7 @@ public class RefreshClientsService extends WakefulIntentService {
 		// 1. alarm just after refresh (manually or via power_connected)
 		// 2. power_connected just after refresh (manually or via alarm)
 
-		//totalhack to wait for SignalStrengthService to acquire a wakelock
+		//TODO: totalhack to wait for SignalStrengthService to acquire a wakelock
 		SystemClock.sleep(1000);
 	}
 

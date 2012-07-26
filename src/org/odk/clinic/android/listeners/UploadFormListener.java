@@ -1,8 +1,7 @@
 package org.odk.clinic.android.listeners;
 
-import java.util.ArrayList;
 
 public interface UploadFormListener {
-    void uploadComplete(ArrayList<String> result);
+    void uploadComplete(String resultString);
     void progressUpdate(String message, int progress, int max);
 }

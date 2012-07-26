@@ -5,20 +5,21 @@ import java.util.ArrayList;
 import org.odk.clinic.android.R;
 import org.odk.clinic.android.adapters.PatientAdapter;
 import org.odk.clinic.android.database.ClinicAdapter;
-import org.odk.clinic.android.listeners.UploadFormListener;
 import org.odk.clinic.android.openmrs.Constants;
 import org.odk.clinic.android.openmrs.Patient;
 import org.odk.clinic.android.utilities.FileUtils;
 
 import android.app.ListActivity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.support.v4.content.LocalBroadcastManager;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -37,30 +38,22 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-// TODO Display patient view data
-// TODO Display ages instead of dates
-// TODO Optimize download patient task
-//TODO: louis.fazen: ha! just seeing this right now on June 16th!  I think this is all the stuff I have been working on... TODO: delete Yaw's To Dos!
+import com.alphabetbloc.clinic.services.RefreshDataService;
 
-public class ListPatientActivity extends ListActivity implements UploadFormListener {
+public class ListPatientActivity extends ListActivity {
 
 	// Menu ID's
 	private static final int MENU_PREFERENCES = Menu.FIRST;
-
-	// Request codes
 	public static final int DOWNLOAD_PATIENT = 1;
 	public static final int BARCODE_CAPTURE = 2;
 	public static final int FILL_BLANK_FORM = 3;
-
+	public static int mListType;
 	private EditText mSearchText;
 	private TextWatcher mFilterTextWatcher;
 	private ClinicAdapter mCla;
 	private ArrayAdapter<Patient> mPatientAdapter;
 	private ArrayList<Patient> mPatients = new ArrayList<Patient>();
-
-	public static int mListType;
 	private Context mContext;
-
 	private String mSearchPatientStr = null;
 	private String mSearchPatientId = null;
 	private Button mSimilarClientButton;
@@ -138,7 +131,6 @@ public class ListPatientActivity extends ListActivity implements UploadFormListe
 
 			@Override
 			public void onClick(View v) {
-				// TODO Auto-generated method stub
 				setResult(RESULT_OK);
 				finish();
 			}
@@ -147,48 +139,16 @@ public class ListPatientActivity extends ListActivity implements UploadFormListe
 	}
 
 	@Override
-	protected void onListItemClick(ListView listView, View view, int position, long id) {
-		// Get selected patient
-		Patient p = (Patient) getListAdapter().getItem(position);
-		String patientIdStr = p.getPatientId().toString();
-
-		Intent ip = new Intent(getApplicationContext(), ViewPatientActivity.class);
-		ip.putExtra(Constants.KEY_PATIENT_ID, patientIdStr);
-
-		// for client created patients, use the UUID to identify them...
-		if (p.getPatientId() < 0) {
-			String uuidStr = p.getUuid();
-			ip.putExtra(Constants.KEY_UUID, uuidStr);
-		}
-
-		startActivity(ip);
+	protected void onResume() {
+		super.onResume();
+		
+		findPatients();
+		mSearchText.setText(mSearchText.getText().toString());
+		IntentFilter filter = new IntentFilter(RefreshDataService.REFRESH_BROADCAST);
+		LocalBroadcastManager.getInstance(this).registerReceiver(onNotice, filter);
 	}
-
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		super.onCreateOptionsMenu(menu);
-
-		SharedPreferences settings = getSharedPreferences("ChwSettings", MODE_PRIVATE);
-		if (settings.getBoolean("IsMenuEnabled", true) == false) {
-			return false;
-		} else {
-			menu.add(0, MENU_PREFERENCES, 0, getString(R.string.server_preferences)).setIcon(android.R.drawable.ic_menu_preferences);
-			return true;
-		}
-	}
-
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		switch (item.getItemId()) {
-		case MENU_PREFERENCES:
-			Intent ip = new Intent(getApplicationContext(), PreferencesActivity.class);
-			startActivity(ip);
-			return true;
-		default:
-			return super.onOptionsItemSelected(item);
-		}
-	}
-
+	
+	//VIEW:
 	private void findPatients() {
 
 		if (mSearchPatientStr == null && mSearchPatientId == null) {
@@ -231,14 +191,10 @@ public class ListPatientActivity extends ListActivity implements UploadFormListe
 			int middleNameIndex = c.getColumnIndex(ClinicAdapter.KEY_MIDDLE_NAME);
 			int birthDateIndex = c.getColumnIndex(ClinicAdapter.KEY_BIRTH_DATE);
 			int genderIndex = c.getColumnIndex(ClinicAdapter.KEY_GENDER);
-
-			// TODO: louis.fazen check all the other occurrences of get and
-			// setFamilyName and add get and set priority as well...
 			int priorityIndex = c.getColumnIndexOrThrow(ClinicAdapter.KEY_PRIORITY_FORM_NUMBER);
 			int priorityFormIndex = c.getColumnIndexOrThrow(ClinicAdapter.KEY_PRIORITY_FORM_NAMES);
 			int savedIndex = c.getColumnIndexOrThrow(ClinicAdapter.KEY_SAVED_FORM_NUMBER);
 			int savedFormIndex = c.getColumnIndexOrThrow(ClinicAdapter.KEY_SAVED_FORM_NAMES);
-			int uuidIndex = c.getColumnIndexOrThrow(ClinicAdapter.KEY_UUID);
 
 			if (c.getCount() > 0) {
 
@@ -252,9 +208,6 @@ public class ListPatientActivity extends ListActivity implements UploadFormListe
 					p.setMiddleName(c.getString(middleNameIndex));
 					p.setBirthDate(c.getString(birthDateIndex));
 					p.setGender(c.getString(genderIndex));
-
-					// TODO: louis.fazen check all the other occurrences of get
-					// and setFamilyName and add get and set priority as well...
 					p.setPriorityNumber(c.getInt(priorityIndex));
 					p.setPriorityForms(c.getString(priorityFormIndex));
 					p.setSavedNumber(c.getInt(savedIndex));
@@ -337,9 +290,66 @@ public class ListPatientActivity extends ListActivity implements UploadFormListe
 		mPatientAdapter = new PatientAdapter(this, R.layout.patient_list_item, mPatients);
 		setListAdapter(mPatientAdapter);
 
-		// TODO: louis.fazen VERIFY why is mCla never closed?!
 	}
+	
+	//BUTTONS
+		@Override
+		protected void onListItemClick(ListView listView, View view, int position, long id) {
 
+			Patient p = (Patient) getListAdapter().getItem(position);
+			String patientIdStr = p.getPatientId().toString();
+			Intent ip = new Intent(getApplicationContext(), ViewPatientActivity.class);
+			ip.putExtra(Constants.KEY_PATIENT_ID, patientIdStr);
+			startActivity(ip);
+		}
+
+		@Override
+		public boolean onCreateOptionsMenu(Menu menu) {
+			super.onCreateOptionsMenu(menu);
+
+			SharedPreferences settings = getSharedPreferences("ChwSettings", MODE_PRIVATE);
+			if (settings.getBoolean("IsMenuEnabled", true) == false) {
+				return false;
+			} else {
+				menu.add(0, MENU_PREFERENCES, 0, getString(R.string.server_preferences)).setIcon(android.R.drawable.ic_menu_preferences);
+				return true;
+			}
+		}
+
+		@Override
+		public boolean onOptionsItemSelected(MenuItem item) {
+			switch (item.getItemId()) {
+			case MENU_PREFERENCES:
+				Intent ip = new Intent(getApplicationContext(), PreferencesActivity.class);
+				startActivity(ip);
+				return true;
+			default:
+				return super.onOptionsItemSelected(item);
+			}
+		}
+	
+	private BroadcastReceiver onNotice = new BroadcastReceiver() {
+		public void onReceive(Context ctxt, Intent i) {
+
+			Intent intent = new Intent(mContext, RefreshDataActivity.class);
+			intent.putExtra(RefreshDataActivity.DIALOG, RefreshDataActivity.ASK_TO_DOWNLOAD);
+			startActivity(intent);
+
+		}
+	};
+	
+	//LIFECYCLE
+	@Override
+	protected void onPause() {
+		super.onPause();
+		LocalBroadcastManager.getInstance(this).unregisterReceiver(onNotice);
+	}	
+
+	@Override
+	protected void onSaveInstanceState(Bundle outState) {
+		super.onSaveInstanceState(outState);
+	}
+	
 	@Override
 	protected void onDestroy() {
 
@@ -349,24 +359,6 @@ public class ListPatientActivity extends ListActivity implements UploadFormListe
 			mCla.close();
 		}
 
-	}
-
-	@Override
-	protected void onResume() {
-		super.onResume();
-		findPatients();
-		mSearchText.setText(mSearchText.getText().toString());
-	}
-
-	@Override
-	protected void onPause() {
-		super.onPause();
-
-	}
-
-	@Override
-	protected void onSaveInstanceState(Bundle outState) {
-		super.onSaveInstanceState(outState);
 	}
 
 	private void showCustomToast(String message) {
@@ -382,17 +374,5 @@ public class ListPatientActivity extends ListActivity implements UploadFormListe
 		t.setDuration(Toast.LENGTH_SHORT);
 		t.setGravity(Gravity.CENTER, 0, 0);
 		t.show();
-	}
-
-	@Override
-	public void uploadComplete(ArrayList<String> result) {
-		// Auto-generated method stub
-
-	}
-
-	@Override
-	public void progressUpdate(String message, int progress, int max) {
-		// Auto-generated method stub
-
 	}
 }

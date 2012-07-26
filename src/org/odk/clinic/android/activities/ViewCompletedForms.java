@@ -17,16 +17,21 @@ import org.odk.clinic.android.utilities.App;
 import org.odk.collect.android.provider.InstanceProviderAPI;
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
+import com.alphabetbloc.clinic.services.RefreshDataService;
+
 import android.app.ListActivity;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -122,12 +127,29 @@ public class ViewCompletedForms extends ListActivity {
 	@Override
 	protected void onResume() {
 		super.onResume();
-
+		IntentFilter filter = new IntentFilter(RefreshDataService.REFRESH_BROADCAST);
+		LocalBroadcastManager.getInstance(this).registerReceiver(onNotice, filter);
 		if (mPatientIdString != null) {
 			refreshView();
 		}
+		
 	}
 
+	@Override
+	protected void onPause() {
+		super.onPause();
+		LocalBroadcastManager.getInstance(this).unregisterReceiver(onNotice);
+	}
+
+	private BroadcastReceiver onNotice = new BroadcastReceiver() {
+		public void onReceive(Context ctxt, Intent i) {
+
+			Intent intent = new Intent(mContext, RefreshDataActivity.class);
+			intent.putExtra(RefreshDataActivity.DIALOG, RefreshDataActivity.ASK_TO_DOWNLOAD);
+			startActivity(intent);
+
+		}
+	};
 	@Override
 	protected void onListItemClick(ListView listView, View view, int position, long id) {
 		Form f = (Form) getListAdapter().getItem(position);
