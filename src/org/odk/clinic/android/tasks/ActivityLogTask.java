@@ -33,7 +33,7 @@ public class ActivityLogTask extends AsyncTask<Void, Void, Void> {
 			catch (Exception e) {
 			}
 		}
-		Log.e("ActivityLogTask", "newactivity added to db!");
+		Log.d("ActivityLogTask", "newactivity added to db!");
 		
 		return null;
 		
@@ -41,7 +41,6 @@ public class ActivityLogTask extends AsyncTask<Void, Void, Void> {
 
 	@Override
 	protected void onCancelled() {
-		// TODO Auto-generated method stub
 		super.onCancelled();
 	}
 
@@ -49,32 +48,7 @@ public class ActivityLogTask extends AsyncTask<Void, Void, Void> {
 
 	@Override
 	protected void onPostExecute(Void result) {
-		// TODO Auto-generated method stub
-		Log.e("ActivityLogTask", "onPostExecute Called!");
 		super.onPostExecute(result);
 	}
 	
-	
-	
-	
-
 }
-
-
-
-// this task should be in
-// ODK Collect
-// ODK Clinic should have DB where if they select the priority form, it
-// gets logged
-// if they select a non-priority form it also gets logged
-// col 1: priority form number
-// col 2: form selected
-// col 3: system time in millis()
-//
-// Maps
-// Ushahidi?
-//
-// New Apps:
-// Website?! -> Show everything that they are doing...
-// Videos?! -> Show everything that they are doing...
-// How many times does system time need to be updated by NTP?

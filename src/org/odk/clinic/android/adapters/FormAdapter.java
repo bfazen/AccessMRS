@@ -3,6 +3,7 @@ package org.odk.clinic.android.adapters;
 import java.util.List;
 
 import org.odk.clinic.android.R;
+import org.odk.clinic.android.activities.ViewFormsActivity;
 import org.odk.clinic.android.openmrs.Form;
 
 import android.content.Context;
@@ -55,12 +56,10 @@ public class FormAdapter extends ArrayAdapter<Form> {
 		ImageView imageView = (ImageView) v.findViewById(R.id.arrow_image);
 
 		if (form != null) {
-			// All Forms
 			if (textView != null)
 				textView.setText(form.getName());
 
 			// priority vs. non-priority
-			// if (defaultLayoutId == R.layout.default_form_item) {
 			if (mFormPriority) {
 				textView.setTextColor(mContext.getResources().getColor(R.color.priority));
 				imageView.setBackgroundResource(R.drawable.arrow_red);
@@ -69,7 +68,6 @@ public class FormAdapter extends ArrayAdapter<Form> {
 				imageView.setBackgroundResource(R.drawable.arrow_gray);
 			}
 			
-
 			// Saved Instances
 			if (defaultLayoutId == R.layout.saved_instances) {
 				if (displayName != null)
@@ -79,7 +77,6 @@ public class FormAdapter extends ArrayAdapter<Form> {
 			}
 
 		}
-
 		return v;
 	}
 }

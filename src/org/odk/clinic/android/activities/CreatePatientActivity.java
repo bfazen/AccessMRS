@@ -49,6 +49,7 @@ import android.database.sqlite.SQLiteException;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.GestureDetector.OnGestureListener;
@@ -94,7 +95,7 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 	private static final int VERIFY_SIMILAR_CLIENTS = 6;
 	private static final String REGISTRATION_FORM_PATH = "/mnt/sdcard/odk/clinic/forms/patient_registration.xml";
 
-	// brought in from Yaw's ViewPatient and my FormPriorityList
+	// brought in from Yaw's ViewPatient and my ViewAllForms
 	private static final DateFormat COLLECT_INSTANCE_NAME_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
 
 	private static Element mFormNode;
@@ -102,7 +103,6 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 	private static Patient mPatient;
 	private static HashMap<String, String> mInstanceValues = new HashMap<String, String>();
 	private static ArrayList<Observation> mObservations = new ArrayList<Observation>();
-	private ArrayList<Patient> mPatients = new ArrayList<Patient>();
 
 	private GestureDetector mGestureDetector;
 
@@ -113,7 +113,6 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 		mGestureDetector = new GestureDetector(this);
 		mContext = this;
 
-		
 		// check to see if form exists in Collect Db
 		String dbjrFormId = "no_registration_form";
 		Cursor cursor = App.getApp().getContentResolver().query(FormsColumns.CONTENT_URI, new String[] { FormsColumns.JR_FORM_ID }, FormsColumns.JR_FORM_ID + "=?", new String[] { "-1" }, null);
@@ -131,11 +130,10 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 				cursor.close();
 			}
 		}
-		Log.e("louis.fazen", "dbjrFormId=" + dbjrFormId);
+
 		String neg = "-1";
 		if (!dbjrFormId.equals(neg)) {
 			insertSingleForm(REGISTRATION_FORM_PATH);
-			Log.e("louis.fazen", "insertSingleForm is called");
 		}
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
 		mProviderId = settings.getString(PreferencesActivity.KEY_PROVIDER, "0");
@@ -204,16 +202,16 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 		if (c != null && c.getCount() > 0) {
 			Log.e("louis.fazen", "cursor is not null and count>0 client is similar");
 			similarFound = true;
-		} 
-		if (!similarFound && mPatientID != null && mPatientID.length() > 3){
+		}
+		if (!similarFound && mPatientID != null && mPatientID.length() > 3) {
 			c = ca.fetchPatients(null, mPatientID, DashboardActivity.LIST_SIMILAR_CLIENTS);
 			if (c != null && c.getCount() > 0) {
 				Log.e("louis.fazen", "cursor is not null and count>0 client is similar");
 				similarFound = true;
-			} 
+			}
 		}
-		
-		if(c != null){
+
+		if (c != null) {
 			c.close();
 		}
 		ca.close();
@@ -237,10 +235,12 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 	protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
 
 		if (resultCode == RESULT_CANCELED) {
-			return;
-		}
-
-		if (resultCode == RESULT_OK) {
+			if (requestCode == VERIFY_SIMILAR_CLIENTS) {
+				finish();
+			} else {
+				return;
+			}
+		} else if (resultCode == RESULT_OK) {
 
 			if (requestCode == VERIFY_SIMILAR_CLIENTS) {
 				addClientToDb();
@@ -303,7 +303,6 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 		Intent ip = new Intent(getApplicationContext(), ViewPatientActivity.class);
 		ip.putExtra(Constants.KEY_PATIENT_ID, mPatient.getPatientId().toString());
 		Log.e("louis.fazen", "createpatient.mpatient.getPatientId=" + mPatient.getPatientId());
-		ip.putExtra(Constants.KEY_UUID, mPatient.getUuid());
 		startActivity(ip);
 
 		// and quit
@@ -342,7 +341,8 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 		CheckBox estimatedDob = (CheckBox) findViewById(R.id.estimated_dob);
 		if (estimatedDob.isChecked())
 			mEstimatedDob = "1";
-		else mEstimatedDob = "0";
+		else
+			mEstimatedDob = "0";
 
 		mYear = mBirthDatePicker.getYear();
 		mMonth = mBirthDatePicker.getMonth();
@@ -392,9 +392,7 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 		ca.open();
 
 		int pId = ca.findLastClientCreatedId() - 1;
-		Log.e("louis.fazen", "piD=" + ca.findLastClientCreatedId());
-		Log.e("louis.fazen", "piD=" + pId);
-		Log.e("louis.fazen", "integer.valueOf piD=" + Integer.valueOf(pId));
+
 		mPatient.setPatientId(Integer.valueOf(pId));
 		mPatient.setFamilyName(mLastName);
 		mPatient.setMiddleName(mMiddleName);
@@ -513,7 +511,7 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 			return Integer.valueOf(insertResult.getLastPathSegment());
 
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+
 			e.printStackTrace();
 		}
 		return -1;
@@ -600,12 +598,12 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 					childElement.clear();
 					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mProviderId.toString());
 				}
-				
+
 				if (childName.equalsIgnoreCase("encounter.location_id")) {
 					childElement.clear();
 					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, "CHV Mobile Form Entry");
 				}
-				
+
 				if (childName.equalsIgnoreCase("encounter.encounter_datetime")) {
 					childElement.clear();
 					Date date = new Date();
@@ -613,12 +611,14 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 					String dateString = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(date);
 					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, dateString);
 				}
-				
+
 				if (childName.equalsIgnoreCase("chv_provider_list")) {
 					childElement.clear();
 					String addClient = "";
-					if(mPatient.getCreateCode() == PERMANENT_NEW_CLIENT) addClient = "Add Client to CHV Provider List";
-					else if (mPatient.getCreateCode() == TEMPORARY_NEW_CLIENT) addClient = "Temporary Visit Only";
+					if (mPatient.getCreateCode() == PERMANENT_NEW_CLIENT)
+						addClient = "Add Client to CHV Provider List";
+					else if (mPatient.getCreateCode() == TEMPORARY_NEW_CLIENT)
+						addClient = "Temporary Visit Only";
 					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, addClient);
 				}
 
@@ -724,20 +724,20 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 
 			mCursor.moveToPosition(-1);
 			while (mCursor.moveToNext()) {
-				Log.e("louis.fazen", "insertsingleform... move to next");
+
 				String dbmd5 = mCursor.getString(mCursor.getColumnIndex(FormsColumns.MD5_HASH));
 				String dbFormId = mCursor.getString(mCursor.getColumnIndex(FormsColumns.JR_FORM_ID));
 
 				// if the exact form exists, leave it be. else, insert it.
 				if (dbmd5.equalsIgnoreCase(md5) && dbFormId.equalsIgnoreCase(id + "")) {
-					Log.e("louis.fazen", "insertsingleform... alreadyexists");
+
 					alreadyExists = true;
 				}
 
 			}
 
 			if (!alreadyExists) {
-				Log.e("louis.fazen", "insertsingleform... !alreadyexists");
+
 				App.getApp().getContentResolver().delete(FormsColumns.CONTENT_URI, "md5Hash=?", new String[] { md5 });
 				App.getApp().getContentResolver().delete(FormsColumns.CONTENT_URI, "jrFormId=?", new String[] { id + "" });
 				App.getApp().getContentResolver().insert(FormsColumns.CONTENT_URI, values);
@@ -748,7 +748,7 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 			}
 
 		}
-		Log.e("louis.fazen", "return true");
+
 		return true;
 
 	}
@@ -800,20 +800,11 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 	public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
 
 		InputMethodManager inputMM = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-//		inputMM.toggleSoftInput(InputMethodManager.HIDE_IMPLICIT_ONLY, 0); // this version worked, but was slow...
+		// inputMM.toggleSoftInput(InputMethodManager.HIDE_IMPLICIT_ONLY, 0); //
+		// this version worked, but was slow...
 		inputMM.hideSoftInputFromWindow(mBirthDatePicker.getWindowToken(), 0);
 		return false;
 	}
-
-	// private static String parseDate(String s) {
-	// SimpleDateFormat inputFormat = new SimpleDateFormat("MMM dd, yyyy");
-	// SimpleDateFormat outputFormat = new SimpleDateFormat("yyyy-MM-dd");
-	// try {
-	// return outputFormat.format(inputFormat.parse(s));
-	// } catch (ParseException e) {
-	// return "";
-	// }
-	// }
 
 	@Override
 	public boolean onDown(MotionEvent e) {
@@ -826,9 +817,27 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 		return false;
 	}
 
+	
+	/**
+	 * For Consistency, using Collect's same UI math for onFling
+	 * 
+	 */
 	@Override
 	public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-		// TODO Auto-generated method stub
+
+		DisplayMetrics dm = new DisplayMetrics();
+		getWindowManager().getDefaultDisplay().getMetrics(dm);
+		int xPixelLimit = (int) (dm.xdpi * .25);
+		int yPixelLimit = (int) (dm.ydpi * .25);
+
+		if ((Math.abs(e1.getX() - e2.getX()) > xPixelLimit && Math.abs(e1.getY() - e2.getY()) < yPixelLimit) || Math.abs(e1.getX() - e2.getX()) > xPixelLimit * 2) {
+			if (velocityX > 0) {
+				finish();
+				return true;
+			}
+
+		}
+
 		return false;
 	}
 

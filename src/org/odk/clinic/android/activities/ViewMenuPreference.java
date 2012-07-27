@@ -12,7 +12,6 @@ import android.util.Log;
 
 public class ViewMenuPreference extends Activity {
 
-	
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
@@ -20,7 +19,7 @@ public class ViewMenuPreference extends Activity {
     Bundle extra = getIntent().getExtras();
     
     Boolean toggle = extra.getBoolean("ShowMenu");
-    Log.e("ChvSetMenuPreference", "OnCreate has been called with toggle extra= " + toggle);
+    Log.e("ChvSetMenuPreference", "Resetting the menu with toggle= " + toggle);
     SharedPreferences.Editor editor = settings.edit();
     editor.putBoolean("IsMenuEnabled", toggle);
     editor.commit();

@@ -99,7 +99,7 @@ the License.
     <string name="suggested_clients_section">Clients with Suggested Forms</string>
     <string name="similar_clients_section">Similar Clients Found. Only create a new client if they are not listed below:</string>
     <string name="similar_client_section">Similar Client Found. Only create a new client if they are not listed below:</string>
-    <string name="similar_client_button_text">New client is not listed. Proceed to make new client.</string>
+    <string name="similar_client_button_text">Add New Client</string>
     <string name="view_all_forms">View All Forms</string>
     <string name="view_only_form">This form is for viewing only.  Changes will not be saved.</string>
     <string name="form_history_section">Your Previous Visits:</string>

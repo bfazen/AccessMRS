@@ -191,7 +191,7 @@ public class Patient {
 		try {
 			patientBirthDate = inputFormat.parse(date);
 		} catch (ParseException e) {
-			// TODO Auto-generated catch block
+
 			e.printStackTrace();
 		}
 

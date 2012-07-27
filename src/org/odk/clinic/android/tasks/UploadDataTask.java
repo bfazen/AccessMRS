@@ -15,7 +15,6 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
-import org.odk.clinic.android.R;
 import org.odk.clinic.android.database.ClinicAdapter;
 import org.odk.clinic.android.listeners.UploadFormListener;
 
@@ -24,7 +23,7 @@ import android.os.AsyncTask;
 import android.util.Log;
 
 public class UploadDataTask extends AsyncTask<String, String, String> {
-	private static String tag = "UploadFormTask";
+	private static String tag = "UploadDataTask";
 
 	private static final int CONNECTION_TIMEOUT = 30000;
 
@@ -65,7 +64,7 @@ public class UploadDataTask extends AsyncTask<String, String, String> {
 	}
 
 	public boolean dataToUpload() {
-		Log.e("louis.fazen", "RefreshDataService.dataToUpload Called");
+
 		boolean dataToUpload = true;
 
 		if (mCla != null) {
@@ -92,14 +91,12 @@ public class UploadDataTask extends AsyncTask<String, String, String> {
 			mTotalCount = selectedInstances.size();
 			if (mTotalCount < 1) {
 				dataToUpload = false;
-				Log.e("louis.fazen", "RefreshDataService.uploadInstances No clients to upload");
 			} else {
 
 				mParams = selectedInstances.toArray(new String[mTotalCount]);
 			}
 		} else {
 			dataToUpload = false;
-			Log.e("louis.fazen", "RefreshDataService.uploadInstances No clients to upload");
 		}
 
 		return dataToUpload;
@@ -127,7 +124,7 @@ public class UploadDataTask extends AsyncTask<String, String, String> {
 			File[] files = file.getParentFile().listFiles();
 			System.out.println(file.getAbsolutePath());
 			if (files == null) {
-				Log.e(tag, "no files to upload in istance");
+				Log.e(tag, "no files to upload in instance");
 				continue;
 			}
 
@@ -222,7 +219,7 @@ public class UploadDataTask extends AsyncTask<String, String, String> {
 
 	@Override
 	protected void onProgressUpdate(String... values) {
-		Log.e("louis.fazen", "UploadInstanceTask.onProgressUpdate=" + values[0] + ", " + values[1] + ", " + values[2] + ", ");
+		Log.e(tag, "UploadInstanceTask.onProgressUpdate=" + values[0] + ", " + values[1] + ", " + values[2] + ", ");
 		synchronized (this) {
 			if (mStateListener != null) {
 				mStateListener.progressUpdate(values[0], new Integer(values[1]).intValue(), new Integer(values[2]).intValue());
@@ -233,7 +230,7 @@ public class UploadDataTask extends AsyncTask<String, String, String> {
 
 	@Override
     protected void onPostExecute(String result) {
-    	Log.e("louis.fazen", "UploadInstanceTask.onPostExecute Result=" + result);
+    	Log.e(tag, "UploadInstanceTask.onPostExecute Result=" + result);
         synchronized (this) {
             if (mStateListener != null)
                 mStateListener.uploadComplete(result);

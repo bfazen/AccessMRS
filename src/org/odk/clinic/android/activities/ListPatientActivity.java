@@ -20,10 +20,13 @@ import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.DisplayMetrics;
+import android.view.GestureDetector.OnGestureListener;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
@@ -40,7 +43,7 @@ import android.widget.Toast;
 
 import com.alphabetbloc.clinic.services.RefreshDataService;
 
-public class ListPatientActivity extends ListActivity {
+public class ListPatientActivity extends ListActivity implements OnGestureListener{
 
 	// Menu ID's
 	private static final int MENU_PREFERENCES = Menu.FIRST;
@@ -56,9 +59,10 @@ public class ListPatientActivity extends ListActivity {
 	private Context mContext;
 	private String mSearchPatientStr = null;
 	private String mSearchPatientId = null;
-	private Button mSimilarClientButton;
 	private LinearLayout mSearchBar;
 	private ImageButton mAddClientButton;
+	private Button mSimilarClientButton;
+	private Button mCancelClientButton;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -125,8 +129,8 @@ public class ListPatientActivity extends ListActivity {
 		});
 
 		// Verify Similar Clients on Add New Client
-		mSimilarClientButton = (Button) findViewById(R.id.similar_client_button);
 		mSearchBar = (LinearLayout) findViewById(R.id.searchholder);
+		mSimilarClientButton = (Button) findViewById(R.id.similar_client_button);
 		mSimilarClientButton.setOnClickListener(new OnClickListener() {
 
 			@Override
@@ -136,6 +140,17 @@ public class ListPatientActivity extends ListActivity {
 			}
 		});
 		mSimilarClientButton.setVisibility(View.GONE);
+		
+		mCancelClientButton = (Button) findViewById(R.id.cancel_client_button);
+		mCancelClientButton.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				setResult(RESULT_CANCELED);
+				finish();
+			}
+		});
+		mCancelClientButton.setVisibility(View.GONE);
 	}
 
 	@Override
@@ -275,6 +290,7 @@ public class ListPatientActivity extends ListActivity {
 			mAddClientButton.setVisibility(View.GONE);
 			mSearchBar.setVisibility(View.GONE);
 			mSimilarClientButton.setVisibility(View.VISIBLE);
+			mCancelClientButton.setVisibility(View.VISIBLE);
 
 			break;
 		case DashboardActivity.LIST_ALL:
@@ -374,5 +390,58 @@ public class ListPatientActivity extends ListActivity {
 		t.setDuration(Toast.LENGTH_SHORT);
 		t.setGravity(Gravity.CENTER, 0, 0);
 		t.show();
+	}
+
+	@Override
+	public boolean onDown(MotionEvent e) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	/**
+	 * For UI Consistency, using ODK Collect's same math for onFling
+	 * 
+	 */
+	@Override
+	public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+
+		DisplayMetrics dm = new DisplayMetrics();
+		getWindowManager().getDefaultDisplay().getMetrics(dm);
+		int xPixelLimit = (int) (dm.xdpi * .25);
+		int yPixelLimit = (int) (dm.ydpi * .25);
+
+		if ((Math.abs(e1.getX() - e2.getX()) > xPixelLimit && Math.abs(e1.getY() - e2.getY()) < yPixelLimit) || Math.abs(e1.getX() - e2.getX()) > xPixelLimit * 2) {
+			if (velocityX > 0) {
+				finish();
+				return true;
+			}
+
+		}
+
+		return false;
+	}
+
+	@Override
+	public void onLongPress(MotionEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public void onShowPress(MotionEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public boolean onSingleTapUp(MotionEvent e) {
+		// TODO Auto-generated method stub
+		return false;
 	}
 }

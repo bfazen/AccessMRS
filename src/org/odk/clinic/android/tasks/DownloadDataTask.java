@@ -108,8 +108,7 @@ public class DownloadDataTask extends DownloadTask {
 					zipFile.delete();
 					publishProgress("Processing Forms", Integer.valueOf(step++).toString(), Integer.valueOf(totalstep).toString());
 
-					// TODO: louis.fazen is adding this...it is a bit of hack of
-					// bringing the various db into sync
+					// NB: basically a hack to bring various db into sync
 					mPatientDbAdapter.updatePriorityFormNumbers();
 					mPatientDbAdapter.updatePriorityFormList();
 
@@ -200,10 +199,8 @@ public class DownloadDataTask extends DownloadTask {
 		}
 	}
 
-	// Check to see if form exists in the Collect Db. If so, we already have the
-	// instance...
-	// TODO: this is so poorly done... could all be accomplished with an inner
-	// join if it were the same Db!!!!
+	// Check if form exists in Collect Db. If so, we already have instance...
+	// TODO: this could just be a simple inner join
 	private boolean doesFormExist(String formId) {
 
 		boolean alreadyExists = false;
@@ -438,18 +435,11 @@ public class DownloadDataTask extends DownloadTask {
 			tempFile = File.createTempFile("pts", ".zip", odkRoot);
 			BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(tempFile));
 
-			// TODO: louis.fazen this next may cause problems:?
-			// int totalSize = inputStream.readInt();
-
 			byte[] buffer = new byte[1024];
 			int count = 0;
-			int progress = 0;
+
 			while ((count = inputStream.read(buffer)) > 0) {
 				stream.write(buffer, 0, count);
-				progress++;
-				// publishProgress("Downloading Data", Integer.valueOf(progress)
-				// .toString(), Integer.valueOf(totalSize).toString());
-
 			}
 			stream.close();
 

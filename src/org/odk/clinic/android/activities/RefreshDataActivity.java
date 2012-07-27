@@ -1,7 +1,6 @@
 package org.odk.clinic.android.activities;
 
 import org.odk.clinic.android.R;
-import org.odk.clinic.android.database.ClinicAdapter;
 import org.odk.clinic.android.listeners.DownloadListener;
 import org.odk.clinic.android.listeners.UploadFormListener;
 import org.odk.clinic.android.openmrs.Constants;
@@ -58,7 +57,7 @@ public class RefreshDataActivity extends Activity implements UploadFormListener,
 		super.onCreate(savedInstanceState);
 		setTitle(getString(R.string.app_name) + " > " + getString(R.string.download_patients));
 		mContext = this;
-		
+
 		if (!FileUtils.storageReady()) {
 			showCustomToast(getString(R.string.error, R.string.storage_error));
 			setResult(RESULT_CANCELED);
@@ -131,7 +130,7 @@ public class RefreshDataActivity extends Activity implements UploadFormListener,
 			showCustomToast(getString(R.string.error, result));
 
 		mDownloadTask = null;
-		stopRefreshDataActivity();
+		stopRefreshDataActivity(true);
 	}
 
 	// DIALOG SECTION
@@ -172,7 +171,7 @@ public class RefreshDataActivity extends Activity implements UploadFormListener,
 					break;
 
 				case DialogInterface.BUTTON_NEGATIVE:
-					stopRefreshDataActivity();
+					stopRefreshDataActivity(false);
 					break;
 				}
 			}
@@ -203,7 +202,7 @@ public class RefreshDataActivity extends Activity implements UploadFormListener,
 					mDownloadTask.setDownloadListener(null);
 					mDownloadTask.cancel(true);
 				}
-				stopRefreshDataActivity();
+				stopRefreshDataActivity(true);
 			}
 		};
 
@@ -234,16 +233,18 @@ public class RefreshDataActivity extends Activity implements UploadFormListener,
 		return null;
 	}
 
-	private void stopRefreshDataActivity() {
+	private void stopRefreshDataActivity(boolean reloadDashboard) {
 
 		Intent stopintent = new Intent(getApplicationContext(), RefreshDataService.class);
 		stopService(stopintent);
-		//reschedule alarms (b/c either user is hitting cancel or recent sync)
+		// reschedule alarms (b/c either user is hitting cancel or recent sync)
 		WakefulIntentService.scheduleAlarms(new AlarmListener(), mContext, true);
 		
-		Intent startintent = new Intent(getApplicationContext(), DashboardActivity.class);
-		startintent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-		startActivity(startintent);
+		if (reloadDashboard) {
+			Intent startintent = new Intent(getApplicationContext(), DashboardActivity.class);
+			startintent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+			startActivity(startintent);
+		}
 		
 		finish();
 	}
@@ -264,7 +265,7 @@ public class RefreshDataActivity extends Activity implements UploadFormListener,
 				mUploadTask.cancel(true);
 			}
 		}
-		
+
 		if (mDownloadTask != null) {
 			mDownloadTask.setDownloadListener(null);
 			if (mDownloadTask.getStatus() == AsyncTask.Status.FINISHED) {
@@ -277,7 +278,7 @@ public class RefreshDataActivity extends Activity implements UploadFormListener,
 	@Override
 	protected void onPause() {
 		super.onPause();
-		
+
 		if (mProgressDialog != null && mProgressDialog.isShowing()) {
 			mProgressDialog.dismiss();
 		}

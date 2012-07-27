@@ -14,65 +14,52 @@ import org.odk.clinic.android.utilities.FileUtils;
 import org.odk.collect.android.provider.InstanceProviderAPI;
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
-import com.alphabetbloc.clinic.services.RefreshDataService;
-
 import android.app.ListActivity;
 import android.content.BroadcastReceiver;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.database.Cursor;
-import android.graphics.Color;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.GestureDetector;
+import android.view.GestureDetector.OnGestureListener;
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.View.OnClickListener;
-import android.view.ViewGroup.LayoutParams;
 import android.view.Window;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-// TODO if no obs, don't crash when viewing patients
+import com.alphabetbloc.clinic.services.RefreshDataService;
 
 /**
  * 
  * Louis Fazen (louis.fazen@gmail.com) has simplified this ListActivity and
- * moved most of the code to FormPriorityList
+ * moved most of the code to ViewAllForms
+ * 
+ * @author Louis Fazen
+ * @author Yaw Anokwa
  * 
  */
-public class ViewPatientActivity extends ListActivity {
-
-	private Button mActionButton;
-
+public class ViewPatientActivity extends ListActivity implements OnGestureListener{
 	private static Patient mPatient;
-
 	private static View mFormView;
-	private static View mFormHistoryView;
-
 	private ArrayList<Integer> mSelectedForms = new ArrayList<Integer>();
-
 	private ArrayAdapter<Observation> mObservationAdapter;
 	private static ArrayList<Observation> mObservations = new ArrayList<Observation>();
 
 	private String patientIdStr;
-
 	private Context mContext;
-
 	private Resources res;
-
 	private MergeAdapter adapter;
 
 	@Override
@@ -83,70 +70,71 @@ public class ViewPatientActivity extends ListActivity {
 		mContext = this;
 		res = this.getResources();
 
-		Log.e("louis.fazen", "mContext Constructor= " + mContext);
-
 		if (!FileUtils.storageReady()) {
 			showCustomToast(getString(R.string.error, R.string.storage_error));
 			finish();
 		}
+		setTitle(getString(R.string.app_name) + " > " + getString(R.string.view_patient));
 
 		// TODO Check for invalid patient IDs
 		patientIdStr = getIntent().getStringExtra(Constants.KEY_PATIENT_ID);
-		Log.e("louis.fazen", "ViewPatientActivity.patientIdStr=" + patientIdStr);
 		Integer patientId = Integer.valueOf(patientIdStr);
-
 		mPatient = getPatient(patientId);
 		mPatient.setTotalCompletedForms(findPreviousEncounters());
+		createPatientHeader(patientId);
+		Log.e("louis.fazen", "OnCreate patientId =" + patientId);
+	}
 
-		setTitle(getString(R.string.app_name) + " > " + getString(R.string.view_patient));
+	@Override
+	protected void onResume() {
+		super.onResume();
+		IntentFilter filter = new IntentFilter(RefreshDataService.REFRESH_BROADCAST);
+		LocalBroadcastManager.getInstance(this).registerReceiver(onNotice, filter);
+		if (mPatient != null) {
+			Log.e("louis.fazen", "onResume patientId =" + mPatient.getPatientId());
+			// TODO Create more efficient SQL query to get only latest obs
+			// values
+			getAllObservations(mPatient.getPatientId());
+			getPatientForms(mPatient.getPatientId());
+			refreshView();
+
+		}
+	}
+
+	private void createPatientHeader(Integer patientId) {
+
+		Patient focusPt = getPatient(patientId);
 
 		TextView textView = (TextView) findViewById(R.id.identifier_text);
-		Log.e("louis.fazen", "textvView Constructor= " + textView);
 		if (textView != null) {
-			textView.setText(mPatient.getIdentifier());
+			textView.setText(focusPt.getIdentifier());
 		}
 
 		textView = (TextView) findViewById(R.id.name_text);
 		if (textView != null) {
 			StringBuilder nameBuilder = new StringBuilder();
-			nameBuilder.append(mPatient.getGivenName());
+			nameBuilder.append(focusPt.getGivenName());
 			nameBuilder.append(' ');
-			nameBuilder.append(mPatient.getMiddleName());
+			nameBuilder.append(focusPt.getMiddleName());
 			nameBuilder.append(' ');
-			nameBuilder.append(mPatient.getFamilyName());
+			nameBuilder.append(focusPt.getFamilyName());
 			textView.setText(nameBuilder.toString());
 		}
 
 		textView = (TextView) findViewById(R.id.birthdate_text);
 		if (textView != null) {
-			textView.setText(mPatient.getBirthdate());
+			textView.setText(focusPt.getBirthdate());
 
 		}
 
 		ImageView imageView = (ImageView) findViewById(R.id.gender_image);
 		if (imageView != null) {
-			if (mPatient.getGender().equals("M")) {
+			if (focusPt.getGender().equals("M")) {
 				imageView.setImageResource(R.drawable.male_gray);
-			} else if (mPatient.getGender().equals("F")) {
+			} else if (focusPt.getGender().equals("F")) {
 				imageView.setImageResource(R.drawable.female_gray);
 			}
 		}
-
-		// mActionButton = (Button) findViewById(R.id.fill_forms);
-		// mActionButton.setOnClickListener(new OnClickListener() {
-		// @Override
-		// public void onClick(View arg0) {
-		// if (checkForForms()) {
-		// Intent i = new Intent(getApplicationContext(),
-		// FormPriorityList.class);
-		// i.putExtra(Constants.KEY_PATIENT_ID, patientIdStr);
-		// startActivity(i);
-		// } else {
-		// showCustomToast(getString(R.string.no_forms));
-		// }
-		// }
-		//
-		// });
 	}
 
 	private boolean checkForForms() {
@@ -200,42 +188,6 @@ public class ViewPatientActivity extends ListActivity {
 		return p;
 	}
 
-	private Patient getPatient(String uuid) {
-
-		Patient p = null;
-		ClinicAdapter ca = new ClinicAdapter();
-
-		ca.open();
-		Cursor c = ca.fetchPatient(uuid);
-
-		if (c != null && c.getCount() > 0) {
-			int patientIdIndex = c.getColumnIndex(ClinicAdapter.KEY_PATIENT_ID);
-			int identifierIndex = c.getColumnIndex(ClinicAdapter.KEY_IDENTIFIER);
-			int givenNameIndex = c.getColumnIndex(ClinicAdapter.KEY_GIVEN_NAME);
-			int familyNameIndex = c.getColumnIndex(ClinicAdapter.KEY_FAMILY_NAME);
-			int middleNameIndex = c.getColumnIndex(ClinicAdapter.KEY_MIDDLE_NAME);
-			int birthDateIndex = c.getColumnIndex(ClinicAdapter.KEY_BIRTH_DATE);
-			int genderIndex = c.getColumnIndex(ClinicAdapter.KEY_GENDER);
-
-			p = new Patient();
-			p.setPatientId(c.getInt(patientIdIndex));
-			p.setIdentifier(c.getString(identifierIndex));
-			p.setGivenName(c.getString(givenNameIndex));
-			p.setFamilyName(c.getString(familyNameIndex));
-			p.setMiddleName(c.getString(middleNameIndex));
-			p.setBirthDate(c.getString(birthDateIndex));
-			p.setGender(c.getString(genderIndex));
-
-		}
-
-		if (c != null) {
-			c.close();
-		}
-		ca.close();
-
-		return p;
-	}
-
 	private void getPatientForms(Integer patientId) {
 
 		ClinicAdapter ca = new ClinicAdapter();
@@ -243,13 +195,12 @@ public class ViewPatientActivity extends ListActivity {
 		Cursor c = ca.fetchPatient(patientId);
 
 		if (c != null && c.getCount() > 0) {
-			// TODO: louis.fazen check all the other occurrences...
+
 			int priorityIndex = c.getColumnIndexOrThrow(ClinicAdapter.KEY_PRIORITY_FORM_NUMBER);
 			int priorityFormIndex = c.getColumnIndexOrThrow(ClinicAdapter.KEY_PRIORITY_FORM_NAMES);
 			int savedNumberIndex = c.getColumnIndexOrThrow(ClinicAdapter.KEY_SAVED_FORM_NUMBER);
 			int savedFormIndex = c.getColumnIndexOrThrow(ClinicAdapter.KEY_SAVED_FORM_NAMES);
 
-			// TODO: louis.fazen check all the other occurrences of get
 			mPatient.setPriorityNumber(c.getInt(priorityIndex));
 			mPatient.setPriorityForms(c.getString(priorityFormIndex));
 			mPatient.setSavedNumber(c.getInt(savedNumberIndex));
@@ -278,13 +229,13 @@ public class ViewPatientActivity extends ListActivity {
 
 	private void getAllObservations(Integer patientId) {
 		mObservations.clear();
-		
+
 		ClinicAdapter ca = new ClinicAdapter();
 		ca.open();
-		Cursor c = ca.fetchPatientObservations(patientId);	
-		
+		Cursor c = ca.fetchPatientObservations(patientId);
+
 		if (c != null && c.getCount() > 0) {
-			
+
 			int valueTextIndex = c.getColumnIndex(ClinicAdapter.KEY_VALUE_TEXT);
 			int valueIntIndex = c.getColumnIndex(ClinicAdapter.KEY_VALUE_INT);
 			int valueDateIndex = c.getColumnIndex(ClinicAdapter.KEY_VALUE_DATE);
@@ -374,10 +325,10 @@ public class ViewPatientActivity extends ListActivity {
 		adapter.addView(mFormView);
 
 		if (!mObservations.isEmpty()) {
-		adapter.addView(buildSectionLabel(getString(R.string.clinical_data_section)));
-		adapter.addAdapter(mObservationAdapter);
+			adapter.addView(buildSectionLabel(getString(R.string.clinical_data_section)));
+			adapter.addAdapter(mObservationAdapter);
 		}
-		
+
 		if (mPatient.getTotalCompletedForms() > 0) {
 			adapter.addView(buildSectionLabel(getString(R.string.form_history_section)));
 			adapter.addView(formHistoryView());
@@ -405,7 +356,7 @@ public class ViewPatientActivity extends ListActivity {
 		formSummaryGroup.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
 				if (checkForForms()) {
-					Intent i = new Intent(getApplicationContext(), FormPriorityList.class);
+					Intent i = new Intent(getApplicationContext(), ViewAllForms.class);
 					i.putExtra(Constants.KEY_PATIENT_ID, patientIdStr);
 					startActivity(i);
 				} else {
@@ -521,25 +472,6 @@ public class ViewPatientActivity extends ListActivity {
 	}
 
 	@Override
-	protected void onResume() {
-		super.onResume();
-		IntentFilter filter = new IntentFilter(RefreshDataService.REFRESH_BROADCAST);
-		LocalBroadcastManager.getInstance(this).registerReceiver(onNotice, filter);
-		if (mPatient != null) {
-			// TODO Create more efficient SQL query to get only the latest
-			// observation values
-			// TODO this seems resource intensive to have to getAllObservations
-			// again and again?
-			getAllObservations(mPatient.getPatientId());
-			getPatientForms(mPatient.getPatientId());
-			refreshView();
-			
-		}
-		// TODO: what if the if clause fails?
-
-	}
-
-	@Override
 	protected void onPause() {
 		super.onPause();
 		LocalBroadcastManager.getInstance(this).unregisterReceiver(onNotice);
@@ -575,47 +507,57 @@ public class ViewPatientActivity extends ListActivity {
 		t.show();
 	}
 
+	@Override
+	public boolean onDown(MotionEvent e) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	/**
+	 * For UI Consistency, using Collect's same math for onFling
+	 * 
+	 */
+	@Override
+	public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+
+		DisplayMetrics dm = new DisplayMetrics();
+		getWindowManager().getDefaultDisplay().getMetrics(dm);
+		int xPixelLimit = (int) (dm.xdpi * .25);
+		int yPixelLimit = (int) (dm.ydpi * .25);
+
+		if ((Math.abs(e1.getX() - e2.getX()) > xPixelLimit && Math.abs(e1.getY() - e2.getY()) < yPixelLimit) || Math.abs(e1.getX() - e2.getX()) > xPixelLimit * 2) {
+			if (velocityX > 0) {
+				finish();
+				return true;
+			}
+
+		}
+
+		return false;
+	}
+
+	@Override
+	public void onLongPress(MotionEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public void onShowPress(MotionEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public boolean onSingleTapUp(MotionEvent e) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
 }
-
-// louis.fazen extras.....
-// View patientView = (View) findViewById(R.id.patient_info);
-// patientView.setBackgroundResource(R.drawable.search_gradient);
-// patientView.setBackgroundColor(res.getColor(R.color.light_gray));
-
-// LayoutInflater vi = (LayoutInflater)
-// mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-// formsSummary = (Button)
-// getLayoutInflater().inflate(R.layout.priority_form_summary, null);
-// formsSummary = (Button)
-// getLayoutInflater().inflate(R.layout.priority_form_summary, null);
-
-// button = (Button)
-// getLayoutInflater().inflate(R.layout.priority_form_summary, null);
-
-// vi.inflate(R.layout.priority_form_summary, null);
-
-// nameView.setTextColor(res.getColor(R.color.priority));
-// nameView.setTextColor(res.getColor(R.color.dark_gray));
-
-// Button formsSummary = new Button(this);
-
-// LayoutInflater inflater =
-// (LayoutInflater)getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-// ImageButton b =
-// (Button)inflater.inflate(R.layout.priority_form_summary,
-// null);
-
-// }
-// Button b = (Button)inflater.inflate(R.layout.priority_form_summary,
-// null);
-
-// formsSummary.setBackgroundResource(R.drawable.priority_form_summary);
-// formsSummary = (Button)
-// getLayoutInflater().inflate(R.layout.priority_form_summary, );
-
-// formsSummary.setText("Add Capitalized Words");
-
-// TODO: louis.fazen turn this into a list item
-// ImageView priorityArrow = (ImageView)
-// v.findViewById(R.id.arrow_image);
-
