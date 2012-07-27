@@ -3,9 +3,12 @@ package org.odk.clinic.android.activities;
 import java.util.ArrayList;
 
 import org.odk.clinic.android.R;
+import org.odk.clinic.android.activities.ViewCompletedForms.onFormClick;
+import org.odk.clinic.android.activities.ViewFormsActivity.formGestureDetector;
 import org.odk.clinic.android.adapters.PatientAdapter;
 import org.odk.clinic.android.database.ClinicAdapter;
 import org.odk.clinic.android.openmrs.Constants;
+import org.odk.clinic.android.openmrs.Form;
 import org.odk.clinic.android.openmrs.Patient;
 import org.odk.clinic.android.utilities.FileUtils;
 
@@ -20,15 +23,16 @@ import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.DisplayMetrics;
-import android.view.GestureDetector.OnGestureListener;
+import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.View.OnClickListener;
+import android.view.View.OnTouchListener;
 import android.view.Window;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -43,13 +47,16 @@ import android.widget.Toast;
 
 import com.alphabetbloc.clinic.services.RefreshDataService;
 
-public class ListPatientActivity extends ListActivity implements OnGestureListener{
+public class ListPatientActivity extends ListActivity {
 
 	// Menu ID's
 	private static final int MENU_PREFERENCES = Menu.FIRST;
 	public static final int DOWNLOAD_PATIENT = 1;
 	public static final int BARCODE_CAPTURE = 2;
 	public static final int FILL_BLANK_FORM = 3;
+	private static final int SWIPE_MIN_DISTANCE = 120;
+	private static final int SWIPE_MAX_OFF_PATH = 250;
+	private static final int SWIPE_THRESHOLD_VELOCITY = 200;
 	public static int mListType;
 	private EditText mSearchText;
 	private TextWatcher mFilterTextWatcher;
@@ -63,6 +70,11 @@ public class ListPatientActivity extends ListActivity implements OnGestureListen
 	private ImageButton mAddClientButton;
 	private Button mSimilarClientButton;
 	private Button mCancelClientButton;
+	protected GestureDetector mClientDetector;
+	protected OnTouchListener mClientListener;
+	protected GestureDetector mSwipeDetector;
+	protected OnTouchListener mSwipeListener;
+	private ListView mClientListView;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -140,7 +152,7 @@ public class ListPatientActivity extends ListActivity implements OnGestureListen
 			}
 		});
 		mSimilarClientButton.setVisibility(View.GONE);
-		
+
 		mCancelClientButton = (Button) findViewById(R.id.cancel_client_button);
 		mCancelClientButton.setOnClickListener(new OnClickListener() {
 
@@ -151,19 +163,96 @@ public class ListPatientActivity extends ListActivity implements OnGestureListen
 			}
 		});
 		mCancelClientButton.setVisibility(View.GONE);
+
+		mClientDetector = new GestureDetector(new onClientClick());
+		mClientListener = new OnTouchListener() {
+			public boolean onTouch(View v, MotionEvent event) {
+				return mClientDetector.onTouchEvent(event);
+			}
+		};
+
+		mSwipeDetector = new GestureDetector(new onHeadingClick());
+		mSwipeListener = new OnTouchListener() {
+			public boolean onTouch(View v, MotionEvent event) {
+				return mSwipeDetector.onTouchEvent(event);
+			}
+		};
+	}
+
+	class onClientClick extends SimpleOnGestureListener {
+
+		@Override
+		public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+			try {
+				if (Math.abs(e1.getY() - e2.getY()) > SWIPE_MAX_OFF_PATH)
+					return false;
+				if (e2.getX() - e1.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
+					finish();
+				}
+			} catch (Exception e) {
+				// nothing
+			}
+			return false;
+		}
+
+		@Override
+		public boolean onSingleTapUp(MotionEvent e) {
+			int pos = mClientListView.pointToPosition((int) e.getX(), (int) e.getY());
+			Patient p = (Patient) mPatientAdapter.getItem(pos);
+			String patientIdStr = p.getPatientId().toString();
+			Intent ip = new Intent(getApplicationContext(), ViewPatientActivity.class);
+			ip.putExtra(Constants.KEY_PATIENT_ID, patientIdStr);
+			startActivity(ip);
+			return false;
+		}
+
+		@Override
+		public boolean onDown(MotionEvent e) {
+			return true;
+		}
+
+	}
+	
+
+	class onHeadingClick extends SimpleOnGestureListener {
+
+		@Override
+		public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+			try {
+				if (Math.abs(e1.getY() - e2.getY()) > SWIPE_MAX_OFF_PATH)
+					return false;
+				if (e2.getX() - e1.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
+					finish();
+				}
+			} catch (Exception e) {
+				// nothing
+			}
+			return false;
+		}
+
+		@Override
+		public boolean onSingleTapUp(MotionEvent e) {
+			return false;
+		}
+
+		@Override
+		public boolean onDown(MotionEvent e) {
+			return true;
+		}
+
 	}
 
 	@Override
 	protected void onResume() {
 		super.onResume();
-		
+
 		findPatients();
 		mSearchText.setText(mSearchText.getText().toString());
 		IntentFilter filter = new IntentFilter(RefreshDataService.REFRESH_BROADCAST);
 		LocalBroadcastManager.getInstance(this).registerReceiver(onNotice, filter);
 	}
-	
-	//VIEW:
+
+	// VIEW:
 	private void findPatients() {
 
 		if (mSearchPatientStr == null && mSearchPatientId == null) {
@@ -191,7 +280,7 @@ public class ListPatientActivity extends ListActivity implements OnGestureListen
 		ca.open();
 		Cursor c = null;
 		if (mSearchPatientStr != null || mSearchPatientId != null) {
-			
+
 			c = ca.fetchPatients(searchString, patientId, mListType);
 		} else {
 			c = ca.fetchAllPatients(mListType);
@@ -303,47 +392,45 @@ public class ListPatientActivity extends ListActivity implements OnGestureListen
 		if (mCla == null) {
 			mCla = new ClinicAdapter();
 		}
+
 		mPatientAdapter = new PatientAdapter(this, R.layout.patient_list_item, mPatients);
-		setListAdapter(mPatientAdapter);
+		// setListAdapter(mPatientAdapter);
 
+		mClientListView = getListView();
+		mClientListView.setAdapter(mPatientAdapter);
+		
+		mClientListView.setOnTouchListener(mClientListener);
+		listLayout.setOnTouchListener(mSwipeListener);
 	}
-	
-	//BUTTONS
-		@Override
-		protected void onListItemClick(ListView listView, View view, int position, long id) {
 
-			Patient p = (Patient) getListAdapter().getItem(position);
-			String patientIdStr = p.getPatientId().toString();
-			Intent ip = new Intent(getApplicationContext(), ViewPatientActivity.class);
-			ip.putExtra(Constants.KEY_PATIENT_ID, patientIdStr);
+	// BUTTONS
+
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		super.onCreateOptionsMenu(menu);
+
+		SharedPreferences settings = getSharedPreferences("ChwSettings", MODE_PRIVATE);
+		if (settings.getBoolean("IsMenuEnabled", true) == false) {
+			return false;
+		} else {
+			menu.add(0, MENU_PREFERENCES, 0, getString(R.string.server_preferences)).setIcon(android.R.drawable.ic_menu_preferences);
+			return true;
+		}
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+		case MENU_PREFERENCES:
+			Intent ip = new Intent(getApplicationContext(), PreferencesActivity.class);
 			startActivity(ip);
+			return true;
+		default:
+			return super.onOptionsItemSelected(item);
 		}
+	}
 
-		@Override
-		public boolean onCreateOptionsMenu(Menu menu) {
-			super.onCreateOptionsMenu(menu);
-
-			SharedPreferences settings = getSharedPreferences("ChwSettings", MODE_PRIVATE);
-			if (settings.getBoolean("IsMenuEnabled", true) == false) {
-				return false;
-			} else {
-				menu.add(0, MENU_PREFERENCES, 0, getString(R.string.server_preferences)).setIcon(android.R.drawable.ic_menu_preferences);
-				return true;
-			}
-		}
-
-		@Override
-		public boolean onOptionsItemSelected(MenuItem item) {
-			switch (item.getItemId()) {
-			case MENU_PREFERENCES:
-				Intent ip = new Intent(getApplicationContext(), PreferencesActivity.class);
-				startActivity(ip);
-				return true;
-			default:
-				return super.onOptionsItemSelected(item);
-			}
-		}
-	
 	private BroadcastReceiver onNotice = new BroadcastReceiver() {
 		public void onReceive(Context ctxt, Intent i) {
 
@@ -353,19 +440,19 @@ public class ListPatientActivity extends ListActivity implements OnGestureListen
 
 		}
 	};
-	
-	//LIFECYCLE
+
+	// LIFECYCLE
 	@Override
 	protected void onPause() {
 		super.onPause();
 		LocalBroadcastManager.getInstance(this).unregisterReceiver(onNotice);
-	}	
+	}
 
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
 	}
-	
+
 	@Override
 	protected void onDestroy() {
 
@@ -392,56 +479,4 @@ public class ListPatientActivity extends ListActivity implements OnGestureListen
 		t.show();
 	}
 
-	@Override
-	public boolean onDown(MotionEvent e) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	/**
-	 * For UI Consistency, using ODK Collect's same math for onFling
-	 * 
-	 */
-	@Override
-	public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-
-		DisplayMetrics dm = new DisplayMetrics();
-		getWindowManager().getDefaultDisplay().getMetrics(dm);
-		int xPixelLimit = (int) (dm.xdpi * .25);
-		int yPixelLimit = (int) (dm.ydpi * .25);
-
-		if ((Math.abs(e1.getX() - e2.getX()) > xPixelLimit && Math.abs(e1.getY() - e2.getY()) < yPixelLimit) || Math.abs(e1.getX() - e2.getX()) > xPixelLimit * 2) {
-			if (velocityX > 0) {
-				finish();
-				return true;
-			}
-
-		}
-
-		return false;
-	}
-
-	@Override
-	public void onLongPress(MotionEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public void onShowPress(MotionEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public boolean onSingleTapUp(MotionEvent e) {
-		// TODO Auto-generated method stub
-		return false;
-	}
 }

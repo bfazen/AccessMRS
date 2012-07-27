@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import org.odk.clinic.android.R;
-import org.odk.clinic.android.activities.ViewCompletedForms.onFormClick;
 import org.odk.clinic.android.adapters.FormAdapter;
 import org.odk.clinic.android.adapters.MergeAdapter;
 import org.odk.clinic.android.database.ClinicAdapter;
@@ -80,17 +79,6 @@ public class ViewFormsActivity extends ListActivity {
 		}
 
 	}
-	
-	
-//	
-//	protected ListView getMergedListView(){
-//		return mListView;
-//	}
-//	
-//	protected MergeAdapter getMergeAdapter(){
-//		return mMergeAdapter;
-//	}
-
 	
 	@Override
 	protected void onResume() {

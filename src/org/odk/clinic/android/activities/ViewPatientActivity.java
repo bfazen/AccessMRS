@@ -3,6 +3,7 @@ package org.odk.clinic.android.activities;
 import java.util.ArrayList;
 
 import org.odk.clinic.android.R;
+import org.odk.clinic.android.activities.ViewCompletedForms.onFormClick;
 import org.odk.clinic.android.adapters.MergeAdapter;
 import org.odk.clinic.android.adapters.ObservationAdapter;
 import org.odk.clinic.android.database.ClinicAdapter;
@@ -27,6 +28,8 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.GestureDetector.OnGestureListener;
+import android.view.GestureDetector.SimpleOnGestureListener;
+import android.view.View.OnTouchListener;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -35,6 +38,7 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -50,17 +54,28 @@ import com.alphabetbloc.clinic.services.RefreshDataService;
  * @author Yaw Anokwa
  * 
  */
-public class ViewPatientActivity extends ListActivity implements OnGestureListener{
+public class ViewPatientActivity extends ListActivity {
 	private static Patient mPatient;
 	private static View mFormView;
 	private ArrayList<Integer> mSelectedForms = new ArrayList<Integer>();
 	private ArrayAdapter<Observation> mObservationAdapter;
 	private static ArrayList<Observation> mObservations = new ArrayList<Observation>();
+	
+	private static final int SWIPE_MIN_DISTANCE = 120;
+	private static final int SWIPE_MAX_OFF_PATH = 250;
+	private static final int SWIPE_THRESHOLD_VELOCITY = 200;
 
 	private String patientIdStr;
 	private Context mContext;
 	private Resources res;
 	private MergeAdapter adapter;
+	private GestureDetector mFormDetector;
+	private OnTouchListener mFormListener;
+	private GestureDetector mFormHistoryDetector;
+	private OnTouchListener mFormHistoryListener;
+	private GestureDetector mSwipeDetector;
+	private OnTouchListener mSwipeListener;
+	private ListView mClientListView;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -81,8 +96,28 @@ public class ViewPatientActivity extends ListActivity implements OnGestureListen
 		Integer patientId = Integer.valueOf(patientIdStr);
 		mPatient = getPatient(patientId);
 		mPatient.setTotalCompletedForms(findPreviousEncounters());
-		createPatientHeader(patientId);
-		Log.e("louis.fazen", "OnCreate patientId =" + patientId);
+		
+		mSwipeDetector = new GestureDetector(new onHeadingClick());
+		mSwipeListener = new OnTouchListener() {
+			public boolean onTouch(View v, MotionEvent event) {
+				return mSwipeDetector.onTouchEvent(event);
+			}
+		};
+		
+		mFormDetector = new GestureDetector(new onFormClick());
+		mFormListener = new OnTouchListener() {
+			public boolean onTouch(View v, MotionEvent event) {
+				return mFormDetector.onTouchEvent(event);
+			}
+		};
+		
+		mFormHistoryDetector = new GestureDetector(new onFormHistoryClick());
+		mFormHistoryListener = new OnTouchListener() {
+			public boolean onTouch(View v, MotionEvent event) {
+				return mFormHistoryDetector.onTouchEvent(event);
+			}
+		};
+
 	}
 
 	@Override
@@ -91,9 +126,10 @@ public class ViewPatientActivity extends ListActivity implements OnGestureListen
 		IntentFilter filter = new IntentFilter(RefreshDataService.REFRESH_BROADCAST);
 		LocalBroadcastManager.getInstance(this).registerReceiver(onNotice, filter);
 		if (mPatient != null) {
-			Log.e("louis.fazen", "onResume patientId =" + mPatient.getPatientId());
+
 			// TODO Create more efficient SQL query to get only latest obs
 			// values
+			createPatientHeader(mPatient.getPatientId());
 			getAllObservations(mPatient.getPatientId());
 			getPatientForms(mPatient.getPatientId());
 			refreshView();
@@ -104,7 +140,12 @@ public class ViewPatientActivity extends ListActivity implements OnGestureListen
 	private void createPatientHeader(Integer patientId) {
 
 		Patient focusPt = getPatient(patientId);
-
+		
+		View v = (View) findViewById(R.id.client_header);
+		if (v != null){
+			v.setOnTouchListener(mSwipeListener);
+		} 
+		
 		TextView textView = (TextView) findViewById(R.id.identifier_text);
 		if (textView != null) {
 			textView.setText(focusPt.getIdentifier());
@@ -323,7 +364,8 @@ public class ViewPatientActivity extends ListActivity implements OnGestureListen
 
 		adapter.addView(buildSectionLabel(getString(R.string.clinical_form_section)));
 		adapter.addView(mFormView);
-
+		mFormView.setOnTouchListener(mFormListener);
+		
 		if (!mObservations.isEmpty()) {
 			adapter.addView(buildSectionLabel(getString(R.string.clinical_data_section)));
 			adapter.addAdapter(mObservationAdapter);
@@ -331,10 +373,14 @@ public class ViewPatientActivity extends ListActivity implements OnGestureListen
 
 		if (mPatient.getTotalCompletedForms() > 0) {
 			adapter.addView(buildSectionLabel(getString(R.string.form_history_section)));
-			adapter.addView(formHistoryView());
+			View v = formHistoryView();
+			adapter.addView(v);
+			v.setOnTouchListener(mFormHistoryListener);
 		}
 
-		setListAdapter(adapter);
+		ListView lv = getListView();
+		lv.setAdapter(adapter);
+		lv.setOnTouchListener(mSwipeListener);
 	}
 
 	private View buildSectionLabel(String section) {
@@ -344,6 +390,7 @@ public class ViewPatientActivity extends ListActivity implements OnGestureListen
 		v.setBackgroundResource(R.color.medium_gray);
 		TextView textView = (TextView) v.findViewById(R.id.name_text);
 		textView.setText(section);
+		v.setOnTouchListener(mSwipeListener);
 		return (v);
 	}
 
@@ -353,17 +400,17 @@ public class ViewPatientActivity extends ListActivity implements OnGestureListen
 		ViewGroup parent = (ViewGroup) formSummaryGroup.findViewById(R.id.vertical_container);
 		formSummaryGroup.setClickable(true);
 
-		formSummaryGroup.setOnClickListener(new View.OnClickListener() {
-			public void onClick(View v) {
-				if (checkForForms()) {
-					Intent i = new Intent(getApplicationContext(), ViewAllForms.class);
-					i.putExtra(Constants.KEY_PATIENT_ID, patientIdStr);
-					startActivity(i);
-				} else {
-					showCustomToast(getString(R.string.no_forms));
-				}
-			}
-		});
+//		formSummaryGroup.setOnClickListener(new View.OnClickListener() {
+//			public void onClick(View v) {
+//				if (checkForForms()) {
+//					Intent i = new Intent(getApplicationContext(), ViewAllForms.class);
+//					i.putExtra(Constants.KEY_PATIENT_ID, patientIdStr);
+//					startActivity(i);
+//				} else {
+//					showCustomToast(getString(R.string.no_forms));
+//				}
+//			}
+//		});
 
 		ImageView formArrow = (ImageView) formSummaryGroup.findViewById(R.id.arrow_image);
 
@@ -431,14 +478,14 @@ public class ViewPatientActivity extends ListActivity implements OnGestureListen
 		formsSummary = vi.inflate(R.layout.priority_form_summary, null);
 		formsSummary.setClickable(true);
 
-		formsSummary.setOnClickListener(new View.OnClickListener() {
-			public void onClick(View v) {
-				Intent i = new Intent(getApplicationContext(), ViewCompletedForms.class);
-				i.putExtra(Constants.KEY_PATIENT_ID, patientIdStr);
-				startActivity(i);
-
-			}
-		});
+//		formsSummary.setOnClickListener(new View.OnClickListener() {
+//			public void onClick(View v) {
+//				Intent i = new Intent(getApplicationContext(), ViewCompletedForms.class);
+//				i.putExtra(Constants.KEY_PATIENT_ID, patientIdStr);
+//				startActivity(i);
+//
+//			}
+//		});
 
 		ImageView priorityArrow = (ImageView) formsSummary.findViewById(R.id.arrow_image);
 		ImageView priorityImage = (ImageView) formsSummary.findViewById(R.id.priority_image);
@@ -466,6 +513,106 @@ public class ViewPatientActivity extends ListActivity implements OnGestureListen
 		return (formsSummary);
 	}
 
+	
+	
+	class onFormClick extends SimpleOnGestureListener {
+
+		@Override
+		public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+			try {
+				if (Math.abs(e1.getY() - e2.getY()) > SWIPE_MAX_OFF_PATH)
+					return false;
+				if (e2.getX() - e1.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
+					finish();
+				}
+			} catch (Exception e) {
+				// nothing
+			}
+			return false;
+		}
+
+		@Override
+		public boolean onSingleTapUp(MotionEvent e) {
+			if (checkForForms()) {
+				Intent i = new Intent(getApplicationContext(), ViewAllForms.class);
+				i.putExtra(Constants.KEY_PATIENT_ID, patientIdStr);
+				startActivity(i);
+			} else {
+				showCustomToast(getString(R.string.no_forms));
+			}
+			return false;
+		}
+
+		@Override
+		public boolean onDown(MotionEvent e) {
+			return true;
+		}
+
+	}
+	
+	class onFormHistoryClick extends SimpleOnGestureListener {
+
+		@Override
+		public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+			try {
+				if (Math.abs(e1.getY() - e2.getY()) > SWIPE_MAX_OFF_PATH)
+					return false;
+				if (e2.getX() - e1.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
+					finish();
+				}
+			} catch (Exception e) {
+				// nothing
+			}
+			return false;
+		}
+
+		@Override
+		public boolean onSingleTapUp(MotionEvent e) {
+			Intent i = new Intent(getApplicationContext(), ViewCompletedForms.class);
+			i.putExtra(Constants.KEY_PATIENT_ID, patientIdStr);
+			startActivity(i);
+			return false;
+		}
+
+		@Override
+		public boolean onDown(MotionEvent e) {
+			return true;
+		}
+
+	}
+	
+
+	class onHeadingClick extends SimpleOnGestureListener {
+
+		@Override
+		public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+			try {
+				if (Math.abs(e1.getY() - e2.getY()) > SWIPE_MAX_OFF_PATH)
+					return false;
+				if (e2.getX() - e1.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
+					finish();
+				}
+			} catch (Exception e) {
+				// nothing
+			}
+			return false;
+		}
+
+		@Override
+		public boolean onSingleTapUp(MotionEvent e) {
+			return false;
+		}
+
+		@Override
+		public boolean onDown(MotionEvent e) {
+			return true;
+		}
+
+	}
+	
+	
+	
+	
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
@@ -506,58 +653,4 @@ public class ViewPatientActivity extends ListActivity implements OnGestureListen
 		t.setGravity(Gravity.CENTER, 0, 0);
 		t.show();
 	}
-
-	@Override
-	public boolean onDown(MotionEvent e) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	/**
-	 * For UI Consistency, using Collect's same math for onFling
-	 * 
-	 */
-	@Override
-	public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-
-		DisplayMetrics dm = new DisplayMetrics();
-		getWindowManager().getDefaultDisplay().getMetrics(dm);
-		int xPixelLimit = (int) (dm.xdpi * .25);
-		int yPixelLimit = (int) (dm.ydpi * .25);
-
-		if ((Math.abs(e1.getX() - e2.getX()) > xPixelLimit && Math.abs(e1.getY() - e2.getY()) < yPixelLimit) || Math.abs(e1.getX() - e2.getX()) > xPixelLimit * 2) {
-			if (velocityX > 0) {
-				finish();
-				return true;
-			}
-
-		}
-
-		return false;
-	}
-
-	@Override
-	public void onLongPress(MotionEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public void onShowPress(MotionEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public boolean onSingleTapUp(MotionEvent e) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
 }
