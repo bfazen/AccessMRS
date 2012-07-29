@@ -432,7 +432,7 @@ public class DownloadDataTask extends DownloadTask {
 		File tempFile = null;
 		try {
 			File odkRoot = new File(Environment.getExternalStorageDirectory() + File.separator + "odk");
-			tempFile = File.createTempFile("pts", ".zip", odkRoot);
+			tempFile = File.createTempFile("pts", ".txt", odkRoot);
 			BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(tempFile));
 
 			byte[] buffer = new byte[1024];

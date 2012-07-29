@@ -57,14 +57,14 @@ public class AlarmListener implements WakefulIntentService.AlarmListener {
 		long timeSinceRefresh = System.currentTimeMillis() - recentDownload;
 		Log.e("louis.fazen", "Minutes since last refresh: " + timeSinceRefresh / (1000 * 60));
 
+		long days = 1000 * 60 * 60 * 24;
 		//establishes threshold for Setting Alarm Frequency
 		if (timeSinceRefresh < Constants.MAXIMUM_REFRESH_TIME) {
-			mgr.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + 100000, 300000, pi);
+			mgr.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + (3*days), (6*days), pi);
 		} else {
-			mgr.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + 100000, 300000, pi);
+			mgr.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + (3*days), (5*days), pi);
 		}
 		
-
 	}
 
 	public void sendWakefulWork(Context ctxt) {

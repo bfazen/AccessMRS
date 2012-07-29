@@ -61,7 +61,7 @@ public class ViewSavedForms extends ViewFormsActivity {
 
 		String patientIdString = getIntent().getStringExtra(Constants.KEY_PATIENT_ID);
 		mPatientId = Integer.valueOf(patientIdString);
-		
+
 		mFormDetector = new GestureDetector(new onFormClick());
 		mFormListener = new OnTouchListener() {
 			public boolean onTouch(View v, MotionEvent event) {
@@ -133,21 +133,22 @@ public class ViewSavedForms extends ViewFormsActivity {
 		createFormHistoryList(selectedForms);
 	}
 
-	
 	class onFormClick extends formGestureDetector {
 
 		@Override
 		public boolean onSingleTapUp(MotionEvent e) {
 			int pos = mListView.pointToPosition((int) e.getX(), (int) e.getY());
-			Object o = mMergeAdapter.getItem(pos);
-			if (o instanceof Form) {
-				launchFormView((Form) o);
-			} 
+			if (pos != -1) {
+				Object o = mMergeAdapter.getItem(pos);
+				if (o instanceof Form) {
+					launchFormView((Form) o);
+				}
+
+			}
 			return false;
 		}
 	}
-	
-	
+
 	protected void launchFormView(Form f) {
 
 		int priority = FILL_FORM;
@@ -240,7 +241,7 @@ public class ViewSavedForms extends ViewFormsActivity {
 				if (status.equalsIgnoreCase(InstanceProviderAPI.STATUS_COMPLETE)) {
 
 					FormInstance fi = new FormInstance();
-					fi.setPatientId(mPatientId); 
+					fi.setPatientId(mPatientId);
 					fi.setFormId(Integer.parseInt(dbjrFormId));
 					fi.setPath(filePath);
 					fi.setStatus(ClinicAdapter.STATUS_UNSUBMITTED);

@@ -3,12 +3,9 @@ package org.odk.clinic.android.activities;
 import java.util.ArrayList;
 
 import org.odk.clinic.android.R;
-import org.odk.clinic.android.activities.ViewCompletedForms.onFormClick;
-import org.odk.clinic.android.activities.ViewFormsActivity.formGestureDetector;
 import org.odk.clinic.android.adapters.PatientAdapter;
 import org.odk.clinic.android.database.ClinicAdapter;
 import org.odk.clinic.android.openmrs.Constants;
-import org.odk.clinic.android.openmrs.Form;
 import org.odk.clinic.android.openmrs.Patient;
 import org.odk.clinic.android.utilities.FileUtils;
 
@@ -24,13 +21,13 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.GestureDetector;
+import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 import android.view.Window;
@@ -179,6 +176,7 @@ public class ListPatientActivity extends ListActivity {
 		};
 	}
 
+	//TODO: consider changing this whole thing to a viewpager... may be much simpler, and also add animation
 	class onClientClick extends SimpleOnGestureListener {
 
 		@Override
@@ -198,21 +196,22 @@ public class ListPatientActivity extends ListActivity {
 		@Override
 		public boolean onSingleTapUp(MotionEvent e) {
 			int pos = mClientListView.pointToPosition((int) e.getX(), (int) e.getY());
-			Patient p = (Patient) mPatientAdapter.getItem(pos);
-			String patientIdStr = p.getPatientId().toString();
-			Intent ip = new Intent(getApplicationContext(), ViewPatientActivity.class);
-			ip.putExtra(Constants.KEY_PATIENT_ID, patientIdStr);
-			startActivity(ip);
+			if (pos != -1) {
+				Patient p = (Patient) mPatientAdapter.getItem(pos);
+				String patientIdStr = p.getPatientId().toString();
+				Intent ip = new Intent(getApplicationContext(), ViewPatientActivity.class);
+				ip.putExtra(Constants.KEY_PATIENT_ID, patientIdStr);
+				startActivity(ip);
+			}
 			return false;
 		}
 
 		@Override
 		public boolean onDown(MotionEvent e) {
-			return true;
+			return false;
 		}
 
 	}
-	
 
 	class onHeadingClick extends SimpleOnGestureListener {
 
@@ -237,10 +236,11 @@ public class ListPatientActivity extends ListActivity {
 
 		@Override
 		public boolean onDown(MotionEvent e) {
-			return true;
+			return false;
 		}
 
 	}
+	
 
 	@Override
 	protected void onResume() {
@@ -398,13 +398,12 @@ public class ListPatientActivity extends ListActivity {
 
 		mClientListView = getListView();
 		mClientListView.setAdapter(mPatientAdapter);
-		
+
 		mClientListView.setOnTouchListener(mClientListener);
 		listLayout.setOnTouchListener(mSwipeListener);
 	}
 
 	// BUTTONS
-
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {

@@ -192,7 +192,7 @@ public class ClinicAdapter {
 		// mDbHelper = new DatabaseHelper(); //this is the problem with Yaws
 		// code... many DbHelpers...!
 		// mDb = mDbHelper.getWritableDatabase();
-
+		
 		mDb = App.getDB();
 		Log.e(t, "open is called");
 		return this;
@@ -489,7 +489,7 @@ public class ClinicAdapter {
 
 			if (listtype == DashboardActivity.LIST_COMPLETE) {
 				c = mDb.query(true, PATIENTS_TABLE + ", " + FORMINSTANCES_TABLE, new String[] { PATIENTS_TABLE + "." + KEY_ID, PATIENTS_TABLE + "." + KEY_PATIENT_ID, KEY_IDENTIFIER, KEY_GIVEN_NAME, KEY_FAMILY_NAME, KEY_MIDDLE_NAME, KEY_BIRTH_DATE, KEY_GENDER,
-						KEY_PRIORITY_FORM_NAMES, KEY_PRIORITY_FORM_NUMBER, KEY_SAVED_FORM_NUMBER, KEY_SAVED_FORM_NAMES, KEY_FORMINSTANCE_SUBTEXT, KEY_CLIENT_CREATED, KEY_UUID }, "(" + expr.toString() + ")" + listSelection, null, null, null, listOrder, null);
+						KEY_PRIORITY_FORM_NAMES, KEY_PRIORITY_FORM_NUMBER, KEY_SAVED_FORM_NUMBER, KEY_SAVED_FORM_NAMES, KEY_FORMINSTANCE_SUBTEXT, KEY_CLIENT_CREATED, KEY_UUID }, "(" + expr.toString() + ")" + listSelection, null, PATIENTS_TABLE + "." + KEY_PATIENT_ID, null, listOrder, null);
 			} else {
 				c = mDb.query(true, PATIENTS_TABLE, new String[] { KEY_ID, KEY_PATIENT_ID, KEY_IDENTIFIER, KEY_GIVEN_NAME, KEY_FAMILY_NAME, KEY_MIDDLE_NAME, KEY_BIRTH_DATE, KEY_GENDER, KEY_PRIORITY_FORM_NAMES, KEY_PRIORITY_FORM_NUMBER, KEY_SAVED_FORM_NUMBER,
 						KEY_SAVED_FORM_NAMES, KEY_CLIENT_CREATED, KEY_UUID }, expr.toString() + listSelection, null, null, null, listOrder, null);
@@ -507,7 +507,7 @@ public class ClinicAdapter {
 						KEY_SAVED_FORM_NUMBER, KEY_SAVED_FORM_NAMES, KEY_FORMINSTANCE_SUBTEXT, KEY_CLIENT_CREATED, KEY_UUID }, KEY_IDENTIFIER + " LIKE '" + identifier + "%' ESCAPE '^'" + listSelection, null, null, null, listOrder, null);
 			} else {
 				c = mDb.query(true, PATIENTS_TABLE, new String[] { KEY_ID, KEY_PATIENT_ID, KEY_IDENTIFIER, KEY_GIVEN_NAME, KEY_FAMILY_NAME, KEY_MIDDLE_NAME, KEY_BIRTH_DATE, KEY_GENDER, KEY_PRIORITY_FORM_NAMES, KEY_PRIORITY_FORM_NUMBER, KEY_SAVED_FORM_NUMBER,
-						KEY_SAVED_FORM_NAMES, KEY_CLIENT_CREATED, KEY_UUID }, KEY_IDENTIFIER + " LIKE '" + identifier + "%' ESCAPE '^'" + listSelection, null, null, null, listOrder, null);
+						KEY_SAVED_FORM_NAMES, KEY_CLIENT_CREATED, KEY_UUID }, KEY_IDENTIFIER + " LIKE '" + identifier + "%' ESCAPE '^'" + listSelection, null, PATIENTS_TABLE + "." + KEY_PATIENT_ID, null, listOrder, null);
 			}
 
 		}
@@ -548,6 +548,7 @@ public class ClinicAdapter {
 
 		String listSelection = "";
 		String listOrder = "";
+		String groupBy = "";
 		switch (listtype) {
 		case DashboardActivity.LIST_SUGGESTED:
 			listSelection = KEY_PRIORITY_FORM_NUMBER + " IS NOT NULL";
@@ -560,17 +561,19 @@ public class ClinicAdapter {
 		case DashboardActivity.LIST_COMPLETE:
 			listSelection = PATIENTS_TABLE + "." + KEY_PATIENT_ID + "=" + FORMINSTANCES_TABLE + "." + KEY_PATIENT_ID;
 			listOrder = KEY_FAMILY_NAME + " COLLATE NOCASE ASC";
+			groupBy = PATIENTS_TABLE + "." + KEY_PATIENT_ID; 
 			break;
 		case DashboardActivity.LIST_ALL:
 			listSelection = "";
 			listOrder = KEY_FAMILY_NAME + " COLLATE NOCASE ASC";
+			
 			break;
 		}
 		Log.e("louis.fazen", "ClinicAdapter listorder=" + listOrder);
 
 		if (listtype == DashboardActivity.LIST_COMPLETE) {
 			c = mDb.query(true, PATIENTS_TABLE + ", " + FORMINSTANCES_TABLE, new String[] { PATIENTS_TABLE + "." + KEY_ID, PATIENTS_TABLE + "." + KEY_PATIENT_ID, KEY_IDENTIFIER, KEY_GIVEN_NAME, KEY_FAMILY_NAME, KEY_MIDDLE_NAME, KEY_BIRTH_DATE, KEY_GENDER,
-					KEY_PRIORITY_FORM_NAMES, KEY_PRIORITY_FORM_NUMBER, KEY_SAVED_FORM_NUMBER, KEY_SAVED_FORM_NAMES, KEY_FORMINSTANCE_SUBTEXT, KEY_CLIENT_CREATED, KEY_UUID }, listSelection, null, null, null, listOrder, null);
+					KEY_PRIORITY_FORM_NAMES, KEY_PRIORITY_FORM_NUMBER, KEY_SAVED_FORM_NUMBER, KEY_SAVED_FORM_NAMES, KEY_FORMINSTANCE_SUBTEXT, KEY_CLIENT_CREATED, KEY_UUID }, listSelection, null, groupBy, null, listOrder, null);
 		} else {
 			c = mDb.query(true, PATIENTS_TABLE, new String[] { KEY_ID, KEY_PATIENT_ID, KEY_IDENTIFIER, KEY_GIVEN_NAME, KEY_FAMILY_NAME, KEY_MIDDLE_NAME, KEY_BIRTH_DATE, KEY_GENDER, KEY_PRIORITY_FORM_NAMES, KEY_PRIORITY_FORM_NUMBER, KEY_SAVED_FORM_NUMBER, KEY_SAVED_FORM_NAMES,
 					KEY_CLIENT_CREATED, KEY_UUID }, listSelection, null, null, null, listOrder, null);
@@ -1221,7 +1224,8 @@ public class ClinicAdapter {
 	}
 
 	public void insertPatientForms(final DataInputStream zdis) throws Exception {
-
+		if (updateIndices)
+			makeIndices();
 		InsertHelper ih = new InsertHelper(mDb, OBSERVATIONS_TABLE);
 		mDb.beginTransaction();
 		try {
@@ -1306,13 +1310,14 @@ public class ClinicAdapter {
 			ih.close();
 			mDb.endTransaction();
 		}
-
+		
 	}
 
 	public void insertObservations(DataInputStream zdis) throws Exception {
 
 		InsertHelper ih = new InsertHelper(mDb, OBSERVATIONS_TABLE);
-		makeIndices();
+		if (updateIndices)
+			makeIndices();
 		mDb.beginTransaction();
 
 		try {

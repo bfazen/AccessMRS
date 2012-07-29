@@ -4,9 +4,9 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:paddingBottom="8dip"
-    android:paddingLeft="8dip"
-    android:paddingRight="8dip"
-    android:paddingTop="8dip" >
+    
+    
+     >
 
     <TextView
         android:id="@+id/name_text"
@@ -15,15 +15,16 @@
         android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true"
         android:paddingBottom="8dip"
-        android:paddingLeft="8dip"
-        android:paddingTop="8dip"
+        android:paddingLeft="16dip"
+        android:paddingTop="10dip"
         android:textSize="18sp"
         android:textStyle="bold" />
 
     <RelativeLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/name_text" >
+        android:layout_below="@+id/name_text"
+        android:paddingLeft="8dip" >
 
         <ImageView
             android:id="@+id/gender_image"
@@ -89,7 +90,7 @@
                 android:layout_alignTop="@+id/saved_image"
                 android:layout_margin="1dp"
                 android:gravity="center"
-                android:textColor="@+color/white_color"
+                android:textColor="@color/white_color"
                 android:textSize="15sp"
                 android:textStyle="bold" />
         </RelativeLayout>
@@ -141,7 +142,7 @@
                 android:layout_alignTop="@+id/priority_image"
                 android:layout_margin="1dp"
                 android:gravity="center"
-                android:textColor="@+color/white_color"
+                android:textColor="@color/white_color"
                 android:textSize="15sp"
                 android:textStyle="bold" />
         </RelativeLayout>
@@ -154,6 +155,13 @@
         android:layout_alignParentRight="true"
         android:layout_centerVertical="true"
         android:paddingLeft="3dip"
-        android:paddingTop="8dip" />
+        android:paddingTop="8dip"
+        android:paddingRight="8dip" />
+    
+        <View
+        android:layout_width="fill_parent"
+        android:layout_height="0.1dp"
+        android:background="@color/light_gray"
+        android:layout_alignParentTop="true" />
 
 </RelativeLayout>

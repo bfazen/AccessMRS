@@ -391,9 +391,11 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 		ClinicAdapter ca = new ClinicAdapter();
 		ca.open();
 
-		int pId = ca.findLastClientCreatedId() - 1;
-
-		mPatient.setPatientId(Integer.valueOf(pId));
+		int minPatientId = ca.findLastClientCreatedId();
+		if (minPatientId < 0)
+			mPatient.setPatientId(Integer.valueOf(minPatientId - 1));
+		else
+			mPatient.setPatientId(Integer.valueOf(-1));
 		mPatient.setFamilyName(mLastName);
 		mPatient.setMiddleName(mMiddleName);
 		mPatient.setGivenName(mFirstName);
@@ -817,11 +819,6 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 		return false;
 	}
 
-	
-	/**
-	 * For Consistency, using Collect's same UI math for onFling
-	 * 
-	 */
 	@Override
 	public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
 

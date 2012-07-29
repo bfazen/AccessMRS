@@ -75,7 +75,7 @@ public class ViewFormsActivity extends ListActivity {
 
 		@Override
 		public boolean onDown(MotionEvent e) {
-			return true;
+			return false;
 		}
 
 	}

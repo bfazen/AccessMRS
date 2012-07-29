@@ -116,25 +116,24 @@ public class ViewAllForms extends ViewFormsActivity {
 		String patientIdStr = getIntent().getStringExtra(Constants.KEY_PATIENT_ID);
 		Integer patientId = Integer.valueOf(patientIdStr);
 		mPatient = getPatient(patientId);
-		
+
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
 		mProviderId = settings.getString(PreferencesActivity.KEY_PROVIDER, "0");
-		
+
 		mFormDetector = new GestureDetector(new onFormClick());
 		mFormListener = new OnTouchListener() {
 			public boolean onTouch(View v, MotionEvent event) {
 				return mFormDetector.onTouchEvent(event);
 			}
 		};
-		
+
 		mFormSummaryDetector = new GestureDetector(new onFormSummaryClick());
 		mFormSummaryListener = new OnTouchListener() {
 			public boolean onTouch(View v, MotionEvent event) {
 				return mFormSummaryDetector.onTouchEvent(event);
 			}
 		};
-		
-		
+
 	}
 
 	private void getDownloadedForms() {
@@ -347,14 +346,14 @@ public class ViewAllForms extends ViewFormsActivity {
 			allFormsAdapter = new FormAdapter(this, R.layout.default_form_item, formList, false);
 			adapter.addAdapter(allFormsAdapter);
 		}
-		
+
 		mAllFormLV = getListView();
 		mAllFormLV.setAdapter(adapter);
 		mAllFormLV.setOnTouchListener(mFormListener);
-		
-//		setListAdapter(adapter);
+
+		// setListAdapter(adapter);
 	}
-	
+
 	@Override
 	protected View buildSectionLabel(String sectionlabel) {
 		View v;
@@ -392,14 +391,15 @@ public class ViewAllForms extends ViewFormsActivity {
 		formsSummary = vi.inflate(R.layout.priority_form_summary, null);
 		formsSummary.setClickable(true);
 
-//		formsSummary.setOnClickListener(new View.OnClickListener() {
-//			public void onClick(View v) {
-//
-//				Intent i = new Intent(getApplicationContext(), ViewSavedForms.class);
-//				i.putExtra(Constants.KEY_PATIENT_ID, mPatient.getPatientId().toString());
-//				startActivity(i);
-//			}
-//		});
+		// formsSummary.setOnClickListener(new View.OnClickListener() {
+		// public void onClick(View v) {
+		//
+		// Intent i = new Intent(getApplicationContext(), ViewSavedForms.class);
+		// i.putExtra(Constants.KEY_PATIENT_ID,
+		// mPatient.getPatientId().toString());
+		// startActivity(i);
+		// }
+		// });
 
 		ImageView priorityArrow = (ImageView) formsSummary.findViewById(R.id.arrow_image);
 		ImageView priorityImage = (ImageView) formsSummary.findViewById(R.id.priority_image);
@@ -428,28 +428,32 @@ public class ViewAllForms extends ViewFormsActivity {
 		return (formsSummary);
 	}
 
-	
-	//BUTTONS
+	// BUTTONS
 	class onFormClick extends formGestureDetector {
 
 		@Override
 		public boolean onSingleTapUp(MotionEvent e) {
+
 			int pos = mAllFormLV.pointToPosition((int) e.getX(), (int) e.getY());
-			Object o = adapter.getItem(pos);
-			if (o instanceof Form) {
-				launchFormView((Form) o, pos);
-			} 
+			if (pos != -1) {
+				Object o = adapter.getItem(pos);
+				if (o instanceof Form) {
+					launchFormView((Form) o, pos);
+				}
+			}
 			return false;
 		}
 	}
-	
+
 	class onFormSummaryClick extends formGestureDetector {
 
 		@Override
 		public boolean onSingleTapUp(MotionEvent e) {
-			Intent i = new Intent(getApplicationContext(), ViewSavedForms.class);
-			i.putExtra(Constants.KEY_PATIENT_ID, mPatient.getPatientId().toString());
-			startActivity(i);
+			
+				Intent i = new Intent(getApplicationContext(), ViewSavedForms.class);
+				i.putExtra(Constants.KEY_PATIENT_ID, mPatient.getPatientId().toString());
+				startActivity(i);
+			
 			return false;
 		}
 	}
@@ -481,7 +485,7 @@ public class ViewAllForms extends ViewFormsActivity {
 		}
 
 	}
-	
+
 	private void launchFormViewOnly(String uriString, String formId) {
 		Intent intent = new Intent();
 		intent.setComponent(new ComponentName("org.odk.collect.android", "org.odk.collect.android.activities.FormEntryActivity"));
@@ -553,12 +557,11 @@ public class ViewAllForms extends ViewFormsActivity {
 					dbjrFormId = mCursor.getString(mCursor.getColumnIndex(InstanceColumns.JR_FORM_ID));
 					displayName = mCursor.getString(mCursor.getColumnIndex(InstanceColumns.DISPLAY_NAME));
 					filePath = mCursor.getString(mCursor.getColumnIndex(InstanceColumns.INSTANCE_FILE_PATH));
-					
+
 				}
 				if (mCursor != null) {
 					mCursor.close();
 				}
-				
 
 				ClinicAdapter ca = new ClinicAdapter();
 				ca.open();
@@ -574,9 +577,9 @@ public class ViewAllForms extends ViewFormsActivity {
 				ca.updateSavedFormsListByPatientId(mPatient.getPatientId().toString());
 
 				if (status.equalsIgnoreCase(InstanceProviderAPI.STATUS_COMPLETE)) {
-					
+
 					FormInstance fi = new FormInstance();
-					fi.setPatientId(mPatient.getPatientId()); 
+					fi.setPatientId(mPatient.getPatientId());
 					fi.setFormId(Integer.parseInt(dbjrFormId));
 					fi.setPath(filePath);
 					fi.setStatus(ClinicAdapter.STATUS_UNSUBMITTED);
@@ -598,9 +601,9 @@ public class ViewAllForms extends ViewFormsActivity {
 		}
 		super.onActivityResult(requestCode, resultCode, intent);
 	}
-	
-	//LAUNCH FORM ENTRY
-	//TODO: All of the below should be made into an loadForm IntentService 
+
+	// LAUNCH FORM ENTRY
+	// TODO: All of the below should be made into an loadForm IntentService
 	private void launchFormEntry(String jrFormId, String formname, int priority) {
 		String formPath = null;
 		int id = -1;
@@ -647,8 +650,8 @@ public class ViewAllForms extends ViewFormsActivity {
 			showCustomToast(getString(R.string.error, getString(R.string.odk_collect_error)));
 		}
 	}
-	
-//	below this line is all excerpted from the ViewPatientActivity
+
+	// below this line is all excerpted from the ViewPatientActivity
 	private static String parseDate(String s) {
 		SimpleDateFormat inputFormat = new SimpleDateFormat("MMM dd, yyyy");
 		SimpleDateFormat outputFormat = new SimpleDateFormat("yyyy-MM-dd");

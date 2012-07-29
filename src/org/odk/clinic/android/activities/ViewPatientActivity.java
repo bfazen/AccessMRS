@@ -545,7 +545,7 @@ public class ViewPatientActivity extends ListActivity {
 
 		@Override
 		public boolean onDown(MotionEvent e) {
-			return true;
+			return false;
 		}
 
 	}
@@ -576,7 +576,7 @@ public class ViewPatientActivity extends ListActivity {
 
 		@Override
 		public boolean onDown(MotionEvent e) {
-			return true;
+			return false;
 		}
 
 	}
@@ -605,7 +605,7 @@ public class ViewPatientActivity extends ListActivity {
 
 		@Override
 		public boolean onDown(MotionEvent e) {
-			return true;
+			return false;
 		}
 
 	}

@@ -2,27 +2,38 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:paddingBottom="8dip"
-    android:paddingLeft="8dip"
-    android:paddingRight="8dip"
-    android:paddingTop="8dip" >
+    android:orientation="vertical" >
 
-    <TextView
-        android:id="@+id/name_text"
-        android:layout_width="0dip"
+    <LinearLayout
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical"
-        android:layout_weight="1.0"
+        android:orientation="horizontal"
+        android:paddingBottom="8dip"
         android:paddingLeft="8dip"
-        android:textSize="18sp"
-        android:textStyle="bold" />
+        android:paddingRight="8dip"
+        android:paddingTop="8dip" >
 
-    <ImageView
-        android:id="@+id/arrow_image"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:paddingLeft="3dip"
-        android:paddingTop="3dip" />
+        <TextView
+            android:id="@+id/name_text"
+            android:layout_width="0dip"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_weight="1.0"
+            android:paddingLeft="8dip"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <ImageView
+            android:id="@+id/arrow_image"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingLeft="3dip"
+            android:paddingTop="3dip" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="fill_parent"
+        android:layout_height="1dp"
+        android:background="@color/light_gray" />
 
 </LinearLayout>

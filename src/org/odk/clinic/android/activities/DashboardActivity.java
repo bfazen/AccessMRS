@@ -90,14 +90,20 @@ public class DashboardActivity extends Activity {
 		IntentFilter filter = new IntentFilter(RefreshDataService.REFRESH_BROADCAST);
 		LocalBroadcastManager.getInstance(this).registerReceiver(onNotice, filter);
 		refreshView();
-		
-		// SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
-		// boolean firstRun = settings.getBoolean(PreferencesActivity.KEY_FIRST_RUN, true);
-		// if (firstRun) {
-		// // Save first run status
-		// SharedPreferences.Editor editor = settings.edit();
-		// editor.putBoolean(PreferencesActivity.KEY_FIRST_RUN, false);
-		// editor.commit();
+
+		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
+		boolean firstRun = settings.getBoolean(PreferencesActivity.KEY_FIRST_RUN, true);
+		if (firstRun) {
+			// Save first run status
+			SharedPreferences.Editor editor = settings.edit();
+			editor.putBoolean(PreferencesActivity.KEY_FIRST_RUN, false);
+			editor.commit();
+			
+			SharedPreferences chwSettings = getSharedPreferences("ChwSettings", MODE_PRIVATE);
+		    SharedPreferences.Editor chwEditor = chwSettings.edit();
+		    chwEditor.putBoolean("IsMenuEnabled", false);
+		    chwEditor.commit();
+		}
 
 	}
 
@@ -326,18 +332,18 @@ public class DashboardActivity extends Activity {
 
 		}
 	};
-	
+
 	@Override
 	protected void onPause() {
 		super.onPause();
 		LocalBroadcastManager.getInstance(this).unregisterReceiver(onNotice);
 	}
-	
+
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
 	}
-	
+
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
