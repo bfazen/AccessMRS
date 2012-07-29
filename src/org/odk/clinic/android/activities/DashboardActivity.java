@@ -102,6 +102,7 @@ public class DashboardActivity extends Activity {
 			SharedPreferences chwSettings = getSharedPreferences("ChwSettings", MODE_PRIVATE);
 		    SharedPreferences.Editor chwEditor = chwSettings.edit();
 		    chwEditor.putBoolean("IsMenuEnabled", false);
+		    chwEditor.putBoolean("IsLoggingEnabled", true);
 		    chwEditor.commit();
 		}
 
