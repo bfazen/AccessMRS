@@ -86,6 +86,8 @@ public class DashboardActivity extends Activity {
 
 	@Override
 	protected void onResume() {
+		Log.e("now is", "systemtime= Long.valueOf(System.currentTimeMillis())=" + Long.valueOf(System.currentTimeMillis()));
+		
 		super.onResume();
 		IntentFilter filter = new IntentFilter(RefreshDataService.REFRESH_BROADCAST);
 		LocalBroadcastManager.getInstance(this).registerReceiver(onNotice, filter);

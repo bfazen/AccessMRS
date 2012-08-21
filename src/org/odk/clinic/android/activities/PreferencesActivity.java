@@ -94,7 +94,6 @@ public class PreferencesActivity extends PreferenceActivity implements
 		mPatientDbAdapter.open();
 		mPatientDbAdapter.deleteAllCohorts();
 		mPatientDbAdapter.close();
-
 	}
 
 	private void updateUsername() {

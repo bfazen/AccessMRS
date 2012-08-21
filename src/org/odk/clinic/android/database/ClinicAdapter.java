@@ -603,6 +603,26 @@ public class ClinicAdapter {
 		}
 		return c;
 	}
+	
+	public Cursor fetchAllObservations() throws SQLException {
+		Cursor c = null;
+		c = mDb.query(true, OBSERVATIONS_TABLE, new String[] { KEY_ID, KEY_PATIENT_ID }, null, null, null, null, null, null);
+
+		if (c != null) {
+			c.moveToFirst();
+		}
+		return c;
+	}
+	
+	public Cursor fetchAllFormInstances() throws SQLException {
+		Cursor c = null;
+		c = mDb.query(true, FORMINSTANCES_TABLE, new String[] { KEY_ID, KEY_PATIENT_ID, KEY_FORM_ID }, null, null, null, null, null, null);
+
+		if (c != null) {
+			c.moveToFirst();
+		}
+		return c;
+	}
 
 	public Cursor fetchForm(Integer formId) throws SQLException {
 		Cursor c = null;
