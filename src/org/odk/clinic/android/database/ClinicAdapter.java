@@ -1242,7 +1242,7 @@ public class ClinicAdapter {
 
 		updateIndices = false;
 	}
-
+	
 	public void insertPatientForms(final DataInputStream zdis) throws Exception {
 		if (updateIndices)
 			makeIndices();
@@ -1267,7 +1267,7 @@ public class ClinicAdapter {
 				} else if (dataType == Constants.TYPE_DATE) {
 					ih.bind(obsDateIndex, parseDate(zdis.readUTF()));
 				}
-
+				
 				ih.bind(obsTypeIndex, dataType);
 				ih.bind(obsEncDateIndex, parseDate(zdis.readUTF()));
 

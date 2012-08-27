@@ -686,33 +686,33 @@ public class ViewAllForms extends ViewFormsActivity {
 				}
 				if (childName.equalsIgnoreCase("patient.family_name")) {
 					childElement.clear();
-					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mPatient.getFamilyName().toString());
+					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mPatient.getFamilyName());
 				}
 				if (childName.equalsIgnoreCase("patient.given_name")) {
 					childElement.clear();
-					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mPatient.getGivenName().toString());
+					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mPatient.getGivenName());
 				}
 
 				if (childName.equalsIgnoreCase("patient.middle_name")) {
 					childElement.clear();
-					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mPatient.getMiddleName().toString());
+					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mPatient.getMiddleName());
 
 				}
 				if (childName.equalsIgnoreCase("patient.sex")) {
 					childElement.clear();
-					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mPatient.getGender().toString());
+					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mPatient.getGender());
 
 				}
 				if (childName.equalsIgnoreCase("patient.medical_record_number")) {
 					childElement.clear();
-					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mPatient.getIdentifier().toString());
+					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mPatient.getIdentifier());
 
 				}
 
 				// provider id
 				if (childName.equalsIgnoreCase("encounter.provider_id")) {
 					childElement.clear();
-					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mProviderId.toString());
+					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mProviderId);
 				}
 
 				if (childName.equalsIgnoreCase("date") || childName.equalsIgnoreCase("time")) {
@@ -739,7 +739,7 @@ public class ViewAllForms extends ViewFormsActivity {
 					// write value into value n
 					String value = mInstanceValues.get(match);
 					if (value != null) {
-						childElement.addChild(0, org.kxml2.kdom.Node.TEXT, value.toString());
+						childElement.addChild(0, org.kxml2.kdom.Node.TEXT, value);
 					}
 				}
 
