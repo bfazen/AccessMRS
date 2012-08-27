@@ -15,7 +15,8 @@ import org.odk.clinic.android.openmrs.Constants;
 
 public abstract class DownloadTask extends
 		AsyncTask<String, String, String> {
-
+	
+	private static final int CONNECTION_TIMEOUT = 60000;
 	protected DownloadListener mStateListener;
 	protected ClinicAdapter mPatientDbAdapter = new ClinicAdapter();
 
@@ -54,8 +55,8 @@ public abstract class DownloadTask extends
 		HttpURLConnection c = (HttpURLConnection) u.openConnection();
 		c.setDoOutput(true);
 		c.setRequestMethod("POST");
-		c.setConnectTimeout(8000);
-		c.setReadTimeout(8000);
+		c.setConnectTimeout(CONNECTION_TIMEOUT);
+		c.setReadTimeout(CONNECTION_TIMEOUT);
 		c.addRequestProperty("Content-type", "application/octet-stream");
 		// write auth details to connection
 		DataOutputStream dos = new DataOutputStream(new GZIPOutputStream(c.getOutputStream()));

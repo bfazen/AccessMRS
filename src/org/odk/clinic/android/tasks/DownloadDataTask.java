@@ -12,8 +12,16 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
@@ -37,12 +45,10 @@ import android.util.Log;
 public class DownloadDataTask extends DownloadTask {
 
 	public static final String KEY_ERROR = "error";
-
 	public static final String KEY_PATIENTS = "patients";
-
 	public static final String KEY_OBSERVATIONS = "observations";
-
 	private static final String TAG = "Clinic.DownloadDataTask";
+	private File mFile;
 
 	private ArrayList<Form> mForms = new ArrayList<Form>();
 
@@ -55,14 +61,37 @@ public class DownloadDataTask extends DownloadTask {
 		boolean savedSearch = Boolean.valueOf(values[3]);
 		int cohort = Integer.valueOf(values[4]);
 		int program = Integer.valueOf(values[5]);
-		String formListUrl = values[6];
+		String formListUrlString = values[6];
 		String formUrl = values[7];
 
 		int step = 0;
 		int totalstep = 10;
 		File zipFile = null;
-		
+
+		// connections:
+		HttpURLConnection urlConnection = null;
+		HttpsURLConnection urlHttpsConnection = null;
+
 		try {
+
+			// HTTPS NEW CODE... TODO: but what about the other patient
+			// downloads etc. etc.?
+			URL newurl = new URL(formListUrlString);
+			if (newurl.getProtocol().toLowerCase().equals("https")) {
+				trustAllHosts();
+				urlHttpsConnection = (HttpsURLConnection) newurl.openConnection();
+				// disable verification
+				urlHttpsConnection.setHostnameVerifier(new HostnameVerifier() {
+					public boolean verify(String string, SSLSession ssls) {
+						return true;
+					}
+				});
+				// assign this to the general connection variable
+				urlConnection = urlHttpsConnection;
+			} else
+				urlConnection = (HttpURLConnection) newurl.openConnection();
+			InputStream is = urlConnection.getInputStream();
+			// END OF HTTPS NEW CODE
 
 			DataInputStream zdisServer = connectToServer(url, username, password, savedSearch, cohort, program);
 			publishProgress("Downloading Clients", Integer.valueOf(step++).toString(), Integer.valueOf(totalstep).toString());
@@ -72,7 +101,7 @@ public class DownloadDataTask extends DownloadTask {
 			}
 
 			publishProgress("Downloading Forms", Integer.valueOf(step++).toString(), Integer.valueOf(totalstep).toString());
-			String formListResult = downloadFormList(formListUrl);
+			String formListResult = downloadFormList(formListUrlString);
 			if (formListResult != null) {
 				return formListResult;
 			}
@@ -84,16 +113,23 @@ public class DownloadDataTask extends DownloadTask {
 
 			publishProgress("Processing", Integer.valueOf(step++).toString(), Integer.valueOf(totalstep).toString());
 			if (zipFile != null) {
-				DataInputStream zdis = new DataInputStream(new BufferedInputStream(new FileInputStream(zipFile)));
+				DataInputStream zdis = new DataInputStream(new BufferedInputStream(new FileInputStream(zipFile))); // TODO:
+																													// Win
+																													// does
+																													// not
+																													// sue
+																													// the
+																													// BufferedInputStream
+																													// here!
 
-				if (zdis != null) {
+				if (zdis != null) { //TODO: consider having a try catch block in here to break things up, and then deleting the zipfile in the catch block...
 					publishProgress("Processing", Integer.valueOf(step++).toString(), Integer.valueOf(totalstep).toString());
 					// open db and clean entries
 					mPatientDbAdapter.open();
 					mPatientDbAdapter.deleteAllPatients();
 					mPatientDbAdapter.deleteAllObservations();
 					mPatientDbAdapter.deleteAllFormInstances();
-					
+
 					mPatientDbAdapter.makeIndices();
 					// download and insert patients and obs
 					publishProgress("Processing Clients", Integer.valueOf(step++).toString(), Integer.valueOf(totalstep).toString());
@@ -123,6 +159,8 @@ public class DownloadDataTask extends DownloadTask {
 					mPatientDbAdapter.close();
 
 				}
+				if (zipFile != null)
+					zipFile.delete(); //TODO: consider placing this file off SD, and then using: FileUtils.deleteFile(mFile.getAbsolutePath());
 			}
 
 			else {
@@ -136,8 +174,6 @@ public class DownloadDataTask extends DownloadTask {
 
 		return null;
 	}
-	
-	
 
 	// DOWNLOAD FORM DATA
 	// TODO: should NOT be downloading and inserting forms at same time...!
@@ -283,8 +319,9 @@ public class DownloadDataTask extends DownloadTask {
 						e.printStackTrace();
 					}
 
-//				} else {
-//					System.out.println("Form " + formId + " already downloaded");
+					// } else {
+					// System.out.println("Form " + formId +
+					// " already downloaded");
 				}
 			}
 			mPatientDbAdapter.close();
@@ -432,10 +469,18 @@ public class DownloadDataTask extends DownloadTask {
 		File tempFile = null;
 		try {
 			File odkRoot = new File(Environment.getExternalStorageDirectory() + File.separator + "odk");
-			tempFile = File.createTempFile("pts", ".txt", odkRoot);
+			tempFile = File.createTempFile("pts", ".txt", odkRoot); // TODO:
+																	// consider
+																	// taking
+																	// this off
+																	// SD: Win
+																	// used File
+																	// file =
+																	// File.createTempFile("odk-connector",
+																	// "-stream");
 			BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(tempFile));
 
-			byte[] buffer = new byte[1024];
+			byte[] buffer = new byte[1024]; // TODO consider: win used [4096]
 			int count = 0;
 
 			while ((count = inputStream.read(buffer)) > 0) {
@@ -449,6 +494,34 @@ public class DownloadDataTask extends DownloadTask {
 			e.printStackTrace();
 		}
 		return tempFile;
+	}
+
+	// //HTTPS NEW CODE...
+	private static void trustAllHosts() {
+
+		X509TrustManager easyTrustManager = new X509TrustManager() {
+
+			public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+			}
+
+			public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+			}
+
+			public X509Certificate[] getAcceptedIssuers() {
+				return null;
+			}
+		};
+
+		// Create a trust manager that does not validate certificate chains
+		TrustManager[] trustAllCerts = new TrustManager[] { easyTrustManager };
+		// Install the all-trusting trust manager
+		try {
+			SSLContext sc = SSLContext.getInstance("TLS");
+			sc.init(null, trustAllCerts, new java.security.SecureRandom());
+			HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 }

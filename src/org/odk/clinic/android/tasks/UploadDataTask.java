@@ -6,15 +6,26 @@ import java.util.ArrayList;
 
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpVersion;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.params.HttpClientParams;
+import org.apache.http.conn.ClientConnectionManager;
+import org.apache.http.conn.params.ConnManagerParams;
+import org.apache.http.conn.params.ConnPerRouteBean;
+import org.apache.http.conn.scheme.PlainSocketFactory;
+import org.apache.http.conn.scheme.Scheme;
+import org.apache.http.conn.scheme.SchemeRegistry;
+import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
+import org.apache.http.params.HttpProtocolParams;
+import org.apache.http.protocol.HTTP;
 import org.odk.clinic.android.database.ClinicAdapter;
 import org.odk.clinic.android.listeners.UploadFormListener;
 
@@ -25,7 +36,7 @@ import android.util.Log;
 public class UploadDataTask extends AsyncTask<String, String, String> {
 	private static String tag = "UploadDataTask";
 
-	private static final int CONNECTION_TIMEOUT = 30000;
+	private static final int CONNECTION_TIMEOUT = 60000;
 
 	protected UploadFormListener mStateListener;
 	private ClinicAdapter mCla;
@@ -40,20 +51,22 @@ public class UploadDataTask extends AsyncTask<String, String, String> {
 
 		if (dataToUpload()) {
 			ArrayList<String> uploaded = uploadInstances();
-			
+
 			if (!uploaded.isEmpty() && uploaded.size() > 0) {
 				updateDbPath(uploaded);
 			}
-			
-			//no context, so manually make string:
+
+			// no context, so manually make string:
 			int resultSize = uploaded.size();
 			String s = " ";
 			if (resultSize == mTotalCount) {
-				if ((resultSize)>1) s = "s ";
+				if ((resultSize) > 1)
+					s = "s ";
 				uploadResult = resultSize + " form " + s + "uploaded successfully.";
 
 			} else {
-				if ((mTotalCount - resultSize)>1) s = "s ";
+				if ((mTotalCount - resultSize) > 1)
+					s = "s ";
 				String failedforms = mTotalCount - resultSize + " of " + mTotalCount + " form" + s;
 				uploadResult = "Sorry, " + failedforms + "failed to upload!";
 			}
@@ -109,12 +122,28 @@ public class UploadDataTask extends AsyncTask<String, String, String> {
 
 			// configure connection
 			HttpParams httpParams = new BasicHttpParams();
+			// HTTPS ADDITION: Next 3 lines
+			HttpProtocolParams.setVersion(httpParams, HttpVersion.HTTP_1_1);
+			HttpProtocolParams.setContentCharset(httpParams, HTTP.UTF_8);
+			HttpProtocolParams.setUseExpectContinue(httpParams, false);
 			HttpConnectionParams.setConnectionTimeout(httpParams, CONNECTION_TIMEOUT);
 			HttpConnectionParams.setSoTimeout(httpParams, CONNECTION_TIMEOUT);
 			HttpClientParams.setRedirecting(httpParams, false);
 
-			// setup client
-			DefaultHttpClient httpclient = new DefaultHttpClient(httpParams);
+			// HTTPS ADDITION (android drops connections pre route > 49)
+			ConnManagerParams.setTimeout(httpParams, CONNECTION_TIMEOUT);
+			ConnManagerParams.setMaxConnectionsPerRoute(httpParams, new ConnPerRouteBean(20));
+			ConnManagerParams.setMaxTotalConnections(httpParams, 20);
+			SchemeRegistry schemeRegistry = new SchemeRegistry();
+			schemeRegistry.register(new Scheme("http", PlainSocketFactory.getSocketFactory(), 80));
+			SSLSocketFactory sslSocketFactory = SSLSocketFactory.getSocketFactory();
+			sslSocketFactory.setHostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
+			schemeRegistry.register(new Scheme("https", sslSocketFactory, 443));
+			ClientConnectionManager connectionManager = new ThreadSafeClientConnManager(httpParams, schemeRegistry);
+			// HTTPS ADDITION END
+
+			// setup client (and HTTPS added the connection manager)
+			DefaultHttpClient httpclient = new DefaultHttpClient(connectionManager, httpParams);
 			HttpPost httppost = new HttpPost(mUrl);
 
 			// get instance file
@@ -229,13 +258,13 @@ public class UploadDataTask extends AsyncTask<String, String, String> {
 	}
 
 	@Override
-    protected void onPostExecute(String result) {
-    	Log.e(tag, "UploadInstanceTask.onPostExecute Result=" + result);
-        synchronized (this) {
-            if (mStateListener != null)
-                mStateListener.uploadComplete(result);
-        }
-    }
+	protected void onPostExecute(String result) {
+		Log.e(tag, "UploadInstanceTask.onPostExecute Result=" + result);
+		synchronized (this) {
+			if (mStateListener != null)
+				mStateListener.uploadComplete(result);
+		}
+	}
 
 	public void setUploadListener(UploadFormListener sl) {
 		synchronized (this) {
