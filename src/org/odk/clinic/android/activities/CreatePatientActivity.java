@@ -712,7 +712,7 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 			} catch (SQLiteException e) {
 				Log.e("DownloadFormTask", e.getLocalizedMessage());
 				return false;
-				// TODO: handle exception
+				// TODO handle exception
 			}
 
 			if (mCursor == null) {
@@ -841,7 +841,6 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 	@Override
 	public void onLongPress(MotionEvent e) {
 		// TODO Auto-generated method stub
-
 	}
 
 	@Override

@@ -26,12 +26,12 @@ import android.util.Log;
 import com.alphabetbloc.clinic.services.AlarmIntentService;
 import com.commonsware.cwac.wakeful.WakefulIntentService;
 
-public class AlarmListener implements WakefulIntentService.AlarmListener {
+public class RefreshDataListener implements WakefulIntentService.AlarmListener {
 
 	public void scheduleAlarms(AlarmManager mgr, PendingIntent pi, Context ctxt) {
 		// set the alarm to wake up the device at interval of 1 day, and go off
 		// at inexact times (for better performance)
-		Log.e("louis.fazen", "WakefulIntentService.scheduleAlarms  is called");
+		Log.e("louis.fazen", "WakefulIntentService.schedule Alarms  is called");
 
 		// this is called
 		// 1. whenever the app starts if forced is true
@@ -77,7 +77,7 @@ public class AlarmListener implements WakefulIntentService.AlarmListener {
 		// if interval between alarms is > maxAge, then alarm probably was reset
 		// by force-stopping application in settings,
 		// so we need to reestablish the Alarm. This logic is taken care of by
-		// WakefulIntentService scheduleAlarms()
+		// WakefulIntentService schedule Alarms()
 		// Here we only set the maxAge paramater, suggested to be 2xInterval by
 		// CommonsWare
 		return (AlarmManager.INTERVAL_FIFTEEN_MINUTES * 2);

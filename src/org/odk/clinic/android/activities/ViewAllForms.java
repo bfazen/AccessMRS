@@ -603,12 +603,12 @@ public class ViewAllForms extends ViewFormsActivity {
 	}
 
 	// LAUNCH FORM ENTRY
-	// TODO: All of the below should be made into an loadForm IntentService
+	// TODO All of the below should be made into an loadForm IntentService
 	private void launchFormEntry(String jrFormId, String formname, int priority) {
 		String formPath = null;
 		int id = -1;
 		try {
-			// TODO: Fix Yaw's inefficient query--could just return one row
+			// TODO! Fix Yaw's inefficient query--could just return one row
 			Cursor mCursor = App.getApp().getContentResolver().query(FormsColumns.CONTENT_URI, null, null, null, null);
 			mCursor.moveToPosition(-1);
 			while (mCursor.moveToNext()) {
@@ -815,7 +815,7 @@ public class ViewAllForms extends ViewFormsActivity {
 			// louis.fazen is adding new variables to Instances.Db
 			insertValues.put(InstanceColumns.PATIENT_ID, mPatient.getPatientId());
 			insertValues.put(InstanceColumns.FORM_NAME, formname);
-			insertValues.put(InstanceColumns.STATUS, "initialized");
+			insertValues.put(InstanceColumns.STATUS, InstanceProviderAPI.STATUS_INITIALIZED);
 
 			Uri insertResult = App.getApp().getContentResolver().insert(InstanceColumns.CONTENT_URI, insertValues);
 			return Integer.valueOf(insertResult.getLastPathSegment());

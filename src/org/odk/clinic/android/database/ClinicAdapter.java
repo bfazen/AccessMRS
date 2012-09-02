@@ -26,6 +26,7 @@ import android.database.DatabaseUtils.InsertHelper;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 import android.util.Log;
@@ -87,7 +88,7 @@ public class ClinicAdapter {
 	// private String mZeroDate = "0000-00-00 00:00:00";
 
 	// louis.fazen is putting in new events table...
-	private static final String PROVIDER_ID = "provider";
+	static final String PROVIDER_ID = "provider";
 	private static final String PATIENT_ID = "patient";
 	private static final String FORM_PRIORITY_BOOLEAN = "form_priority";
 	private static final String FORM_NAME = "form_name";
@@ -153,13 +154,13 @@ public class ClinicAdapter {
 
 	private static final String CREATE_DOWNLOAD_LOG_TABLE = "create table " + DOWNLOAD_LOG_TABLE + " (_id integer primary key autoincrement, " + DOWNLOAD_TIME + " integer);";
 
-	public static class DatabaseHelper extends ODKSQLiteOpenHelper {
+	public static class DatabaseHelper extends SQLiteOpenHelper {
 		// private static class DatabaseHelper extends ODKSQLiteOpenHelper {
 
 		// we create this once from the App singleton
 		public DatabaseHelper(Context context) {
 			// DatabaseHelper() {
-			super(FileUtils.DATABASE_PATH, DATABASE_NAME, null, DATABASE_VERSION);
+			super(context, DATABASE_NAME, null, DATABASE_VERSION);
 			createStorage();
 		}
 
@@ -198,7 +199,7 @@ public class ClinicAdapter {
 		return this;
 	}
 
-	// TODO: go through code and delete all instances of close(), but for now,
+	// TODO go through code and delete all instances of close(), but for now,
 	// this suffices!
 	public void close() {
 		// mDbHelper = App.getHelper();
@@ -212,7 +213,6 @@ public class ClinicAdapter {
 
 	// TODO Remove the need to pass in Patient/Observation objects. Saves object
 	// creation
-
 	/**
 	 * Generate text for the first level of the row display.
 	 * 
@@ -1122,6 +1122,17 @@ public class ClinicAdapter {
 		return mDb.update(FORMINSTANCES_TABLE, cv, KEY_PATH + "='" + path + "'", null) > 0;
 	}
 
+	
+	public boolean updateInstancePath(Integer id, String newPath) {
+
+		ContentValues cv = new ContentValues();
+
+		cv.put(KEY_PATH, newPath);
+
+		return mDb.update(FORMINSTANCES_TABLE, cv, KEY_ID + "=?", new String[] {String.valueOf(id)}) > 0;
+	}
+	
+	
 	/**
 	 * Update patient in the database.
 	 * 

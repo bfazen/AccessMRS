@@ -17,7 +17,7 @@ import com.commonsware.cwac.wakeful.WakefulIntentService;
 /**
  * @author Louis.Fazen@gmail.com
  * 
- *         IntentService is called by AlarmListener at periodic intervals.
+ *         IntentService is called by Alarm Listener at periodic intervals.
  *         Decides whether or not to start ongoing service to monitor
  *         SignalStrength and download clients. After decision, this
  *         IntentService finishes. Holds wakelock.

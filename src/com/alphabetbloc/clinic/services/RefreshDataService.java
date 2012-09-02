@@ -7,14 +7,10 @@ import org.odk.clinic.android.R;
 import org.odk.clinic.android.activities.CreatePatientActivity;
 import org.odk.clinic.android.activities.DashboardActivity;
 import org.odk.clinic.android.activities.ListPatientActivity;
-import org.odk.clinic.android.activities.PreferencesActivity;
 import org.odk.clinic.android.activities.RefreshDataActivity;
-import org.odk.clinic.android.database.ClinicAdapter;
 import org.odk.clinic.android.listeners.DownloadListener;
 import org.odk.clinic.android.listeners.UploadFormListener;
-import org.odk.clinic.android.openmrs.Constants;
 import org.odk.clinic.android.tasks.DownloadDataTask;
-import org.odk.clinic.android.tasks.DownloadTask;
 import org.odk.clinic.android.tasks.UploadDataTask;
 
 import android.app.ActivityManager;
@@ -27,20 +23,18 @@ import android.app.Service;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.IBinder;
 import android.os.PowerManager;
-import android.preference.PreferenceManager;
-import android.provider.ContactsContract.CommonDataKinds.Phone;
-
 import android.support.v4.content.LocalBroadcastManager;
 import android.telephony.PhoneStateListener;
 import android.telephony.ServiceState;
 import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+
+import com.commonsware.cwac.wakeful.WakefulIntentService;
 
 /**
  * 
@@ -72,18 +66,8 @@ public class RefreshDataService extends Service implements UploadFormListener, D
 	// CM7
 	public static final String MOBILE_DATA_CHANGED = "com.alphabetbloc.android.telephony.MOBILE_DATA_CHANGED";
 
-	private DownloadTask mDownloadTask;
+	private DownloadDataTask mDownloadTask;
 	private UploadDataTask mUploadTask;
-
-	private String username;
-	private String password;
-	private String savedSearch;
-	private String cohortId;
-	private String programId;
-	private String patientDownloadUrl;
-	private String formDownloadUrl;
-	private String formlistDownloadUrl;
-	private String formUploadUrl;
 
 	private boolean mUploadComplete;
 	private boolean mDownloadComplete;
@@ -156,7 +140,7 @@ public class RefreshDataService extends Service implements UploadFormListener, D
 		return dataNetwork;
 	}
 
-	// TODO: Update the service connection!!!
+	// TODO! Update the service connection!!!
 	private void updateService() {
 		// if 2G, then update to 3G?
 		int nt = mTelephonyManager.getNetworkType();
@@ -165,17 +149,18 @@ public class RefreshDataService extends Service implements UploadFormListener, D
 		ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
 
 		Intent launchIntent = new Intent(MOBILE_DATA_CHANGED);
-//		sendBroadcast(launchIntent);
+		// sendBroadcast(launchIntent);
 		PendingIntent pi = PendingIntent.getBroadcast(getApplicationContext(), 0, launchIntent, 0);
 		Log.e(TAG, "Sending a broadcast intent to change the network!");
 		/*
-		Intent launchIntent = new Intent();
-		launchIntent.setClass(context, SettingsAppWidgetProvider.class);
-		launchIntent.addCategory(Intent.CATEGORY_ALTERNATIVE);
-		launchIntent.setData(Uri.parse("custom:" + buttonId));
-		PendingIntent pi = PendingIntent.getBroadcast(getApplicationContext(), 0, launchIntent, 0);
+		 * Intent launchIntent = new Intent(); launchIntent.setClass(context,
+		 * SettingsAppWidgetProvider.class);
+		 * launchIntent.addCategory(Intent.CATEGORY_ALTERNATIVE);
+		 * launchIntent.setData(Uri.parse("custom:" + buttonId)); PendingIntent
+		 * pi = PendingIntent.getBroadcast(getApplicationContext(), 0,
+		 * launchIntent, 0);
 		 */
-		
+
 		countS = 0;
 		countN = 0;
 
@@ -199,22 +184,17 @@ public class RefreshDataService extends Service implements UploadFormListener, D
 
 		if (!enteringClientData()) {
 			if (mClinicInForeground) {
-
 				LocalBroadcastManager.getInstance(this).sendBroadcast(broadcast);
-
 			} else {
-				buildUrls();
-
 				mUploadComplete = false;
 				mUploadTask = new UploadDataTask();
 				mUploadTask.setUploadListener(this);
-				mUploadTask.execute(formUploadUrl);
+				mUploadTask.execute();
 
 				mDownloadComplete = false;
 				mDownloadTask = new DownloadDataTask();
 				mDownloadTask.setDownloadListener(this);
-				mDownloadTask.execute(patientDownloadUrl, username, password, savedSearch, cohortId, programId, formlistDownloadUrl, formDownloadUrl);
-
+				mDownloadTask.execute();
 			}
 		}
 
@@ -310,6 +290,9 @@ public class RefreshDataService extends Service implements UploadFormListener, D
 
 	@Override
 	public void uploadComplete(String resultString) {
+		// Encrypt the uploaded data with wakelock to ensure it happens!
+		WakefulIntentService.sendWakefulWork(mContext, EncryptionService.class);
+
 		mUploadComplete = true;
 		if (mDownloadComplete)
 			stopSelf();
@@ -336,35 +319,6 @@ public class RefreshDataService extends Service implements UploadFormListener, D
 			Log.e("louis.fazen", "Called lockStatic.release()=" + lockStatic.toString());
 		}
 		super.onDestroy();
-	}
-
-	private void buildUrls() {
-		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
-		String serverUrl = settings.getString(PreferencesActivity.KEY_SERVER, getString(R.string.default_server));
-		username = settings.getString(PreferencesActivity.KEY_USERNAME, getString(R.string.default_username));
-		password = settings.getString(PreferencesActivity.KEY_PASSWORD, getString(R.string.default_password));
-		String userpwd = "&uname=" + username + "&pw=" + password;
-
-		savedSearch = String.valueOf(settings.getBoolean(PreferencesActivity.KEY_USE_SAVED_SEARCHES, false));
-		cohortId = settings.getString(PreferencesActivity.KEY_SAVED_SEARCH, "0");
-		programId = settings.getString(PreferencesActivity.KEY_PROGRAM, "0");
-		patientDownloadUrl = serverUrl + Constants.PATIENT_DOWNLOAD_URL;
-
-		StringBuilder uploadUrl = new StringBuilder(serverUrl);
-		uploadUrl.append(Constants.INSTANCE_UPLOAD_URL);
-		uploadUrl.append(userpwd);
-		formUploadUrl = uploadUrl.toString();
-
-		StringBuilder formlistUrl = new StringBuilder(serverUrl);
-		formlistUrl.append(Constants.FORMLIST_DOWNLOAD_URL);
-		formlistUrl.append(userpwd);
-		formlistDownloadUrl = formlistUrl.toString();
-
-		StringBuilder formUrl = new StringBuilder(serverUrl);
-		formUrl.append(Constants.FORM_DOWNLOAD_URL);
-		formUrl.append(userpwd);
-		formDownloadUrl = formUrl.toString();
-
 	}
 
 	// //// Not using the following:

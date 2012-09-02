@@ -30,7 +30,7 @@ the License.
     <string name="default_password">test</string>
 
     <!--
-        Customization by louis.fazen@gmail.com
+        TODO: Customization by louis.fazen@gmail.com
    		Setting to AMPATH Server Preferences
     -->
     <string name="default_server">http://192.168.43.155:8080/openmrs</string>
@@ -51,6 +51,7 @@ the License.
     <string name="no_cohort">No cohorts. Try Refresh Data.</string>
     <string name="no_forms">No forms found.</string>
     <string name="no_patients">No patients found.</string>
+    <string name="no_patient">No patient found.</string>
     <string name="no_select_error">Sorry, you have not selected any patients!</string>
     <string name="no_upload_patients">No forms to upload!</string>
     <string name="odk">Open Data Kit</string>
@@ -119,6 +120,7 @@ the License.
     <string name="completed_form">Completed Form To Be Sent</string>
     <string name="incomplete_forms">Incomplete Forms To Fill</string>
     <string name="incomplete_form">Incomplete Form To Fill</string>
+    <string name="decrypting_data">Unlocking data...</string>
 
     <!-- Clients -->
     <string name="provider_lists_section">Current Client Lists:</string>
@@ -132,7 +134,6 @@ the License.
     <string name="incomplete_client">Incomplete Client</string>
     <string name="dashboard_title">Clinic For CHWs</string>
     <string name="dashboard_task_title">Forms:</string>
-
     <string name="ss_service_connected">Trying to Update Clients</string>
     <string name="ss_service_disconnected">Stopped Updating Clients</string>
     <string name="ss_service_started">Update Clients Started</string>
@@ -140,5 +141,5 @@ the License.
     <string name="ss_service_label">Update Client List</string>
     <string name="refresh_clients_title">Refresh Client List</string>
     <string name="refresh_clients_text">Your client list is out of date. Please refresh data now.</string>
-    
+
 </resources>

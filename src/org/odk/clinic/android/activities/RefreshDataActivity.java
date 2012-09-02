@@ -3,9 +3,7 @@ package org.odk.clinic.android.activities;
 import org.odk.clinic.android.R;
 import org.odk.clinic.android.listeners.DownloadListener;
 import org.odk.clinic.android.listeners.UploadFormListener;
-import org.odk.clinic.android.openmrs.Constants;
 import org.odk.clinic.android.tasks.DownloadDataTask;
-import org.odk.clinic.android.tasks.DownloadTask;
 import org.odk.clinic.android.tasks.UploadDataTask;
 import org.odk.clinic.android.utilities.FileUtils;
 
@@ -16,10 +14,8 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -27,8 +23,9 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.alphabetbloc.clinic.services.EncryptionService;
 import com.alphabetbloc.clinic.services.RefreshDataService;
-import com.commonsware.cwac.wakeful.AlarmListener;
+import com.commonsware.cwac.wakeful.RefreshDataListener;
 import com.commonsware.cwac.wakeful.WakefulIntentService;
 
 public class RefreshDataActivity extends Activity implements UploadFormListener, DownloadListener {
@@ -39,17 +36,8 @@ public class RefreshDataActivity extends Activity implements UploadFormListener,
 	private Context mContext;
 	private ProgressDialog mProgressDialog;
 	private AlertDialog mAlertDialog;
-	private DownloadTask mDownloadTask;
+	private DownloadDataTask mDownloadTask;
 	private UploadDataTask mUploadTask;
-	private String username;
-	private String password;
-	private String savedSearch;
-	private String cohortId;
-	private String programId;
-	private String patientDownloadUrl;
-	private String formDownloadUrl;
-	private String formlistDownloadUrl;
-	private String formUploadUrl;
 	private int showProgress;
 
 	@Override
@@ -65,13 +53,12 @@ public class RefreshDataActivity extends Activity implements UploadFormListener,
 		}
 
 		mUploadTask = (UploadDataTask) getLastNonConfigurationInstance();
-		mDownloadTask = (DownloadTask) getLastNonConfigurationInstance();
+		mDownloadTask = (DownloadDataTask) getLastNonConfigurationInstance();
 
 		showProgress = getIntent().getIntExtra(DIALOG, ASK_TO_DOWNLOAD);
 
 		// get the task if we've changed orientations.
 		if (mUploadTask == null && mDownloadTask == null) {
-			buildUrls();
 			showDialog(showProgress);
 			if (showProgress == DIRECT_TO_DOWNLOAD)
 				uploadData();
@@ -97,14 +84,18 @@ public class RefreshDataActivity extends Activity implements UploadFormListener,
 	}
 
 	private void uploadData() {
+		if (mUploadTask != null)
+			return;
 		mUploadTask = new UploadDataTask();
 		mUploadTask.setUploadListener(this);
-		mUploadTask.execute(formUploadUrl);
-
+		mUploadTask.execute();
 	}
 
 	@Override
 	public void uploadComplete(String result) {
+		// Encrypt the uploaded data with wakelock to ensure it happens!
+		WakefulIntentService.sendWakefulWork(mContext, EncryptionService.class);
+
 		Log.e("louis.fazen", "uploadcomplete String=" + result);
 		showCustomToast(result);
 		mUploadTask = null;
@@ -117,7 +108,7 @@ public class RefreshDataActivity extends Activity implements UploadFormListener,
 
 		mDownloadTask = new DownloadDataTask();
 		mDownloadTask.setDownloadListener(RefreshDataActivity.this);
-		mDownloadTask.execute(patientDownloadUrl, username, password, savedSearch, cohortId, programId, formlistDownloadUrl, formDownloadUrl);
+		mDownloadTask.execute();
 	}
 
 	public void downloadComplete(String result) {
@@ -191,7 +182,6 @@ public class RefreshDataActivity extends Activity implements UploadFormListener,
 		DialogInterface.OnClickListener loadingButtonListener = new DialogInterface.OnClickListener() {
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
-				// TODO: redundant with onDestroy(), no?
 				dialog.dismiss();
 				if (mUploadTask != null) {
 					mUploadTask.setUploadListener(null);
@@ -238,14 +228,15 @@ public class RefreshDataActivity extends Activity implements UploadFormListener,
 		Intent stopintent = new Intent(getApplicationContext(), RefreshDataService.class);
 		stopService(stopintent);
 		// reschedule alarms (b/c either user is hitting cancel or recent sync)
-		WakefulIntentService.scheduleAlarms(new AlarmListener(), mContext, true);
-		
+		// TODO! check if this should be false!
+		WakefulIntentService.scheduleAlarms(new RefreshDataListener(), WakefulIntentService.REFRESH_DATA, mContext, true);
+
 		if (reloadDashboard) {
 			Intent startintent = new Intent(getApplicationContext(), DashboardActivity.class);
 			startintent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 			startActivity(startintent);
 		}
-		
+
 		finish();
 	}
 
@@ -302,36 +293,6 @@ public class RefreshDataActivity extends Activity implements UploadFormListener,
 		t.setDuration(Toast.LENGTH_LONG);
 		t.setGravity(Gravity.BOTTOM, 0, -20);
 		t.show();
-
-	}
-
-	// asynctask has no context, so build here
-	private void buildUrls() {
-		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
-		String serverUrl = settings.getString(PreferencesActivity.KEY_SERVER, getString(R.string.default_server));
-		username = settings.getString(PreferencesActivity.KEY_USERNAME, getString(R.string.default_username));
-		password = settings.getString(PreferencesActivity.KEY_PASSWORD, getString(R.string.default_password));
-		String userpwd = "&uname=" + username + "&pw=" + password;
-
-		savedSearch = String.valueOf(settings.getBoolean(PreferencesActivity.KEY_USE_SAVED_SEARCHES, false));
-		cohortId = settings.getString(PreferencesActivity.KEY_SAVED_SEARCH, "0");
-		programId = settings.getString(PreferencesActivity.KEY_PROGRAM, "0");
-		patientDownloadUrl = serverUrl + Constants.PATIENT_DOWNLOAD_URL;
-
-		StringBuilder uploadUrl = new StringBuilder(serverUrl);
-		uploadUrl.append(Constants.INSTANCE_UPLOAD_URL);
-		uploadUrl.append(userpwd);
-		formUploadUrl = uploadUrl.toString();
-
-		StringBuilder formlistUrl = new StringBuilder(serverUrl);
-		formlistUrl.append(Constants.FORMLIST_DOWNLOAD_URL);
-		formlistUrl.append(userpwd);
-		formlistDownloadUrl = formlistUrl.toString();
-
-		StringBuilder formUrl = new StringBuilder(serverUrl);
-		formUrl.append(Constants.FORM_DOWNLOAD_URL);
-		formUrl.append(userpwd);
-		formDownloadUrl = formUrl.toString();
 
 	}
 

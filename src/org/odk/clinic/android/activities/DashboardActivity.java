@@ -32,7 +32,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.alphabetbloc.clinic.services.RefreshDataService;
-import com.commonsware.cwac.wakeful.AlarmListener;
+import com.commonsware.cwac.wakeful.RefreshDataListener;
 import com.commonsware.cwac.wakeful.WakefulIntentService;
 
 public class DashboardActivity extends Activity {
@@ -68,7 +68,7 @@ public class DashboardActivity extends Activity {
 		mContext = this;
 
 		// Establish background service for downloading clients
-		WakefulIntentService.scheduleAlarms(new AlarmListener(), mContext, true);
+		WakefulIntentService.scheduleAlarms(new RefreshDataListener(), WakefulIntentService.REFRESH_DATA, mContext, true);
 
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.dashboard);

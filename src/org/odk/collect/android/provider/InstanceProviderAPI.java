@@ -33,6 +33,8 @@ public final class InstanceProviderAPI {
     public static final String STATUS_COMPLETE = "complete";
     public static final String STATUS_SUBMITTED = "submitted";
     public static final String STATUS_SUBMISSION_FAILED = "submissionFailed";
+    public static final String STATUS_INITIALIZED = "initialized";
+    public static final String STATUS_ENCRYPTED = "encrypted";
     
     /**
      * Notes table
@@ -60,6 +62,9 @@ public final class InstanceProviderAPI {
         public static final String STATUS = "status";
         public static final String LAST_STATUS_CHANGE_DATE = "date";
         public static final String DISPLAY_SUBTEXT = "displaySubtext";
+        public static final String SUBMISSION_KEY = "key";
+        public static final String DECRYPTION_TIME = "decryptionTime";
+        
         //public static final String DISPLAY_SUB_SUBTEXT = "displaySubSubtext";
 
 

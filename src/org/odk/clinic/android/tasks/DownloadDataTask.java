@@ -1,8 +1,8 @@
 package org.odk.clinic.android.tasks;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -12,23 +12,26 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
-import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.odk.clinic.android.R;
+import org.odk.clinic.android.activities.PreferencesActivity;
 import org.odk.clinic.android.database.ClinicAdapter;
+import org.odk.clinic.android.listeners.DownloadListener;
+import org.odk.clinic.android.openmrs.Constants;
 import org.odk.clinic.android.openmrs.Form;
 import org.odk.clinic.android.utilities.App;
 import org.odk.clinic.android.utilities.FileUtils;
+import org.odk.clinic.android.utilities.ODKLocalKeyStore;
+import org.odk.clinic.android.utilities.ODKSSLSocketFactory;
+import org.odk.clinic.android.utilities.WebUtils;
 import org.odk.collect.android.provider.FormsProviderAPI.FormsColumns;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
@@ -37,136 +40,90 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.NodeList;
 
 import android.content.ContentValues;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteException;
+import android.os.AsyncTask;
 import android.os.Environment;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
-public class DownloadDataTask extends DownloadTask {
+public class DownloadDataTask extends AsyncTask<Void, String, String> {
 
 	public static final String KEY_ERROR = "error";
 	public static final String KEY_PATIENTS = "patients";
 	public static final String KEY_OBSERVATIONS = "observations";
 	private static final String TAG = "Clinic.DownloadDataTask";
-	private File mFile;
+
+	private static final String NAMESPACE = "org.odk.clinic.android";
+	private static final String DATA_DIR = "/data/" + NAMESPACE;
+
+	private static final int CONNECTION_TIMEOUT = 60000;
+	protected DownloadListener mStateListener;
+	protected ClinicAdapter mPatientDbAdapter = new ClinicAdapter();
+
+	private int mStep = 0;
+	private int mTotalStep = 10;
 
 	private ArrayList<Form> mForms = new ArrayList<Form>();
 
 	@Override
-	protected String doInBackground(String... values) {
-
-		String url = values[0];
-		String username = values[1];
-		String password = values[2];
-		boolean savedSearch = Boolean.valueOf(values[3]);
-		int cohort = Integer.valueOf(values[4]);
-		int program = Integer.valueOf(values[5]);
-		String formListUrlString = values[6];
-		String formUrl = values[7];
-
-		int step = 0;
-		int totalstep = 10;
-		File zipFile = null;
-
-		// connections:
-		HttpURLConnection urlConnection = null;
-		HttpsURLConnection urlHttpsConnection = null;
-
+	protected String doInBackground(Void... values) {
+		// DOWNLOAD
+		
+		// FormlistSection:
+		// TODO! HTTPS NEW CODE.. but what about other downloads
+		// initialize @ODKSSLSocketFactory to authorize local
+		// certificates for all subsequent
+		// @HttpsURLConnection
 		try {
-
-			// HTTPS NEW CODE... TODO: but what about the other patient
-			// downloads etc. etc.?
-			URL newurl = new URL(formListUrlString);
-			if (newurl.getProtocol().toLowerCase().equals("https")) {
-				trustAllHosts();
-				urlHttpsConnection = (HttpsURLConnection) newurl.openConnection();
-				// disable verification
-				urlHttpsConnection.setHostnameVerifier(new HostnameVerifier() {
-					public boolean verify(String string, SSLSession ssls) {
-						return true;
-					}
-				});
-				// assign this to the general connection variable
-				urlConnection = urlHttpsConnection;
-			} else
-				urlConnection = (HttpURLConnection) newurl.openConnection();
+			HttpURLConnection urlConnection = connectURL(WebUtils.getFormListDownloadUrl());
 			InputStream is = urlConnection.getInputStream();
-			// END OF HTTPS NEW CODE
+			showProgress("Downloading Forms");
+			String formListResult = downloadFormList(is);
+			if (formListResult != null)
+				return formListResult;
 
-			DataInputStream zdisServer = connectToServer(url, username, password, savedSearch, cohort, program);
-			publishProgress("Downloading Clients", Integer.valueOf(step++).toString(), Integer.valueOf(totalstep).toString());
+		} catch (IOException e1) {
+			e1.printStackTrace();
+			return e1.getLocalizedMessage();
+		}
+
+		// Forms and Clients Section:
+		File zipFile = null;
+		try {
+			String formResult = downloadNewForms(WebUtils.getFormDownloadUrl());
+			if (formResult != null)
+				return formResult;
+
+			showProgress("Downloading Clients");
+			DataInputStream zdisServer = connectToServer();
 			if (zdisServer != null) {
 				zipFile = downloadStreamToZip(zdisServer);
 				zdisServer.close();
 			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			return e.getLocalizedMessage();
+		}
 
-			publishProgress("Downloading Forms", Integer.valueOf(step++).toString(), Integer.valueOf(totalstep).toString());
-			String formListResult = downloadFormList(formListUrlString);
-			if (formListResult != null) {
-				return formListResult;
-			}
-
-			String formResult = downloadNewForms(formUrl);
-			if (formResult != null) {
-				return formResult;
-			}
-
-			publishProgress("Processing", Integer.valueOf(step++).toString(), Integer.valueOf(totalstep).toString());
+		// PROCESS
+		try {
+			showProgress("Processing");
+			mPatientDbAdapter.open();
 			if (zipFile != null) {
-				DataInputStream zdis = new DataInputStream(new BufferedInputStream(new FileInputStream(zipFile))); // TODO:
-																													// Win
-																													// does
-																													// not
-																													// sue
-																													// the
-																													// BufferedInputStream
-																													// here!
-
-				if (zdis != null) { //TODO: consider having a try catch block in here to break things up, and then deleting the zipfile in the catch block...
-					publishProgress("Processing", Integer.valueOf(step++).toString(), Integer.valueOf(totalstep).toString());
-					// open db and clean entries
-					mPatientDbAdapter.open();
-					mPatientDbAdapter.deleteAllPatients();
-					mPatientDbAdapter.deleteAllObservations();
-					mPatientDbAdapter.deleteAllFormInstances();
-
-					mPatientDbAdapter.makeIndices();
-					// download and insert patients and obs
-					publishProgress("Processing Clients", Integer.valueOf(step++).toString(), Integer.valueOf(totalstep).toString());
-					mPatientDbAdapter.insertPatients(zdis);
-					publishProgress("Processing Data", Integer.valueOf(step++).toString(), Integer.valueOf(totalstep).toString());
-					mPatientDbAdapter.insertObservations(zdis);
-					publishProgress("Processing Forms", Integer.valueOf(step++).toString(), Integer.valueOf(totalstep).toString());
-					mPatientDbAdapter.insertPatientForms(zdis);
-
-					// close zip stream
+				DataInputStream zdis = new DataInputStream(new FileInputStream(zipFile));
+				// OLD: (new BufferedInputStream(new FileInputStream(zipFile)));
+				if (zdis != null) {
+					insertData(zdis);
 					zdis.close();
-					zipFile.delete();
-					publishProgress("Processing Forms", Integer.valueOf(step++).toString(), Integer.valueOf(totalstep).toString());
-
-					// NB: basically a hack to bring various db into sync
-					mPatientDbAdapter.updatePriorityFormNumbers();
-					mPatientDbAdapter.updatePriorityFormList();
-
-					publishProgress("Processing Forms", Integer.valueOf(step++).toString(), Integer.valueOf(totalstep).toString());
-					mPatientDbAdapter.updateSavedFormNumbers();
-					mPatientDbAdapter.updateSavedFormsList();
-
-					publishProgress("Processing Forms", Integer.valueOf(step++).toString(), Integer.valueOf(totalstep).toString());
-
-					// close db and stream
-					mPatientDbAdapter.createDownloadLog();
-					mPatientDbAdapter.close();
-
 				}
-				if (zipFile != null)
-					zipFile.delete(); //TODO: consider placing this file off SD, and then using: FileUtils.deleteFile(mFile.getAbsolutePath());
+				FileUtils.deleteFile(zipFile.getAbsolutePath()); // zipFile.delete();
 			}
 
-			else {
-				Log.e(TAG, "FileInputStream Could not Retrieve Data from ZipFile");
-			}
-
+			publishProgress("Processing Forms");
+			updateFormNumbers();
+			mPatientDbAdapter.createDownloadLog();
 		} catch (Exception e) {
 			e.printStackTrace();
 			return e.getLocalizedMessage();
@@ -175,37 +132,84 @@ public class DownloadDataTask extends DownloadTask {
 		return null;
 	}
 
-	// DOWNLOAD FORM DATA
-	// TODO: should NOT be downloading and inserting forms at same time...!
-	// Downloads all forms to clinic database
-	private String downloadFormList(String formUrl) {
+	private HttpURLConnection connectURL(String urlString) throws IOException {
+		HttpURLConnection urlConnection = null;
+		URL url = new URL(urlString);
 
 		try {
-			URL u = new URL(formUrl);
-			HttpURLConnection c = (HttpURLConnection) u.openConnection();
-			InputStream is = c.getInputStream();
+			if (url.getProtocol().toLowerCase().equals("https")) {
+				new ODKSSLSocketFactory(ODKLocalKeyStore.getKeyStore());
+				HttpsURLConnection urlHttpsConnection = null;
+				urlHttpsConnection = (HttpsURLConnection) url.openConnection();
+				urlConnection = urlHttpsConnection;
+			} else
+				urlConnection = (HttpURLConnection) url.openConnection();
 
+		} catch (NoSuchAlgorithmException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return urlConnection;
+	}
+
+	private void showProgress(String title) {
+		String current = Integer.valueOf(mStep++).toString();
+		String total = Integer.valueOf(mTotalStep).toString();
+		publishProgress(title, current, total);
+	}
+
+	private void insertData(DataInputStream dis) throws Exception {
+		publishProgress("Processing");
+		// open db and clean entries
+
+		mPatientDbAdapter.deleteAllPatients();
+		mPatientDbAdapter.deleteAllObservations();
+		mPatientDbAdapter.deleteAllFormInstances();
+
+		mPatientDbAdapter.makeIndices();
+		// download and insert patients and obs
+		showProgress("Processing Clients");
+		mPatientDbAdapter.insertPatients(dis);
+		publishProgress("Processing Data");
+		mPatientDbAdapter.insertObservations(dis);
+		publishProgress("Processing Forms");
+		mPatientDbAdapter.insertPatientForms(dis);
+	}
+
+	private void updateFormNumbers() {
+		// NB: basically a hack to bring various db into sync
+		mPatientDbAdapter.updatePriorityFormNumbers();
+		mPatientDbAdapter.updatePriorityFormList();
+
+		mPatientDbAdapter.updateSavedFormNumbers();
+		mPatientDbAdapter.updateSavedFormsList();
+	}
+
+	// DOWNLOAD FORM DATA
+	/**
+	 * Downloads a list of the current forms located on the server
+	 * 
+	 * @param is
+	 *            Inputstream from a https connection
+	 * @return null if successful, and error message if not
+	 */
+	private String downloadFormList(InputStream is) {
+
+		try {
 			Document doc = null;
 			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 			DocumentBuilder db = dbf.newDocumentBuilder();
 			doc = db.parse(is);
 
+			// clean db, insert reference to forms
 			if (doc != null) {
-				// open db and clean entries
 				mPatientDbAdapter.open();
 				mPatientDbAdapter.deleteAllForms();
-
-				// download forms to file, and insert reference to db
 				insertForms(doc);
-
-				// close db
-				mPatientDbAdapter.close();
 			}
+
 		} catch (Exception e) {
 			e.printStackTrace();
-			if (mPatientDbAdapter != null) {
-				mPatientDbAdapter.close();
-			}
 			return e.getLocalizedMessage();
 		}
 
@@ -213,7 +217,14 @@ public class DownloadDataTask extends DownloadTask {
 
 	}
 
-	// Inserts a list of forms on the server into clinic database
+	/**
+	 * Inserts a list of forms into the clinic form list database (not the forms
+	 * themselves)
+	 * 
+	 * @param doc
+	 *            Document created from parsed input stream
+	 * @throws Exception
+	 */
 	private void insertForms(Document doc) throws Exception {
 
 		NodeList formElements = doc.getElementsByTagName("xform");
@@ -235,8 +246,13 @@ public class DownloadDataTask extends DownloadTask {
 		}
 	}
 
-	// Check if form exists in Collect Db. If so, we already have instance...
-	// TODO: this could just be a simple inner join
+	/**
+	 * Checks if a form exists in Collect Db. If it does, we already have the
+	 * form, and there is no need to download!
+	 * 
+	 * @param formId
+	 * @return true if form exists in Collect Db.
+	 */
 	private boolean doesFormExist(String formId) {
 
 		boolean alreadyExists = false;
@@ -292,6 +308,7 @@ public class DownloadDataTask extends DownloadTask {
 						url.append(formId);
 
 						URL u = new URL(url.toString());
+						
 						HttpURLConnection c = (HttpURLConnection) u.openConnection();
 						InputStream is = c.getInputStream();
 
@@ -334,34 +351,6 @@ public class DownloadDataTask extends DownloadTask {
 			return e.getLocalizedMessage();
 		}
 		return null;
-	}
-
-	private String getNameFromId(Integer id) {
-		String formName = null;
-		ClinicAdapter ca = new ClinicAdapter();
-		ca.open();
-		Cursor c = ca.fetchAllForms();
-
-		if (c != null && c.getCount() >= 0) {
-
-			int formIdIndex = c.getColumnIndex(ClinicAdapter.KEY_FORM_ID);
-			int nameIndex = c.getColumnIndex(ClinicAdapter.KEY_NAME);
-
-			if (c.getCount() > 0) {
-				do {
-					if (c.getInt(formIdIndex) == id) {
-						formName = c.getString(nameIndex);
-						break;
-					}
-				} while (c.moveToNext());
-			}
-		}
-
-		if (c != null)
-			c.close();
-
-		ca.close();
-		return formName;
 	}
 
 	private boolean insertSingleForm(String formPath) {
@@ -424,7 +413,7 @@ public class DownloadDataTask extends DownloadTask {
 			} catch (SQLiteException e) {
 				Log.e("DownloadFormTask", e.getLocalizedMessage());
 				return false;
-				// TODO: handle exception
+				// TODO handle exception
 			}
 
 			if (mCursor == null) {
@@ -464,28 +453,49 @@ public class DownloadDataTask extends DownloadTask {
 
 	}
 
+	private String getNameFromId(Integer id) {
+		String formName = null;
+		ClinicAdapter ca = new ClinicAdapter();
+		ca.open();
+		Cursor c = ca.fetchAllForms();
+
+		if (c != null && c.getCount() >= 0) {
+
+			int formIdIndex = c.getColumnIndex(ClinicAdapter.KEY_FORM_ID);
+			int nameIndex = c.getColumnIndex(ClinicAdapter.KEY_NAME);
+
+			if (c.getCount() > 0) {
+				do {
+					if (c.getInt(formIdIndex) == id) {
+						formName = c.getString(nameIndex);
+						break;
+					}
+				} while (c.moveToNext());
+			}
+		}
+
+		if (c != null)
+			c.close();
+
+		ca.close();
+		return formName;
+	}
+
 	// DOWNLOAD CLIENT DATA
 	private File downloadStreamToZip(final DataInputStream inputStream) throws Exception {
 		File tempFile = null;
 		try {
-			File odkRoot = new File(Environment.getExternalStorageDirectory() + File.separator + "odk");
-			tempFile = File.createTempFile("pts", ".txt", odkRoot); // TODO:
-																	// consider
-																	// taking
-																	// this off
-																	// SD: Win
-																	// used File
-																	// file =
-																	// File.createTempFile("odk-connector",
-																	// "-stream");
+			// TODO CHECK downloads to data dir?
+			File datadir = new File(Environment.getDataDirectory() + DATA_DIR);
+			tempFile = File.createTempFile(".omrs", "-stream", datadir);
 			BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(tempFile));
 
-			byte[] buffer = new byte[1024]; // TODO consider: win used [4096]
+			byte[] buffer = new byte[4096]; // TODO! CHECK: originally= 1024
 			int count = 0;
-
 			while ((count = inputStream.read(buffer)) > 0) {
 				stream.write(buffer, 0, count);
 			}
+
 			stream.close();
 
 		} catch (FileNotFoundException e) {
@@ -496,31 +506,77 @@ public class DownloadDataTask extends DownloadTask {
 		return tempFile;
 	}
 
-	// //HTTPS NEW CODE...
-	private static void trustAllHosts() {
+	// url, username, password, serializer, locale, action, cohort
+	protected DataInputStream connectToServer() throws Exception {
 
-		X509TrustManager easyTrustManager = new X509TrustManager() {
+		//get prefs
+		String url = WebUtils.getPatientDownloadUrl();
+		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(App.getApp());
+		String username = settings.getString(PreferencesActivity.KEY_USERNAME, App.getApp().getString(R.string.default_username));
+		String password = settings.getString(PreferencesActivity.KEY_PASSWORD, App.getApp().getString(R.string.default_password));
+		boolean savedSearch = settings.getBoolean(PreferencesActivity.KEY_USE_SAVED_SEARCHES, false);
+		int cohort = settings.getInt(PreferencesActivity.KEY_SAVED_SEARCH, 0);
+		int program = settings.getInt(PreferencesActivity.KEY_PROGRAM, 0);
+		
+		// compose url
+		URL u = new URL(url);
 
-			public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+		// setup http url connection
+		HttpURLConnection c = (HttpURLConnection) u.openConnection();
+		c.setDoOutput(true);
+		c.setRequestMethod("POST");
+		c.setConnectTimeout(CONNECTION_TIMEOUT);
+		c.setReadTimeout(CONNECTION_TIMEOUT);
+		c.addRequestProperty("Content-type", "application/octet-stream");
+
+		// write auth details to connection
+		DataOutputStream dos = new DataOutputStream(new GZIPOutputStream(c.getOutputStream()));
+		dos.writeUTF(username); // username
+		dos.writeUTF(password); // password
+		dos.writeBoolean(savedSearch);
+		if (cohort > 0)
+			dos.writeInt(cohort);
+		dos.writeInt(program);
+		dos.flush();
+		dos.close();
+
+		// read connection status
+		DataInputStream zdis = new DataInputStream(new GZIPInputStream(c.getInputStream()));
+		int status = zdis.readInt();
+		if (status == Constants.STATUS_FAILURE) {
+			zdis.close();
+			throw new IOException("Connection failed. Please try again.");
+		} else if (status == HttpURLConnection.HTTP_UNAUTHORIZED) {
+			zdis.close();
+			throw new IOException("Access denied. Check your username and password.");
+		} else {
+			assert (status == HttpURLConnection.HTTP_OK); // success
+			return zdis;
+		}
+	}
+
+	// /ASYNCTASK UPDATE METHODS
+	@Override
+	protected void onProgressUpdate(String... values) {
+		synchronized (this) {
+			if (mStateListener != null) {
+				// update progress and total
+				mStateListener.progressUpdate(values[0], Integer.valueOf(values[1]), Integer.valueOf(values[2]));
 			}
+		}
+	}
 
-			public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-			}
+	@Override
+	protected void onPostExecute(String result) {
+		synchronized (this) {
+			if (mStateListener != null)
+				mStateListener.downloadComplete(result);
+		}
+	}
 
-			public X509Certificate[] getAcceptedIssuers() {
-				return null;
-			}
-		};
-
-		// Create a trust manager that does not validate certificate chains
-		TrustManager[] trustAllCerts = new TrustManager[] { easyTrustManager };
-		// Install the all-trusting trust manager
-		try {
-			SSLContext sc = SSLContext.getInstance("TLS");
-			sc.init(null, trustAllCerts, new java.security.SecureRandom());
-			HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-		} catch (Exception e) {
-			e.printStackTrace();
+	public void setDownloadListener(DownloadListener sl) {
+		synchronized (this) {
+			mStateListener = sl;
 		}
 	}
 

@@ -60,7 +60,7 @@ public class ViewPatientActivity extends ListActivity {
 	private ArrayList<Integer> mSelectedForms = new ArrayList<Integer>();
 	private ArrayAdapter<Observation> mObservationAdapter;
 	private static ArrayList<Observation> mObservations = new ArrayList<Observation>();
-	
+
 	private static final int SWIPE_MIN_DISTANCE = 120;
 	private static final int SWIPE_MAX_OFF_PATH = 250;
 	private static final int SWIPE_THRESHOLD_VELOCITY = 200;
@@ -89,28 +89,29 @@ public class ViewPatientActivity extends ListActivity {
 			showCustomToast(getString(R.string.error, R.string.storage_error));
 			finish();
 		}
-		setTitle(getString(R.string.app_name) + " > " + getString(R.string.view_patient));
 
-		// TODO Check for invalid patient IDs
 		patientIdStr = getIntent().getStringExtra(Constants.KEY_PATIENT_ID);
 		Integer patientId = Integer.valueOf(patientIdStr);
 		mPatient = getPatient(patientId);
-		mPatient.setTotalCompletedForms(findPreviousEncounters());
-		
+		if (mPatient == null) {
+			showCustomToast(getString(R.string.error, R.string.no_patient));
+			finish();
+		}
+
 		mSwipeDetector = new GestureDetector(new onHeadingClick());
 		mSwipeListener = new OnTouchListener() {
 			public boolean onTouch(View v, MotionEvent event) {
 				return mSwipeDetector.onTouchEvent(event);
 			}
 		};
-		
+
 		mFormDetector = new GestureDetector(new onFormClick());
 		mFormListener = new OnTouchListener() {
 			public boolean onTouch(View v, MotionEvent event) {
 				return mFormDetector.onTouchEvent(event);
 			}
 		};
-		
+
 		mFormHistoryDetector = new GestureDetector(new onFormHistoryClick());
 		mFormHistoryListener = new OnTouchListener() {
 			public boolean onTouch(View v, MotionEvent event) {
@@ -129,6 +130,7 @@ public class ViewPatientActivity extends ListActivity {
 
 			// TODO Create more efficient SQL query to get only latest obs
 			// values
+			mPatient.setTotalCompletedForms(findPreviousEncounters());
 			createPatientHeader(mPatient.getPatientId());
 			getAllObservations(mPatient.getPatientId());
 			getPatientForms(mPatient.getPatientId());
@@ -140,12 +142,12 @@ public class ViewPatientActivity extends ListActivity {
 	private void createPatientHeader(Integer patientId) {
 
 		Patient focusPt = getPatient(patientId);
-		
+
 		View v = (View) findViewById(R.id.client_header);
-		if (v != null){
+		if (v != null) {
 			v.setOnTouchListener(mSwipeListener);
-		} 
-		
+		}
+
 		TextView textView = (TextView) findViewById(R.id.identifier_text);
 		if (textView != null) {
 			textView.setText(focusPt.getIdentifier());
@@ -365,7 +367,7 @@ public class ViewPatientActivity extends ListActivity {
 		adapter.addView(buildSectionLabel(getString(R.string.clinical_form_section)));
 		adapter.addView(mFormView);
 		mFormView.setOnTouchListener(mFormListener);
-		
+
 		if (!mObservations.isEmpty()) {
 			adapter.addView(buildSectionLabel(getString(R.string.clinical_data_section)));
 			adapter.addAdapter(mObservationAdapter);
@@ -400,17 +402,17 @@ public class ViewPatientActivity extends ListActivity {
 		ViewGroup parent = (ViewGroup) formSummaryGroup.findViewById(R.id.vertical_container);
 		formSummaryGroup.setClickable(true);
 
-//		formSummaryGroup.setOnClickListener(new View.OnClickListener() {
-//			public void onClick(View v) {
-//				if (checkForForms()) {
-//					Intent i = new Intent(getApplicationContext(), ViewAllForms.class);
-//					i.putExtra(Constants.KEY_PATIENT_ID, patientIdStr);
-//					startActivity(i);
-//				} else {
-//					showCustomToast(getString(R.string.no_forms));
-//				}
-//			}
-//		});
+		// formSummaryGroup.setOnClickListener(new View.OnClickListener() {
+		// public void onClick(View v) {
+		// if (checkForForms()) {
+		// Intent i = new Intent(getApplicationContext(), ViewAllForms.class);
+		// i.putExtra(Constants.KEY_PATIENT_ID, patientIdStr);
+		// startActivity(i);
+		// } else {
+		// showCustomToast(getString(R.string.no_forms));
+		// }
+		// }
+		// });
 
 		ImageView formArrow = (ImageView) formSummaryGroup.findViewById(R.id.arrow_image);
 
@@ -455,8 +457,8 @@ public class ViewPatientActivity extends ListActivity {
 	private Integer findPreviousEncounters() {
 		Integer completedForms = 0;
 		String patientIdStr = String.valueOf(mPatient.getPatientId());
-		String selection = "(" + InstanceColumns.STATUS + "=? or " + InstanceColumns.STATUS + "=? ) and " + InstanceColumns.PATIENT_ID + "=?";
-		String selectionArgs[] = { InstanceProviderAPI.STATUS_COMPLETE, InstanceProviderAPI.STATUS_SUBMITTED, patientIdStr };
+		String selection = "(" + InstanceColumns.STATUS + "=? or " + InstanceColumns.STATUS + "=? or " + InstanceColumns.STATUS + "=? ) and " + InstanceColumns.PATIENT_ID + "=?";
+		String selectionArgs[] = { InstanceProviderAPI.STATUS_ENCRYPTED, InstanceProviderAPI.STATUS_COMPLETE, InstanceProviderAPI.STATUS_SUBMITTED, patientIdStr };
 		Cursor c = App.getApp().getContentResolver().query(InstanceColumns.CONTENT_URI, new String[] { InstanceColumns.PATIENT_ID, "count(*) as count" }, selection, selectionArgs, null);
 
 		if (c.moveToFirst()) {
@@ -478,14 +480,15 @@ public class ViewPatientActivity extends ListActivity {
 		formsSummary = vi.inflate(R.layout.priority_form_summary, null);
 		formsSummary.setClickable(true);
 
-//		formsSummary.setOnClickListener(new View.OnClickListener() {
-//			public void onClick(View v) {
-//				Intent i = new Intent(getApplicationContext(), ViewCompletedForms.class);
-//				i.putExtra(Constants.KEY_PATIENT_ID, patientIdStr);
-//				startActivity(i);
-//
-//			}
-//		});
+		// formsSummary.setOnClickListener(new View.OnClickListener() {
+		// public void onClick(View v) {
+		// Intent i = new Intent(getApplicationContext(),
+		// ViewCompletedForms.class);
+		// i.putExtra(Constants.KEY_PATIENT_ID, patientIdStr);
+		// startActivity(i);
+		//
+		// }
+		// });
 
 		ImageView priorityArrow = (ImageView) formsSummary.findViewById(R.id.arrow_image);
 		ImageView priorityImage = (ImageView) formsSummary.findViewById(R.id.priority_image);
@@ -513,8 +516,6 @@ public class ViewPatientActivity extends ListActivity {
 		return (formsSummary);
 	}
 
-	
-	
 	class onFormClick extends SimpleOnGestureListener {
 
 		@Override
@@ -549,7 +550,7 @@ public class ViewPatientActivity extends ListActivity {
 		}
 
 	}
-	
+
 	class onFormHistoryClick extends SimpleOnGestureListener {
 
 		@Override
@@ -580,7 +581,6 @@ public class ViewPatientActivity extends ListActivity {
 		}
 
 	}
-	
 
 	class onHeadingClick extends SimpleOnGestureListener {
 
@@ -609,10 +609,7 @@ public class ViewPatientActivity extends ListActivity {
 		}
 
 	}
-	
-	
-	
-	
+
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();

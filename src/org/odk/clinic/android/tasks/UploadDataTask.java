@@ -4,8 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import org.apache.http.Header;
-import org.apache.http.HttpResponse;
 import org.apache.http.HttpVersion;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.HttpPost;
@@ -26,98 +24,90 @@ import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.params.HttpProtocolParams;
 import org.apache.http.protocol.HTTP;
+import org.odk.clinic.android.R;
 import org.odk.clinic.android.database.ClinicAdapter;
 import org.odk.clinic.android.listeners.UploadFormListener;
+import org.odk.clinic.android.utilities.App;
+import org.odk.clinic.android.utilities.ODKLocalKeyStore;
+import org.odk.clinic.android.utilities.WebUtils;
+import org.odk.collect.android.provider.InstanceProviderAPI;
+import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
+import android.content.ContentValues;
 import android.database.Cursor;
 import android.os.AsyncTask;
 import android.util.Log;
 
-public class UploadDataTask extends AsyncTask<String, String, String> {
+public class UploadDataTask extends AsyncTask<Void, String, String> {
 	private static String tag = "UploadDataTask";
 
 	private static final int CONNECTION_TIMEOUT = 60000;
 
 	protected UploadFormListener mStateListener;
 	private ClinicAdapter mCla;
-	private String mUrl;
 	private int mTotalCount = -1;
-	private String[] mParams;
+	private String[] mInstancesToUpload;
 
 	@Override
-	protected String doInBackground(String... values) {
-		mUrl = values[0];
+	protected String doInBackground(Void... values) {
+
 		String uploadResult = "No Completed Forms to Upload";
 
-		if (dataToUpload()) {
-			ArrayList<String> uploaded = uploadInstances();
-
-			if (!uploaded.isEmpty() && uploaded.size() > 0) {
-				updateDbPath(uploaded);
-			}
-
-			// no context, so manually make string:
-			int resultSize = uploaded.size();
-			String s = " ";
-			if (resultSize == mTotalCount) {
-				if ((resultSize) > 1)
-					s = "s ";
-				uploadResult = resultSize + " form " + s + "uploaded successfully.";
-
-			} else {
-				if ((mTotalCount - resultSize) > 1)
-					s = "s ";
-				String failedforms = mTotalCount - resultSize + " of " + mTotalCount + " form" + s;
-				uploadResult = "Sorry, " + failedforms + "failed to upload!";
-			}
+		if (mCla == null) {
+			mCla = new ClinicAdapter();
+			mCla.open();
 		}
 
-		return uploadResult;
+		if (dataToUpload()) {
+			//TODO! CHECK does this verify uploaded?
+			ArrayList<String> uploaded = uploadInstances(WebUtils.getFormUploadUrl());
 
+			// Encrypt all the instances successfully uploaded
+			if (!uploaded.isEmpty() && uploaded.size() > 0) {
+				// update the databases with new status submitted
+				for (int i = 0; i < uploaded.size(); i++) {
+					String path = uploaded.get(i);
+					updateClinicDbPath(path);
+					updateCollectDb(path);
+				}
+			}
+
+			int resultSize = uploaded.size();
+			if (resultSize == mTotalCount)
+				uploadResult = App.getApp().getString(R.string.upload_all_successful, resultSize);
+			else
+				uploadResult = App.getApp().getString(R.string.upload_all_successful, (mTotalCount - resultSize) + " of " + mTotalCount);
+		}
+		return uploadResult;
 	}
 
 	public boolean dataToUpload() {
 
 		boolean dataToUpload = true;
-
-		if (mCla != null) {
-			mCla.open();
-		} else {
-			mCla = new ClinicAdapter();
-			mCla.open();
-		}
-		Cursor c = mCla.fetchFormInstancesByStatus(ClinicAdapter.STATUS_UNSUBMITTED);
 		ArrayList<String> selectedInstances = new ArrayList<String>();
 
+		Cursor c = mCla.fetchFormInstancesByStatus(ClinicAdapter.STATUS_UNSUBMITTED);
 		if (c != null && c.getCount() > 0) {
 			String s = c.getString(c.getColumnIndex(ClinicAdapter.KEY_PATH));
 			selectedInstances.add(s);
-		}
-
-		if (c != null)
 			c.close();
-
-		mCla.close();
+		}
 
 		if (!selectedInstances.isEmpty()) {
-
 			mTotalCount = selectedInstances.size();
-			if (mTotalCount < 1) {
+			if (mTotalCount < 1)
 				dataToUpload = false;
-			} else {
-
-				mParams = selectedInstances.toArray(new String[mTotalCount]);
-			}
-		} else {
+			else
+				mInstancesToUpload = selectedInstances.toArray(new String[mTotalCount]);
+		} else
 			dataToUpload = false;
-		}
 
 		return dataToUpload;
 	}
 
-	private ArrayList<String> uploadInstances() {
+	private ArrayList<String> uploadInstances(String url) {
 		ArrayList<String> uploadedInstances = new ArrayList<String>();
-		int instanceCount = mParams.length;
+		int instanceCount = mInstancesToUpload.length;
 		for (int i = 0; i < instanceCount; i++) {
 
 			// configure connection
@@ -130,24 +120,27 @@ public class UploadDataTask extends AsyncTask<String, String, String> {
 			HttpConnectionParams.setSoTimeout(httpParams, CONNECTION_TIMEOUT);
 			HttpClientParams.setRedirecting(httpParams, false);
 
-			// HTTPS ADDITION (android drops connections pre route > 49)
+			// HTTPS ADDITION
 			ConnManagerParams.setTimeout(httpParams, CONNECTION_TIMEOUT);
 			ConnManagerParams.setMaxConnectionsPerRoute(httpParams, new ConnPerRouteBean(20));
 			ConnManagerParams.setMaxTotalConnections(httpParams, 20);
 			SchemeRegistry schemeRegistry = new SchemeRegistry();
 			schemeRegistry.register(new Scheme("http", PlainSocketFactory.getSocketFactory(), 80));
-			SSLSocketFactory sslSocketFactory = SSLSocketFactory.getSocketFactory();
-			sslSocketFactory.setHostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
-			schemeRegistry.register(new Scheme("https", sslSocketFactory, 443));
+
+			try {
+				schemeRegistry.register(new Scheme("https", new SSLSocketFactory(ODKLocalKeyStore.getKeyStore()), 8443));
+			} catch (Exception e) {
+			}
+
 			ClientConnectionManager connectionManager = new ThreadSafeClientConnManager(httpParams, schemeRegistry);
 			// HTTPS ADDITION END
 
-			// setup client (and HTTPS added the connection manager)
+			// setup client (HTTPS added the connection manager)
 			DefaultHttpClient httpclient = new DefaultHttpClient(connectionManager, httpParams);
-			HttpPost httppost = new HttpPost(mUrl);
+			HttpPost httppost = new HttpPost(url);
 
 			// get instance file
-			File file = new File(mParams[i]);
+			File file = new File(mInstancesToUpload[i]);
 
 			// find all files in parent directory
 			File[] files = file.getParentFile().listFiles();
@@ -188,10 +181,8 @@ public class UploadDataTask extends AsyncTask<String, String, String> {
 			}
 			httppost.setEntity(entity);
 
-			// prepare response and return uploaded
-			HttpResponse response = null;
 			try {
-				response = httpclient.execute(httppost);
+				httpclient.execute(httppost);
 			} catch (ClientProtocolException e) {
 				e.printStackTrace();
 				return uploadedInstances;
@@ -203,56 +194,89 @@ public class UploadDataTask extends AsyncTask<String, String, String> {
 				return uploadedInstances;
 			}
 
-			// check response.
-			// TODO: This isn't handled correctly.
-			String serverLocation = null;
-			Header[] h = response.getHeaders("Location");
-			if (h != null && h.length > 0) {
-				serverLocation = h[0].getValue();
-			} else {
-				// something should be done here...
-				Log.e(tag, "Location header was absent");
-			}
-			int responseCode = response.getStatusLine().getStatusCode();
-			Log.d(tag, "Response code:" + responseCode);
+			uploadedInstances.add(mInstancesToUpload[i]);
 
-			// verify that your response came from a known server
-			if (serverLocation != null && mUrl.contains(serverLocation)) {
-				uploadedInstances.add(mParams[i]);
-			}
 		}
 		return uploadedInstances;
 	}
 
-	private void updateDbPath(ArrayList<String> uploadInstance) {
-		if (mCla != null) {
-			mCla.open();
-		} else {
-			mCla = new ClinicAdapter();
-			mCla.open();
-		}
-		Cursor c = null;
-		for (int i = 0; i < uploadInstance.size(); i++) {
-			c = mCla.fetchFormInstancesByPath(uploadInstance.get(i));
-			if (c != null) {
-				mCla.updateFormInstance(uploadInstance.get(i), ClinicAdapter.STATUS_SUBMITTED);
+	// TODO: do we no longer have a check on these things? ORIGINAL VERSION OF
+	// THE ABOVE:
+	// prepare response and return uploaded
+	// HttpResponse response = null;
+	// try {
+	// response = httpclient.execute(httppost);
+	// } catch (ClientProtocolException e) {
+	// e.printStackTrace();
+	// return uploadedInstances;
+	// } catch (IOException e) {
+	// e.printStackTrace();
+	// return uploadedInstances;
+	// } catch (IllegalStateException e) {
+	// e.printStackTrace();
+	// return uploadedInstances;
+	// }
+	//
+	// // check response.
+	// // TODO This isn't handled correctly.
+	// String serverLocation = null;
+	// Header[] h = response.getHeaders("Location");
+	// if (h != null && h.length > 0) {
+	// serverLocation = h[0].getValue();
+	// } else {
+	// // something should be done here...
+	// Log.e(tag, "Location header was absent");
+	// }
+	// int responseCode = response.getStatusLine().getStatusCode();
+	// Log.d(tag, "Response code:" + responseCode);
+	//
+	// // verify that your response came from a known server
+	// if (serverLocation != null && mUrl.contains(serverLocation)) {
+	// uploadedInstances.add(mInstancesToUpload[i]);
+	// }
+
+	private boolean updateCollectDb(String path) {
+		boolean updated = false;
+		try {
+			ContentValues insertValues = new ContentValues();
+			insertValues.put(InstanceColumns.STATUS, InstanceProviderAPI.STATUS_SUBMITTED);
+			String where = InstanceColumns.INSTANCE_FILE_PATH + "=?";
+			String whereArgs[] = { path };
+			int updatedrows = App.getApp().getContentResolver().update(InstanceColumns.CONTENT_URI, insertValues, where, whereArgs);
+
+			if (updatedrows > 1) {
+				Log.e(tag, "Error! updated more than one entry when tyring to update: " + path.toString());
+			} else if (updatedrows == 1) {
+				Log.i(tag, "Instance successfully updated to Submitted Status");
+				updated = true;
+			} else {
+				Log.e(tag, "Error, Instance doesn't exist but we have its path!! " + path.toString());
 			}
 
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 
-		if (c != null)
-			c.close();
+		return updated;
+	}
 
-		mCla.close();
+	private void updateClinicDbPath(String path) {
+		// TODO! WHAT HAPPENED HERE? we should simply be deleting these in the
+		// FormInstances Table,
+		// not updating them, no?
+		Cursor c = mCla.fetchFormInstancesByPath(path);
+		if (c != null) {
+			mCla.updateFormInstance(path, ClinicAdapter.STATUS_SUBMITTED);
+			c.close();
+		}
 	}
 
 	@Override
 	protected void onProgressUpdate(String... values) {
 		Log.e(tag, "UploadInstanceTask.onProgressUpdate=" + values[0] + ", " + values[1] + ", " + values[2] + ", ");
 		synchronized (this) {
-			if (mStateListener != null) {
-				mStateListener.progressUpdate(values[0], new Integer(values[1]).intValue(), new Integer(values[2]).intValue());
-			}
+			if (mStateListener != null)
+				mStateListener.progressUpdate(values[0], Integer.valueOf(values[1]), Integer.valueOf(values[2]));
 		}
 
 	}

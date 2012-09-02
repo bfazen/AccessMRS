@@ -51,10 +51,13 @@ public class ObservationChartActivity extends Activity {
 			finish();
 		}
 
-		// TODO Check for invalid patient IDs
 		String patientIdStr = getIntent().getStringExtra(Constants.KEY_PATIENT_ID);
 		Integer patientId = Integer.valueOf(patientIdStr);
 		mPatient = getPatient(patientId);
+		if (mPatient == null) {
+			showCustomToast(getString(R.string.error, R.string.no_patient));
+			finish();
+		}
 		
 		mObservationFieldName = getIntent().getStringExtra(Constants.KEY_OBSERVATION_FIELD_NAME);
 		

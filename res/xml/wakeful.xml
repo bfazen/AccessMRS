@@ -1,3 +1,0 @@
-<WakefulIntentService
-  listener="com.commonsware.cwac.wakeful.AlarmListener"
-/>

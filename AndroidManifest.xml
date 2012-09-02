@@ -22,18 +22,20 @@
     <uses-permission android:name="android.permission.CHANGE_CONFIGURATION" />
     -->
 
+
     <!-- Used for the 2G/3G Toggle -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
 
-    <!-- Others...
+    <!--
+    Others...
     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
     <uses-permission android:name="com.android.launcher.permission.READ_SETTINGS" />
     <uses-permission android:name="com.android.launcher.permission.WRITE_SETTINGS" />
     -->
     <!-- testing with CM... -->
-    <uses-permission android:name="com.alphabetbloc.android.permission.TOGGLE_INTERNET"/>
+    <uses-permission android:name="com.alphabetbloc.android.permission.TOGGLE_INTERNET" />
 
     <application
         android:name=".utilities.App"
@@ -115,7 +117,7 @@
         </activity>
 
         <!-- Receivers -->
-        <receiver android:name="com.commonsware.cwac.wakeful.AlarmReceiver" >
+        <receiver android:name="com.commonsware.cwac.wakeful.RefreshDataReceiver" >
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
@@ -125,7 +127,25 @@
 
             <meta-data
                 android:name="com.commonsware.cwac.wakeful"
-                android:resource="@xml/wakeful" />
+                android:resource="@xml/wakeful_refresh_data" />
+        </receiver>
+        <receiver android:name="com.commonsware.cwac.wakeful.EncryptDataReceiver" >
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+            <!-- Could add other things here, eg. SMS to force encryption... -->
+            <meta-data
+                android:name="com.commonsware.cwac.wakeful"
+                android:resource="@xml/wakeful_encrypt_data" />
+        </receiver>
+         <receiver android:name="com.commonsware.cwac.wakeful.DeleteDecryptedDataReceiver" >
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+            <!-- Could add other things here, eg. SMS to force encryption... -->
+            <meta-data
+                android:name="com.commonsware.cwac.wakeful"
+                android:resource="@xml/wakeful_delete_decrypted_data" />
         </receiver>
 
         <!-- Services -->
@@ -136,7 +156,9 @@
                 <action android:name="com.alphabetbloc.clinic.services.RefreshDataService" />
             </intent-filter>
         </service>
-        <service android:name="com.alphabetbloc.clinic.services.AlarmIntentService" >
+        <service android:name="com.alphabetbloc.clinic.services.EncryptionService" >
+        </service>
+        <service android:name="com.alphabetbloc.clinic.services.DeleteDecryptedFilesService" >
         </service>
     </application>
 

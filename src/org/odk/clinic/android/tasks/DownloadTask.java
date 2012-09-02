@@ -13,19 +13,19 @@ import org.odk.clinic.android.database.ClinicAdapter;
 import org.odk.clinic.android.listeners.DownloadListener;
 import org.odk.clinic.android.openmrs.Constants;
 
-public abstract class DownloadTask extends
-		AsyncTask<String, String, String> {
-	
+public abstract class DownloadTask extends AsyncTask<String, String, String> {
+
 	private static final int CONNECTION_TIMEOUT = 60000;
 	protected DownloadListener mStateListener;
 	protected ClinicAdapter mPatientDbAdapter = new ClinicAdapter();
 
+	// TODO! Consider deleting altogether!
 	@Override
 	protected void onProgressUpdate(String... values) {
 		synchronized (this) {
 			if (mStateListener != null) {
 				// update progress and total
-				mStateListener.progressUpdate(values[0], new Integer(values[1]), new Integer(values[2]));
+				mStateListener.progressUpdate(values[0], Integer.valueOf(values[1]), Integer.valueOf(values[2]));
 			}
 		}
 
@@ -65,8 +65,8 @@ public abstract class DownloadTask extends
 		dos.writeBoolean(savedSearch);
 		if (cohort > 0)
 			dos.writeInt(cohort);
-		//if (program > 0)
-			dos.writeInt(program);
+		// if (program > 0)
+		dos.writeInt(program);
 
 		dos.flush();
 		dos.close();
@@ -80,8 +80,7 @@ public abstract class DownloadTask extends
 			throw new IOException("Connection failed. Please try again.");
 		} else if (status == HttpURLConnection.HTTP_UNAUTHORIZED) {
 			zdis.close();
-			throw new IOException(
-					"Access denied. Check your username and password.");
+			throw new IOException("Access denied. Check your username and password.");
 		} else {
 			assert (status == HttpURLConnection.HTTP_OK); // success
 			return zdis;

@@ -176,7 +176,7 @@ public class ListPatientActivity extends ListActivity {
 		};
 	}
 
-	//TODO: consider changing this whole thing to a viewpager... may be much simpler, and also add animation
+	//TODO!: consider changing this whole thing to a viewpager... may be much simpler, and also add animation
 	class onClientClick extends SimpleOnGestureListener {
 
 		@Override

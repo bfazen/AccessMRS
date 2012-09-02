@@ -261,7 +261,7 @@ public class ViewFormsActivity extends ListActivity {
 		return selectedFormIds;
 	}
 
-	// TODO: better resource management if Patient were Parceable object?
+	// TODO better resource management if Patient were Parceable object?
 	protected Patient getPatient(Integer patientId) {
 
 		Patient p = null;
