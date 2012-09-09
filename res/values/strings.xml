@@ -50,6 +50,7 @@ the License.
     <string name="go_back">Go Back</string>
     <string name="no_cohort">No cohorts. Try Refresh Data.</string>
     <string name="no_forms">No forms found.</string>
+    <string name="no_certs">No certificates found.</string>
     <string name="no_patients">No patients found.</string>
     <string name="no_patient">No patient found.</string>
     <string name="no_select_error">Sorry, you have not selected any patients!</string>
@@ -141,5 +142,27 @@ the License.
     <string name="ss_service_label">Update Client List</string>
     <string name="refresh_clients_title">Refresh Client List</string>
     <string name="refresh_clients_text">Your client list is out of date. Please refresh data now.</string>
+
+    <!-- SSL Preferences -->
+        <string name="manage_ssl">Manage SSL Connections</string>
+    <string name="use_client_auth">Use Client Authentication</string>
+    <string name="client_auth_hint"></string>
+    <string name="client_auth">Client Authentication</string>
+    <string name="client_auth_desc">Manage Authentication Keys</string>
+     <string name="manage_certs">Manage Certificates</string>
+    <string name="manage_certs_desc">Add or Remove Server Certificates</string>
+    
+    
+    
+    <string name="ssl_store_title">Manage %ss</string>
+    <string name="ssl_add_success_message">Added %1$d %2$s(s) to local %3$s store.</string>
+    <string name="ssl_add_alert_message">No %1$ss found.  Please place a %2$s in DER format on the SD Card.</string>
+    <string name="ssl_error_message">Error manipulating local %s store: </string>
+    <string name="ssl_remove_success_message">Removed %1$d %2$s(s) from local %3$s store.</string>
+    <string name="ssl_remove_alert_message">There was a problem removing this %s.</string>
+    <string name="ssl_add_alert_title">Add A New %s</string>
+    <string name="ssl_add_alert_body">To add a new %1$s, please add the %2$s in DER format to the SD Card.</string>
+    <string name="ssl_remove_alert_title">Remove %s</string>
+    <string name="ssl_remove_alert_body">You are about to remove the %s of: \n\n</string>
 
 </resources>

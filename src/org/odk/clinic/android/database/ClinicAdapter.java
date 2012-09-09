@@ -5,6 +5,19 @@ import java.io.File;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
+import net.sqlcipher.DatabaseUtils;
+import net.sqlcipher.DatabaseUtils.InsertHelper;
+import net.sqlcipher.SQLException;
+import net.sqlcipher.database.SQLiteConstraintException;
+import net.sqlcipher.database.SQLiteDatabase;
+import net.sqlcipher.database.SQLiteOpenHelper;
+import net.sqlcipher.database.SQLiteQueryBuilder;
+
+//import android.database.Cursor;
+//import android.database.SQLException;
+//import android.database.sqlite.SQLiteConstraintException;
+//import android.database.sqlite.SQLiteQueryBuilder;
+
 import org.odk.clinic.android.activities.DashboardActivity;
 import org.odk.clinic.android.openmrs.ActivityLog;
 import org.odk.clinic.android.openmrs.Cohort;
@@ -21,13 +34,7 @@ import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.database.DatabaseUtils;
-import android.database.DatabaseUtils.InsertHelper;
-import android.database.SQLException;
-import android.database.sqlite.SQLiteConstraintException;
-import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteOpenHelper;
-import android.database.sqlite.SQLiteQueryBuilder;
+
 import android.net.Uri;
 import android.util.Log;
 
@@ -161,7 +168,7 @@ public class ClinicAdapter {
 		public DatabaseHelper(Context context) {
 			// DatabaseHelper() {
 			super(context, DATABASE_NAME, null, DATABASE_VERSION);
-			createStorage();
+			// createStorage(); //no longer needed...
 		}
 
 		@Override
@@ -187,13 +194,18 @@ public class ClinicAdapter {
 			db.execSQL("DROP TABLE IF EXISTS " + DOWNLOAD_LOG_TABLE);
 			onCreate(db);
 		}
+
 	}
+
+	// public static boolean createStorage() {
+	// return FileUtils.createFolder(FileUtils.DATABASE_PATH);
+	// }
 
 	public ClinicAdapter open() throws SQLException {
 		// mDbHelper = new DatabaseHelper(); //this is the problem with Yaws
 		// code... many DbHelpers...!
 		// mDb = mDbHelper.getWritableDatabase();
-		
+
 		mDb = App.getDB();
 		Log.e(t, "open is called");
 		return this;
@@ -489,7 +501,8 @@ public class ClinicAdapter {
 
 			if (listtype == DashboardActivity.LIST_COMPLETE) {
 				c = mDb.query(true, PATIENTS_TABLE + ", " + FORMINSTANCES_TABLE, new String[] { PATIENTS_TABLE + "." + KEY_ID, PATIENTS_TABLE + "." + KEY_PATIENT_ID, KEY_IDENTIFIER, KEY_GIVEN_NAME, KEY_FAMILY_NAME, KEY_MIDDLE_NAME, KEY_BIRTH_DATE, KEY_GENDER,
-						KEY_PRIORITY_FORM_NAMES, KEY_PRIORITY_FORM_NUMBER, KEY_SAVED_FORM_NUMBER, KEY_SAVED_FORM_NAMES, KEY_FORMINSTANCE_SUBTEXT, KEY_CLIENT_CREATED, KEY_UUID }, "(" + expr.toString() + ")" + listSelection, null, PATIENTS_TABLE + "." + KEY_PATIENT_ID, null, listOrder, null);
+						KEY_PRIORITY_FORM_NAMES, KEY_PRIORITY_FORM_NUMBER, KEY_SAVED_FORM_NUMBER, KEY_SAVED_FORM_NAMES, KEY_FORMINSTANCE_SUBTEXT, KEY_CLIENT_CREATED, KEY_UUID }, "(" + expr.toString() + ")" + listSelection, null, PATIENTS_TABLE + "." + KEY_PATIENT_ID, null,
+						listOrder, null);
 			} else {
 				c = mDb.query(true, PATIENTS_TABLE, new String[] { KEY_ID, KEY_PATIENT_ID, KEY_IDENTIFIER, KEY_GIVEN_NAME, KEY_FAMILY_NAME, KEY_MIDDLE_NAME, KEY_BIRTH_DATE, KEY_GENDER, KEY_PRIORITY_FORM_NAMES, KEY_PRIORITY_FORM_NUMBER, KEY_SAVED_FORM_NUMBER,
 						KEY_SAVED_FORM_NAMES, KEY_CLIENT_CREATED, KEY_UUID }, expr.toString() + listSelection, null, null, null, listOrder, null);
@@ -556,17 +569,17 @@ public class ClinicAdapter {
 			break;
 		case DashboardActivity.LIST_INCOMPLETE:
 			listSelection = KEY_SAVED_FORM_NUMBER + " IS NOT NULL";
-			listOrder = KEY_SAVED_FORM_NUMBER + " DESC, " +  KEY_PRIORITY_FORM_NUMBER + " DESC, " + KEY_FAMILY_NAME + " COLLATE NOCASE ASC";
+			listOrder = KEY_SAVED_FORM_NUMBER + " DESC, " + KEY_PRIORITY_FORM_NUMBER + " DESC, " + KEY_FAMILY_NAME + " COLLATE NOCASE ASC";
 			break;
 		case DashboardActivity.LIST_COMPLETE:
 			listSelection = PATIENTS_TABLE + "." + KEY_PATIENT_ID + "=" + FORMINSTANCES_TABLE + "." + KEY_PATIENT_ID;
 			listOrder = KEY_FAMILY_NAME + " COLLATE NOCASE ASC";
-			groupBy = PATIENTS_TABLE + "." + KEY_PATIENT_ID; 
+			groupBy = PATIENTS_TABLE + "." + KEY_PATIENT_ID;
 			break;
 		case DashboardActivity.LIST_ALL:
 			listSelection = "";
 			listOrder = KEY_FAMILY_NAME + " COLLATE NOCASE ASC";
-			
+
 			break;
 		}
 		Log.e("louis.fazen", "ClinicAdapter listorder=" + listOrder);
@@ -603,7 +616,7 @@ public class ClinicAdapter {
 		}
 		return c;
 	}
-	
+
 	public Cursor fetchAllObservations() throws SQLException {
 		Cursor c = null;
 		c = mDb.query(true, OBSERVATIONS_TABLE, new String[] { KEY_ID, KEY_PATIENT_ID }, null, null, null, null, null, null);
@@ -613,7 +626,7 @@ public class ClinicAdapter {
 		}
 		return c;
 	}
-	
+
 	public Cursor fetchAllFormInstances() throws SQLException {
 		Cursor c = null;
 		c = mDb.query(true, FORMINSTANCES_TABLE, new String[] { KEY_ID, KEY_PATIENT_ID, KEY_FORM_ID }, null, null, null, null, null, null);
@@ -1122,17 +1135,15 @@ public class ClinicAdapter {
 		return mDb.update(FORMINSTANCES_TABLE, cv, KEY_PATH + "='" + path + "'", null) > 0;
 	}
 
-	
 	public boolean updateInstancePath(Integer id, String newPath) {
 
 		ContentValues cv = new ContentValues();
 
 		cv.put(KEY_PATH, newPath);
 
-		return mDb.update(FORMINSTANCES_TABLE, cv, KEY_ID + "=?", new String[] {String.valueOf(id)}) > 0;
+		return mDb.update(FORMINSTANCES_TABLE, cv, KEY_ID + "=?", new String[] { String.valueOf(id) }) > 0;
 	}
-	
-	
+
 	/**
 	 * Update patient in the database.
 	 * 
@@ -1163,10 +1174,6 @@ public class ClinicAdapter {
 		cv.put(KEY_PATH, path);
 
 		return mDb.update(FORMS_TABLE, cv, KEY_FORM_ID + "='" + formId.toString() + "'", null) > 0;
-	}
-
-	public static boolean createStorage() {
-		return FileUtils.createFolder(FileUtils.DATABASE_PATH);
 	}
 
 	public Cursor fetchPatientObservations(Integer patientId) throws SQLException {
@@ -1215,11 +1222,11 @@ public class ClinicAdapter {
 		}
 	}
 
-	// NB: louis.fazen is following Yaw's logic here, but in actuality Patient Forms
+	// NB: louis.fazen is following Yaw's logic here, but in actuality Patient
+	// Forms
 	// and Observations are both going into obs, and therefore, the code is
 	// identical...
-	
-	
+
 	// (louis.fazen NOTE: Do NOT use this with Cursor indices in other code
 	// Cursor has different indices than IH b/c it does not include _id
 	// i.e. Cursor.getColumnIndex = (IH.getColumnIndex -1)
@@ -1253,7 +1260,7 @@ public class ClinicAdapter {
 
 		updateIndices = false;
 	}
-	
+
 	public void insertPatientForms(final DataInputStream zdis) throws Exception {
 		if (updateIndices)
 			makeIndices();
@@ -1278,7 +1285,7 @@ public class ClinicAdapter {
 				} else if (dataType == Constants.TYPE_DATE) {
 					ih.bind(obsDateIndex, parseDate(zdis.readUTF()));
 				}
-				
+
 				ih.bind(obsTypeIndex, dataType);
 				ih.bind(obsEncDateIndex, parseDate(zdis.readUTF()));
 
@@ -1341,7 +1348,7 @@ public class ClinicAdapter {
 			ih.close();
 			mDb.endTransaction();
 		}
-		
+
 	}
 
 	public void insertObservations(DataInputStream zdis) throws Exception {

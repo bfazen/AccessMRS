@@ -484,10 +484,21 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 		instanceName = instanceName + "_" + COLLECT_INSTANCE_NAME_DATE_FORMAT.format(new Date());
 
 		String instancePath = FileUtils.INSTANCES_PATH + instanceName;
-		(new File(instancePath)).mkdirs();
+		File ftest = new File(instancePath);
+		
+		if((new File(instancePath)).mkdirs())
+			Log.e("create pt activity", "mk directories has been made at=" + instancePath);
+		else{
+			Log.e("create pt activity", "failed to make directories at=" + instancePath);
+			if(ftest.mkdir())
+				Log.e("create pt activity", "a directory has been made at=" + instancePath);
+			else
+				Log.e("create pt activity", "failed to make directory at=" + instancePath);
+		}
 		String instanceFilePath = instancePath + "/" + instanceName + ".xml";
 		File instanceFile = new File(instanceFilePath);
 
+		Log.e("create patient activity", "making a new form at path=" + instanceFilePath);
 		KXmlSerializer instanceSerializer = new KXmlSerializer();
 		try {
 			instanceFile.createNewFile();

@@ -25,48 +25,88 @@
         android:dialogTitle="@string/change_server"
         android:key="server"
         android:title="@string/server" />
-    <EditTextPreference
-        android:id="@+id/username"
-        android:defaultValue="@string/default_username"
-        android:dialogTitle="@string/change_username"
-        android:key="username"
-        android:title="@string/username" />
-    <EditTextPreference
-        android:id="@+id/password"
-        android:defaultValue="@string/default_password"
-        android:dialogTitle="@string/change_password"
-        android:key="password"
-        android:password="true"
-        android:title="@string/password" />
-    <EditTextPreference
-        android:id="@+id/provider"
-        android:defaultValue="1"
-        android:dialogTitle="@string/change_provider"
-        android:inputType="phone"
-        android:key="provider"
-        android:title="@string/provider" />
-    <EditTextPreference
-        android:id="@+id/program"
-        android:defaultValue="1"
-        android:dialogTitle="@string/change_program"
-        android:inputType="phone"
-        android:key="program"
-        android:title="@string/program" />
-    <EditTextPreference
-        android:id="@+id/saved_search"
-        android:defaultValue="2"
-        android:dialogTitle="@string/change_saved_search"
-        android:inputType="phone"
-        android:key="saved_search"
-        android:title="@string/saved_search" />
 
-    <CheckBoxPreference
-        android:id="@+id/use_saved_searches"
-        android:key="use_saved_searches"
-        android:summaryOff="@string/saved_search_hint"
-        android:summaryOn="@string/saved_search_hint"
-        android:title="@string/use_saved_search" />
+    <PreferenceCategory android:title="@string/openmrs" >
+        <EditTextPreference
+            android:id="@+id/username"
+            android:defaultValue="@string/default_username"
+            android:dialogTitle="@string/change_username"
+            android:key="username"
+            android:title="@string/username" />
+        <EditTextPreference
+            android:id="@+id/password"
+            android:defaultValue="@string/default_password"
+            android:dialogTitle="@string/change_password"
+            android:key="password"
+            android:password="true"
+            android:title="@string/password" />
+        <EditTextPreference
+            android:id="@+id/provider"
+            android:defaultValue="1"
+            android:dialogTitle="@string/change_provider"
+            android:inputType="phone"
+            android:key="provider"
+            android:title="@string/provider" />
+        <EditTextPreference
+            android:id="@+id/program"
+            android:defaultValue="1"
+            android:dialogTitle="@string/change_program"
+            android:inputType="phone"
+            android:key="program"
+            android:title="@string/program" />
+        <EditTextPreference
+            android:id="@+id/saved_search"
+            android:defaultValue="2"
+            android:dialogTitle="@string/change_saved_search"
+            android:inputType="phone"
+            android:key="saved_search"
+            android:title="@string/saved_search" />
 
-    <!-- </PreferenceCategory> -->
+        <CheckBoxPreference
+            android:id="@+id/use_saved_searches"
+            android:key="use_saved_searches"
+            android:summaryOff="@string/saved_search_hint"
+            android:summaryOn="@string/saved_search_hint"
+            android:title="@string/use_saved_search" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="@string/manage_ssl" >
+        <CheckBoxPreference
+            android:id="@+id/use_client_auth"
+            android:key="use_client_auth"
+            android:summaryOff="@string/client_auth_hint"
+            android:summaryOn="@string/client_auth_hint"
+            android:title="@string/use_client_auth" />
+
+        <Preference
+            android:summary="@string/client_auth_desc"
+            android:title="@string/client_auth" >
+            <intent
+                android:targetClass="org.odk.clinic.android.activities.ClientAuthenticationActivity"
+                android:targetPackage="org.odk.clinic.android" />
+        </Preference>
+        <Preference
+            android:summary="@string/manage_certs_desc"
+            android:title="@string/manage_certs" >
+            <intent
+                android:targetClass="org.odk.clinic.android.activities.AddCertificatesActivity"
+                android:targetPackage="org.odk.clinic.android" />
+        </Preference>
+    </PreferenceCategory>
+    <!--
+    </PreferenceCategory>
+     <Button
+        android:id="@+id/manage_certs"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="Manage Certificates" />
+    
+    <Button
+        android:id="@+id/manage_keys"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="Manage Keys" />
+    -->
 
 </PreferenceScreen>

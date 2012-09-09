@@ -10,18 +10,18 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 
+import android.os.Environment;
 import android.util.Log;
 
 public class ODKLocalKeyStore {
-	private static String storePath= FileUtils.ODK_CLINIC_ROOT + ".key/";
+	private static String storePath=  Environment.getExternalStorageDirectory() + "/odk/clinic/" + ".key/";
 	private static KeyStore keyStore;
 	
 	private static void loadLocalStore(){
 		
 		//there should be only one file in the store as we will only load one file from the store 
 		//if you want several certs load them into one BKS KeyStore and load them here
-		
-		
+
 		
 		try {
 			File keyStoreDir = new File(storePath); 

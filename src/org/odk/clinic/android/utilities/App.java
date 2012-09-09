@@ -1,9 +1,10 @@
 package org.odk.clinic.android.utilities;
 
+import net.sqlcipher.database.SQLiteDatabase;
+
 import org.odk.clinic.android.database.ClinicAdapter;
 
 import android.app.Application;
-import android.database.sqlite.SQLiteDatabase;
 
 /*
  * NB: Never close the DB! just ensure always using one DbHelper... its own
@@ -23,21 +24,28 @@ import android.database.sqlite.SQLiteDatabase;
 
 public class App extends Application {
 	private static App mSingleton = null;
-	private static ClinicAdapter.DatabaseHelper openHelper;
+//	private static ClinicAdapter.DatabaseHelper openHelper;
+	private static ClinicAdapter.DatabaseHelper mSqlCipherDbHelper;
 
 	@Override
 	public void onCreate() {
 		super.onCreate();
 		mSingleton = this;
-		openHelper = new ClinicAdapter.DatabaseHelper(this);
+//		openHelper = new ClinicAdapter.DatabaseHelper(this);
+		
+		//DB
+		SQLiteDatabase.loadLibs(this);
+		mSqlCipherDbHelper = new ClinicAdapter.DatabaseHelper(this);
 	}
-	
+
 	public static App getApp() {
 		return mSingleton;
 	}
 
 	public static SQLiteDatabase getDB() {
-		return openHelper.getWritableDatabase();
-	}
+		String password = "foo123";
+		return mSqlCipherDbHelper.getWritableDatabase(password);
+//		return openHelper.getWritableDatabase();
+	}	    
 
 }

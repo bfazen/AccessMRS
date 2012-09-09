@@ -44,10 +44,10 @@ public class FileUtils {
 	public static final String VALID_FILENAME = "[ _\\-A-Za-z0-9]*.x[ht]*ml";
 
 	// Storage paths
-	public static final String ODK_CLINIC_ROOT = Environment.getExternalStorageDirectory() + "/odk/clinic/";
-	public static final String FORMS_PATH = ODK_CLINIC_ROOT + "forms/";
-	public static final String INSTANCES_PATH = ODK_CLINIC_ROOT + "instances/";
-	public static final String DATABASE_PATH = ODK_CLINIC_ROOT + "databases/";
+	public static final String ODK_SD_ROOT = Environment.getExternalStorageDirectory() + "/odk/clinic/";
+	public static final String FORMS_PATH = ODK_SD_ROOT + "forms/";
+	public static final String INSTANCES_PATH = "/data/org.odk.collect.android/files/instances/";
+//	public static final String DATABASE_PATH = ODK_CLINIC_ROOT + "databases/";
 
 	private static final String TAG = "FileUtils";
 

@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:paddingBottom="8dip" >
+
+    <TextView
+        android:id="@+id/o_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:paddingLeft="10dip"
+        android:paddingTop="10dip"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <LinearLayout
+        android:id="@+id/description_block"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/o_text"
+        android:layout_marginRight="8dip"
+        android:orientation="vertical" >
+
+        <!-- Division -->
+
+        <RelativeLayout
+            android:id="@+id/division"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" >
+
+            <TextView
+                android:id="@+id/title_cn_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:paddingLeft="8dip"
+                android:text="Division:"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/cn_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_toRightOf="@+id/title_cn_text"
+                android:paddingLeft="8dip"
+                android:textSize="14sp" />
+        </RelativeLayout>
+
+        <!-- Domain Name -->
+
+        <RelativeLayout
+            android:id="@+id/domain"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" >
+
+            <TextView
+                android:id="@+id/title_ou_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:paddingLeft="8dip"
+                android:text="Domain:"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/ou_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_toRightOf="@+id/title_ou_text"
+                android:paddingLeft="8dip"
+                android:textSize="14sp" />
+        </RelativeLayout>
+
+        <!-- Location -->
+
+        <RelativeLayout
+            android:id="@+id/location_block"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" >
+
+            <TextView
+                android:id="@+id/title_l_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:paddingLeft="8dip"
+                android:text="Location:"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/l_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_toRightOf="@+id/title_l_text"
+                android:paddingLeft="8dip"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/st_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_toRightOf="@+id/l_text"
+                android:paddingLeft="2dip"
+                android:paddingRight="2dip"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/c_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_toRightOf="@+id/st_text"
+                android:paddingLeft="2dip"
+                android:paddingRight="2dip"
+                android:textSize="14sp" />
+        </RelativeLayout>
+
+        <!-- Email -->
+
+        <RelativeLayout
+            android:id="@+id/email"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" >
+
+            <TextView
+                android:id="@+id/title_e_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:paddingLeft="8dip"
+                android:text="Email:"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/e_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_toRightOf="@+id/title_e_text"
+                android:paddingLeft="8dip"
+                android:textSize="14sp" />
+        </RelativeLayout>
+        <!-- Issued By -->
+
+        <RelativeLayout
+            android:id="@+id/issuer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" >
+
+            <TextView
+                android:id="@+id/title_io_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:paddingLeft="8dip"
+                android:text="Issued By:"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/io_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_toRightOf="@+id/title_io_text"
+                android:paddingLeft="8dip"
+                android:textSize="14sp" />
+        </RelativeLayout>
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/delete_image"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
+        android:layout_marginRight="10dp"
+         android:layout_marginLeft="10dp"
+        android:background="@drawable/ic_minus"
+        android:paddingLeft="8dip"
+        android:paddingRight="8dip"
+        android:paddingTop="3dip" />
+
+    <View
+        android:layout_width="fill_parent"
+        android:layout_height="0.1dp"
+        android:layout_alignParentTop="true"
+        android:background="@color/light_gray" />
+
+</RelativeLayout>

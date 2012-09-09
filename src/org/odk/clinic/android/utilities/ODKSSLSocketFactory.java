@@ -24,6 +24,11 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 
+import org.apache.http.conn.ClientConnectionManager;
+import org.apache.http.conn.scheme.PlainSocketFactory;
+import org.apache.http.conn.scheme.Scheme;
+import org.apache.http.conn.scheme.SchemeRegistry;
+
 import android.util.Log;
 
 /**
@@ -73,99 +78,8 @@ public class ODKSSLSocketFactory extends SSLSocketFactory {
 	// you have included in your app.
 	//
 
-	// FROM THOUGHTCRIME:
 
-	// private Socket constructSSLSocket(Context context, String host, int port)
-	// {
-	// AssetManager assetManager = context.getAssets();
-	// InputStream keyStoreInputStream = assetManager.open("yourapp.store");
-	// KeyStore trustStore = KeyStore.getInstance("BKS");
-	//
-	// trustStore.load(keyStoreInputStream, "somepass".toCharArray());
-	//
-	// SSLSocketFactory sslSocketFactory = new SSLSocketFactory(trustStore);
-	// sslSocketFactory.setHostnameVerifier(SSLSocketFactory.STRICT_HOSTNAME_VERIFIER);
-	//
-	// return sslSocketFactory.connectSocket(sslSocketFactory.createSocket(),
-	// host, port, null, 0, new BasicHttpParams());
-	// }
 
-	// // FROM THOUGHTCRIME
-
-	// /FROM CODEPROJECT 
-
-	// @Override
-	// protected ClientConnectionManager createClientConnectionManager {
-	// SchemeRegistry registry = new SchemeRegistry();
-	// registry.register("http", PlainSocketFactory.getSocketFactory(), 80));
-	// registry.register("https", newSslSocketFactory(), 443));
-	// return new SingleClientConnManager(getParams(), registry);
-	// }
-	//
-	// private SSLSocketFactory newSslSocketFactory() {
-	// try {
-	// KeyStore trusted = KeyStore.getInstance("BKS");
-	// InputStream in = context.getResources().openRawResource(R.raw.mystore);
-	// try {
-	// trusted.load(in, "mypassword".toCharArray());
-	// }
-	// finally {
-	// in.close();
-	// }
-	//
-	// SSLSocketFactory mySslFact = new SslFactory(trusted);
-	// //mySslFact.setHostNameVerifier(new MyHstNameVerifier());
-	// return mySslFact;
-	// } catch(Exception e) {
-	// throw new AssertionError(e);
-	// }
-	// }
-
-	// FROM CODEPROJECT
-	
-	//////// FROM BLOG OF ANTOINE HAUCK (CODE IS SAME AS CODE PROJECT, and SAME AS CRAZY BOB)
-	@Override
-    protected ClientConnectionManager createClientConnectionManager() {
-        SchemeRegistry registry = new SchemeRegistry();
-        registry.register(new Scheme("http", PlainSocketFactory.getSocketFactory(), 80));
-        // Register for port 443 our SSLSocketFactory with our keystore
-        // to the ConnectionManager
-        registry.register(new Scheme("https", newSslSocketFactory(), 443));
-        return new SingleClientConnManager(getParams(), registry);
-    }
- 
-    private SSLSocketFactory newSslSocketFactory() {
-        try {
-            // Get an instance of the Bouncy Castle KeyStore format
-            KeyStore trusted = KeyStore.getInstance("BKS");
-            // Get the raw resource, which contains the keystore with
-            // your trusted certificates (root and any intermediate certs)
-            InputStream in = context.getResources().openRawResource(R.raw.mykeystore);
-            try {
-                // Initialize the keystore with the provided trusted certificates
-                // Also provide the password of the keystore
-                trusted.load(in, "mysecret".toCharArray());
-            } finally {
-                in.close();
-            }
-            // Pass the keystore to the SSLSocketFactory. The factory is responsible
-            // for the verification of the server certificate.
-            SSLSocketFactory sf = new SSLSocketFactory(trusted);
-            // Hostname verification from certificate
-            // http://hc.apache.org/httpcomponents-client-ga/tutorial/html/connmgmt.html#d4e506
-            sf.setHostnameVerifier(SSLSocketFactory.STRICT_HOSTNAME_VERIFIER); //THIS LINE IS NOT IN OTHER POSTS...
-            return sf;
-        } catch (Exception e) {
-            throw new AssertionError(e);
-        }
-    }
-}
-	
-	
-	
-	
-	
-	
 	
 
 	public ODKSSLSocketFactory(KeyStore keyStore) throws NoSuchAlgorithmException {
@@ -175,8 +89,8 @@ public class ODKSSLSocketFactory extends SSLSocketFactory {
 		// keyStore.load(cert, "openmrs".toCharArray());
 
 		try {
-			sslContext.init(null, new TrustManager[] { new ODKTrustManager(keyStore) }, null);
-			HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory());
+			sslContext.init(null, new TrustManager[] { new ODKTrustManager(keyStore) }, null); 
+			HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.getSocketFactory()); //NEW?
 		} catch (KeyManagementException e) {
 			Log.e("loadLocalStore", "Key management error" + e.getLocalizedMessage());
 		}
@@ -189,6 +103,7 @@ public class ODKSSLSocketFactory extends SSLSocketFactory {
 		//
 		// }
 	}
+	    
 
 	@Override
 	public Socket createSocket(Socket socket, String host, int port, boolean autoClose) throws IOException {
@@ -200,33 +115,46 @@ public class ODKSSLSocketFactory extends SSLSocketFactory {
 		return sslContext.getSocketFactory().createSocket();
 	}
 
+
 	@Override
 	public String[] getDefaultCipherSuites() {
+		// TODO Auto-generated method stub
 		return null;
 	}
+
 
 	@Override
 	public String[] getSupportedCipherSuites() {
+		// TODO Auto-generated method stub
 		return null;
 	}
+
 
 	@Override
 	public Socket createSocket(String host, int port) throws IOException, UnknownHostException {
+		// TODO Auto-generated method stub
 		return null;
 	}
+
 
 	@Override
 	public Socket createSocket(InetAddress host, int port) throws IOException {
+		// TODO Auto-generated method stub
 		return null;
 	}
+
 
 	@Override
 	public Socket createSocket(String host, int port, InetAddress localHost, int localPort) throws IOException, UnknownHostException {
+		// TODO Auto-generated method stub
 		return null;
 	}
 
+
 	@Override
 	public Socket createSocket(InetAddress address, int port, InetAddress localAddress, int localPort) throws IOException {
+		// TODO Auto-generated method stub
 		return null;
 	}
+
 }

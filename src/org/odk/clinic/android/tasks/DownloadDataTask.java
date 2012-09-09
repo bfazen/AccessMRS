@@ -290,7 +290,7 @@ public class DownloadDataTask extends AsyncTask<Void, String, String> {
 	}
 
 	private String downloadNewForms(String baseUrl) {
-		// Ensure directory exists
+		// Ensure directory exists //TODO! perhaps change to COLLECT_FORMS_PATH?
 		FileUtils.createFolder(FileUtils.FORMS_PATH);
 		try {
 			// Open db for editing
