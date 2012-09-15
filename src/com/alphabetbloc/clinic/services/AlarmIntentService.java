@@ -1,6 +1,6 @@
 package com.alphabetbloc.clinic.services;
 
-import org.odk.clinic.android.database.ClinicAdapter;
+import org.odk.clinic.android.database.DbAdapter;
 import org.odk.clinic.android.openmrs.Constants;
 
 import android.content.ComponentName;
@@ -36,10 +36,7 @@ public class AlarmIntentService extends WakefulIntentService {
 		mContext = this;
 
 		// Find the most recent download time
-		ClinicAdapter ca = new ClinicAdapter();
-		ca.open();
-		long recentDownload = ca.fetchMostRecentDownload();
-		ca.close();
+		long recentDownload = DbAdapter.getInstance().open().fetchMostRecentDownload();
 		long timeSinceRefresh = System.currentTimeMillis() - recentDownload;
 		Log.e(TAG, "Minutes since last refresh: " + timeSinceRefresh / (1000 * 60));
 

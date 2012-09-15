@@ -3,7 +3,6 @@ package org.odk.clinic.android.adapters;
 import java.util.List;
 
 import org.odk.clinic.android.R;
-import org.odk.clinic.android.activities.ViewFormsActivity;
 import org.odk.clinic.android.openmrs.Form;
 
 import android.content.Context;

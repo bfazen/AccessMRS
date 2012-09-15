@@ -39,9 +39,9 @@ public class WebUtils {
 
 	private static void buildUrls() {
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(App.getApp());
-		mServerUrl = settings.getString(PreferencesActivity.KEY_SERVER, App.getApp().getString(R.string.default_server));
-		String username = settings.getString(PreferencesActivity.KEY_USERNAME, App.getApp().getString(R.string.default_username));
-		String password = settings.getString(PreferencesActivity.KEY_PASSWORD, App.getApp().getString(R.string.default_password));
+		mServerUrl = settings.getString(App.getApp().getString(R.string.key_server), App.getApp().getString(R.string.default_server));
+		String username = settings.getString(App.getApp().getString(R.string.key_username), App.getApp().getString(R.string.default_username));
+		String password = settings.getString(App.getApp().getString(R.string.key_password), App.getApp().getString(R.string.default_password));
 		mUserNamePwd = "&uname=" + username + "&pw=" + password;
 	}
 

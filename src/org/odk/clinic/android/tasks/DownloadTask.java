@@ -9,7 +9,7 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import android.os.AsyncTask;
-import org.odk.clinic.android.database.ClinicAdapter;
+import org.odk.clinic.android.database.DbAdapter;
 import org.odk.clinic.android.listeners.DownloadListener;
 import org.odk.clinic.android.openmrs.Constants;
 
@@ -17,7 +17,6 @@ public abstract class DownloadTask extends AsyncTask<String, String, String> {
 
 	private static final int CONNECTION_TIMEOUT = 60000;
 	protected DownloadListener mStateListener;
-	protected ClinicAdapter mPatientDbAdapter = new ClinicAdapter();
 
 	// TODO! Consider deleting altogether!
 	@Override

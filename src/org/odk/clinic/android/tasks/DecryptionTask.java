@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.crypto.Cipher;
@@ -19,11 +18,9 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.odk.clinic.android.listeners.DecryptionListener;
-import org.odk.clinic.android.listeners.DownloadListener;
 import org.odk.clinic.android.utilities.App;
+import org.odk.clinic.android.utilities.FileUtils;
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
-
-import com.alphabetbloc.clinic.services.EncryptionService;
 
 import android.content.ContentValues;
 import android.database.Cursor;
@@ -31,8 +28,10 @@ import android.os.AsyncTask;
 import android.util.Base64;
 import android.util.Log;
 
+import com.alphabetbloc.clinic.services.EncryptionService;
+
 /**
- * Encrypts Xform instances and their associated media files on the SD Card,
+ * Decrypts Xform instances and their associated media files on the SD Card,
  * deletes all Cleartext files from parent ODK Collect instance directory. Each
  * Form and its media files share a unique 256-bit AES key with different IVs.
  * Key is stored locally on phone database, allowing for easy decryption for
@@ -49,43 +48,39 @@ import android.util.Log;
  * @author Louis Fazen (louis.fazen@gmail.com)
  * 
  */
-public class DecryptionTask extends AsyncTask<Integer, Void, Boolean> {
+public class DecryptionTask extends AsyncTask<Object, Void, Boolean> {
 
 	private static final String TAG = "DecryptionTask";
 	public static final String COLLECT_INSTANCE_ID = "collect_instance_id";
 	public static final String MAX_DECRYPT_TIME = "maximum_time_decrypted";
 	private DecryptionListener mListener;
-	private boolean anydone;
+	private boolean anydone = false;
 
 	@Override
-	protected Boolean doInBackground(Integer... params) {
-		anydone = false;
+	protected Boolean doInBackground(Object... params) {
+		int id = (Integer) params[0];
+		String dbPath = (String) params[1];
+		
+		String inPath = FileUtils.getEncryptedFilePath(dbPath);
+		String outPath = FileUtils.getDecryptedFilePath(dbPath);
+		
 		boolean decrypted = false;
-		int id = params[0];
-		Log.e(TAG, " doInBackground with id=" + id);
+		if (id > 0)
+			decrypted = decryptFormInstance(id, inPath, outPath);
+		
+		if (decrypted)
+			Log.e(TAG, "Decryption Sucessful!");
+		else
+			Log.e(TAG, "Decryption Error with Collect Instance Id: " + String.valueOf(id) + " at path=" + inPath);
 
-		if (id > 0) {
-			if (decryptFormInstance(id)) {
-				Log.e(TAG, "Decryption Sucessful!");
-				decrypted = true;
-			} else
-				Log.e(TAG, "Decryption Error with Collect Instance Id: " + String.valueOf(id));
-		} else
-			Log.e(TAG, "File to decrypt is not fully specified. Ensure Path and Id are included in intent.");
-		Log.e(TAG, "before onpostexecute... anydone=" + anydone);
 		return decrypted;
 	}
 
-	private boolean decryptFormInstance(Integer id) {
-		String path = getInstancePath(id);
-		if (path == null)
+	private boolean decryptFormInstance(Integer id, String inPath, String outPath) {
+		if (inPath == null || outPath == null || id == null)
 			return false;
 
-		// This is path to decrypted form: instanceDir/.dec/instance-date.xml
-		// NB: file does not exist, b/c we have not decrypted!
-		File decryptedfile = new File(path);
-		File decryptHiddenDir = decryptedfile.getParentFile();
-		File instanceDir = decryptHiddenDir.getParentFile();
+		File encFile = new File(inPath);
 
 		// get Cipher and Key
 		Cipher c = generateCipher();
@@ -93,8 +88,8 @@ public class DecryptionTask extends AsyncTask<Integer, Void, Boolean> {
 		if (c == null || key == null)
 			return false;
 
-		// get Files
-		List<File> filesToDecrypt = findEncryptedFiles(instanceDir);
+		// get Encrypted Files
+		List<File> filesToDecrypt = FileUtils.findAllFiles(encFile.getParent(), FileUtils.ENC_EXT);
 		if (filesToDecrypt.isEmpty())
 			return false;
 
@@ -106,7 +101,7 @@ public class DecryptionTask extends AsyncTask<Integer, Void, Boolean> {
 		boolean alldone = true;
 		for (File f : filesToDecrypt) {
 			try {
-				anydone = decryptFile(f, c, key);
+				anydone = decryptFile(f.getAbsolutePath(), outPath, c, key);
 				Log.e(TAG, "after decrypting... anydone=" + anydone);
 				alldone = alldone & anydone;
 			} catch (Exception e) {
@@ -116,30 +111,6 @@ public class DecryptionTask extends AsyncTask<Integer, Void, Boolean> {
 		}
 
 		return alldone;
-	}
-
-	// TODO? put all the contentresolver queries into a CollectUtil
-	private String getInstancePath(Integer id) {
-
-		String selection = InstanceColumns._ID + "=?";
-		String selectionArgs[] = { String.valueOf(id) };
-		String projection[] = { InstanceColumns.INSTANCE_FILE_PATH };
-		Cursor c = App.getApp().getContentResolver().query(InstanceColumns.CONTENT_URI, projection, selection, selectionArgs, null);
-		String path = null;
-
-		if (c != null) {
-			if (c.getCount() > 0) {
-				int pathIndex = c.getColumnIndex(InstanceColumns.INSTANCE_FILE_PATH);
-				if (c.moveToFirst())
-					path = c.getString(pathIndex);
-			}
-			c.close();
-		}
-
-		if (path == null)
-			Log.e(TAG, "Error retreiving the path of Collect instance with id: " + String.valueOf(id));
-
-		return path;
 	}
 
 	private static Cipher generateCipher() {
@@ -182,16 +153,7 @@ public class DecryptionTask extends AsyncTask<Integer, Void, Boolean> {
 		}
 	}
 
-	private List<File> findEncryptedFiles(File instanceDir) {
-		File[] allFiles = instanceDir.listFiles();
-		List<File> directoryFiles = new ArrayList<File>();
-		for (File f : allFiles) {
-			if (f.getName().endsWith(".enc"))
-				directoryFiles.add(f);
-		}
-		return directoryFiles;
-	}
-
+	
 	/**
 	 * We update the collect Db with the time of decryption so that we can be
 	 * sure to delete later!
@@ -227,19 +189,27 @@ public class DecryptionTask extends AsyncTask<Integer, Void, Boolean> {
 		return updated;
 	}
 
-	private boolean decryptFile(File encFile, Cipher cipher, SecretKeySpec keySpec) throws Exception {
+	private boolean decryptFile(String inPath, String outPath, Cipher cipher, SecretKeySpec keySpec) throws Exception {
 		boolean decrypted = false;
-		// make the decrypted file
-		String name = encFile.getName();
-		int ext = name.lastIndexOf(".");
-		String xmltitle = name.substring(0, ext); // drop the .enc
-		String decryptedFilePath = encFile.getParent() + File.separator + EncryptionService.DECRYPTED_HIDDEN_DIR + File.separator + xmltitle;
-		File decFile = new File(decryptedFilePath);
+		
+		//input file
+		File inFile = new File(inPath);
+		String outName = inPath.substring(inPath.lastIndexOf(File.separator), inPath.lastIndexOf(FileUtils.ENC_EXT));
+		
+		//output dir & file
+		File outDir = (new File(outPath)).getParentFile();
+		FileUtils.createFolder(outDir.getAbsolutePath());
+		File outFile = new File(outDir.getAbsolutePath(), outName);
+		if (outFile.exists()) {
+			outFile = new File(outDir.getAbsolutePath(), outName + "-" + String.valueOf(System.currentTimeMillis()) + FileUtils.ENC_EXT);
+			System.out.println("File already exists. File has been renamed to " + outFile.getName());
+		}
+
 
 		try {
 			// make the streams
-			InputStream in = new BufferedInputStream(new FileInputStream(encFile));
-			OutputStream out = new BufferedOutputStream(new FileOutputStream(decFile));
+			InputStream in = new BufferedInputStream(new FileInputStream(inFile));
+			OutputStream out = new BufferedOutputStream(new FileOutputStream(outFile));
 
 			// find iv from prefix, then read
 			final int blockSize = cipher.getBlockSize();
@@ -258,10 +228,10 @@ public class DecryptionTask extends AsyncTask<Integer, Void, Boolean> {
 			in.close();
 			out.flush();
 			out.close();
-			Log.i(TAG, "Decrpyted:" + encFile.getName() + " -> " + decFile.getName());
+			Log.i(TAG, "Decrpyted:" + inFile.getName() + " -> " + outFile.getName());
 			decrypted = true;
 		} catch (IOException e) {
-			Log.e(TAG, "Error encrypting: " + encFile.getName() + " -> " + decFile.getName());
+			Log.e(TAG, "Error encrypting: " + inFile.getName() + " -> " + outFile.getName());
 			e.printStackTrace();
 			throw e;
 		}

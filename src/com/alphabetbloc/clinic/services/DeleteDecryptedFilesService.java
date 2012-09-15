@@ -30,7 +30,7 @@ import com.commonsware.cwac.wakeful.WakefulIntentService;
 public class DeleteDecryptedFilesService extends WakefulIntentService {
 
 	private Context mContext;
-	private static final String TAG = "RefreshClientService";
+	private static final String TAG = "DeleteDecryptedFiles";
 	private static final String INSTANCE_ID = "id";
 	private static final String INSTANCE_PATH = "path";
 
@@ -42,31 +42,37 @@ public class DeleteDecryptedFilesService extends WakefulIntentService {
 	@Override
 	protected void doWakefulWork(Intent intent) {
 		mContext = this;
-		Log.e(TAG, "DeleteDecrypted files doWakefulWork called! ");
-		ArrayList<Map<String, Object>> decryptedFiles = findDecryptedFiles();
+
+		// get all recently submitted files
+		ArrayList<Map<String, Object>> decryptedInstances = findDecryptedInstances();
+		if (decryptedInstances.isEmpty())
+			stopSelf();
+
 		boolean allDeleted = true;
-		for (Map<String, Object> file : decryptedFiles) {
-			// delete files from the instance main directory
-			String path = (String) file.get(INSTANCE_PATH); // =instanceDir/.dec/instance-date-xml
-			File parentDir = (new File(path)).getParentFile().getParentFile(); // =instanceDir/
+		for (Map<String, Object> current : decryptedInstances) {
+			String dbPath = (String) current.get(INSTANCE_PATH);
+			int id = (Integer) current.get(INSTANCE_ID);
+
+			// get the decrypted instance's parent directory
+			String parentPath = FileUtils.getDecryptedFilePath(dbPath);
+			File parentDir = new File(parentPath);
+
+			// delete everything in the directory
 			boolean thisDeleted = false;
-			if (parentDir.exists())
-				thisDeleted = FileUtils.deleteAllCleartextFiles(parentDir);
+			if (parentDir != null && parentDir.exists())
+				thisDeleted = FileUtils.deleteAllFiles(parentDir.getAbsolutePath());
 
 			// update db
-			int id = (Integer) file.get(INSTANCE_ID);
 			if (thisDeleted)
 				thisDeleted = clearDecryptionLog(id);
 			else
-				Log.e(TAG, "An error occurred when attempting to delete decrypted files in the directory: " + parentDir.getPath());
+				Log.e(TAG, "An error occurred when attempting to delete decrypted files in the directory: " + parentDir);
 
-			// catalog all complete deletions (no short circuit!)
+			// catalog all deletions (no short circuit!)
 			allDeleted = thisDeleted & allDeleted;
 		}
-		
-		// TODO? add cancel threshold to prevent looping unsuccessful alarms?
-		// BUT if not deleting, better to keep trying, negatively effect
-		// performance, and have user complain as we want to know about this ...
+
+		// Cancel this service IF there are no more decrypted instances on disk
 		if (allDeleted && !decryptedFilesExist())
 			cancelAlarms(WakefulIntentService.DELETE_DECRYPTED_DATA, mContext);
 	}
@@ -83,11 +89,10 @@ public class DeleteDecryptedFilesService extends WakefulIntentService {
 	 * @return ArrayList of Maps that contain both the path and Collect Instance
 	 *         Id of the decrypted instance file.
 	 */
-	private ArrayList<Map<String, Object>> findDecryptedFiles() {
-		// calculate datetime threshold for deciding whether to delete a
-		// decrypted file.
+	private ArrayList<Map<String, Object>> findDecryptedInstances() {
+		// calculate datetime threshold for deciding whether to delete 
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
-		Long maxDecryptTime = prefs.getLong(DecryptionTask.MAX_DECRYPT_TIME, AlarmManager.INTERVAL_FIFTEEN_MINUTES/5);
+		Long maxDecryptTime = prefs.getLong(DecryptionTask.MAX_DECRYPT_TIME, AlarmManager.INTERVAL_FIFTEEN_MINUTES / 5);
 		Long now = System.currentTimeMillis();
 		Long deleteThreshold = now - maxDecryptTime;
 
@@ -98,7 +103,7 @@ public class DeleteDecryptedFilesService extends WakefulIntentService {
 
 		ArrayList<Map<String, Object>> decryptedList = new ArrayList<Map<String, Object>>();
 		int instanceId = 0;
-		String instancePath = null;
+		String dbPath = null;
 
 		if (c != null) {
 			if (c.getCount() > 0) {
@@ -107,12 +112,12 @@ public class DeleteDecryptedFilesService extends WakefulIntentService {
 
 				if (c.moveToFirst()) {
 					do {
-						instancePath = c.getString(pathIndex);
+						dbPath = c.getString(pathIndex);
 						instanceId = c.getInt(idIndex);
-						Log.e(TAG, "DeleteDecrypted files found id=" + instanceId + " path=" + instancePath);
+						Log.e(TAG, "DeleteDecrypted files found id=" + instanceId + " path=" + dbPath);
 						Map<String, Object> temp = new HashMap<String, Object>();
 						temp.put(INSTANCE_ID, instanceId);
-						temp.put(INSTANCE_PATH, instancePath);
+						temp.put(INSTANCE_PATH, dbPath);
 						decryptedList.add(temp);
 
 					} while (c.moveToNext());
@@ -123,7 +128,6 @@ public class DeleteDecryptedFilesService extends WakefulIntentService {
 		return decryptedList;
 	}
 
-	
 	private boolean decryptedFilesExist() {
 		boolean anyDecryptedFile = false;
 		String selection = InstanceColumns.DECRYPTION_TIME + " IS NOT NULL";
@@ -131,17 +135,11 @@ public class DeleteDecryptedFilesService extends WakefulIntentService {
 		Cursor c = App.getApp().getContentResolver().query(InstanceColumns.CONTENT_URI, projection, selection, null, null);
 
 		if (c != null) {
-			if (c.getCount() > 0) 
+			if (c.getCount() > 0)
 				anyDecryptedFile = true;
 		}
-		
+
 		return anyDecryptedFile;
-	}
-	
-	@Override
-	public void onDestroy() {
-		super.onDestroy();
-		Log.e(TAG, "RefreshClientService OnDestroy is called");
 	}
 
 	/**

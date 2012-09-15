@@ -1,6 +1,6 @@
 package org.odk.clinic.android.tasks;
 
-import org.odk.clinic.android.database.ClinicAdapter;
+import org.odk.clinic.android.database.DbAdapter;
 import org.odk.clinic.android.openmrs.ActivityLog;
 
 import android.os.AsyncTask;
@@ -23,11 +23,7 @@ public class ActivityLogTask extends AsyncTask<Void, Void, Void> {
 		
 		if (ACTIVITY_LOGGING) {
 			try {
-		
-				ClinicAdapter ca = new ClinicAdapter();
-				ca.open();
-				ca.createActivityLog(newActivity);
-				ca.close();
+				DbAdapter.openDb().createActivityLog(newActivity);
 			}
 
 			catch (Exception e) {

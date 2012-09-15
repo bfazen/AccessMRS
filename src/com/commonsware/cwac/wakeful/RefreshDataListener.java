@@ -14,7 +14,7 @@
 
 package com.commonsware.cwac.wakeful;
 
-import org.odk.clinic.android.database.ClinicAdapter;
+import org.odk.clinic.android.database.DbAdapter;
 import org.odk.clinic.android.openmrs.Constants;
 
 import android.app.AlarmManager;
@@ -50,10 +50,7 @@ public class RefreshDataListener implements WakefulIntentService.AlarmListener {
 
 		// Find the most recent download time, determine the best interval for
 		// the alarms...
-		ClinicAdapter ca = new ClinicAdapter();
-		ca.open();
-		long recentDownload = ca.fetchMostRecentDownload();
-		ca.close();
+		long recentDownload = DbAdapter.getInstance().open().fetchMostRecentDownload();
 		long timeSinceRefresh = System.currentTimeMillis() - recentDownload;
 		Log.e("louis.fazen", "Minutes since last refresh: " + timeSinceRefresh / (1000 * 60));
 

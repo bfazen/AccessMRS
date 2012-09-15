@@ -23,7 +23,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.odk.clinic.android.R;
 import org.odk.clinic.android.activities.PreferencesActivity;
-import org.odk.clinic.android.database.ClinicAdapter;
+import org.odk.clinic.android.database.DbAdapter;
 import org.odk.clinic.android.listeners.DownloadListener;
 import org.odk.clinic.android.openmrs.Constants;
 import org.odk.clinic.android.openmrs.Form;
@@ -32,6 +32,7 @@ import org.odk.clinic.android.utilities.FileUtils;
 import org.odk.clinic.android.utilities.ODKLocalKeyStore;
 import org.odk.clinic.android.utilities.ODKSSLSocketFactory;
 import org.odk.clinic.android.utilities.WebUtils;
+import org.odk.clinic.android.utilities.XformUtils;
 import org.odk.collect.android.provider.FormsProviderAPI.FormsColumns;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
@@ -53,14 +54,13 @@ public class DownloadDataTask extends AsyncTask<Void, String, String> {
 	public static final String KEY_ERROR = "error";
 	public static final String KEY_PATIENTS = "patients";
 	public static final String KEY_OBSERVATIONS = "observations";
-	private static final String TAG = "Clinic.DownloadDataTask";
 
 	private static final String NAMESPACE = "org.odk.clinic.android";
 	private static final String DATA_DIR = "/data/" + NAMESPACE;
 
 	private static final int CONNECTION_TIMEOUT = 60000;
 	protected DownloadListener mStateListener;
-	protected ClinicAdapter mPatientDbAdapter = new ClinicAdapter();
+	protected DbAdapter mDb; 
 
 	private int mStep = 0;
 	private int mTotalStep = 10;
@@ -70,7 +70,7 @@ public class DownloadDataTask extends AsyncTask<Void, String, String> {
 	@Override
 	protected String doInBackground(Void... values) {
 		// DOWNLOAD
-		
+		mDb = DbAdapter.openDb();
 		// FormlistSection:
 		// TODO! HTTPS NEW CODE.. but what about other downloads
 		// initialize @ODKSSLSocketFactory to authorize local
@@ -110,7 +110,7 @@ public class DownloadDataTask extends AsyncTask<Void, String, String> {
 		// PROCESS
 		try {
 			showProgress("Processing");
-			mPatientDbAdapter.open();
+			mDb.open();
 			if (zipFile != null) {
 				DataInputStream zdis = new DataInputStream(new FileInputStream(zipFile));
 				// OLD: (new BufferedInputStream(new FileInputStream(zipFile)));
@@ -123,7 +123,7 @@ public class DownloadDataTask extends AsyncTask<Void, String, String> {
 
 			publishProgress("Processing Forms");
 			updateFormNumbers();
-			mPatientDbAdapter.createDownloadLog();
+			mDb.createDownloadLog();
 		} catch (Exception e) {
 			e.printStackTrace();
 			return e.getLocalizedMessage();
@@ -162,27 +162,27 @@ public class DownloadDataTask extends AsyncTask<Void, String, String> {
 		publishProgress("Processing");
 		// open db and clean entries
 
-		mPatientDbAdapter.deleteAllPatients();
-		mPatientDbAdapter.deleteAllObservations();
-		mPatientDbAdapter.deleteAllFormInstances();
+		mDb.deleteAllPatients();
+		mDb.deleteAllObservations();
+		mDb.deleteAllFormInstances();
 
-		mPatientDbAdapter.makeIndices();
+		mDb.makeIndices();
 		// download and insert patients and obs
 		showProgress("Processing Clients");
-		mPatientDbAdapter.insertPatients(dis);
+		mDb.insertPatients(dis);
 		publishProgress("Processing Data");
-		mPatientDbAdapter.insertObservations(dis);
+		mDb.insertObservations(dis);
 		publishProgress("Processing Forms");
-		mPatientDbAdapter.insertPatientForms(dis);
+		mDb.insertPatientForms(dis);
 	}
 
 	private void updateFormNumbers() {
 		// NB: basically a hack to bring various db into sync
-		mPatientDbAdapter.updatePriorityFormNumbers();
-		mPatientDbAdapter.updatePriorityFormList();
+		mDb.updatePriorityFormNumbers();
+		mDb.updatePriorityFormList();
 
-		mPatientDbAdapter.updateSavedFormNumbers();
-		mPatientDbAdapter.updateSavedFormsList();
+		mDb.updateSavedFormNumbers();
+		mDb.updateSavedFormsList();
 	}
 
 	// DOWNLOAD FORM DATA
@@ -203,8 +203,8 @@ public class DownloadDataTask extends AsyncTask<Void, String, String> {
 
 			// clean db, insert reference to forms
 			if (doc != null) {
-				mPatientDbAdapter.open();
-				mPatientDbAdapter.deleteAllForms();
+				mDb.open();
+				mDb.deleteAllForms();
 				insertForms(doc);
 			}
 
@@ -240,7 +240,7 @@ public class DownloadDataTask extends AsyncTask<Void, String, String> {
 			f = new Form();
 			f.setName(formName);
 			f.setFormId(Integer.valueOf(formId));
-			mPatientDbAdapter.createForm(f);
+			mDb.createForm(f);
 			mForms.add(f);
 
 		}
@@ -275,7 +275,7 @@ public class DownloadDataTask extends AsyncTask<Void, String, String> {
 			String dbFormId = mCursor.getString(mCursor.getColumnIndex(FormsColumns.JR_FORM_ID));
 
 			// if the exact form exists, leave it be. else, insert it.
-			if (dbFormId.equalsIgnoreCase(formId + "") && (new File(FileUtils.FORMS_PATH + "/" + formId + ".xml")).exists()) {
+			if (dbFormId.equalsIgnoreCase(formId + "") && (new File(FileUtils.getExternalFormsPath() + File.separator + formId + FileUtils.XML_EXT)).exists()) {
 				alreadyExists = true;
 			}
 
@@ -290,11 +290,10 @@ public class DownloadDataTask extends AsyncTask<Void, String, String> {
 	}
 
 	private String downloadNewForms(String baseUrl) {
-		// Ensure directory exists //TODO! perhaps change to COLLECT_FORMS_PATH?
-		FileUtils.createFolder(FileUtils.FORMS_PATH);
+		FileUtils.createFolder(FileUtils.getExternalFormsPath());
 		try {
 			// Open db for editing
-			mPatientDbAdapter.open();
+			mDb.open();
 			String formId;
 
 			for (int i = 0; i < mForms.size(); i++) {
@@ -308,11 +307,11 @@ public class DownloadDataTask extends AsyncTask<Void, String, String> {
 						url.append(formId);
 
 						URL u = new URL(url.toString());
-						
+
 						HttpURLConnection c = (HttpURLConnection) u.openConnection();
 						InputStream is = c.getInputStream();
 
-						String path = FileUtils.FORMS_PATH + formId + ".xml";
+						String path = FileUtils.getExternalFormsPath() + formId + FileUtils.XML_EXT;
 
 						File f = new File(path);
 						OutputStream os = new FileOutputStream(f);
@@ -325,10 +324,10 @@ public class DownloadDataTask extends AsyncTask<Void, String, String> {
 						os.close();
 						is.close();
 
-						mPatientDbAdapter.updateFormPath(Integer.valueOf(formId), path);
+						mDb.updateFormPath(Integer.valueOf(formId), path);
 
 						// insert path into collect db
-						if (!insertSingleForm(path)) {
+						if (!XformUtils.insertSingleForm(path)) {
 							return "ODK Collect not initialized.";
 						}
 
@@ -341,144 +340,13 @@ public class DownloadDataTask extends AsyncTask<Void, String, String> {
 					// " already downloaded");
 				}
 			}
-			mPatientDbAdapter.close();
 
 		} catch (Exception e) {
 			e.printStackTrace();
-			if (mPatientDbAdapter != null)
-				mPatientDbAdapter.close();
 
 			return e.getLocalizedMessage();
 		}
 		return null;
-	}
-
-	private boolean insertSingleForm(String formPath) {
-
-		ContentValues values = new ContentValues();
-		File addMe = new File(formPath);
-
-		// Ignore invisible files that start with periods.
-		if (!addMe.getName().startsWith(".") && (addMe.getName().endsWith(".xml") || addMe.getName().endsWith(".xhtml"))) {
-
-			DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-			DocumentBuilder documentBuilder = null;
-			Document document = null;
-
-			try {
-				documentBuilder = documentBuilderFactory.newDocumentBuilder();
-				document = documentBuilder.parse(addMe);
-				document.normalize();
-			} catch (Exception e) {
-				Log.e("DownloadFormTask", e.getLocalizedMessage());
-			}
-
-			String name = null;
-			int id = -1;
-			String version = null;
-			String md5 = FileUtils.getMd5Hash(addMe);
-
-			NodeList form = document.getElementsByTagName("form");
-			NamedNodeMap nodemap = form.item(0).getAttributes();
-			for (int i = 0; i < nodemap.getLength(); i++) {
-				Attr attribute = (Attr) nodemap.item(i);
-				if (attribute.getName().equalsIgnoreCase("id")) {
-					id = Integer.valueOf(attribute.getValue());
-				}
-				if (attribute.getName().equalsIgnoreCase("version")) {
-					version = attribute.getValue();
-				}
-				if (attribute.getName().equalsIgnoreCase("name")) {
-					name = attribute.getValue();
-				}
-			}
-
-			if (name != null) {
-				if (getNameFromId(id) == null) {
-					values.put(FormsColumns.DISPLAY_NAME, name);
-				} else {
-					values.put(FormsColumns.DISPLAY_NAME, getNameFromId(id));
-				}
-			}
-			if (id != -1 && version != null) {
-				values.put(FormsColumns.JR_FORM_ID, id);
-			}
-			values.put(FormsColumns.FORM_FILE_PATH, addMe.getAbsolutePath());
-
-			boolean alreadyExists = false;
-
-			Cursor mCursor;
-			try {
-				mCursor = App.getApp().getContentResolver().query(FormsColumns.CONTENT_URI, null, null, null, null);
-			} catch (SQLiteException e) {
-				Log.e("DownloadFormTask", e.getLocalizedMessage());
-				return false;
-				// TODO handle exception
-			}
-
-			if (mCursor == null) {
-				System.out.println("Something bad happened");
-				mPatientDbAdapter.open();
-				mPatientDbAdapter.deleteAllForms();
-				mPatientDbAdapter.close();
-				return false;
-			}
-
-			mCursor.moveToPosition(-1);
-			while (mCursor.moveToNext()) {
-
-				String dbmd5 = mCursor.getString(mCursor.getColumnIndex(FormsColumns.MD5_HASH));
-				String dbFormId = mCursor.getString(mCursor.getColumnIndex(FormsColumns.JR_FORM_ID));
-
-				// if the exact form exists, leave it be. else, insert it.
-				if (dbmd5.equalsIgnoreCase(md5) && dbFormId.equalsIgnoreCase(id + "")) {
-					alreadyExists = true;
-				}
-
-			}
-
-			if (!alreadyExists) {
-				App.getApp().getContentResolver().delete(FormsColumns.CONTENT_URI, "md5Hash=?", new String[] { md5 });
-				App.getApp().getContentResolver().delete(FormsColumns.CONTENT_URI, "jrFormId=?", new String[] { id + "" });
-				App.getApp().getContentResolver().insert(FormsColumns.CONTENT_URI, values);
-			}
-
-			if (mCursor != null) {
-				mCursor.close();
-			}
-
-		}
-
-		return true;
-
-	}
-
-	private String getNameFromId(Integer id) {
-		String formName = null;
-		ClinicAdapter ca = new ClinicAdapter();
-		ca.open();
-		Cursor c = ca.fetchAllForms();
-
-		if (c != null && c.getCount() >= 0) {
-
-			int formIdIndex = c.getColumnIndex(ClinicAdapter.KEY_FORM_ID);
-			int nameIndex = c.getColumnIndex(ClinicAdapter.KEY_NAME);
-
-			if (c.getCount() > 0) {
-				do {
-					if (c.getInt(formIdIndex) == id) {
-						formName = c.getString(nameIndex);
-						break;
-					}
-				} while (c.moveToNext());
-			}
-		}
-
-		if (c != null)
-			c.close();
-
-		ca.close();
-		return formName;
 	}
 
 	// DOWNLOAD CLIENT DATA
@@ -509,15 +377,15 @@ public class DownloadDataTask extends AsyncTask<Void, String, String> {
 	// url, username, password, serializer, locale, action, cohort
 	protected DataInputStream connectToServer() throws Exception {
 
-		//get prefs
+		// get prefs
 		String url = WebUtils.getPatientDownloadUrl();
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(App.getApp());
-		String username = settings.getString(PreferencesActivity.KEY_USERNAME, App.getApp().getString(R.string.default_username));
-		String password = settings.getString(PreferencesActivity.KEY_PASSWORD, App.getApp().getString(R.string.default_password));
-		boolean savedSearch = settings.getBoolean(PreferencesActivity.KEY_USE_SAVED_SEARCHES, false);
-		int cohort = settings.getInt(PreferencesActivity.KEY_SAVED_SEARCH, 0);
-		int program = settings.getInt(PreferencesActivity.KEY_PROGRAM, 0);
-		
+		String username = settings.getString(App.getApp().getString(R.string.key_username), App.getApp().getString(R.string.default_username));
+		String password = settings.getString(App.getApp().getString(R.string.key_password), App.getApp().getString(R.string.default_password));
+		boolean savedSearch = settings.getBoolean(App.getApp().getString(R.string.key_use_saved_searches), false);
+		int cohort = settings.getInt(App.getApp().getString(R.string.key_saved_search), 0);
+		int program = settings.getInt(App.getApp().getString(R.string.key_program), 0);
+
 		// compose url
 		URL u = new URL(url);
 

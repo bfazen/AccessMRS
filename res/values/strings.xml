@@ -18,29 +18,106 @@ the License.
 
     <string name="app_name">Clinic for CHWs</string>
     <string name="app_version">1.1.1</string>
-    <string name="barcode_error">Barcode Scanner not installed.</string>
-    <string name="cancel">Cancel</string>
-    <string name="cancel_download">Cancel Download</string>
+
+    <!-- PREFERENCES -->
+    <!-- Strings -->
     <string name="change_password">Change Password</string>
     <string name="change_server">Change URL</string>
     <string name="change_username">Change Username</string>
-    <string name="connecting_server">Connecting …</string>
-    <string name="create_patient">Create Patient</string>
-    <string name="default_info">http://opendatakit.org</string>
-    <string name="default_password">test</string>
 
-    <!--
-        TODO: Customization by louis.fazen@gmail.com
-   		Setting to AMPATH Server Preferences
-    -->
+    <!-- Manage Device Prefs -->
+    <string name="manage_device_pref">Device Management</string>
+    <string name="enable_activity_logging">Log User Activity</string>
+    <string name="activity_logging_hint">Log forms loaded for each client</string>
+    <string name="show_settings_menu">Show Settings Menu</string>
+    <string name="show_menu_hint">Allow access to this menu</string>
+
+    <!-- Keys -->
+    <string name="key_server">server</string>
+    <string name="key_username">username</string>
+    <string name="key_password">password</string>
+    <string name="key_saved_search">saved_search</string>
+    <string name="key_program">program</string>
+    <string name="key_provider">provider</string>
+    <string name="key_cohort">cohort</string>
+    <string name="key_first_run">first_run</string>
+    <string name="key_info">info</string>
+    <string name="key_use_saved_searches">use_saved_searches</string>
+    <string name="key_client_auth">client_authentication</string>
+    <string name="key_show_settings_menu">show_settings_menu</string>
+    <string name="key_enable_activity_log">enable_activity_log</string>
+
+    <!-- Defaults -->
     <string name="default_server">http://192.168.43.155:8080/openmrs</string>
     <string name="default_username">admin</string>
+    <string name="default_info">http://opendatakit.org</string>
+    <string name="default_password">test</string>
+    <string name="default_provider">test</string>
+    <string name="default_program">0</string>
+    <string name="default_saved_search">0</string>
+    <string name="default_use_saved_searches">true</string>
+    <string name="default_show_settings_menu">false</string>
+    <string name="default_enable_activity_logging">true</string>
+    <string name="default_use_client_auth">true</string>
+
+    <!-- SSL Preferences and SSL Activity -->
+    <string name="manage_ssl">Manage SSL Connections</string>
+    <string name="use_client_auth">Use Client Authentication</string>
+    <string name="client_auth_hint"></string>
+    <string name="client_auth">Client Authentication</string>
+    <string name="client_auth_desc">Manage Authentication Keys</string>
+    <string name="manage_certs">Manage Certificates</string>
+    <string name="manage_certs_desc">Add or Remove Server Certificates</string>
+    <string name="ssl_store_title">Manage %ss</string>
+    <string name="ssl_add_success_message">Added %1$d %2$s(s) to local %3$s store.</string>
+    <string name="ssl_add_alert_message">No %1$ss found.  Please place a %2$s in DER format on the SD Card.</string>
+    <string name="ssl_error_message">Error manipulating local %s store: </string>
+    <string name="ssl_remove_success_message">Removed %1$d %2$s(s) from local %3$s store.</string>
+    <string name="ssl_remove_alert_message">There was a problem removing this %s.</string>
+    <string name="ssl_add_alert_title">Add A New %s</string>
+    <string name="ssl_add_alert_body">To add a new %1$s, please add the %2$s in DER format to the SD Card.</string>
+    <string name="ssl_remove_alert_title">Remove %s</string>
+    <string name="ssl_remove_alert_body">You are about to remove the %s of: \n\n</string>
+
+    <!-- UI STRINGS -->
+    <!-- ClinicLauncherActivity Cipher Password -->
+    <string name="button_ok">Okay</string>
+    <string name="button_cancel">Cancel</string>
+    <string name="do_rekey">Encrypting database with the new passphrase... Please be patient...</string>
+    <string name="sql_verify_pwd">Enter your passphrase:</string>
+    <string name="set_sqlcipher_pwd">Please enter a secure password for your database.</string>
+    <string name="change_sqlcipher_pwd">Please enter a new password for your database.</string>
+    <string name="confirm_sqlcipher_pwd">Please Re-enter Your Password.</string>
+    <string name="reset_new_pwd">Enter a strong passphrase to secure your data. It must contain at least one uppercase, one lowercase and one number, and be longer than six characters.</string>
+    <string name="reset_confirm_pwd">Please reenter your passphrase to confirm. Do NOT forget this password. You will be unable to recover your data if something happens to your phone.</string>
+
+    <!-- ClinicLauncherActivity Set Provider ID -->
+    <string name="submit">Submit</string>
+    <string name="provider_id">Enter Your Provider ID:</string>
+    <string name="change_provider_id">Enter a New Provider ID:</string>
+    <string name="confirm_id">Please Re-Enter Provider ID:</string>
+    <string name="btn_confirm">Confirm</string>
+    <string name="provider_instructions">Please enter your provider identification number.</string>
+    <string name="provider_requirement">You must be a provider to use this device.  Please enter your assigned provider ID.</string>
+    <string name="set_provider">Set Provider ID</string>
+    
+    <!-- ClinicLauncherActivity Db Setup -->
+    <string name="error_lost_db_key">ERROR! The key to the Database has been lost! Current Database is useless. Deleting and Reinstalling.</string>
+    <string name="error_lost_db_pwd">ERROR! The key to the Database Password has been lost! Current Database is useless. Deleting and Reinstalling.</string>
+
+    <!-- MISC -->
+    <string name="barcode_error">Barcode Scanner not installed.</string>
+    <string name="cancel">Cancel</string>
+    <string name="cancel_download">Cancel Download</string>
+    <string name="connecting_server">Connecting …</string>
+    <string name="create_patient">Create Patient</string>
     <string name="download">Download</string>
     <string name="download_forms">Update Data</string>
     <string name="download_patients">Refresh Data</string>
     <string name="download_selected">Download Selected</string>
     <string name="downloading">%s…</string>
     <string name="please_wait">Please wait a few moments.</string>
+    <string name="unlocking_db">Unlocking databases...</string>
     <string name="error">Error: %s</string>
     <string name="fill_forms">Fill Blank Forms</string>
     <string name="fill_patient_forms">Fill Patient Forms</string>
@@ -112,7 +189,7 @@ the License.
     <string name="instances_last_year">Visits in the past year:</string>
     <string name="instances_unknown_gt_year">All other visits:</string>
 
-    <!-- Forms -->
+    <!-- Dashboard Activity Forms -->
     <string name="downloaded_forms">Available Forms</string>
     <string name="downloaded_form">Available Form</string>
     <string name="to_do_forms">Suggested Forms To Fill</string>
@@ -123,7 +200,7 @@ the License.
     <string name="incomplete_form">Incomplete Form To Fill</string>
     <string name="decrypting_data">Unlocking data...</string>
 
-    <!-- Clients -->
+    <!-- Dashboard Activity Clients -->
     <string name="provider_lists_section">Current Client Lists:</string>
     <string name="current_clients">All Current Clients</string>
     <string name="current_client">Current Client</string>
@@ -142,27 +219,5 @@ the License.
     <string name="ss_service_label">Update Client List</string>
     <string name="refresh_clients_title">Refresh Client List</string>
     <string name="refresh_clients_text">Your client list is out of date. Please refresh data now.</string>
-
-    <!-- SSL Preferences -->
-        <string name="manage_ssl">Manage SSL Connections</string>
-    <string name="use_client_auth">Use Client Authentication</string>
-    <string name="client_auth_hint"></string>
-    <string name="client_auth">Client Authentication</string>
-    <string name="client_auth_desc">Manage Authentication Keys</string>
-     <string name="manage_certs">Manage Certificates</string>
-    <string name="manage_certs_desc">Add or Remove Server Certificates</string>
-    
-    
-    
-    <string name="ssl_store_title">Manage %ss</string>
-    <string name="ssl_add_success_message">Added %1$d %2$s(s) to local %3$s store.</string>
-    <string name="ssl_add_alert_message">No %1$ss found.  Please place a %2$s in DER format on the SD Card.</string>
-    <string name="ssl_error_message">Error manipulating local %s store: </string>
-    <string name="ssl_remove_success_message">Removed %1$d %2$s(s) from local %3$s store.</string>
-    <string name="ssl_remove_alert_message">There was a problem removing this %s.</string>
-    <string name="ssl_add_alert_title">Add A New %s</string>
-    <string name="ssl_add_alert_body">To add a new %1$s, please add the %2$s in DER format to the SD Card.</string>
-    <string name="ssl_remove_alert_title">Remove %s</string>
-    <string name="ssl_remove_alert_body">You are about to remove the %s of: \n\n</string>
 
 </resources>

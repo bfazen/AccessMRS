@@ -1,31 +1,28 @@
 package org.odk.clinic.android.activities;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 
 import org.odk.clinic.android.R;
 import org.odk.clinic.android.adapters.FormAdapter;
 import org.odk.clinic.android.adapters.MergeAdapter;
-import org.odk.clinic.android.database.ClinicAdapter;
+import org.odk.clinic.android.database.DbAdapter;
+import org.odk.clinic.android.openmrs.ActivityLog;
 import org.odk.clinic.android.openmrs.Form;
-import org.odk.clinic.android.openmrs.Patient;
+import org.odk.clinic.android.openmrs.FormInstance;
+import org.odk.clinic.android.tasks.ActivityLogTask;
+import org.odk.clinic.android.utilities.App;
+import org.odk.collect.android.provider.InstanceProviderAPI;
+import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
-import android.app.ListActivity;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
-import android.support.v4.content.LocalBroadcastManager;
-import android.view.GestureDetector;
-import android.view.GestureDetector.SimpleOnGestureListener;
-import android.view.LayoutInflater;
-import android.view.MotionEvent;
-import android.view.View;
-import android.view.View.OnTouchListener;
-import android.widget.ImageView;
-import android.widget.ListView;
-import android.widget.TextView;
+import android.preference.PreferenceManager;
 
 /**
  * Displays ArrayList<Form> in a Time-Separated List with patient header
@@ -34,124 +31,143 @@ import android.widget.TextView;
  * 
  */
 
-public class ViewFormsActivity extends ListActivity {
+public class ViewFormsActivity extends ViewPatientDataActivity {
 
-	private static final int SWIPE_MIN_DISTANCE = 120;
-	private static final int SWIPE_MAX_OFF_PATH = 250;
-	private static final int SWIPE_THRESHOLD_VELOCITY = 200;
-	protected MergeAdapter mMergeAdapter;
-	protected ListView mListView;
-
-	protected GestureDetector mFormDetector;
-	protected OnTouchListener mFormListener;
-
-	protected GestureDetector mSwipeDetector;
-	protected OnTouchListener mSwipeListener;
+	public static final String EDIT_FORM = "edit_form";
+	public static final int FILL_FORM = 3;
+	public static final int VIEW_FORM_ONLY = 4;
+	public static final int FILL_PRIORITY_FORM = 5;
+	protected ActivityLog mActivityLog;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);	
+		super.onCreate(savedInstanceState);
 	}
 
-	protected class formGestureDetector extends SimpleOnGestureListener {
-		@Override
-		public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-			try {
-				if (Math.abs(e1.getY() - e2.getY()) > SWIPE_MAX_OFF_PATH)
-					return false;
-				if (e2.getX() - e1.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
-					finish();
-				}
-			} catch (Exception e) {
-				// nothing
-			}
-			return false;
-		}
-
-		@Override
-		public boolean onSingleTapUp(MotionEvent e) {
-			return false;
-		}
-
-		@Override
-		public boolean onDown(MotionEvent e) {
-			return false;
-		}
-
-	}
-	
 	@Override
 	protected void onResume() {
 		super.onResume();
 	}
+	
+	protected ArrayList<Form> getCompletedForms(String patientId) {
+		String selection = "(" + InstanceColumns.STATUS + "=? or " + InstanceColumns.STATUS + "=? or " + InstanceColumns.STATUS + "=? ) and " + InstanceColumns.PATIENT_ID + "=?";
+		String selectionArgs[] = { InstanceProviderAPI.STATUS_ENCRYPTED, InstanceProviderAPI.STATUS_COMPLETE, InstanceProviderAPI.STATUS_SUBMITTED, patientId };
+		return queryInstances(selection, selectionArgs);
+	}
+
+	protected ArrayList<Form> getSavedForms(String patientId) {
+		String selection = InstanceColumns.STATUS + "=? and " + InstanceColumns.PATIENT_ID + "=?";
+		String selectionArgs[] = { InstanceProviderAPI.STATUS_INCOMPLETE, patientId };
+		return queryInstances(selection, selectionArgs);
+	}
+
+	protected FormAdapter buildInstancesList(Form[] forms) {
+		ArrayList<Form> formList = new ArrayList<Form>(Arrays.asList(forms));
+		FormAdapter formAdapter = new FormAdapter(this, R.layout.saved_instances, formList, false);
+		return (formAdapter);
+	}
+
+	protected ArrayList<Integer> getPriorityForms(Integer patientId) {
+		ArrayList<Integer> selectedFormIds = new ArrayList<Integer>();
+
+		Cursor c = DbAdapter.openDb().fetchPriorityFormIdByPatientId(patientId);
+
+		if (c != null && c.getCount() > 0) {
+			int valueIntIndex = c.getColumnIndex(DbAdapter.KEY_VALUE_INT);
+			do {
+				selectedFormIds.add(c.getInt(valueIntIndex));
+			} while (c.moveToNext());
+		}
+
+		if (c != null) {
+			c.close();
+		}
+
+		return selectedFormIds;
+	}
+
+	protected ArrayList<Form> queryInstances(String selection, String[] selectionArgs) {
+
+		Cursor c = App.getApp().getContentResolver().query(InstanceColumns.CONTENT_URI, null, selection, selectionArgs, InstanceColumns.LAST_STATUS_CHANGE_DATE + " DESC");
+
+		ArrayList<Form> selectedForms = new ArrayList<Form>();
+
+		if (c != null) {
+			c.moveToFirst();
+		}
+
+		if (c != null && c.getCount() >= 0) {
+			int formPathIndex = c.getColumnIndex(InstanceColumns.INSTANCE_FILE_PATH);
+			int formIdIndex = c.getColumnIndex(InstanceColumns.JR_FORM_ID);
+			int displayNameIndex = c.getColumnIndex(InstanceColumns.DISPLAY_NAME);
+			int formNameIndex = c.getColumnIndex(InstanceColumns.FORM_NAME);
+			int displaySubtextIndex = c.getColumnIndex(InstanceColumns.DISPLAY_SUBTEXT);
+			int idIndex = c.getColumnIndex(InstanceColumns._ID);
+			int dateIndex = c.getColumnIndex(InstanceColumns.LAST_STATUS_CHANGE_DATE);
+
+			if (c.getCount() > 0) {
+				Form form;
+				do {
+					if (!c.isNull(idIndex)) {
+						form = new Form();
+						form.setInstanceId(c.getInt(idIndex));
+						form.setFormId(c.getInt(formIdIndex));
+						form.setName(c.getString(formNameIndex));
+						form.setDisplayName(c.getString(displayNameIndex));
+						form.setPath(c.getString(formPathIndex));
+						form.setDisplaySubtext(c.getString(displaySubtextIndex));
+						form.setDate(c.getLong(dateIndex));
+
+						selectedForms.add(form);
+					}
+				} while (c.moveToNext());
+			}
+		}
+
+		if (c != null)
+			c.close();
+
+		return selectedForms;
+	}
+
+	/**
+	 * Create an activity log of launching this form
+	 * 
+	 * @param patientId
+	 * @param formId
+	 * @param formtype
+	 * @param priority
+	 */
+	protected void startActivityLog(String patientId, String formId, String formtype, boolean priority) {
+		SharedPreferences chwsettings = getSharedPreferences("ChwSettings", MODE_PRIVATE);
+		if (chwsettings.getBoolean("IsLoggingEnabled", true)) {
+
+			SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
+			String providerId = settings.getString(getString(R.string.key_provider), "0");
+			mActivityLog = new ActivityLog();
+			mActivityLog.setProviderId(providerId);
+			mActivityLog.setFormId(formId);
+			mActivityLog.setPatientId(patientId);
+			mActivityLog.setActivityStartTime();
+			mActivityLog.setFormType(formtype);
+			if (priority)
+				mActivityLog.setFormPriority("true");
+			else
+				mActivityLog.setFormPriority("false");
+		}
+	}
 
 	@Override
-	protected void onPause() {
-		super.onPause();
-		LocalBroadcastManager.getInstance(this).unregisterReceiver(onNotice);
+	protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
+		super.onActivityResult(requestCode, resultCode, intent);
+		SharedPreferences settings = getSharedPreferences("ChwSettings", MODE_PRIVATE);
+		if (settings.getBoolean("IsLoggingEnabled", true)) {
+			mActivityLog.setActivityStopTime();
+			new ActivityLogTask(mActivityLog).execute();
+		}
 	}
 
-	protected BroadcastReceiver onNotice = new BroadcastReceiver() {
-		public void onReceive(Context ctxt, Intent i) {
-
-			Intent intent = new Intent(getApplicationContext(), RefreshDataActivity.class);
-			intent.putExtra(RefreshDataActivity.DIALOG, RefreshDataActivity.ASK_TO_DOWNLOAD);
-			startActivity(intent);
-
-		}
-	};
-
-	protected void createPatientHeader(Integer patientId) {
-		mSwipeDetector = new GestureDetector(new formGestureDetector());
-		mSwipeListener = new OnTouchListener() {
-			public boolean onTouch(View v, MotionEvent event) {
-				return mSwipeDetector.onTouchEvent(event);
-			}
-		};
-		
-		setContentView(R.layout.example_cw_main);
-
-		View v = (View) findViewById(R.id.client_header);
-		if (v != null){
-			v.setOnTouchListener(mSwipeListener);
-		} 
-		
-		Patient focusPt = getPatient(patientId);
-		
-		TextView textView = (TextView) findViewById(R.id.identifier_text);
-		if (textView != null) {
-			textView.setText(focusPt.getIdentifier());
-		}
-
-		textView = (TextView) findViewById(R.id.name_text);
-		if (textView != null) {
-			StringBuilder nameBuilder = new StringBuilder();
-			nameBuilder.append(focusPt.getGivenName());
-			nameBuilder.append(' ');
-			nameBuilder.append(focusPt.getMiddleName());
-			nameBuilder.append(' ');
-			nameBuilder.append(focusPt.getFamilyName());
-			textView.setText(nameBuilder.toString());
-		}
-
-		textView = (TextView) findViewById(R.id.birthdate_text);
-		if (textView != null) {
-			textView.setText(focusPt.getBirthdate());
-		}
-
-		ImageView imageView = (ImageView) findViewById(R.id.gender_image);
-		if (imageView != null) {
-			if (focusPt.getGender().equals("M")) {
-				imageView.setImageResource(R.drawable.male_gray);
-			} else if (focusPt.getGender().equals("F")) {
-				imageView.setImageResource(R.drawable.female_gray);
-			}
-		}
-		
-	}
-
-	protected void createFormHistoryList(ArrayList<Form> formInstances) {
-		mMergeAdapter = new MergeAdapter();
+	protected MergeAdapter createFormHistoryList(MergeAdapter mMergeAdapter, ArrayList<Form> formInstances) {
 
 		if (formInstances != null && formInstances.size() > 0) {
 			ArrayList<Form> dayGroup = new ArrayList<Form>();
@@ -184,141 +200,89 @@ public class ViewFormsActivity extends ListActivity {
 			}
 			if (!dayGroup.isEmpty()) {
 				Form[] day = dayGroup.toArray(new Form[dayGroup.size()]);
-				mMergeAdapter.addView(buildSectionLabel(getString(R.string.instances_last_day)));
+				mMergeAdapter.addView(buildSectionLabel(getString(R.string.instances_last_day), false));
 				mMergeAdapter.addAdapter(buildInstancesList(day));
 			}
 			if (!weekGroup.isEmpty()) {
 				Form[] week = weekGroup.toArray(new Form[weekGroup.size()]);
-				mMergeAdapter.addView(buildSectionLabel(getString(R.string.instances_last_week)));
+				mMergeAdapter.addView(buildSectionLabel(getString(R.string.instances_last_week), false));
 				mMergeAdapter.addAdapter(buildInstancesList(week));
 			}
 			if (!monthGroup.isEmpty()) {
 				Form[] month = monthGroup.toArray(new Form[monthGroup.size()]);
-				mMergeAdapter.addView(buildSectionLabel(getString(R.string.instances_last_month)));
+				mMergeAdapter.addView(buildSectionLabel(getString(R.string.instances_last_month), false));
 				mMergeAdapter.addAdapter(buildInstancesList(month));
 			}
 			if (!sixMonthGroup.isEmpty()) {
 				Form[] sixmonth = monthGroup.toArray(new Form[monthGroup.size()]);
-				mMergeAdapter.addView(buildSectionLabel(getString(R.string.instances_last_six_months)));
+				mMergeAdapter.addView(buildSectionLabel(getString(R.string.instances_last_six_months), false));
 				mMergeAdapter.addAdapter(buildInstancesList(sixmonth));
 			}
 			if (!oneYearGroup.isEmpty()) {
 				Form[] year = oneYearGroup.toArray(new Form[oneYearGroup.size()]);
-				mMergeAdapter.addView(buildSectionLabel(getString(R.string.instances_last_year)));
+				mMergeAdapter.addView(buildSectionLabel(getString(R.string.instances_last_year), false));
 				mMergeAdapter.addAdapter(buildInstancesList(year));
 			}
 			if (!allOtherGroup.isEmpty()) {
 				Form[] allother = allOtherGroup.toArray(new Form[allOtherGroup.size()]);
-				mMergeAdapter.addView(buildSectionLabel(getString(R.string.instances_unknown_gt_year)));
+				mMergeAdapter.addView(buildSectionLabel(getString(R.string.instances_unknown_gt_year), false));
 				mMergeAdapter.addAdapter(buildInstancesList(allother));
 			}
 
 		}
 
-		mListView = getListView();
-		mListView.setAdapter(mMergeAdapter);
-		mListView.setOnTouchListener(mFormListener);
+		return mMergeAdapter;
 	}
 
-	protected View buildSectionLabel(String timeperiod) {
-		View v;
-		LayoutInflater vi = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-		v = vi.inflate(R.layout.section_label, null);
-		TextView textView = (TextView) v.findViewById(R.id.name_text);
-		ImageView sectionImage = (ImageView) v.findViewById(R.id.section_image);
-		sectionImage.setVisibility(View.GONE);
-		v.setBackgroundResource(R.color.dark_gray);
-		v.setOnTouchListener(mSwipeListener);
-		textView.setText(timeperiod);
-		return (v);
-	}
+	protected void updateDatabases(int requestCode, Intent intent, Integer patientId) {
+		// 1. GET instance from Collect
+		Uri u = intent.getData();
+		String dbjrFormId = null;
+		String displayName = null;
+		String fileDbPath = null;
+		String status = null;
 
-	protected FormAdapter buildInstancesList(Form[] forms) {
-		ArrayList<Form> formList = new ArrayList<Form>(Arrays.asList(forms));
-		FormAdapter formAdapter = new FormAdapter(this, R.layout.saved_instances, formList, false);
-		return (formAdapter);
-	}
-
-	protected ArrayList<Integer> getPriorityForms(Integer patientId) {
-		ArrayList<Integer> selectedFormIds = new ArrayList<Integer>();
-		ClinicAdapter ca = new ClinicAdapter();
-
-		ca.open();
-		Cursor c = ca.fetchPriorityFormIdByPatientId(patientId);
-
-		if (c != null && c.getCount() > 0) {
-			int valueIntIndex = c.getColumnIndex(ClinicAdapter.KEY_VALUE_INT);
-			do {
-				selectedFormIds.add(c.getInt(valueIntIndex));
-			} while (c.moveToNext());
+		Cursor mCursor = App.getApp().getContentResolver().query(u, null, null, null, null);
+		mCursor.moveToPosition(-1);
+		while (mCursor.moveToNext()) {
+			status = mCursor.getString(mCursor.getColumnIndex(InstanceColumns.STATUS));
+			dbjrFormId = mCursor.getString(mCursor.getColumnIndex(InstanceColumns.JR_FORM_ID));
+			displayName = mCursor.getString(mCursor.getColumnIndex(InstanceColumns.DISPLAY_NAME));
+			fileDbPath = mCursor.getString(mCursor.getColumnIndex(InstanceColumns.INSTANCE_FILE_PATH));
+		}
+		if (mCursor != null) {
+			mCursor.close();
 		}
 
-		if (c != null) {
-			c.close();
+		// 2. updateSavedForm Numbers by Patient ID--Not necessary here,
+		// as we have no ID
+		// Allows for faster PatientList Queries using ONLY patient table
+		// otherwise, for patient list, need: patients, instances, and obs
+		// tables
+		DbAdapter ca = DbAdapter.openDb();
+		if (patientId > 0) {
+			ca.updateSavedFormNumbersByPatientId(patientId.toString());
+			ca.updateSavedFormsListByPatientId(patientId.toString());
 		}
-		ca.close();
 
-		return selectedFormIds;
-	}
+		// 3. Add to Clinic Db if complete, even without ID
+		if (status.equalsIgnoreCase(InstanceProviderAPI.STATUS_COMPLETE)) {
 
-	// TODO better resource management if Patient were Parceable object?
-	protected Patient getPatient(Integer patientId) {
+			FormInstance fi = new FormInstance();
+			fi.setPatientId(patientId);
+			fi.setFormId(Integer.parseInt(dbjrFormId));
+			fi.setPath(fileDbPath);
+			fi.setStatus(DbAdapter.STATUS_UNSUBMITTED);
+			Date date = new Date();
+			date.setTime(System.currentTimeMillis());
+			String dateString = "Completed: " + (new SimpleDateFormat("EEE, MMM dd, yyyy 'at' HH:mm").format(date));
+			fi.setCompletionSubtext(dateString);
+			ca.createFormInstance(fi, displayName);
 
-		Patient p = null;
-		ClinicAdapter ca = new ClinicAdapter();
-
-		ca.open();
-		Cursor c = ca.fetchPatient(patientId);
-
-		if (c != null && c.getCount() > 0) {
-			int patientIdIndex = c.getColumnIndex(ClinicAdapter.KEY_PATIENT_ID);
-			int identifierIndex = c.getColumnIndex(ClinicAdapter.KEY_IDENTIFIER);
-			int givenNameIndex = c.getColumnIndex(ClinicAdapter.KEY_GIVEN_NAME);
-			int familyNameIndex = c.getColumnIndex(ClinicAdapter.KEY_FAMILY_NAME);
-			int middleNameIndex = c.getColumnIndex(ClinicAdapter.KEY_MIDDLE_NAME);
-			int birthDateIndex = c.getColumnIndex(ClinicAdapter.KEY_BIRTH_DATE);
-			int genderIndex = c.getColumnIndex(ClinicAdapter.KEY_GENDER);
-			int priorityIndex = c.getColumnIndexOrThrow(ClinicAdapter.KEY_PRIORITY_FORM_NUMBER);
-			int priorityFormIndex = c.getColumnIndexOrThrow(ClinicAdapter.KEY_PRIORITY_FORM_NAMES);
-
-			p = new Patient();
-			p.setPatientId(c.getInt(patientIdIndex));
-			p.setIdentifier(c.getString(identifierIndex));
-			p.setGivenName(c.getString(givenNameIndex));
-			p.setFamilyName(c.getString(familyNameIndex));
-			p.setMiddleName(c.getString(middleNameIndex));
-			p.setBirthDate(c.getString(birthDateIndex));
-			p.setGender(c.getString(genderIndex));
-			p.setPriorityNumber(c.getInt(priorityIndex));
-			p.setPriorityForms(c.getString(priorityFormIndex));
-
-			if (c.getInt(priorityIndex) > 0) {
-
-				p.setPriority(true);
-
+			if (requestCode == FILL_PRIORITY_FORM) {
+				ca.updatePriorityFormsByPatientId(patientId.toString(), dbjrFormId);
 			}
-
 		}
 
-		if (c != null) {
-			c.close();
-		}
-		ca.close();
-
-		return p;
 	}
-
-	/**
-	 * For Consistency, using Collect's same UI math for onFling
-	 * 
-	 */
-
-
-	// if ((Math.abs(e1.getX() - e2.getX()) > xPixelLimit && Math.abs(e1.getY()
-	// - e2.getY()) < yPixelLimit) || Math.abs(e1.getX() - e2.getX()) >
-	// xPixelLimit * 2) {
-	// if (velocityX > 0) {
-
-
-
 }

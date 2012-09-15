@@ -27,6 +27,7 @@ public final class InstanceProviderAPI {
 
     // This class cannot be instantiated
     private InstanceProviderAPI() {}
+    public static final String DATABASE_NAME = "instances.db";
     
     // status for instances
     public static final String STATUS_INCOMPLETE = "incomplete";

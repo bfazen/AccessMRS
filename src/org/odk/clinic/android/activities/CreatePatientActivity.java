@@ -1,51 +1,29 @@
 package org.odk.clinic.android.activities;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-
-import org.kxml2.io.KXmlParser;
-import org.kxml2.io.KXmlSerializer;
-import org.kxml2.kdom.Document;
-import org.kxml2.kdom.Element;
 import org.odk.clinic.android.R;
-import org.odk.clinic.android.database.ClinicAdapter;
+import org.odk.clinic.android.database.DbAdapter;
 import org.odk.clinic.android.openmrs.ActivityLog;
 import org.odk.clinic.android.openmrs.Constants;
 import org.odk.clinic.android.openmrs.FormInstance;
-import org.odk.clinic.android.openmrs.Observation;
 import org.odk.clinic.android.openmrs.Patient;
 import org.odk.clinic.android.tasks.ActivityLogTask;
 import org.odk.clinic.android.utilities.App;
-import org.odk.clinic.android.utilities.FileUtils;
+import org.odk.clinic.android.utilities.XformUtils;
 import org.odk.collect.android.provider.FormsProviderAPI.FormsColumns;
 import org.odk.collect.android.provider.InstanceProviderAPI;
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
-import org.w3c.dom.Attr;
-import org.w3c.dom.NamedNodeMap;
-import org.w3c.dom.NodeList;
 
 import android.app.Activity;
 import android.content.ComponentName;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteException;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -68,6 +46,7 @@ import android.widget.Toast;
 public class CreatePatientActivity extends Activity implements OnGestureListener {
 	public static final Integer PERMANENT_NEW_CLIENT = 1;
 	public static final Integer TEMPORARY_NEW_CLIENT = 2;
+	public static final String TAG = CreatePatientActivity.class.getSimpleName();
 
 	private Context mContext;
 	private String mFirstName;
@@ -78,14 +57,11 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 	private String mEstimatedDob;
 
 	private DatePicker mBirthDatePicker;
-	// private TimePicker mBirthTime;
 	private String mBirthString;
 	private String mDbBirthString;
 	private int mYear;
 	private int mMonth;
 	private int mDay;
-	// private int mHour;
-	// private int mMinute;
 	private Date mDbBirthDate;
 	private Integer mCreateCode = null;
 
@@ -93,16 +69,8 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 	private ActivityLog mActivityLog;
 	private static final int REGISTRATION = 5;
 	private static final int VERIFY_SIMILAR_CLIENTS = 6;
-	private static final String REGISTRATION_FORM_PATH = "/mnt/sdcard/odk/clinic/forms/patient_registration.xml";
-
-	// brought in from Yaw's ViewPatient and my ViewAllForms
-	private static final DateFormat COLLECT_INSTANCE_NAME_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
-
-	private static Element mFormNode;
 	private static String mProviderId;
 	private static Patient mPatient;
-	private static HashMap<String, String> mInstanceValues = new HashMap<String, String>();
-	private static ArrayList<Observation> mObservations = new ArrayList<Observation>();
 
 	private GestureDetector mGestureDetector;
 
@@ -115,15 +83,11 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 
 		// check to see if form exists in Collect Db
 		String dbjrFormId = "no_registration_form";
-		Cursor cursor = App.getApp().getContentResolver().query(FormsColumns.CONTENT_URI, new String[] { FormsColumns.JR_FORM_ID }, FormsColumns.JR_FORM_ID + "=?", new String[] { "-1" }, null);
+		String registrationFormId = "-1";
+		Cursor cursor = App.getApp().getContentResolver().query(FormsColumns.CONTENT_URI, new String[] { FormsColumns.JR_FORM_ID }, FormsColumns.JR_FORM_ID + "=?", new String[] { registrationFormId }, null);
 		if (cursor.moveToFirst()) {
 			do {
-				// if registration form does not exist, then create it
 				dbjrFormId = cursor.getString(cursor.getColumnIndex(FormsColumns.JR_FORM_ID));
-				// String neg = "-1";
-				// if (dbjrFormId.equals(neg)) {
-				//
-				// }
 			} while (cursor.moveToNext());
 
 			if (cursor != null) {
@@ -131,12 +95,12 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 			}
 		}
 
-		String neg = "-1";
-		if (!dbjrFormId.equals(neg)) {
-			insertSingleForm(REGISTRATION_FORM_PATH);
-		}
+		if (!dbjrFormId.equals(registrationFormId))
+			XformUtils.insertRegistrationForm();
+
+
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
-		mProviderId = settings.getString(PreferencesActivity.KEY_PROVIDER, "0");
+		mProviderId = settings.getString(getString(R.string.key_provider), "0");
 
 		// get Birthday
 		mBirthDatePicker = (DatePicker) findViewById(R.id.birthdate_widget);
@@ -145,10 +109,6 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 		mMonth = 1;
 		mDay = 1;
 		mBirthDatePicker.init(mYear, mMonth, mDay, null);
-
-		// mBirthTime = (TimePicker) findViewById(R.id.birthtime_widget);
-		// mBirthTime.setCurrentHour(0);
-		// mBirthTime.setCurrentMinute(0);
 
 		Button btnSubmit = (Button) findViewById(R.id.btnSubmit);
 		btnSubmit.setOnClickListener(new OnClickListener() {
@@ -193,20 +153,17 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 
 	private boolean similarClientCheck() {
 		// Verify the client against the db
-		Log.e("louis.fazen", "similarClientCheck!!!!!!!!!!!!!!!!!!!!!!!!!!!  firstname=" + mFirstName + " lastname=" + mLastName + ", pid=" + mPatientID);
 		boolean similarFound = false;
-		ClinicAdapter ca = new ClinicAdapter();
-		ca.open();
+
 		Cursor c = null;
-		c = ca.fetchPatients(mFirstName + " " + mLastName, null, DashboardActivity.LIST_SIMILAR_CLIENTS);
+		c = DbAdapter.getInstance().open().fetchPatients(mFirstName + " " + mLastName, null, DashboardActivity.LIST_SIMILAR_CLIENTS);
 		if (c != null && c.getCount() > 0) {
-			Log.e("louis.fazen", "cursor is not null and count>0 client is similar");
 			similarFound = true;
 		}
+		
 		if (!similarFound && mPatientID != null && mPatientID.length() > 3) {
-			c = ca.fetchPatients(null, mPatientID, DashboardActivity.LIST_SIMILAR_CLIENTS);
+			c = DbAdapter.getInstance().open().fetchPatients(null, mPatientID, DashboardActivity.LIST_SIMILAR_CLIENTS);
 			if (c != null && c.getCount() > 0) {
-				Log.e("louis.fazen", "cursor is not null and count>0 client is similar");
 				similarFound = true;
 			}
 		}
@@ -214,7 +171,7 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 		if (c != null) {
 			c.close();
 		}
-		ca.close();
+
 		return similarFound;
 
 	}
@@ -256,7 +213,7 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 				Uri u = intent.getData();
 				String dbjrFormId = null;
 				String displayName = null;
-				String filePath = null;
+				String fileDbPath = null;
 				String status = null;
 
 				Cursor mCursor = App.getApp().getContentResolver().query(u, null, null, null, null);
@@ -265,29 +222,24 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 					status = mCursor.getString(mCursor.getColumnIndex(InstanceColumns.STATUS));
 					dbjrFormId = mCursor.getString(mCursor.getColumnIndex(InstanceColumns.JR_FORM_ID));
 					displayName = mCursor.getString(mCursor.getColumnIndex(InstanceColumns.DISPLAY_NAME));
-					filePath = mCursor.getString(mCursor.getColumnIndex(InstanceColumns.INSTANCE_FILE_PATH));
-					Log.e("lef-onActivityResult", "mCursor status:" + status + " FormId:" + dbjrFormId + " displayName:" + displayName + " filepath:" + filePath);
+					fileDbPath = mCursor.getString(mCursor.getColumnIndex(InstanceColumns.INSTANCE_FILE_PATH));
 				}
 				if (mCursor != null) {
 					mCursor.close();
 				}
 
 				if (status.equalsIgnoreCase(InstanceProviderAPI.STATUS_COMPLETE)) {
-					Log.e("lef-onActivityResult", "mCursor status:" + status + "=" + InstanceProviderAPI.STATUS_COMPLETE);
 					FormInstance fi = new FormInstance();
 					fi.setPatientId(mPatient.getPatientId());
 					fi.setFormId(Integer.parseInt(dbjrFormId));
-					fi.setPath(filePath);
-					fi.setStatus(ClinicAdapter.STATUS_UNSUBMITTED);
+					fi.setPath(fileDbPath);
+					fi.setStatus(DbAdapter.STATUS_UNSUBMITTED);
 					Date date = new Date();
 					date.setTime(System.currentTimeMillis());
 					String dateString = "Completed: " + (new SimpleDateFormat("EEE, MMM dd, yyyy 'at' HH:mm").format(date));
 					fi.setCompletionSubtext(dateString);
 
-					ClinicAdapter ca = new ClinicAdapter();
-					ca.open();
-					ca.createFormInstance(fi, displayName);
-					ca.close();
+					DbAdapter.openDb().createFormInstance(fi, displayName);
 				}
 
 				loadNewClientView();
@@ -299,10 +251,10 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 	}
 
 	private void loadNewClientView() {
+		
 		// load the newly created patient into ViewPatientActivity
 		Intent ip = new Intent(getApplicationContext(), ViewPatientActivity.class);
 		ip.putExtra(Constants.KEY_PATIENT_ID, mPatient.getPatientId().toString());
-		Log.e("louis.fazen", "createpatient.mpatient.getPatientId=" + mPatient.getPatientId());
 		startActivity(ip);
 
 		// and quit
@@ -388,10 +340,7 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 	private void addClientToDb() {
 		mPatient = new Patient();
 
-		ClinicAdapter ca = new ClinicAdapter();
-		ca.open();
-
-		int minPatientId = ca.findLastClientCreatedId();
+		int minPatientId = DbAdapter.openDb().findLastClientCreatedId();
 		if (minPatientId < 0)
 			mPatient.setPatientId(Integer.valueOf(minPatientId - 1));
 		else
@@ -416,12 +365,12 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 		String randomUUID = uuid.toString();
 		mPatient.setUuid(randomUUID);
 
-		ca.createPatient(mPatient);
-		ca.close();
+		DbAdapter.openDb().createPatient(mPatient);
 	}
 
 	private void addFormToCollect() {
-		int instanceId = createFormInstance();
+		
+		int instanceId = XformUtils.createRegistrationFormInstance(mPatient);
 		if (instanceId != -1) {
 			Intent intent = new Intent();
 			intent.setComponent(new ComponentName("org.odk.collect.android", "org.odk.collect.android.activities.FormEntryActivity"));
@@ -440,359 +389,8 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 
 	}
 
-	// create a HasMap of mInstanceValues... but I know everything that should
-	// go into it... so maybe do not need to do that?
-	private static void prepareInstanceValues() {
 
-		for (int i = 0; i < mObservations.size(); i++) {
-			Observation o = mObservations.get(i);
-			mInstanceValues.put(o.getFieldName(), o.toString());
-
-		}
-	}
-
-	private static int createFormInstance() {
-
-		String jrFormId = "-1";
-		// reading the form
-		Document doc = new Document();
-		KXmlParser formParser = new KXmlParser();
-		try {
-			formParser.setInput(new FileReader(REGISTRATION_FORM_PATH));
-			doc.parse(formParser);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-		findFormNode(doc.getRootElement());
-		if (mFormNode != null) {
-			prepareInstanceValues();
-			traverseInstanceNodes(mFormNode);
-		} else {
-			return -1;
-		}
-
-		// writing the instance file
-		File formFile = new File(REGISTRATION_FORM_PATH);
-		String formFileName = formFile.getName();
-		String instanceName = "";
-		if (formFileName.endsWith(".xml")) {
-			instanceName = formFileName.substring(0, formFileName.length() - 4);
-		} else {
-			instanceName = jrFormId;
-		}
-		instanceName = instanceName + "_" + COLLECT_INSTANCE_NAME_DATE_FORMAT.format(new Date());
-
-		String instancePath = FileUtils.INSTANCES_PATH + instanceName;
-		File ftest = new File(instancePath);
-		
-		if((new File(instancePath)).mkdirs())
-			Log.e("create pt activity", "mk directories has been made at=" + instancePath);
-		else{
-			Log.e("create pt activity", "failed to make directories at=" + instancePath);
-			if(ftest.mkdir())
-				Log.e("create pt activity", "a directory has been made at=" + instancePath);
-			else
-				Log.e("create pt activity", "failed to make directory at=" + instancePath);
-		}
-		String instanceFilePath = instancePath + "/" + instanceName + ".xml";
-		File instanceFile = new File(instanceFilePath);
-
-		Log.e("create patient activity", "making a new form at path=" + instanceFilePath);
-		KXmlSerializer instanceSerializer = new KXmlSerializer();
-		try {
-			instanceFile.createNewFile();
-			FileWriter instanceWriter = new FileWriter(instanceFile);
-			instanceSerializer.setOutput(instanceWriter);
-			mFormNode.write(instanceSerializer);
-			instanceSerializer.endDocument();
-			instanceSerializer.flush();
-			instanceWriter.close();
-
-			// register into content provider
-			ContentValues insertValues = new ContentValues();
-			insertValues.put(InstanceColumns.DISPLAY_NAME, mPatient.getGivenName() + " " + mPatient.getFamilyName());
-			insertValues.put(InstanceColumns.INSTANCE_FILE_PATH, instanceFilePath);
-			insertValues.put(InstanceColumns.JR_FORM_ID, jrFormId);
-
-			// louis.fazen is adding new variables to Instances.Db
-			insertValues.put(InstanceColumns.PATIENT_ID, mPatient.getPatientId());
-			insertValues.put(InstanceColumns.FORM_NAME, "PatientRegistrationForm");
-			insertValues.put(InstanceColumns.STATUS, InstanceProviderAPI.STATUS_COMPLETE);
-
-			Uri insertResult = App.getApp().getContentResolver().insert(InstanceColumns.CONTENT_URI, insertValues);
-			return Integer.valueOf(insertResult.getLastPathSegment());
-
-		} catch (IOException e) {
-
-			e.printStackTrace();
-		}
-		return -1;
-	}
-
-	private static void findFormNode(Element element) {
-
-		// loop through all the children of this element
-		for (int i = 0; i < element.getChildCount(); i++) {
-
-			Element childElement = element.getElement(i);
-			if (childElement != null) {
-
-				String childName = childElement.getName();
-				if (childName.equalsIgnoreCase("form")) {
-					mFormNode = childElement;
-				}
-
-				if (childElement.getChildCount() > 0) {
-					findFormNode(childElement);
-				}
-			}
-		}
-
-	}
-
-	private static void traverseInstanceNodes(Element element) {
-
-		// extract 'WEIGHT (KG)' from '5089^WEIGHT (KG)^99DCT'
-		Pattern pattern = Pattern.compile("\\^.*\\^");
-		// loop through all the children of this element
-		for (int i = 0; i < element.getChildCount(); i++) {
-
-			Element childElement = element.getElement(i);
-			if (childElement != null) {
-
-				String childName = childElement.getName();
-
-				// patient id
-				if (childName.equalsIgnoreCase("patient.patient_id")) {
-					childElement.clear();
-					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mPatient.getPatientId().toString());
-				}
-				if (childName.equalsIgnoreCase("patient.birthdate")) {
-					childElement.clear();
-					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mPatient.getDbBirthDate().toString());
-				}
-				if (childName.equalsIgnoreCase("patient.birthdate_estimated")) {
-					childElement.clear();
-					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mPatient.getbirthEstimated().toString());
-				}
-				if (childName.equalsIgnoreCase("patient.family_name")) {
-					childElement.clear();
-					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mPatient.getFamilyName());
-				}
-				if (childName.equalsIgnoreCase("patient.given_name")) {
-					childElement.clear();
-					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mPatient.getGivenName());
-				}
-
-				if (childName.equalsIgnoreCase("patient.middle_name")) {
-					childElement.clear();
-					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mPatient.getMiddleName());
-
-				}
-				if (childName.equalsIgnoreCase("patient.sex")) {
-					childElement.clear();
-					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mPatient.getGender());
-
-				}
-				if (childName.equalsIgnoreCase("patient.uuid")) {
-					childElement.clear();
-					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mPatient.getUuid());
-
-				}
-				if (childName.equalsIgnoreCase("patient.medical_record_number")) {
-					childElement.clear();
-					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mPatient.getIdentifier());
-
-				}
-
-				// provider id
-				if (childName.equalsIgnoreCase("encounter.provider_id")) {
-					childElement.clear();
-					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mProviderId);
-				}
-
-				if (childName.equalsIgnoreCase("encounter.location_id")) {
-					childElement.clear();
-					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, "CHV Mobile Form Entry");
-				}
-
-				if (childName.equalsIgnoreCase("encounter.encounter_datetime")) {
-					childElement.clear();
-					Date date = new Date();
-					date.setTime(System.currentTimeMillis());
-					String dateString = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(date);
-					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, dateString);
-				}
-
-				if (childName.equalsIgnoreCase("chv_provider_list")) {
-					childElement.clear();
-					String addClient = "";
-					if (mPatient.getCreateCode() == PERMANENT_NEW_CLIENT)
-						addClient = "Add Client to CHV Provider List";
-					else if (mPatient.getCreateCode() == TEMPORARY_NEW_CLIENT)
-						addClient = "Temporary Visit Only";
-					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, addClient);
-				}
-
-				if (childName.equalsIgnoreCase("date") || childName.equalsIgnoreCase("time")) {
-					childElement.clear();
-
-				}
-
-				// value node
-				if (childName.equalsIgnoreCase("value")) {
-
-					childElement.clear();
-
-					// parent of value node
-					Element parentElement = ((Element) childElement.getParent());
-					String parentConcept = parentElement.getAttributeValue("", "openmrs_concept");
-
-					// match the text inside ^^
-					String match = null;
-					Matcher matcher = pattern.matcher(parentConcept);
-					while (matcher.find()) {
-						match = matcher.group(0).substring(1, matcher.group(0).length() - 1);
-					}
-
-					// write value into value n
-					String value = mInstanceValues.get(match);
-					if (value != null) {
-						childElement.addChild(0, org.kxml2.kdom.Node.TEXT, value);
-					}
-				}
-
-				if (childElement.getChildCount() > 0) {
-					traverseInstanceNodes(childElement);
-				}
-			}
-		}
-	}
-
-	// taken from DownLoadFormTask (which is an Async Task)
-	private boolean insertSingleForm(String formPath) {
-
-		ContentValues values = new ContentValues();
-		File addMe = new File(formPath);
-
-		// Ignore invisible files that start with periods.
-		if (!addMe.getName().startsWith(".") && (addMe.getName().endsWith(".xml") || addMe.getName().endsWith(".xhtml"))) {
-			Log.e("louis.fazen", "make a document");
-			DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-			DocumentBuilder documentBuilder = null;
-			org.w3c.dom.Document document = null;
-
-			try {
-				documentBuilder = documentBuilderFactory.newDocumentBuilder();
-				document = documentBuilder.parse(addMe);
-				document.normalize();
-			} catch (Exception e) {
-				Log.e("DownloadFormTask", e.getLocalizedMessage());
-			}
-
-			String name = null;
-			int id = -1;
-			String version = null;
-			String md5 = FileUtils.getMd5Hash(addMe);
-
-			NodeList form = document.getElementsByTagName("form");
-			NamedNodeMap nodemap = form.item(0).getAttributes();
-			for (int i = 0; i < nodemap.getLength(); i++) {
-				Attr attribute = (Attr) nodemap.item(i);
-				if (attribute.getName().equalsIgnoreCase("id")) {
-					id = Integer.valueOf(attribute.getValue());
-				}
-				if (attribute.getName().equalsIgnoreCase("version")) {
-					version = attribute.getValue();
-				}
-				if (attribute.getName().equalsIgnoreCase("name")) {
-					name = attribute.getValue();
-				}
-			}
-
-			values.put(FormsColumns.DISPLAY_NAME, "Client Registration Form");
-			values.put(FormsColumns.JR_FORM_ID, "-1");
-			values.put(FormsColumns.FORM_FILE_PATH, addMe.getAbsolutePath());
-
-			boolean alreadyExists = false;
-
-			Cursor mCursor;
-			try {
-				mCursor = App.getApp().getContentResolver().query(FormsColumns.CONTENT_URI, null, null, null, null);
-			} catch (SQLiteException e) {
-				Log.e("DownloadFormTask", e.getLocalizedMessage());
-				return false;
-				// TODO handle exception
-			}
-
-			if (mCursor == null) {
-				System.out.println("Something bad happened");
-				ClinicAdapter ca = new ClinicAdapter();
-				ca.open();
-				ca.deleteAllForms();
-				ca.close();
-				return false;
-			}
-
-			mCursor.moveToPosition(-1);
-			while (mCursor.moveToNext()) {
-
-				String dbmd5 = mCursor.getString(mCursor.getColumnIndex(FormsColumns.MD5_HASH));
-				String dbFormId = mCursor.getString(mCursor.getColumnIndex(FormsColumns.JR_FORM_ID));
-
-				// if the exact form exists, leave it be. else, insert it.
-				if (dbmd5.equalsIgnoreCase(md5) && dbFormId.equalsIgnoreCase(id + "")) {
-
-					alreadyExists = true;
-				}
-
-			}
-
-			if (!alreadyExists) {
-
-				App.getApp().getContentResolver().delete(FormsColumns.CONTENT_URI, "md5Hash=?", new String[] { md5 });
-				App.getApp().getContentResolver().delete(FormsColumns.CONTENT_URI, "jrFormId=?", new String[] { id + "" });
-				App.getApp().getContentResolver().insert(FormsColumns.CONTENT_URI, values);
-			}
-
-			if (mCursor != null) {
-				mCursor.close();
-			}
-
-		}
-
-		return true;
-
-	}
-
-	private String getNameFromId(Integer id) {
-		String formName = null;
-		ClinicAdapter ca = new ClinicAdapter();
-		ca.open();
-		Cursor c = ca.fetchAllForms();
-
-		if (c != null && c.getCount() >= 0) {
-
-			int formIdIndex = c.getColumnIndex(ClinicAdapter.KEY_FORM_ID);
-			int nameIndex = c.getColumnIndex(ClinicAdapter.KEY_NAME);
-
-			if (c.getCount() > 0) {
-				do {
-					if (c.getInt(formIdIndex) == id) {
-						formName = c.getString(nameIndex);
-						break;
-					}
-				} while (c.moveToNext());
-			}
-		}
-
-		if (c != null)
-			c.close();
-
-		ca.close();
-		return formName;
-	}
+	//TODO! delete this type of swipe action...
 
 	@Override
 	public boolean onTouchEvent(MotionEvent me) {

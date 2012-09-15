@@ -25,7 +25,7 @@ import org.apache.http.params.HttpParams;
 import org.apache.http.params.HttpProtocolParams;
 import org.apache.http.protocol.HTTP;
 import org.odk.clinic.android.R;
-import org.odk.clinic.android.database.ClinicAdapter;
+import org.odk.clinic.android.database.DbAdapter;
 import org.odk.clinic.android.listeners.UploadFormListener;
 import org.odk.clinic.android.utilities.App;
 import org.odk.clinic.android.utilities.ODKLocalKeyStore;
@@ -44,7 +44,6 @@ public class UploadDataTask extends AsyncTask<Void, String, String> {
 	private static final int CONNECTION_TIMEOUT = 60000;
 
 	protected UploadFormListener mStateListener;
-	private ClinicAdapter mCla;
 	private int mTotalCount = -1;
 	private String[] mInstancesToUpload;
 
@@ -52,11 +51,6 @@ public class UploadDataTask extends AsyncTask<Void, String, String> {
 	protected String doInBackground(Void... values) {
 
 		String uploadResult = "No Completed Forms to Upload";
-
-		if (mCla == null) {
-			mCla = new ClinicAdapter();
-			mCla.open();
-		}
 
 		if (dataToUpload()) {
 			//TODO! CHECK does this verify uploaded?
@@ -86,9 +80,9 @@ public class UploadDataTask extends AsyncTask<Void, String, String> {
 		boolean dataToUpload = true;
 		ArrayList<String> selectedInstances = new ArrayList<String>();
 
-		Cursor c = mCla.fetchFormInstancesByStatus(ClinicAdapter.STATUS_UNSUBMITTED);
+		Cursor c = DbAdapter.openDb().fetchFormInstancesByStatus(DbAdapter.STATUS_UNSUBMITTED);
 		if (c != null && c.getCount() > 0) {
-			String s = c.getString(c.getColumnIndex(ClinicAdapter.KEY_PATH));
+			String s = c.getString(c.getColumnIndex(DbAdapter.KEY_PATH));
 			selectedInstances.add(s);
 			c.close();
 		}
@@ -264,9 +258,9 @@ public class UploadDataTask extends AsyncTask<Void, String, String> {
 		// TODO! WHAT HAPPENED HERE? we should simply be deleting these in the
 		// FormInstances Table,
 		// not updating them, no?
-		Cursor c = mCla.fetchFormInstancesByPath(path);
+		Cursor c = DbAdapter.openDb().fetchFormInstancesByPath(path);
 		if (c != null) {
-			mCla.updateFormInstance(path, ClinicAdapter.STATUS_SUBMITTED);
+			DbAdapter.openDb().updateFormInstance(path, DbAdapter.STATUS_SUBMITTED);
 			c.close();
 		}
 	}

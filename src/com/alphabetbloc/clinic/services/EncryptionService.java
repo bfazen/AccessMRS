@@ -12,7 +12,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import javax.crypto.Cipher;
@@ -32,7 +31,6 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.util.Base64;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.commonsware.cwac.wakeful.EncryptDataListener;
 import com.commonsware.cwac.wakeful.WakefulIntentService;
@@ -81,6 +79,7 @@ public class EncryptionService extends WakefulIntentService {
 	protected void doWakefulWork(Intent intent) {
 		mContext = this;
 
+		// get all recently submitted files
 		ArrayList<Map<String, Object>> submittedFiles = findSubmittedFiles();
 		if (submittedFiles.isEmpty())
 			stopSelf();
@@ -89,15 +88,16 @@ public class EncryptionService extends WakefulIntentService {
 		scheduleAlarms(new EncryptDataListener(), WakefulIntentService.ENCRYPT_DATA, mContext, true);
 
 		boolean allEncrypted = true;
-		for (Map<String, Object> file : submittedFiles) {
-			String path = (String) file.get(INSTANCE_PATH);
-			File instance = new File(path);
-			int id = (Integer) file.get(INSTANCE_ID);
-			Log.e(TAG, "attempting to encrypt:" + path);
+		for (Map<String, Object> current : submittedFiles) {
+			String dbPath = (String) current.get(INSTANCE_PATH);
+			int id = (Integer) current.get(INSTANCE_ID);
 
-			Log.e(TAG, "dowakefulwork forloop allencrypted before encrypt=:" + allEncrypted);
-			allEncrypted = allEncrypted & encryptFormInstance(instance, id);
-			Log.e(TAG, "dowakefulwork forloop allencrypted after encrypt=:" + allEncrypted);
+			//construct the instance path from db path
+			String inPath = FileUtils.getDecryptedFilePath(dbPath);
+			String outPath = FileUtils.getEncryptedFilePath(dbPath);
+			
+			allEncrypted = allEncrypted & encryptFormInstance(id, inPath, outPath);
+			Log.e(TAG, "Encrypting: " + inPath + " -> " + outPath);
 		}
 
 		// TODO? add cancel threshold to prevent looping unsuccessful alarms?
@@ -113,13 +113,13 @@ public class EncryptionService extends WakefulIntentService {
 
 	/**
 	 * This searches the database for any record of a recently submitted file as
-	 * labelled under Collect Db Status 'submitted'. These files need to be
-	 * encrypted, and status updated to 'encrypted'.
+	 * labeled under Collect Db Status 'submitted'. These files need to be
+	 * encrypted, and status then updated to 'encrypted'.
 	 * 
 	 * @return ArrayList of Maps that contain both the path and Collect Instance
 	 *         Id of the decrypted instance file.
 	 */
-	private ArrayList<Map<String, Object>> findSubmittedFiles() {
+	private static ArrayList<Map<String, Object>> findSubmittedFiles() {
 
 		// Find any recently submitted files
 		String selection = InstanceColumns.STATUS + "=?";
@@ -129,7 +129,7 @@ public class EncryptionService extends WakefulIntentService {
 
 		ArrayList<Map<String, Object>> decryptedList = new ArrayList<Map<String, Object>>();
 		int instanceId = 0;
-		String instancePath = null;
+		String instanceDbPath = null;
 
 		if (c != null) {
 			if (c.getCount() > 0) {
@@ -139,12 +139,12 @@ public class EncryptionService extends WakefulIntentService {
 				Log.e(TAG, "path index is= " + String.valueOf(pathIndex) + " idindex = " + String.valueOf(idIndex));
 				if (c.moveToFirst()) {
 					do {
-						instancePath = c.getString(pathIndex);
+						instanceDbPath = c.getString(pathIndex);
 						instanceId = c.getInt(idIndex);
 
 						Map<String, Object> temp = new HashMap<String, Object>();
 						temp.put(INSTANCE_ID, instanceId);
-						temp.put(INSTANCE_PATH, instancePath);
+						temp.put(INSTANCE_PATH, instanceDbPath);
 						decryptedList.add(temp);
 
 					} while (c.moveToNext());
@@ -155,14 +155,24 @@ public class EncryptionService extends WakefulIntentService {
 		return decryptedList;
 	}
 
-	public boolean encryptFormInstance(File file, Integer id) {
+	/**
+	 * This will encrypt an individual form instance, including all the
+	 * associated files in the same directory. All files will be saved in an
+	 * encrypted form on the SD.
+	 * 
+	 * @param file
+	 * @param id
+	 * @return true if encryption was successful
+	 */
+	public static boolean encryptFormInstance(Integer id, String inPath, String outPath) {
+		File file = new File(inPath);
 		if (!file.exists()) {
 			System.out.println("No file found to encrypt at: " + file.getName());
 			return false;
 		}
 		File parentDir = file.getParentFile();
 
-		// get a Cipher and a Key
+		//1. get a Cipher and a Key
 		Cipher c = generateCipher();
 		byte[] key = generateKey();
 		if (c == null || key == null)
@@ -170,12 +180,12 @@ public class EncryptionService extends WakefulIntentService {
 
 		final SecretKeySpec keySpec = new SecretKeySpec(key, KEYSPEC_ALGORITHM);
 
-		// update CollectDb with key and new path
+		//2. update CollectDb with key and new path
 		boolean logged = false;
-		String decryptedPath = parentDir.getPath() + File.separator + DECRYPTED_HIDDEN_DIR + File.separator + file.getName();
+		
 		String keyString = Base64.encodeToString(key, Base64.NO_WRAP);
-		if (id != null && decryptedPath != null && keyString != null)
-			logged = updateCollectDb(id, decryptedPath, keyString);
+		if (id != null && keyString != null)
+			logged = updateCollectDb(id, keyString);
 
 		// ONLY proceed if we have logged key!
 		if (!logged) {
@@ -184,11 +194,11 @@ public class EncryptionService extends WakefulIntentService {
 		}
 
 		// get Files from instance directory and encrypt
-		List<File> filesToEncrypt = FileUtils.findCleartextFiles(parentDir);
+		File[] allFiles = parentDir.listFiles();
 		boolean result = true;
-		for (File f : filesToEncrypt) {
+		for (File f : allFiles) {
 			try {
-				result = result & encryptFile(f, c, keySpec);
+				result = result & encryptFile(f.getAbsolutePath(), outPath, c, keySpec);
 				Log.e(TAG, "for loop!:" + result);
 			} catch (Exception e) {
 				Log.e(TAG, "Error encrypting: " + file.getName());
@@ -198,12 +208,12 @@ public class EncryptionService extends WakefulIntentService {
 		Log.e(TAG, "end of for loop!:" + result);
 		// we have now encrypted and stored the key, so safe to delete cleartext
 		if (result)
-			result = FileUtils.deleteAllCleartextFiles(parentDir);
+			result = FileUtils.deleteAllFiles(parentDir.getAbsolutePath());
 		Log.e(TAG, "end of encryptforminstance method with result=:" + result);
 		return result;
 	}
 
-	private static Cipher generateCipher() {
+	public static Cipher generateCipher() {
 		// get Cipher
 		Cipher c = null;
 		try {
@@ -216,7 +226,7 @@ public class EncryptionService extends WakefulIntentService {
 		return c;
 	}
 
-	private static byte[] generateKey() {
+	public static byte[] generateKey() {
 		SecureRandom rand = new SecureRandom();
 		byte[] key = new byte[KEY_LENGTH / 8];
 		rand.nextBytes(key);
@@ -231,12 +241,11 @@ public class EncryptionService extends WakefulIntentService {
 	 * @param filepath
 	 * @param base64key
 	 */
-	private static boolean updateCollectDb(Integer id, String filepath, String base64key) {
+	private static boolean updateCollectDb(Integer id, String base64key) {
 		boolean updated = false;
 
 		try {
 			ContentValues insertValues = new ContentValues();
-			insertValues.put(InstanceColumns.INSTANCE_FILE_PATH, filepath);
 			insertValues.put(InstanceColumns.SUBMISSION_KEY, base64key);
 			insertValues.put(InstanceColumns.STATUS, InstanceProviderAPI.STATUS_ENCRYPTED);
 
@@ -245,12 +254,12 @@ public class EncryptionService extends WakefulIntentService {
 			int updatedrows = App.getApp().getContentResolver().update(InstanceColumns.CONTENT_URI, insertValues, where, whereArgs);
 
 			if (updatedrows > 1) {
-				Log.w(TAG, "Updated more than one entry, that's not good: " + filepath.toString());
+				Log.w(TAG, "Updated more than one entry, that's not good: id=" + id);
 			} else if (updatedrows == 1) {
 				Log.i(TAG, "Instance successfully updated");
 				updated = true;
 			} else {
-				Log.e(TAG, "Instance doesn't exist but we have its path!! " + filepath.toString());
+				Log.e(TAG, "Instance doesn't exist but we have its path!!: id= " + id);
 			}
 
 		} catch (Exception e) {
@@ -260,19 +269,26 @@ public class EncryptionService extends WakefulIntentService {
 		return updated;
 	}
 
-	private static boolean encryptFile(File file, Cipher cipher, SecretKeySpec keySpec) throws Exception {
+	private static boolean encryptFile(String inPath, String outPath, Cipher cipher, SecretKeySpec keySpec) throws Exception {
 		boolean encrypted = false;
-		// make the encrypted file
-		File encFile = new File(file.getPath() + ".enc");
-		if (encFile.exists()) {
-			encFile = new File(file.getPath() + "-" + String.valueOf(System.currentTimeMillis()) + ".enc");
-			System.out.println("File has already been encrypted.  File has been renamed to -datetime.enc");
+		
+		// input file
+		File inFile = new File(inPath);
+		String inName = inPath.substring(inPath.lastIndexOf(File.separator));
+		
+		//output dir & file
+		File outDir = (new File(outPath)).getParentFile();
+		FileUtils.createFolder(outDir.getAbsolutePath());
+		File outFile = new File(outDir.getAbsolutePath(), inName + FileUtils.ENC_EXT);
+		if (outFile.exists()) {
+			outFile = new File(outDir.getAbsolutePath(), inName + "-" + String.valueOf(System.currentTimeMillis()) + FileUtils.ENC_EXT);
+			System.out.println("File already exists. File has been renamed to " + outFile.getName());
 		}
-
+		
 		try {
 			// make the streams
-			InputStream in = new BufferedInputStream(new FileInputStream(file));
-			OutputStream out = new BufferedOutputStream(new FileOutputStream(encFile));
+			InputStream in = new BufferedInputStream(new FileInputStream(inFile));
+			OutputStream out = new BufferedOutputStream(new FileOutputStream(outFile));
 
 			// make new iv and write as prefix
 			final int blockSize = cipher.getBlockSize(); // = 128 bits, 16 bytes
@@ -296,36 +312,14 @@ public class EncryptionService extends WakefulIntentService {
 			in.close();
 			out.flush();
 			out.close();
-			Log.i(TAG, "Encrpyted:" + file.getName() + " -> " + encFile.getName());
+			Log.i(TAG, "Encrpyted:" + inFile.getName() + " -> " + outFile.getName());
 			encrypted = true;
 		} catch (IOException e) {
-			Log.e(TAG, "Error encrypting: " + file.getName() + " -> " + encFile.getName());
+			Log.e(TAG, "Error encrypting: " + inFile.getName() + " -> " + outFile.getName());
 			e.printStackTrace();
 			throw e;
 		}
 		return encrypted;
 	}
 
-	// private String getInstancePath(Integer id) {
-	//
-	// String selection = InstanceColumns._ID + "=?";
-	// String selectionArgs[] = { String.valueOf(id) };
-	// String projection[] = { InstanceColumns.INSTANCE_FILE_PATH };
-	// Cursor c =
-	// App.getApp().getContentResolver().query(InstanceColumns.CONTENT_URI,
-	// projection, selection, selectionArgs, null);
-	// String path = null;
-	// if (c != null) {
-	// int pathIndex = c.getColumnIndex(InstanceColumns.INSTANCE_FILE_PATH);
-	// if (c.moveToFirst())
-	// path = c.getString(pathIndex);
-	// c.close();
-	// }
-	//
-	// if (path == null)
-	// Log.e(TAG, "Error retreiving the path of Collect instance with id: " +
-	// String.valueOf(id));
-	//
-	// return path;
-	// }
 }

@@ -4,7 +4,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import org.odk.clinic.android.R;
-import org.odk.clinic.android.database.ClinicAdapter;
+import org.odk.clinic.android.database.DbAdapter;
 import org.odk.clinic.android.openmrs.Constants;
 import org.odk.clinic.android.utilities.FileUtils;
 
@@ -47,6 +47,7 @@ public class DashboardActivity extends Activity {
 	public static final int FILL_BLANK_FORM = 3;
 
 	// Intent Extras
+	public static final String TAG = DashboardActivity.class.getSimpleName();
 	public static final String LIST_TYPE = "list_type";
 	public static final int LIST_ALL = 1;
 	public static final int LIST_SUGGESTED = 2;
@@ -54,7 +55,6 @@ public class DashboardActivity extends Activity {
 	public static final int LIST_COMPLETE = 4;
 	public static final int LIST_SIMILAR_CLIENTS = 5;
 
-	private ClinicAdapter mCla;
 	private int patients = 0;
 	private int priorityToDoForms = 0;
 	private int completedForms = 0;
@@ -75,55 +75,43 @@ public class DashboardActivity extends Activity {
 
 		TextView providerNumber = (TextView) findViewById(R.id.provider_number);
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
-		mProviderId = settings.getString(PreferencesActivity.KEY_PROVIDER, "0");
+		mProviderId = settings.getString(getString(R.string.key_provider), "0");
 		providerNumber.setText(mProviderId);
 
 		if (!FileUtils.storageReady()) {
 			showCustomToast(getString(R.string.error, getString(R.string.storage_error)));
 			finish();
 		}
+		
+		Log.e(TAG, "SETTINGS." +
+				"\n  PROVIDER=" + settings.getString(getString(R.string.key_provider), "Z") +
+				"\n SERVER=" + settings.getString(getString(R.string.key_server), "Z") +
+				"\n USERNAME=" + settings.getString(getString(R.string.key_username), "Z") +
+				"\n PASSWORD=" + settings.getString(getString(R.string.key_password), "Z") +
+				"\n COHORT=" + settings.getString(getString(R.string.key_cohort), "Z") +
+				"\n SAVED SEARCH=" + settings.getString(getString(R.string.key_saved_search), "Z") +
+				"\n USE SAVED SEARCH=" + settings.getBoolean(getString(R.string.key_use_saved_searches), true) +
+				"\n CLIENT AUTH=" + settings.getBoolean(getString(R.string.key_client_auth), true) +
+				"\n ACTIVITY LOG=" + settings.getBoolean(getString(R.string.key_enable_activity_log), true) +
+				"\n SHOW MENU=" + settings.getBoolean(getString(R.string.key_show_settings_menu), false) +
+				"\n FIRST RUN=" + settings.getBoolean(getString(R.string.key_first_run), true));
 	}
 
 	@Override
 	protected void onResume() {
-		Log.e("now is", "systemtime= Long.valueOf(System.currentTimeMillis())=" + Long.valueOf(System.currentTimeMillis()));
-		
 		super.onResume();
 		IntentFilter filter = new IntentFilter(RefreshDataService.REFRESH_BROADCAST);
 		LocalBroadcastManager.getInstance(this).registerReceiver(onNotice, filter);
 		refreshView();
-
-		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
-		boolean firstRun = settings.getBoolean(PreferencesActivity.KEY_FIRST_RUN, true);
-		if (firstRun) {
-			// Save first run status
-			SharedPreferences.Editor editor = settings.edit();
-			editor.putBoolean(PreferencesActivity.KEY_FIRST_RUN, false);
-			editor.commit();
-			
-			SharedPreferences chwSettings = getSharedPreferences("ChwSettings", MODE_PRIVATE);
-		    SharedPreferences.Editor chwEditor = chwSettings.edit();
-		    chwEditor.putBoolean("IsMenuEnabled", false);
-		    chwEditor.putBoolean("IsLoggingEnabled", true);
-		    chwEditor.commit();
-		}
-
 	}
 
 	private void refreshView() {
-		if (mCla != null) {
-			mCla.open();
-		} else {
-			mCla = new ClinicAdapter();
-			mCla.open();
-		}
-
-		patients = mCla.countAllPatients();
-		incompleteForms = mCla.countAllSavedFormNumbers();
-		completedForms = mCla.countAllCompletedUnsentForms();
-		priorityToDoForms = mCla.countAllPriorityFormNumbers();
-		long refreshDate = mCla.fetchMostRecentDownload();
-		mCla.close();
+		DbAdapter ca = DbAdapter.openDb();
+		patients = ca.countAllPatients();
+		incompleteForms = ca.countAllSavedFormNumbers();
+		completedForms = ca.countAllCompletedUnsentForms();
+		priorityToDoForms = ca.countAllPriorityFormNumbers();
+		long refreshDate = ca.fetchMostRecentDownload();
 
 		// REFRESH TIME
 		Date date = new Date();

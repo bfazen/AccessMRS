@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 import org.odk.clinic.android.R;
 import org.odk.clinic.android.adapters.EncounterAdapter;
-import org.odk.clinic.android.database.ClinicAdapter;
+import org.odk.clinic.android.database.DbAdapter;
 import org.odk.clinic.android.openmrs.Constants;
 import org.odk.clinic.android.openmrs.Observation;
 import org.odk.clinic.android.openmrs.Patient;
@@ -62,25 +62,23 @@ public class ObservationTimelineActivity extends ListActivity {
 	private Patient getPatient(Integer patientId) {
 
 		Patient p = null;
-		ClinicAdapter ca = new ClinicAdapter();
 
-		ca.open();
-		Cursor c = ca.fetchPatient(patientId);
+		Cursor c = DbAdapter.openDb().fetchPatient(patientId);
 
 		if (c != null && c.getCount() > 0) {
 			int patientIdIndex = c
-					.getColumnIndex(ClinicAdapter.KEY_PATIENT_ID);
+					.getColumnIndex(DbAdapter.KEY_PATIENT_ID);
 			int identifierIndex = c
-					.getColumnIndex(ClinicAdapter.KEY_IDENTIFIER);
+					.getColumnIndex(DbAdapter.KEY_IDENTIFIER);
 			int givenNameIndex = c
-					.getColumnIndex(ClinicAdapter.KEY_GIVEN_NAME);
+					.getColumnIndex(DbAdapter.KEY_GIVEN_NAME);
 			int familyNameIndex = c
-					.getColumnIndex(ClinicAdapter.KEY_FAMILY_NAME);
+					.getColumnIndex(DbAdapter.KEY_FAMILY_NAME);
 			int middleNameIndex = c
-					.getColumnIndex(ClinicAdapter.KEY_MIDDLE_NAME);
+					.getColumnIndex(DbAdapter.KEY_MIDDLE_NAME);
 			int birthDateIndex = c
-					.getColumnIndex(ClinicAdapter.KEY_BIRTH_DATE);
-			int genderIndex = c.getColumnIndex(ClinicAdapter.KEY_GENDER);
+					.getColumnIndex(DbAdapter.KEY_BIRTH_DATE);
+			int genderIndex = c.getColumnIndex(DbAdapter.KEY_GENDER);
 			
 			p = new Patient();
 			p.setPatientId(c.getInt(patientIdIndex));
@@ -95,28 +93,24 @@ public class ObservationTimelineActivity extends ListActivity {
 		if (c != null) {
 			c.close();
 		}
-		ca.close();
 
 		return p;
 	}
 	
 	private void getObservations(Integer patientId, String fieldName) {
 		
-		ClinicAdapter ca = new ClinicAdapter();
-		
-		ca.open();
-		Cursor c = ca.fetchPatientObservation(patientId, fieldName);
+		Cursor c = DbAdapter.openDb().fetchPatientObservation(patientId, fieldName);
 		
 		if (c != null && c.getCount() >= 0) {
 			
 			mEncounters.clear();
 
-			int valueTextIndex = c.getColumnIndex(ClinicAdapter.KEY_VALUE_TEXT);
-			int valueIntIndex = c.getColumnIndex(ClinicAdapter.KEY_VALUE_INT);
-			int valueDateIndex = c.getColumnIndex(ClinicAdapter.KEY_VALUE_DATE);
-			int valueNumericIndex = c.getColumnIndex(ClinicAdapter.KEY_VALUE_NUMERIC);
-			int encounterDateIndex = c.getColumnIndex(ClinicAdapter.KEY_ENCOUNTER_DATE);
-			int dataTypeIndex = c.getColumnIndex(ClinicAdapter.KEY_DATA_TYPE);
+			int valueTextIndex = c.getColumnIndex(DbAdapter.KEY_VALUE_TEXT);
+			int valueIntIndex = c.getColumnIndex(DbAdapter.KEY_VALUE_INT);
+			int valueDateIndex = c.getColumnIndex(DbAdapter.KEY_VALUE_DATE);
+			int valueNumericIndex = c.getColumnIndex(DbAdapter.KEY_VALUE_NUMERIC);
+			int encounterDateIndex = c.getColumnIndex(DbAdapter.KEY_ENCOUNTER_DATE);
+			int dataTypeIndex = c.getColumnIndex(DbAdapter.KEY_DATA_TYPE);
 
 			Observation obs;
 			do {
@@ -153,7 +147,6 @@ public class ObservationTimelineActivity extends ListActivity {
 		if (c != null) {
 			c.close();
 		}
-		ca.close();
 	}
 	
 	private void refreshView() {

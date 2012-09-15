@@ -1,18 +1,14 @@
 package org.odk.clinic.android.activities;
 
 import java.io.File;
-import java.util.ArrayList;
 
 import org.odk.clinic.android.R;
+import org.odk.clinic.android.adapters.MergeAdapter;
 import org.odk.clinic.android.listeners.DecryptionListener;
-import org.odk.clinic.android.openmrs.ActivityLog;
 import org.odk.clinic.android.openmrs.Constants;
 import org.odk.clinic.android.openmrs.Form;
-import org.odk.clinic.android.tasks.ActivityLogTask;
 import org.odk.clinic.android.tasks.DecryptionTask;
-import org.odk.clinic.android.utilities.App;
 import org.odk.clinic.android.utilities.FileUtils;
-import org.odk.collect.android.provider.InstanceProviderAPI;
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
 import android.app.AlarmManager;
@@ -22,26 +18,21 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
+import android.widget.ListView;
 import android.widget.Toast;
 
 import com.alphabetbloc.clinic.services.EncryptionService;
-import com.alphabetbloc.clinic.services.RefreshDataService;
 import com.commonsware.cwac.wakeful.DeleteDecryptedDataListener;
-import com.commonsware.cwac.wakeful.DeleteDecryptedDataReceiver;
-import com.commonsware.cwac.wakeful.EncryptDataListener;
 import com.commonsware.cwac.wakeful.WakefulIntentService;
 
 /**
@@ -61,15 +52,19 @@ public class ViewCompletedForms extends ViewFormsActivity implements DecryptionL
 	private static final String TAG = "ViewCompletedForms";
 	private ProgressDialog mProgressDialog;
 	private static Integer mPatientId;
-	private ActivityLog mActivityLog;
 	private Context mContext;
 	private Form mClickedForm;
 	private DecryptionTask mDecryptionTask;
+	private ListView mListView;
+	private MergeAdapter mMergeAdapter;
+	protected GestureDetector mFormDetector;
+	protected OnTouchListener mFormListener;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setTitle(getString(R.string.app_name) + " > " + "Previous Encounters");
+		setContentView(R.layout.example_cw_main);
+
 		mContext = this;
 		String patientIdString = getIntent().getStringExtra(Constants.KEY_PATIENT_ID);
 		mPatientId = Integer.valueOf(patientIdString);
@@ -89,13 +84,8 @@ public class ViewCompletedForms extends ViewFormsActivity implements DecryptionL
 	protected void onResume() {
 		super.onResume();
 
-		IntentFilter filter = new IntentFilter(RefreshDataService.REFRESH_BROADCAST);
-		LocalBroadcastManager.getInstance(this).registerReceiver(onNotice, filter);
-
-		if (mPatientId != null) {
-			createPatientHeader(mPatientId);
-			refreshView();
-		}
+		createPatientHeader(mPatientId);
+		refreshView();
 
 		if (mProgressDialog != null && !mProgressDialog.isShowing()) {
 			Log.e(TAG, "mProgressDialog is SHOWING FROM ON RESUME!");
@@ -107,51 +97,15 @@ public class ViewCompletedForms extends ViewFormsActivity implements DecryptionL
 	}
 
 	private void refreshView() {
-		String selection = "(" + InstanceColumns.STATUS + "=? or " + InstanceColumns.STATUS + "=? or " + InstanceColumns.STATUS + "=? ) and " + InstanceColumns.PATIENT_ID + "=?";
-		String selectionArgs[] = { InstanceProviderAPI.STATUS_ENCRYPTED, InstanceProviderAPI.STATUS_COMPLETE, InstanceProviderAPI.STATUS_SUBMITTED, mPatientId.toString() };
-		Cursor c = App.getApp().getContentResolver().query(InstanceColumns.CONTENT_URI, null, selection, selectionArgs, InstanceColumns.LAST_STATUS_CHANGE_DATE + " desc");
-
-		ArrayList<Form> selectedForms = new ArrayList<Form>();
-
-		if (c != null) {
-			c.moveToFirst();
-		}
-
-		if (c != null && c.getCount() >= 0) {
-			int formPathIndex = c.getColumnIndex(InstanceColumns.INSTANCE_FILE_PATH);
-			int formIdIndex = c.getColumnIndex(InstanceColumns.JR_FORM_ID);
-			int displayNameIndex = c.getColumnIndex(InstanceColumns.DISPLAY_NAME);
-			int formNameIndex = c.getColumnIndex(InstanceColumns.FORM_NAME);
-			int displaySubtextIndex = c.getColumnIndex(InstanceColumns.DISPLAY_SUBTEXT);
-			int idIndex = c.getColumnIndex(InstanceColumns._ID);
-			int dateIndex = c.getColumnIndex(InstanceColumns.LAST_STATUS_CHANGE_DATE);
-
-			if (c.getCount() > 0) {
-				Form form;
-				do {
-					if (!c.isNull(idIndex)) {
-						form = new Form();
-						form.setInstanceId(c.getInt(idIndex));
-						form.setFormId(c.getInt(formIdIndex));
-						form.setName(c.getString(formNameIndex));
-						form.setDisplayName(c.getString(displayNameIndex));
-						form.setPath(c.getString(formPathIndex));
-						form.setDisplaySubtext(c.getString(displaySubtextIndex));
-						form.setDate(c.getLong(dateIndex));
-
-						selectedForms.add(form);
-					}
-				} while (c.moveToNext());
-			}
-		}
-
-		if (c != null)
-			c.close();
-
-		createFormHistoryList(selectedForms);
+		mMergeAdapter = new MergeAdapter();
+		mMergeAdapter = createFormHistoryList(mMergeAdapter, getCompletedForms(mPatientId.toString()));
+		mListView = getListView();
+		mListView.setAdapter(mMergeAdapter);
+		mListView.setOnTouchListener(mFormListener);
 	}
 
-	class onFormClick extends formGestureDetector {
+	
+	class onFormClick extends myGestureListener {
 
 		@Override
 		public boolean onSingleTapUp(MotionEvent e) {
@@ -166,15 +120,18 @@ public class ViewCompletedForms extends ViewFormsActivity implements DecryptionL
 		}
 	}
 
-	// protected void decryptForm(Form f) {
-	// mProgressDialog = createDecryptDialog();
-	// if (EncryptionUtil.decryptFormInstance(f.getInstanceId(), f.getPath())) {
-	// launchFormView(f);
-	// if (mProgressDialog != null)
-	// mProgressDialog.dismiss();
-	// }
-	// }
+	protected void launchFormView(Form f) {
 
+		startActivityLog(mPatientId.toString(), f.getFormId().toString(), "Previous Encounter", false);
+
+		Intent intent = new Intent();
+		intent.setComponent(new ComponentName("org.odk.collect.android", "org.odk.collect.android.activities.FormEntryActivity"));
+		intent.setAction(Intent.ACTION_VIEW);
+		intent.putExtra(EDIT_FORM, false);
+		intent.setData(Uri.parse(InstanceColumns.CONTENT_URI + "/" + f.getInstanceId()));
+		startActivityForResult(intent, VIEW_FORM_ONLY);
+	}
+	
 	private void decryptForm(final Form f) {
 		final AlertDialog.Builder alert = new AlertDialog.Builder(this);
 
@@ -191,19 +148,23 @@ public class ViewCompletedForms extends ViewFormsActivity implements DecryptionL
 		alert.setNegativeButton("Decrypt", new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int whichButton) {
 				if (isFileEncrypted(f) && !isRecentlyDecrypted(f)) {
+
 					if (mDecryptionTask != null && mDecryptionTask.getStatus() != AsyncTask.Status.FINISHED)
 						return;
-					Log.e(TAG, "file is not recently decrypted!");
+
 					mClickedForm = f;
-					// always schedule an alarm to delete the decrypted files
-					// before we decrypt
+
+					// schedule alarm to delete the decrypted files even before
+					// decrypt
 					WakefulIntentService.scheduleAlarms(new DeleteDecryptedDataListener(), WakefulIntentService.DELETE_DECRYPTED_DATA, mContext, true);
+
 					mProgressDialog = createDecryptDialog();
 					mProgressDialog.show();
+
 					mDecryptionTask = new DecryptionTask();
 					mDecryptionTask.setDecryptionListener(ViewCompletedForms.this);
-					Log.e(TAG, "setDecryptionTask with formId=" + f.getInstanceId());
-					mDecryptionTask.execute(f.getInstanceId());
+					mDecryptionTask.execute(f.getInstanceId(), f.getPath());
+
 				} else {
 					launchFormView(f);
 				}
@@ -221,35 +182,35 @@ public class ViewCompletedForms extends ViewFormsActivity implements DecryptionL
 
 	private boolean isFileEncrypted(Form f) {
 		boolean encrypted = false;
-		CharSequence decryptDir = "/.dec/";
-		if (f.getPath().contains(decryptDir))
+		String encPath = FileUtils.getEncryptedFilePath(f.getPath());
+		File encFile = new File(encPath);
+		if (encFile.exists())
 			encrypted = true;
 		Log.e(TAG, "isFileEncrypted=" + encrypted);
 		return encrypted;
 	}
 
-	private boolean isRecentlyDecrypted(Form f) {
-		// This is path to decrypted form: instanceDir/.dec/instance-date.xml
-		// NB: file does not exist, b/c we have not decrypted!
-		File decryptedfile = new File(f.getPath());
-		File decryptHiddenDir = decryptedfile.getParentFile();
-		File instanceDir = decryptHiddenDir.getParentFile();
+	protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
+		super.onActivityResult(requestCode, resultCode, intent);
+	}
 
+	private boolean isRecentlyDecrypted(Form f) {
 		// Make new decryption OR use existing decrypted files
 		// IF exists, should be < MAX_DECRYPT_TIME as gets automatically deleted
 		// IF not, a decrypt process was killed: file may be corrupt, so delete
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 		Long maxDecrypt = prefs.getLong(DecryptionTask.MAX_DECRYPT_TIME, AlarmManager.INTERVAL_HOUR);
-		if (decryptedfile.exists() && ((System.currentTimeMillis() - decryptedfile.lastModified()) < maxDecrypt)) {
+		String decPath = FileUtils.getDecryptedFilePath(f.getPath());
+		File decFile = new File(decPath);
 
-			
+		if (decFile.exists() && ((System.currentTimeMillis() - decFile.lastModified()) < maxDecrypt)) {
 			Log.e(TAG, "file is already decrytped!");
 			return true;
-		} else if (decryptedfile.exists())
-			FileUtils.deleteFile(decryptHiddenDir.getPath());
 
-		Log.e(TAG, "file is not recently decrypted!");
-		FileUtils.createFolder(decryptHiddenDir.getPath());
+		} else if (decFile.exists()) {
+			FileUtils.deleteFile(decFile.getParentFile().getAbsolutePath());
+		}
+
 		return false;
 	}
 
@@ -297,39 +258,6 @@ public class ViewCompletedForms extends ViewFormsActivity implements DecryptionL
 		return pD;
 	}
 
-	protected void launchFormView(Form f) {
-		SharedPreferences settings = getSharedPreferences("ChwSettings", MODE_PRIVATE);
-		if (settings.getBoolean("IsLoggingEnabled", true)) {
-			startActivityLog(f.getFormId().toString());
-		}
-
-		Intent intent = new Intent();
-		intent.setComponent(new ComponentName("org.odk.collect.android", "org.odk.collect.android.activities.FormEntryActivity"));
-		intent.setAction(Intent.ACTION_VIEW);
-		intent.putExtra(EDIT_FORM, false);
-		intent.setData(Uri.parse(InstanceColumns.CONTENT_URI + "/" + f.getInstanceId()));
-		startActivityForResult(intent, VIEW_FORM_ONLY);
-	}
-
-	private void startActivityLog(String formId) {
-
-		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
-		String providerId = settings.getString(PreferencesActivity.KEY_PROVIDER, "0");
-		mActivityLog = new ActivityLog();
-		mActivityLog.setProviderId(providerId);
-		mActivityLog.setFormId(formId);
-		mActivityLog.setPatientId(mPatientId.toString());
-		mActivityLog.setActivityStartTime();
-		mActivityLog.setFormPriority("not applicable");
-		mActivityLog.setFormType("Previous Encounter");
-
-	}
-
-	protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
-		super.onActivityResult(requestCode, resultCode, intent);
-		mActivityLog.setActivityStopTime();
-		new ActivityLogTask(mActivityLog).execute();
-	}
 
 	@Override
 	protected void onPause() {

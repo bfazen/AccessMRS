@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 import org.odk.clinic.android.R;
 import org.odk.clinic.android.adapters.PatientAdapter;
-import org.odk.clinic.android.database.ClinicAdapter;
+import org.odk.clinic.android.database.DbAdapter;
 import org.odk.clinic.android.openmrs.Constants;
 import org.odk.clinic.android.openmrs.Patient;
 import org.odk.clinic.android.utilities.FileUtils;
@@ -57,7 +57,6 @@ public class ListPatientActivity extends ListActivity {
 	public static int mListType;
 	private EditText mSearchText;
 	private TextWatcher mFilterTextWatcher;
-	private ClinicAdapter mCla;
 	private ArrayAdapter<Patient> mPatientAdapter;
 	private ArrayList<Patient> mPatients = new ArrayList<Patient>();
 	private Context mContext;
@@ -72,6 +71,8 @@ public class ListPatientActivity extends ListActivity {
 	protected GestureDetector mSwipeDetector;
 	protected OnTouchListener mSwipeListener;
 	private ListView mClientListView;
+	private int mIndex = 0;
+	private int mTop = 0;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -176,7 +177,8 @@ public class ListPatientActivity extends ListActivity {
 		};
 	}
 
-	//TODO!: consider changing this whole thing to a viewpager... may be much simpler, and also add animation
+	// TODO!: consider changing this whole thing to a viewpager... may be much
+	// simpler, and also add animation
 	class onClientClick extends SimpleOnGestureListener {
 
 		@Override
@@ -197,6 +199,7 @@ public class ListPatientActivity extends ListActivity {
 		public boolean onSingleTapUp(MotionEvent e) {
 			int pos = mClientListView.pointToPosition((int) e.getX(), (int) e.getY());
 			if (pos != -1) {
+				savePosition();
 				Patient p = (Patient) mPatientAdapter.getItem(pos);
 				String patientIdStr = p.getPatientId().toString();
 				Intent ip = new Intent(getApplicationContext(), ViewPatientActivity.class);
@@ -240,16 +243,26 @@ public class ListPatientActivity extends ListActivity {
 		}
 
 	}
-	
+
+	private void savePosition() {
+		mIndex = mClientListView.getFirstVisiblePosition();
+		View v = mClientListView.getChildAt(0);
+		mTop = (v == null) ? 0 : v.getTop();
+	}
 
 	@Override
 	protected void onResume() {
 		super.onResume();
-
-		findPatients();
 		mSearchText.setText(mSearchText.getText().toString());
 		IntentFilter filter = new IntentFilter(RefreshDataService.REFRESH_BROADCAST);
 		LocalBroadcastManager.getInstance(this).registerReceiver(onNotice, filter);
+		
+		// NB: get immediate view position
+		if (mClientListView != null)
+			mClientListView.setSelectionFromTop(mIndex, mTop);
+
+		//then refresh the view
+		findPatients();
 	}
 
 	// VIEW:
@@ -275,9 +288,8 @@ public class ListPatientActivity extends ListActivity {
 
 	private void getPatients(String searchString, String patientId) {
 
-		ClinicAdapter ca = new ClinicAdapter();
+		DbAdapter ca = DbAdapter.openDb();
 
-		ca.open();
 		Cursor c = null;
 		if (mSearchPatientStr != null || mSearchPatientId != null) {
 
@@ -288,17 +300,17 @@ public class ListPatientActivity extends ListActivity {
 
 		if (c != null && c.getCount() >= 0) {
 
-			int patientIdIndex = c.getColumnIndex(ClinicAdapter.KEY_PATIENT_ID);
-			int identifierIndex = c.getColumnIndex(ClinicAdapter.KEY_IDENTIFIER);
-			int givenNameIndex = c.getColumnIndex(ClinicAdapter.KEY_GIVEN_NAME);
-			int familyNameIndex = c.getColumnIndex(ClinicAdapter.KEY_FAMILY_NAME);
-			int middleNameIndex = c.getColumnIndex(ClinicAdapter.KEY_MIDDLE_NAME);
-			int birthDateIndex = c.getColumnIndex(ClinicAdapter.KEY_BIRTH_DATE);
-			int genderIndex = c.getColumnIndex(ClinicAdapter.KEY_GENDER);
-			int priorityIndex = c.getColumnIndexOrThrow(ClinicAdapter.KEY_PRIORITY_FORM_NUMBER);
-			int priorityFormIndex = c.getColumnIndexOrThrow(ClinicAdapter.KEY_PRIORITY_FORM_NAMES);
-			int savedIndex = c.getColumnIndexOrThrow(ClinicAdapter.KEY_SAVED_FORM_NUMBER);
-			int savedFormIndex = c.getColumnIndexOrThrow(ClinicAdapter.KEY_SAVED_FORM_NAMES);
+			int patientIdIndex = c.getColumnIndex(DbAdapter.KEY_PATIENT_ID);
+			int identifierIndex = c.getColumnIndex(DbAdapter.KEY_IDENTIFIER);
+			int givenNameIndex = c.getColumnIndex(DbAdapter.KEY_GIVEN_NAME);
+			int familyNameIndex = c.getColumnIndex(DbAdapter.KEY_FAMILY_NAME);
+			int middleNameIndex = c.getColumnIndex(DbAdapter.KEY_MIDDLE_NAME);
+			int birthDateIndex = c.getColumnIndex(DbAdapter.KEY_BIRTH_DATE);
+			int genderIndex = c.getColumnIndex(DbAdapter.KEY_GENDER);
+			int priorityIndex = c.getColumnIndexOrThrow(DbAdapter.KEY_PRIORITY_FORM_NUMBER);
+			int priorityFormIndex = c.getColumnIndexOrThrow(DbAdapter.KEY_PRIORITY_FORM_NAMES);
+			int savedIndex = c.getColumnIndexOrThrow(DbAdapter.KEY_SAVED_FORM_NUMBER);
+			int savedFormIndex = c.getColumnIndexOrThrow(DbAdapter.KEY_SAVED_FORM_NAMES);
 
 			if (c.getCount() > 0) {
 
@@ -340,7 +352,6 @@ public class ListPatientActivity extends ListActivity {
 		if (c != null) {
 			c.close();
 		}
-		ca.close();
 	}
 
 	private void refreshView() {
@@ -389,10 +400,6 @@ public class ListPatientActivity extends ListActivity {
 			break;
 		}
 
-		if (mCla == null) {
-			mCla = new ClinicAdapter();
-		}
-
 		mPatientAdapter = new PatientAdapter(this, R.layout.patient_list_item, mPatients);
 		// setListAdapter(mPatientAdapter);
 
@@ -401,6 +408,13 @@ public class ListPatientActivity extends ListActivity {
 
 		mClientListView.setOnTouchListener(mClientListener);
 		listLayout.setOnTouchListener(mSwipeListener);
+		
+		//get the same item position as before (but now should have updated numbers)
+		if (mIndex > 0 || mTop > 0){
+			mClientListView.setSelectionFromTop(mIndex, mTop);
+			mIndex = 0;
+			mTop = 0;
+		}
 	}
 
 	// BUTTONS
@@ -422,6 +436,7 @@ public class ListPatientActivity extends ListActivity {
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 		case MENU_PREFERENCES:
+			savePosition();
 			Intent ip = new Intent(getApplicationContext(), PreferencesActivity.class);
 			startActivity(ip);
 			return true;
@@ -432,7 +447,7 @@ public class ListPatientActivity extends ListActivity {
 
 	private BroadcastReceiver onNotice = new BroadcastReceiver() {
 		public void onReceive(Context ctxt, Intent i) {
-
+			savePosition();
 			Intent intent = new Intent(mContext, RefreshDataActivity.class);
 			intent.putExtra(RefreshDataActivity.DIALOG, RefreshDataActivity.ASK_TO_DOWNLOAD);
 			startActivity(intent);
@@ -457,9 +472,6 @@ public class ListPatientActivity extends ListActivity {
 
 		super.onDestroy();
 		mSearchText.removeTextChangedListener(mFilterTextWatcher);
-		if (mCla != null) {
-			mCla.close();
-		}
 
 	}
 

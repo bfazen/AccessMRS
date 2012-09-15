@@ -27,9 +27,11 @@ abstract public class WakefulIntentService extends IntentService {
 
 	static final String NAME = "com.commonsware.cwac.wakeful.WakefulIntentService";
 	// static final String LAST_ALARM = "lastAlarm";
-	public static final String REFRESH_DATA = "refreshd.ata";
+	public static final String REFRESH_DATA = "refresh.data";
 	public static final String ENCRYPT_DATA = "encrypt.data";
 	public static final String DELETE_DECRYPTED_DATA = "delete.decrypted.data";
+	public static final String WIPE_DATA = "wipe.all.data";
+	
 	private static volatile PowerManager.WakeLock lockStatic = null;
 
 	synchronized private static PowerManager.WakeLock getLock(Context context) {
@@ -70,6 +72,8 @@ abstract public class WakefulIntentService extends IntentService {
 				i = new Intent(ctxt, EncryptDataReceiver.class);
 			} else if (receiver.equals(DELETE_DECRYPTED_DATA)) {
 				i = new Intent(ctxt, DeleteDecryptedDataReceiver.class);
+			} else if (receiver.equals(WIPE_DATA)) {
+				i = new Intent(ctxt, WipeDataReceiver.class);
 			}
 			PendingIntent pi = PendingIntent.getBroadcast(ctxt, 0, i, 0);
 
@@ -86,6 +90,8 @@ abstract public class WakefulIntentService extends IntentService {
 			i = new Intent(ctxt, EncryptDataReceiver.class);
 		} else if (receiver.equals(DELETE_DECRYPTED_DATA)) {
 			i = new Intent(ctxt, DeleteDecryptedDataReceiver.class);
+		}else if (receiver.equals(WIPE_DATA)) {
+			i = new Intent(ctxt, WipeDataReceiver.class);
 		}
 
 		PendingIntent pi = PendingIntent.getBroadcast(ctxt, 0, i, 0);

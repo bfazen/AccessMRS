@@ -14,9 +14,6 @@ package org.odk.clinic.android.utilities;
  * the License.
  */
 
-import android.os.Environment;
-import android.util.Log;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -28,7 +25,10 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.alphabetbloc.clinic.services.EncryptionService;
+import android.content.Context;
+import android.content.pm.PackageManager.NameNotFoundException;
+import android.os.Environment;
+import android.util.Log;
 
 /**
  * Static methods used for common file operations. LF Added common deletion
@@ -38,18 +38,18 @@ import com.alphabetbloc.clinic.services.EncryptionService;
  * @author Louis Fazen (louis.fazen@gmail.com)
  */
 public class FileUtils {
-	private final static String t = "FileUtils";
+
+	private static final String TAG = "FileUtils";
 
 	// Used to validate and display valid form names.
 	public static final String VALID_FILENAME = "[ _\\-A-Za-z0-9]*.x[ht]*ml";
 
 	// Storage paths
-	public static final String ODK_SD_ROOT = Environment.getExternalStorageDirectory() + "/odk/clinic/";
-	public static final String FORMS_PATH = ODK_SD_ROOT + "forms/";
-	public static final String INSTANCES_PATH = "/data/org.odk.collect.android/files/instances/";
-//	public static final String DATABASE_PATH = ODK_CLINIC_ROOT + "databases/";
-
-	private static final String TAG = "FileUtils";
+	public static final String SD_ROOT_DIR = "clinic";
+	public static final String INSTANCES = "instances";
+	public static final String FORMS = "forms";
+	public static final String XML_EXT = ".xml";
+	public static final String ENC_EXT = ".enc";
 
 	public static boolean storageReady() {
 		String cardstatus = Environment.getExternalStorageState();
@@ -60,6 +60,16 @@ public class FileUtils {
 		}
 	}
 
+	/**
+	 * Non-recursive deletion of a file. If the file is a directory, it will
+	 * delete every file in the directory, but not sub-directories.
+	 * 
+	 * @param path
+	 *            of the file
+	 * @return true if successfully deletes all files. Returns false if it is
+	 *         not able to delete the file (for example, will return false for
+	 *         any directory that has a subdirectory).
+	 */
 	public static final boolean deleteFile(String path) {
 		// not recursive
 		if (path != null && storageReady()) {
@@ -69,7 +79,7 @@ public class FileUtils {
 					File[] files = folder.listFiles();
 					for (File file : files) {
 						if (!file.delete()) {
-							Log.i(t, "Failed to delete " + file);
+							Log.i(TAG, "Failed to delete " + file);
 						} else
 							Log.e(TAG, "successfully deleted a file from:" + path);
 					}
@@ -90,84 +100,94 @@ public class FileUtils {
 	}
 
 	/**
-	 * Find Cleartext files in this directory. This is not recursive, and does
-	 * not find hidden "." files.
+	 * Convenience method for finding all files in a path recursively,
+	 * regardless of extension.
 	 * 
-	 * @param parentDir
-	 * @return
+	 * @param path
+	 * @return The list of Files in the directory.
 	 */
-	public static List<File> findCleartextFiles(File parentDir) {
-		// catalog files to encrypt (skip hidden ".", ".enc", dirs)
-		File[] allFiles = parentDir.listFiles();
-		List<File> directoryFiles = new ArrayList<File>();
-		for (File f : allFiles) {
-			if (f.isDirectory())
-				continue;
-			if (f.getName().endsWith(".enc"))
-				continue;
-			if (f.getName().startsWith("."))
-				continue;
-			else
-				directoryFiles.add(f);
-		}
-		return directoryFiles;
+	public static List<File> findAllFiles(String path) {
+		return findAllFiles(path, null);
 	}
 
 	/**
-	 * Deletes all the Cleartext files in this directory. This is not recursive,
-	 * but does delete the decrypted directory ".dec"
+	 * Find all files in a directory matching an extension recursively.
 	 * 
-	 * @param parentDir
+	 * @param path
+	 *            Path to search in.
+	 * @param ext
+	 *            Extension of the file. If null is passed, then will return all
+	 *            files.
 	 * @return
 	 */
-	public static boolean deleteCleartextFiles(File parentDir) {
+	public static List<File> findAllFiles(String path, String ext) {
 
-		boolean allSuccessful = true;
+		File file = new File(path);
+		if (file != null && file.exists()) {
+			List<File> allFiles = new ArrayList<File>();
 
-		File[] allFiles = parentDir.listFiles();
-		for (File f : allFiles) {
-			Log.e(TAG, "deleteCleartextfiles for loop! all successful:" + allSuccessful);
-			if (f.isDirectory() && f.getName().equals(EncryptionService.DECRYPTED_HIDDEN_DIR))
-				allSuccessful = allSuccessful & deleteFile(f.getPath());
-			else if (!f.getName().endsWith(".enc"))
-				allSuccessful = allSuccessful & f.delete();
-			Log.e(TAG, "deleteCleartextfiles for loop! all successful:" + allSuccessful + " for file=" + f.getPath());
-		}
-		return allSuccessful;
-	}
+			if (file.isDirectory()) {
+				File[] dirFiles = file.listFiles();
+				for (File f : dirFiles) {
+					if (f.isDirectory()) {
 
-	/**
-	 * Finds and deletes all the Cleartext files in this directory in a
-	 * recursive method. Only use for small directories that are unlikely to
-	 * cause stack overflow!
-	 * 
-	 * @param parentDir
-	 * @return
-	 */
-	public static boolean deleteAllCleartextFiles(File parentDir) {
-		// catalog files to encrypt (skip hidden ".", ".enc", dirs)
-		boolean allDeleted = true;
+						List<File> subFiles = new ArrayList<File>();
+						subFiles = findAllFiles(f.getAbsolutePath(), ext);
+						if (!subFiles.isEmpty() && subFiles.size() > 0) {
+							allFiles.addAll(subFiles);
+						}
 
-		if (parentDir != null && storageReady()) {
-			try {
-				File[] allFiles = parentDir.listFiles();
-				for (File f : allFiles) {
-					if (f.getName().endsWith(".enc"))
-						continue;
-					else if (f.isDirectory())
-						deleteAllCleartextFiles(f);
-					else{
-						Log.e(TAG, "deleteAllCleartextfiles for loop! found a file... allDeleted=" + allDeleted);
-						allDeleted = allDeleted & f.delete();
-						Log.e(TAG, "deleteAllCleartextfiles for loop! updated file... allDeleted=" + allDeleted);
+					} else {
+						if (ext != null && f.getName().endsWith(ext)) {
+							allFiles.add(f);
+						} else {
+							allFiles.add(f);
+						}
 					}
 				}
-				Log.e(TAG, "deleteAllCleartextfiles End of for loop! found a file... allDeleted=" + allDeleted);
-			} catch (Exception e) {
-				e.printStackTrace();
+			} else {
+				if (ext != null && file.getName().endsWith(ext)) {
+					allFiles.add(file);
+				} else {
+					allFiles.add(file);
+				}
+			}
+
+			return allFiles;
+		}
+
+		return null;
+	}
+
+	/**
+	 * Recursive deletion of all files on this path.
+	 * 
+	 * @param path
+	 * @return
+	 */
+	public static final boolean deleteAllFiles(String path) {
+		// not recursive
+		if (path != null && storageReady()) {
+			File folder = new File(path);
+			if (folder.exists()) {
+
+				if (folder.isDirectory()) {
+					File[] files = folder.listFiles();
+
+					for (File file : files) {
+						if (file.isDirectory())
+							deleteAllFiles(file.getAbsolutePath());
+						else if (!file.delete())
+							Log.i(TAG, "Failed to delete " + file);
+						else
+							Log.e(TAG, "successfully deleted a file from:" + path);
+					}
+
+				}
+				return folder.delete();
 			}
 		}
-		return allDeleted;
+		return false;
 	}
 
 	public static String getMd5Hash(File file) {
@@ -183,7 +203,7 @@ public class FileUtils {
 			long lLength = file.length();
 
 			if (lLength > Integer.MAX_VALUE) {
-				Log.e(t, "File " + file.getName() + "is too large");
+				Log.e(TAG, "File " + file.getName() + "is too large");
 				return null;
 			}
 
@@ -224,6 +244,57 @@ public class FileUtils {
 			return null;
 		}
 
+	}
+
+	//PATHS
+	//INTERNAL (COLLECT)
+	public static File getInternalInstanceDirectory() {
+		File instanceDir = null;
+		try {
+			Context collectContext = App.getApp().createPackageContext("org.odk.collect.android", Context.CONTEXT_RESTRICTED);
+			instanceDir = new File(collectContext.getFilesDir(), INSTANCES);
+		} catch (NameNotFoundException e) {
+			e.printStackTrace();
+		}
+		return instanceDir;
+	}
+	
+	public static String getInternalInstancePath() {
+		String path = getInternalInstanceDirectory().getAbsolutePath();
+		return path;
+	}
+	
+	public static String getDecryptedFilePath(String dbPath) {
+		if (dbPath == null)
+			Log.e(TAG, "Error retreiving the db path");
+
+		File instanceDir = getInternalInstanceDirectory();
+		String path = instanceDir.getAbsolutePath() + dbPath;
+
+		return path;
+	}
+
+	//EXTERNAL (GLOBAL)
+	public static File getExternalRootDirectory() {
+		File sdRootDir = new File(Environment.getExternalStorageDirectory(), SD_ROOT_DIR);
+		return sdRootDir;
+	}
+	
+	public static String getExternalInstancesPath() {
+		File instances = new File(getExternalRootDirectory(), INSTANCES);
+		return instances.getAbsolutePath();
+	}
+	
+	public static String getExternalFormsPath() {
+		File forms = new File(getExternalRootDirectory(), FORMS);
+		return forms.getAbsolutePath();
+	}
+	
+	public static String getEncryptedFilePath(String dbPath) {
+		if (dbPath == null)
+			Log.e(TAG, "Error retreiving the db path");
+		String outPath = getExternalInstancesPath() + dbPath;
+		return outPath;
 	}
 
 }

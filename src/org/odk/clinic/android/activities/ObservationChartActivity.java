@@ -13,7 +13,7 @@ import org.achartengine.model.XYSeries;
 import org.achartengine.renderer.XYMultipleSeriesRenderer;
 import org.achartengine.renderer.XYSeriesRenderer;
 import org.odk.clinic.android.R;
-import org.odk.clinic.android.database.ClinicAdapter;
+import org.odk.clinic.android.database.DbAdapter;
 import org.odk.clinic.android.openmrs.Constants;
 import org.odk.clinic.android.openmrs.Patient;
 import org.odk.clinic.android.utilities.FileUtils;
@@ -88,25 +88,23 @@ public class ObservationChartActivity extends Activity {
 	private Patient getPatient(Integer patientId) {
 
 		Patient p = null;
-		ClinicAdapter ca = new ClinicAdapter();
 
-		ca.open();
-		Cursor c = ca.fetchPatient(patientId);
+		Cursor c = DbAdapter.openDb().fetchPatient(patientId);
 
 		if (c != null && c.getCount() > 0) {
 			int patientIdIndex = c
-					.getColumnIndex(ClinicAdapter.KEY_PATIENT_ID);
+					.getColumnIndex(DbAdapter.KEY_PATIENT_ID);
 			int identifierIndex = c
-					.getColumnIndex(ClinicAdapter.KEY_IDENTIFIER);
+					.getColumnIndex(DbAdapter.KEY_IDENTIFIER);
 			int givenNameIndex = c
-					.getColumnIndex(ClinicAdapter.KEY_GIVEN_NAME);
+					.getColumnIndex(DbAdapter.KEY_GIVEN_NAME);
 			int familyNameIndex = c
-					.getColumnIndex(ClinicAdapter.KEY_FAMILY_NAME);
+					.getColumnIndex(DbAdapter.KEY_FAMILY_NAME);
 			int middleNameIndex = c
-					.getColumnIndex(ClinicAdapter.KEY_MIDDLE_NAME);
+					.getColumnIndex(DbAdapter.KEY_MIDDLE_NAME);
 			int birthDateIndex = c
-					.getColumnIndex(ClinicAdapter.KEY_BIRTH_DATE);
-			int genderIndex = c.getColumnIndex(ClinicAdapter.KEY_GENDER);
+					.getColumnIndex(DbAdapter.KEY_BIRTH_DATE);
+			int genderIndex = c.getColumnIndex(DbAdapter.KEY_GENDER);
 			
 			p = new Patient();
 			p.setPatientId(c.getInt(patientIdIndex));
@@ -121,18 +119,15 @@ public class ObservationChartActivity extends Activity {
 		if (c != null) {
 			c.close();
 		}
-		ca.close();
 
 		return p;
 	}
 	
 	private void getObservations(Integer patientId, String fieldName) {
 		
-		ClinicAdapter ca = new ClinicAdapter();
 		DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		
-		ca.open();
-		Cursor c = ca.fetchPatientObservation(patientId, fieldName);
+		Cursor c = DbAdapter.openDb().fetchPatientObservation(patientId, fieldName);
 		
 		if (c != null && c.getCount() >= 0) {
 			
@@ -145,10 +140,10 @@ public class ObservationChartActivity extends Activity {
 				mDataset.addSeries(series);
 			}
 
-			int valueIntIndex = c.getColumnIndex(ClinicAdapter.KEY_VALUE_INT);
-			int valueNumericIndex = c.getColumnIndex(ClinicAdapter.KEY_VALUE_NUMERIC);
-			int encounterDateIndex = c.getColumnIndex(ClinicAdapter.KEY_ENCOUNTER_DATE);
-			int dataTypeIndex = c.getColumnIndex(ClinicAdapter.KEY_DATA_TYPE);
+			int valueIntIndex = c.getColumnIndex(DbAdapter.KEY_VALUE_INT);
+			int valueNumericIndex = c.getColumnIndex(DbAdapter.KEY_VALUE_NUMERIC);
+			int encounterDateIndex = c.getColumnIndex(DbAdapter.KEY_ENCOUNTER_DATE);
+			int dataTypeIndex = c.getColumnIndex(DbAdapter.KEY_DATA_TYPE);
 
 			do {
 				try {
@@ -173,7 +168,7 @@ public class ObservationChartActivity extends Activity {
 		if (c != null) {
 			c.close();
 		}
-		ca.close();
+
 	}
 	
 	@Override

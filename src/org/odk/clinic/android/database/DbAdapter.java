@@ -4,6 +4,9 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+
+import javax.crypto.spec.SecretKeySpec;
 
 import net.sqlcipher.DatabaseUtils;
 import net.sqlcipher.DatabaseUtils.InsertHelper;
@@ -13,11 +16,7 @@ import net.sqlcipher.database.SQLiteDatabase;
 import net.sqlcipher.database.SQLiteOpenHelper;
 import net.sqlcipher.database.SQLiteQueryBuilder;
 
-//import android.database.Cursor;
-//import android.database.SQLException;
-//import android.database.sqlite.SQLiteConstraintException;
-//import android.database.sqlite.SQLiteQueryBuilder;
-
+import org.odk.clinic.android.activities.ClinicLauncherActivity;
 import org.odk.clinic.android.activities.DashboardActivity;
 import org.odk.clinic.android.openmrs.ActivityLog;
 import org.odk.clinic.android.openmrs.Cohort;
@@ -27,19 +26,24 @@ import org.odk.clinic.android.openmrs.FormInstance;
 import org.odk.clinic.android.openmrs.Observation;
 import org.odk.clinic.android.openmrs.Patient;
 import org.odk.clinic.android.utilities.App;
+import org.odk.clinic.android.utilities.Crypto;
 import org.odk.clinic.android.utilities.FileUtils;
+import org.odk.clinic.android.utilities.KeyStore;
 import org.odk.collect.android.provider.InstanceProviderAPI;
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.database.Cursor;
-
 import android.net.Uri;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
-public class ClinicAdapter {
+public class DbAdapter {
 	private final static String t = "PatientDbAdapter";
+
+	private static DbAdapter instance;
 
 	// general columns
 	public static final String KEY_PATH = "path";
@@ -109,7 +113,7 @@ public class ClinicAdapter {
 
 	private static final String DOWNLOAD_TIME = "download_time";
 
-	private static final String DATABASE_NAME = "clinic.sqlite3";
+	public static final String DATABASE_NAME = "clinic.sqlite3";
 	private static final String PATIENTS_TABLE = "patients";
 	private static final String OBSERVATIONS_TABLE = "observations";
 	private static final String COHORTS_TABLE = "cohorts";
@@ -161,6 +165,13 @@ public class ClinicAdapter {
 
 	private static final String CREATE_DOWNLOAD_LOG_TABLE = "create table " + DOWNLOAD_LOG_TABLE + " (_id integer primary key autoincrement, " + DOWNLOAD_TIME + " integer);";
 
+	public static synchronized DbAdapter getInstance() {
+		if (instance == null) {
+			instance = new DbAdapter();
+		}
+		return instance;
+	}
+
 	public static class DatabaseHelper extends SQLiteOpenHelper {
 		// private static class DatabaseHelper extends ODKSQLiteOpenHelper {
 
@@ -173,6 +184,7 @@ public class ClinicAdapter {
 
 		@Override
 		public void onCreate(SQLiteDatabase db) {
+			Log.e(t, "creating tables");
 			db.execSQL(CREATE_PATIENTS_TABLE);
 			db.execSQL(CREATE_OBSERVATIONS_TABLE);
 			db.execSQL(CREATE_COHORTS_TABLE);
@@ -197,30 +209,94 @@ public class ClinicAdapter {
 
 	}
 
-	// public static boolean createStorage() {
-	// return FileUtils.createFolder(FileUtils.DATABASE_PATH);
-	// }
 
-	public ClinicAdapter open() throws SQLException {
-		// mDbHelper = new DatabaseHelper(); //this is the problem with Yaws
-		// code... many DbHelpers...!
-		// mDb = mDbHelper.getWritableDatabase();
+	public static DbAdapter openDb(){
+		return getInstance().open();
+	}
 
-		mDb = App.getDB();
-		Log.e(t, "open is called");
+	public DbAdapter open() throws SQLException {
+
+		if (!isOpen()) {
+			Log.e(t, "!!!Database is not open!!!, trying to open from UI thread!");
+			String pwd = getDbPwd();
+			if (pwd != null) {
+				mDb = App.getDB(pwd);
+			} else {
+				// TODO! if that fails, then launch the SQLCipherActivity to
+				// Request A
+				// Password To be Entered (Should never happen)
+			}
+		}
+
+		// mDb should be open and ready for business
 		return this;
 	}
 
-	// TODO go through code and delete all instances of close(), but for now,
-	// this suffices!
-	public void close() {
-		// mDbHelper = App.getHelper();
+	public boolean isOpen() {
+		if (mDb != null && mDb.isOpen())
+			return true;
+		else
+			return false;
+	}
 
-		// the following should always be null, so we comment out & never close!
-		// if (mDbHelper != null) {
-		// mDbHelper.close();
-		// Log.e(t, "closed is called");
-		// }
+	public static String getDbPwd() {
+		// Get the key
+		KeyStore ks = KeyStore.getInstance();
+		byte[] keyBytes = ks.get(ClinicLauncherActivity.SQLCIPHER_KEY_NAME);
+
+		// Get the pwd
+		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(App.getApp());
+		String encryptedPwd = settings.getString(ClinicLauncherActivity.SQLCIPHER_KEY_NAME, null);
+
+		// Decrypt pwd with key
+		String decryptedPwd = null;
+		if (encryptedPwd != null && keyBytes != null) {
+			SecretKeySpec key = new SecretKeySpec(keyBytes, "AES");
+			decryptedPwd = Crypto.decrypt(encryptedPwd, key);
+		} else {
+			Log.w(t, "Encryption key not found in keystore: " + ClinicLauncherActivity.SQLCIPHER_KEY_NAME);
+		}
+
+		return decryptedPwd;
+	}
+
+	public boolean unlock() {
+		return unlock(getDbPwd());
+	}
+
+	public boolean unlock(String password) {
+		mDb = App.getDB(password);
+
+		if (mDb.isOpen())
+			return true;
+		else
+			return false;
+	}
+
+	public boolean rekeyDb(String password) {
+		Exception error = null;
+
+		try {
+			mDb.execSQL("PRAGMA rekey = '" + password + "'");
+			System.gc();
+		} catch (Exception e) {
+			error = e;
+			Log.e(t, "Error rekeying the database: " + e.getMessage());
+		}
+
+		if (error == null)
+			return true;
+		else
+			return false;
+	}
+
+	// TODO go through code and delete all instances of close(), but for now
+	public void close() {
+	}
+
+	public void lock() {
+		mDb.close();
+		mDb = null;
 	}
 
 	// TODO Remove the need to pass in Patient/Observation objects. Saves object
@@ -255,23 +331,19 @@ public class ClinicAdapter {
 	 * @return database id of the new patient
 	 */
 	public long createPatient(Patient patient) {
-		long id = -1;
 
 		ContentValues cv = new ContentValues();
-
 		cv.put(KEY_PATIENT_ID, patient.getPatientId());
 		cv.put(KEY_IDENTIFIER, patient.getIdentifier());
-
 		cv.put(KEY_GIVEN_NAME, patient.getGivenName());
 		cv.put(KEY_FAMILY_NAME, patient.getFamilyName());
 		cv.put(KEY_MIDDLE_NAME, patient.getMiddleName());
-
 		cv.put(KEY_BIRTH_DATE, patient.getBirthdate());
 		cv.put(KEY_GENDER, patient.getGender());
-
 		cv.put(KEY_CLIENT_CREATED, patient.getCreateCode());
 		cv.put(KEY_UUID, patient.getUuid());
 
+		long id = -1;
 		try {
 			id = mDb.insert(PATIENTS_TABLE, null, cv);
 		} catch (SQLiteConstraintException e) {
@@ -282,23 +354,18 @@ public class ClinicAdapter {
 	}
 
 	public long createObservation(Observation obs) {
-		long id = -1;
 
 		ContentValues cv = new ContentValues();
-
 		cv.put(KEY_PATIENT_ID, obs.getPatientId());
 		cv.put(KEY_VALUE_TEXT, obs.getValueText());
-
 		cv.put(KEY_VALUE_NUMERIC, obs.getValueNumeric());
 		cv.put(KEY_VALUE_DATE, obs.getValueDate());
 		cv.put(KEY_VALUE_INT, obs.getValueInt());
-
 		cv.put(KEY_FIELD_NAME, obs.getFieldName());
-
 		cv.put(KEY_DATA_TYPE, obs.getDataType());
-
 		cv.put(KEY_ENCOUNTER_DATE, obs.getEncounterDate());
 
+		long id = -1;
 		try {
 			id = mDb.insert(OBSERVATIONS_TABLE, null, cv);
 		} catch (SQLiteConstraintException e) {
@@ -309,8 +376,8 @@ public class ClinicAdapter {
 	}
 
 	public long createCohort(Cohort cohort) {
-		ContentValues cv = new ContentValues();
 
+		ContentValues cv = new ContentValues();
 		cv.put(KEY_COHORT_ID, cohort.getCohortId());
 		cv.put(KEY_NAME, cohort.getName());
 
@@ -325,14 +392,13 @@ public class ClinicAdapter {
 	}
 
 	public long createForm(Form form) {
-		long id = -1;
 
 		ContentValues cv = new ContentValues();
-
 		cv.put(KEY_FORM_ID, form.getFormId());
 		cv.put(KEY_NAME, form.getName());
 		cv.put(KEY_PATH, form.getPath());
 
+		long id = -1;
 		try {
 			id = mDb.insert(FORMS_TABLE, null, cv);
 		} catch (SQLiteConstraintException e) {
@@ -345,7 +411,6 @@ public class ClinicAdapter {
 	public long createFormInstance(FormInstance instance, String title) {
 
 		ContentValues cv = new ContentValues();
-
 		cv.put(KEY_PATIENT_ID, instance.getPatientId());
 		cv.put(KEY_FORM_ID, instance.getFormId());
 		cv.put(KEY_FORMINSTANCE_STATUS, instance.getStatus());
@@ -363,12 +428,24 @@ public class ClinicAdapter {
 		return id;
 	}
 
-	public Long createActivityLog(ActivityLog activitylog) {
-		long id = -1;
-
-		Log.e("ClinicAdapter", "adding newActivity to db!");
+	// / ACTIVITY LOG SECTION /////////////////////////////
+	public void createDownloadLog() {
+		Long downloadTime = Long.valueOf(System.currentTimeMillis());
 		ContentValues cv = new ContentValues();
-		// Long now = Long.valueOf(System.currentTimeMillis());
+
+		cv.put(DOWNLOAD_TIME, downloadTime);
+
+		try {
+			mDb.insert(DOWNLOAD_LOG_TABLE, null, cv);
+		} catch (SQLiteConstraintException e) {
+			Log.e(t, "Caught SQLiteConstraitException: " + e);
+		}
+
+	}
+
+	public Long createActivityLog(ActivityLog activitylog) {
+
+		ContentValues cv = new ContentValues();
 		cv.put(PROVIDER_ID, activitylog.getProviderId());
 		cv.put(PATIENT_ID, activitylog.getPatientId());
 		cv.put(FORM_NAME, activitylog.getFormId());
@@ -377,6 +454,7 @@ public class ClinicAdapter {
 		cv.put(FORM_STOP_TIME, activitylog.getActivityStopTime());
 		cv.put(FORM_LAUNCH_TYPE, activitylog.getFormType());
 
+		long id = -1;
 		mDb.beginTransaction();
 		try {
 			id = mDb.insert(FORM_LOG_TABLE, null, cv);
@@ -390,11 +468,13 @@ public class ClinicAdapter {
 		return id;
 	}
 
+	// ////// DELETE SECTION //////////////////////////////
 	/**
 	 * Remove all patients from the database.
 	 * 
 	 * @return number of affected rows
 	 */
+
 	public boolean deleteAllPatients() {
 		return mDb.delete(PATIENTS_TABLE, KEY_CLIENT_CREATED + " IS NULL OR " + KEY_CLIENT_CREATED + "=?", new String[] { "2" }) > 0;
 	}
@@ -427,6 +507,7 @@ public class ClinicAdapter {
 		return mDb.delete(FORMINSTANCES_TABLE, KEY_PATH + "=" + path, null) > 0;
 	}
 
+	// /////// FETCH SECTION ////////////////////////////
 	/**
 	 * Get a cursor to multiple patients from the database.
 	 * 
@@ -626,6 +707,69 @@ public class ClinicAdapter {
 		}
 		return c;
 	}
+	
+	// moved this here, as wanted it in several places...!
+	public ArrayList<Observation> fetchPatientObservationList(Integer patientId) {
+		ArrayList<Observation> mObservations = new ArrayList<Observation>();
+		mObservations.clear();
+
+		Cursor c = fetchPatientObservations(patientId);
+
+		if (c != null && c.getCount() > 0) {
+
+			int valueTextIndex = c.getColumnIndex(DbAdapter.KEY_VALUE_TEXT);
+			int valueIntIndex = c.getColumnIndex(DbAdapter.KEY_VALUE_INT);
+			int valueDateIndex = c.getColumnIndex(DbAdapter.KEY_VALUE_DATE);
+			int valueNumericIndex = c.getColumnIndex(DbAdapter.KEY_VALUE_NUMERIC);
+			int fieldNameIndex = c.getColumnIndex(DbAdapter.KEY_FIELD_NAME);
+			int encounterDateIndex = c.getColumnIndex(DbAdapter.KEY_ENCOUNTER_DATE);
+			int dataTypeIndex = c.getColumnIndex(DbAdapter.KEY_DATA_TYPE);
+
+			Observation obs;
+			String prevFieldName = null;
+			do {
+				String fieldName = c.getString(fieldNameIndex);
+
+				// We only want most recent observation, so only get first
+				// observation
+				if (!fieldName.equals(prevFieldName)) {
+
+					obs = new Observation();
+					obs.setFieldName(fieldName);
+					obs.setEncounterDate(c.getString(encounterDateIndex));
+
+					int dataType = c.getInt(dataTypeIndex);
+					obs.setDataType((byte) dataType);
+					switch (dataType) {
+					case Constants.TYPE_INT:
+						obs.setValueInt(c.getInt(valueIntIndex));
+						break;
+					case Constants.TYPE_DOUBLE:
+						obs.setValueNumeric(c.getDouble(valueNumericIndex));
+						break;
+					case Constants.TYPE_DATE:
+						obs.setValueDate(c.getString(valueDateIndex));
+
+						break;
+					default:
+						obs.setValueText(c.getString(valueTextIndex));
+					}
+
+					mObservations.add(obs);
+
+					prevFieldName = fieldName;
+				}
+
+			} while (c.moveToNext());
+		}
+
+		if (c != null) {
+			c.close();
+		}
+
+		return mObservations;
+
+	}
 
 	public Cursor fetchAllFormInstances() throws SQLException {
 		Cursor c = null;
@@ -760,18 +904,42 @@ public class ClinicAdapter {
 		return c;
 	}
 
-	public void createDownloadLog() {
-		Long downloadTime = Long.valueOf(System.currentTimeMillis());
-		ContentValues cv = new ContentValues();
-
-		cv.put(DOWNLOAD_TIME, downloadTime);
-
-		try {
-			mDb.insert(DOWNLOAD_LOG_TABLE, null, cv);
-		} catch (SQLiteConstraintException e) {
-			Log.e(t, "Caught SQLiteConstraitException: " + e);
+	public int findLastClientCreatedId() throws SQLException {
+		int lowestNegativeId = 0;
+		Cursor c = null;
+		c = mDb.query(PATIENTS_TABLE, new String[] { "min(" + KEY_PATIENT_ID + ") AS " + KEY_PATIENT_ID }, null, null, null, null, null);
+		if (c != null) {
+			if (c.moveToFirst()) {
+				lowestNegativeId = c.getInt(c.getColumnIndex(KEY_PATIENT_ID));
+			}
+			c.close();
 		}
 
+		return lowestNegativeId;
+
+	}
+
+	public Cursor fetchPatientObservations(Integer patientId) throws SQLException {
+		Cursor c = null;
+		// TODO removing an extra KEY_VALUE_TEXT doesn't screw things up?
+		c = mDb.query(OBSERVATIONS_TABLE, new String[] { KEY_VALUE_TEXT, KEY_DATA_TYPE, KEY_VALUE_NUMERIC, KEY_VALUE_DATE, KEY_VALUE_INT, KEY_FIELD_NAME, KEY_ENCOUNTER_DATE }, KEY_PATIENT_ID + "=" + patientId, null, null, null, KEY_FIELD_NAME + "," + KEY_ENCOUNTER_DATE + " desc");
+
+		if (c != null)
+			c.moveToFirst();
+
+		return c;
+	}
+
+	public Cursor fetchPatientObservation(Integer patientId, String fieldName) throws SQLException {
+		Cursor c = null;
+
+		c = mDb.query(OBSERVATIONS_TABLE, new String[] { KEY_VALUE_TEXT, KEY_DATA_TYPE, KEY_VALUE_NUMERIC, KEY_VALUE_DATE, KEY_VALUE_INT, KEY_ENCOUNTER_DATE }, KEY_PATIENT_ID + "=" + patientId + " AND " + KEY_FIELD_NAME + "='" + fieldName + "'", null, null, null,
+				KEY_ENCOUNTER_DATE + " desc");
+
+		if (c != null)
+			c.moveToFirst();
+
+		return c;
 	}
 
 	public long fetchMostRecentDownload() {
@@ -791,7 +959,7 @@ public class ClinicAdapter {
 		return datetime;
 	}
 
-	// PRIORITY FORMS SECTION //
+	// PRIORITY FORMS SECTION //////////////////////////////////
 	public void updatePriorityFormList() throws SQLException {
 		Cursor c = null;
 		// SQLQuery:
@@ -911,7 +1079,7 @@ public class ClinicAdapter {
 		}
 	}
 
-	// SAVED FORMS SECTION //
+	// SAVED FORMS SECTION ///////////////////////////////////
 	public void updateSavedFormsList() throws SQLException {
 		// SELECT observations.patient_id as patientid, group_concat(forms.name,
 		// \", \") as name FROM observations INNER JOIN forms
@@ -1013,14 +1181,10 @@ public class ClinicAdapter {
 
 	}
 
-	// COUNTING SECTION....
+	// /////////////////// COUNTING SECTION ////////////////////
 	public int countAllPriorityFormNumbers() throws SQLException {
 		int count = 0;
 		Cursor c = null;
-		// counting total priority form number:
-		// c = mDb.query(PATIENTS_TABLE, new String[] { "total(" +
-		// KEY_PRIORITY_FORM_NUMBER + ") AS " + KEY_PRIORITY_FORM_NUMBER },
-		// KEY_PRIORITY_FORM_NUMBER + " IS NOT NULL", null, null, null, null);
 
 		// counting total patients with a priority form:
 		c = mDb.query(PATIENTS_TABLE, new String[] { "count(*) AS " + KEY_PRIORITY_FORM_NUMBER }, KEY_PRIORITY_FORM_NUMBER + " IS NOT NULL", null, null, null, null);
@@ -1038,16 +1202,6 @@ public class ClinicAdapter {
 		int count = 0;
 		Cursor c = null;
 
-		// Count Total Saved Forms:
-		// All saved numbers come from the Collect.Instances.Db, otherwise, you
-		// would miss the saved instances where there are no identifiers.
-		// String selection = InstanceColumns.STATUS + "=?";
-		// String selectionArgs[] = { InstanceProviderAPI.STATUS_INCOMPLETE };
-		// c =
-		// App.getApp().getContentResolver().query(InstanceColumns.CONTENT_URI,
-		// new String[] { "count(*) as " + KEY_SAVED_FORM_NUMBER }, selection,
-		// selectionArgs, null);
-
 		// Count Total Patients with Saved Forms:
 		c = mDb.query(PATIENTS_TABLE, new String[] { "count(*) AS " + KEY_SAVED_FORM_NUMBER }, KEY_SAVED_FORM_NUMBER + " IS NOT NULL", null, null, null, null);
 
@@ -1061,36 +1215,10 @@ public class ClinicAdapter {
 		return count;
 	}
 
-	public int findLastClientCreatedId() throws SQLException {
-		int lowestNegativeId = 0;
-		Cursor c = null;
-		c = mDb.query(PATIENTS_TABLE, new String[] { "min(" + KEY_PATIENT_ID + ") AS " + KEY_PATIENT_ID }, null, null, null, null, null);
-		if (c != null) {
-			if (c.moveToFirst()) {
-				lowestNegativeId = c.getInt(c.getColumnIndex(KEY_PATIENT_ID));
-			}
-			c.close();
-		}
-
-		return lowestNegativeId;
-
-	}
-
-	// Count Completed Forms/Clients
+	// Count all patients with completed forms (i.e. group by patient id)
 	public int countAllCompletedUnsentForms() throws SQLException {
 		int count = 0;
 
-		// Count all Completed forms as entries in Db: All Unsent Completed
-		// Forms should all be in the clinic.sqlite
-		// FORMINSTANCES table, so just count:
-		// count = DatabaseUtils.queryNumEntries(mDb, FORMINSTANCES_TABLE);
-		// int intcount = safeLongToInt(count);
-		// Log.e("louis.fazen",
-		// "countAllCompletedUnsentForms is not null with count of " +
-		// intcount);
-		// return intcount;
-
-		// Count all patients with completed forms (i.e. group by patient id)
 		Cursor c = null;
 		c = mDb.query("(SELECT DISTINCT " + KEY_PATIENT_ID + " FROM " + FORMINSTANCES_TABLE + ")", new String[] { "count(" + KEY_PATIENT_ID + ") AS " + KEY_PATIENT_ID }, null, null, null, null, null);
 
@@ -1126,10 +1254,10 @@ public class ClinicAdapter {
 		return (int) l;
 	}
 
+	// ///////// UPDATE TABLES SECTION ////////////////////////
 	public boolean updateFormInstance(String path, String status) {
 
 		ContentValues cv = new ContentValues();
-
 		cv.put(KEY_FORMINSTANCE_STATUS, status);
 
 		return mDb.update(FORMINSTANCES_TABLE, cv, KEY_PATH + "='" + path + "'", null) > 0;
@@ -1138,7 +1266,6 @@ public class ClinicAdapter {
 	public boolean updateInstancePath(Integer id, String newPath) {
 
 		ContentValues cv = new ContentValues();
-
 		cv.put(KEY_PATH, newPath);
 
 		return mDb.update(FORMINSTANCES_TABLE, cv, KEY_ID + "=?", new String[] { String.valueOf(id) }) > 0;
@@ -1152,15 +1279,13 @@ public class ClinicAdapter {
 	 * @return number of affected rows
 	 */
 	public boolean updatePatient(Patient patient) {
-		ContentValues cv = new ContentValues();
 
+		ContentValues cv = new ContentValues();
 		cv.put(KEY_PATIENT_ID, patient.getPatientId());
 		cv.put(KEY_IDENTIFIER, patient.getIdentifier());
-
 		cv.put(KEY_GIVEN_NAME, patient.getGivenName());
 		cv.put(KEY_FAMILY_NAME, patient.getFamilyName());
 		cv.put(KEY_MIDDLE_NAME, patient.getMiddleName());
-
 		cv.put(KEY_BIRTH_DATE, patient.getBirthdate());
 		cv.put(KEY_GENDER, patient.getGender());
 
@@ -1174,29 +1299,6 @@ public class ClinicAdapter {
 		cv.put(KEY_PATH, path);
 
 		return mDb.update(FORMS_TABLE, cv, KEY_FORM_ID + "='" + formId.toString() + "'", null) > 0;
-	}
-
-	public Cursor fetchPatientObservations(Integer patientId) throws SQLException {
-		Cursor c = null;
-		// TODO removing an extra KEY_VALUE_TEXT doesn't screw things up?
-		c = mDb.query(OBSERVATIONS_TABLE, new String[] { KEY_VALUE_TEXT, KEY_DATA_TYPE, KEY_VALUE_NUMERIC, KEY_VALUE_DATE, KEY_VALUE_INT, KEY_FIELD_NAME, KEY_ENCOUNTER_DATE }, KEY_PATIENT_ID + "=" + patientId, null, null, null, KEY_FIELD_NAME + "," + KEY_ENCOUNTER_DATE + " desc");
-
-		if (c != null)
-			c.moveToFirst();
-
-		return c;
-	}
-
-	public Cursor fetchPatientObservation(Integer patientId, String fieldName) throws SQLException {
-		Cursor c = null;
-
-		c = mDb.query(OBSERVATIONS_TABLE, new String[] { KEY_VALUE_TEXT, KEY_DATA_TYPE, KEY_VALUE_NUMERIC, KEY_VALUE_DATE, KEY_VALUE_INT, KEY_ENCOUNTER_DATE }, KEY_PATIENT_ID + "=" + patientId + " AND " + KEY_FIELD_NAME + "='" + fieldName + "'", null, null, null,
-				KEY_ENCOUNTER_DATE + " desc");
-
-		if (c != null)
-			c.moveToFirst();
-
-		return c;
 	}
 
 	public void removeOrphanInstances(Context ctx) {
@@ -1222,6 +1324,7 @@ public class ClinicAdapter {
 		}
 	}
 
+	// /////////////// DOWNLOAD AND UPDATE TABLE SECTION ///////////////////////
 	// NB: louis.fazen is following Yaw's logic here, but in actuality Patient
 	// Forms
 	// and Observations are both going into obs, and therefore, the code is
@@ -1272,7 +1375,6 @@ public class ClinicAdapter {
 			for (int i = 1; i < icount + 1; i++) {
 
 				ih.prepareForInsert();
-
 				ih.bind(ptIdIndex, zdis.readInt());
 				ih.bind(obsFieldIndex, zdis.readUTF());
 				byte dataType = zdis.readByte();
@@ -1285,16 +1387,10 @@ public class ClinicAdapter {
 				} else if (dataType == Constants.TYPE_DATE) {
 					ih.bind(obsDateIndex, parseDate(zdis.readUTF()));
 				}
-
 				ih.bind(obsTypeIndex, dataType);
 				ih.bind(obsEncDateIndex, parseDate(zdis.readUTF()));
-
-				// Insert the row into the database.
 				ih.execute();
 
-				// publishProgress("Processing Forms",
-				// Integer.valueOf(i).toString(),
-				// Integer.valueOf(icount).toString());
 			}
 			mDb.setTransactionSuccessful();
 		} finally {
@@ -1316,8 +1412,6 @@ public class ClinicAdapter {
 			for (int i = 1; i < icount + 1; i++) {
 
 				ih.prepareForInsert();
-
-				// Add the data for each column
 				ih.bind(ptIdIndex, zdis.readInt());
 				ih.bind(ptFamilyIndex, zdis.readUTF());
 				ih.bind(ptMiddleIndex, zdis.readUTF());
@@ -1325,21 +1419,6 @@ public class ClinicAdapter {
 				ih.bind(ptGenderIndex, zdis.readUTF());
 				ih.bind(ptBirthIndex, parseDate(zdis.readUTF()));
 				ih.bind(ptIdentifierIndex, zdis.readUTF());
-
-				// ih.bind(ptFormIndex, "");
-				// ih.bind(ptFormNumberIndex, "");
-
-				// Log.e(t,
-				// " ptIdIndex2: " + String.valueOf(ptIdIndex) +
-				// " ptFamilyIndex:5 " + String.valueOf(ptFamilyIndex) +
-				// " ptMiddleIndex:6 " + String.valueOf(ptMiddleIndex) +
-				// " ptGivenIndex:4 " + String.valueOf(ptGivenIndex) +
-				// " ptGenderIndex:8 "
-				// + String.valueOf(ptGenderIndex) + " ptBirthIndex:7 " +
-				// String.valueOf(ptBirthIndex) + " ptIdentifierIndex:3 " +
-				// String.valueOf(ptIdentifierIndex));
-
-				// Insert the row into the database.
 				ih.execute();
 
 			}
@@ -1364,8 +1443,6 @@ public class ClinicAdapter {
 			for (int i = 1; i < icount + 1; i++) {
 
 				ih.prepareForInsert();
-
-				// Add the data for each column
 				ih.bind(ptIdIndex, zdis.readInt());
 				ih.bind(obsFieldIndex, zdis.readUTF());
 				byte dataType = zdis.readByte();
@@ -1378,11 +1455,8 @@ public class ClinicAdapter {
 				} else if (dataType == Constants.TYPE_DATE) {
 					ih.bind(obsDateIndex, parseDate(zdis.readUTF()));
 				}
-
 				ih.bind(obsTypeIndex, dataType);
 				ih.bind(obsEncDateIndex, parseDate(zdis.readUTF()));
-
-				// Insert the row into the database.
 				ih.execute();
 
 			}

@@ -19,18 +19,17 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.os.SystemClock;
 
-import com.alphabetbloc.clinic.services.DeleteDecryptedFilesService;
+import com.alphabetbloc.clinic.services.WipeDataService;
 
-public class DeleteDecryptedDataListener implements WakefulIntentService.AlarmListener {
+public class WipeDataListener implements WakefulIntentService.AlarmListener {
 
 	public void scheduleAlarms(AlarmManager mgr, PendingIntent pi, Context ctxt) {
 		
-		//TODO! CHANGE ALARM INTERVAL!!
-		mgr.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + 60000, AlarmManager.INTERVAL_FIFTEEN_MINUTES/8, pi);
+		mgr.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + 60000, AlarmManager.INTERVAL_HALF_HOUR, pi);
 	}
 
 	public void sendWakefulWork(Context ctxt) {
-		WakefulIntentService.sendWakefulWork(ctxt, DeleteDecryptedFilesService.class);
+		WakefulIntentService.sendWakefulWork(ctxt, WipeDataService.class);
 	}
 
 	public long getMaxAge() {
