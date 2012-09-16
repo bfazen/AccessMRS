@@ -48,15 +48,15 @@ the License.
     <string name="key_enable_activity_log">enable_activity_log</string>
 
     <!-- Defaults -->
-    <string name="default_server">http://192.168.43.155:8080/openmrs</string>
-    <string name="default_username">admin</string>
+    <string name="default_server">https://41.215.140.67:8443/amrs</string>
+    <string name="default_username">ChangeIt</string>
     <string name="default_info">http://opendatakit.org</string>
     <string name="default_password">test</string>
-    <string name="default_provider">test</string>
+    <string name="default_provider">1234</string>
     <string name="default_program">0</string>
     <string name="default_saved_search">0</string>
     <string name="default_use_saved_searches">true</string>
-    <string name="default_show_settings_menu">false</string>
+    <string name="default_show_settings_menu">true</string>
     <string name="default_enable_activity_logging">true</string>
     <string name="default_use_client_auth">true</string>
 
@@ -199,6 +199,7 @@ the License.
     <string name="incomplete_forms">Incomplete Forms To Fill</string>
     <string name="incomplete_form">Incomplete Form To Fill</string>
     <string name="decrypting_data">Unlocking data...</string>
+    <string name="decrypting_data_body">Please be patient.</string>
 
     <!-- Dashboard Activity Clients -->
     <string name="provider_lists_section">Current Client Lists:</string>

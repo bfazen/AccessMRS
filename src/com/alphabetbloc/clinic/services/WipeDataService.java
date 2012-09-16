@@ -30,6 +30,7 @@ public class WipeDataService extends WakefulIntentService {
 
 	private static final String TAG = "WipeDataService";
 	public static final String WIPE_DATA_COMPLETE = "com.alphabetbloc.android.settings.WIPE_DATA_SERVICE_COMPLETE";
+	public static final String WIPE_CLINIC_DATA = "wipe_clinic_data";
 	private Context mCollectCtx;
 
 	public WipeDataService() {
@@ -40,6 +41,8 @@ public class WipeDataService extends WakefulIntentService {
 	protected void doWakefulWork(Intent intent) {
 		boolean allDeleted = true;
 		int attempts = 0;
+		boolean wipeClinic = intent.getBooleanExtra(WIPE_CLINIC_DATA, true);
+		Log.e(TAG, "Wiping Data Collect = true and Clinic = " + wipeClinic);
 
 		do {
 
@@ -72,30 +75,32 @@ public class WipeDataService extends WakefulIntentService {
 			}
 
 			// CLINIC
-			try {
-				// delete cache
-				File clinicInternalCache = getApplicationContext().getCacheDir();
-				File clinicExternalCache = getApplicationContext().getExternalCacheDir();
-				allDeleted = allDeleted & deleteDirectory(clinicExternalCache);
-				allDeleted = allDeleted & deleteDirectory(clinicInternalCache);
+			if (wipeClinic) {
+				try {
+					// delete cache
+					File clinicInternalCache = getApplicationContext().getCacheDir();
+					File clinicExternalCache = getApplicationContext().getExternalCacheDir();
+					allDeleted = allDeleted & deleteDirectory(clinicExternalCache);
+					allDeleted = allDeleted & deleteDirectory(clinicInternalCache);
 
-				// delete db keys
-				SharedPreferences clinicPrefs = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
-				allDeleted = allDeleted & deleteSqlCipherDbKeys(clinicPrefs);
+					// delete db keys
+					SharedPreferences clinicPrefs = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
+					allDeleted = allDeleted & deleteSqlCipherDbKeys(clinicPrefs);
 
-				// delete clinic db
-				allDeleted = allDeleted & deleteClinicDb();
+					// delete clinic db
+					allDeleted = allDeleted & deleteClinicDb();
 
-				// Finally
-				// Delete the entire external instances dir (which is encrypted)
-				String instancePath = FileUtils.getExternalInstancesPath();
-				File externalInstanceDir = new File(instancePath);
-				allDeleted = allDeleted & deleteDirectory(externalInstanceDir);
+					// Finally
+					// Delete the entire external instances dir (which is
+					// encrypted)
+					String instancePath = FileUtils.getExternalInstancesPath();
+					File externalInstanceDir = new File(instancePath);
+					allDeleted = allDeleted & deleteDirectory(externalInstanceDir);
 
-			} catch (Exception e) {
-				e.printStackTrace();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 			}
-
 			attempts++;
 
 		} while (!allDeleted && (attempts < 4));

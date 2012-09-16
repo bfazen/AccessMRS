@@ -12,7 +12,6 @@ import org.odk.clinic.android.utilities.FileUtils;
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
 import android.app.AlarmManager;
-import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.ComponentName;
 import android.content.Context;
@@ -31,7 +30,6 @@ import android.view.View.OnTouchListener;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import com.alphabetbloc.clinic.services.EncryptionService;
 import com.commonsware.cwac.wakeful.DeleteDecryptedDataListener;
 import com.commonsware.cwac.wakeful.WakefulIntentService;
 
@@ -104,7 +102,6 @@ public class ViewCompletedForms extends ViewFormsActivity implements DecryptionL
 		mListView.setOnTouchListener(mFormListener);
 	}
 
-	
 	class onFormClick extends myGestureListener {
 
 		@Override
@@ -131,46 +128,28 @@ public class ViewCompletedForms extends ViewFormsActivity implements DecryptionL
 		intent.setData(Uri.parse(InstanceColumns.CONTENT_URI + "/" + f.getInstanceId()));
 		startActivityForResult(intent, VIEW_FORM_ONLY);
 	}
-	
+
 	private void decryptForm(final Form f) {
-		final AlertDialog.Builder alert = new AlertDialog.Builder(this);
 
-		alert.setTitle("crypto$*^@crypto");
-		alert.setIcon(R.drawable.id_icon_inverse);
-		alert.setMessage("Select cryptography type:");
-		alert.setPositiveButton("Encrypt", new DialogInterface.OnClickListener() {
-			public void onClick(DialogInterface dialog, int whichButton) {
-				WakefulIntentService.sendWakefulWork(mContext, EncryptionService.class);
-				Toast.makeText(mContext, "Encrypting Data...", Toast.LENGTH_SHORT);
-			}
-		});
+		if (isFileEncrypted(f) && !isRecentlyDecrypted(f)) {
+			if (mDecryptionTask != null && mDecryptionTask.getStatus() != AsyncTask.Status.FINISHED)
+				return;
 
-		alert.setNegativeButton("Decrypt", new DialogInterface.OnClickListener() {
-			public void onClick(DialogInterface dialog, int whichButton) {
-				if (isFileEncrypted(f) && !isRecentlyDecrypted(f)) {
+			// schedule alarm to delete the decrypted files even before decrypt
+			WakefulIntentService.scheduleAlarms(new DeleteDecryptedDataListener(), WakefulIntentService.DELETE_DECRYPTED_DATA, mContext, true);
+			
+			//save the form until completion of the asynctask, show dialog
+			mClickedForm = f;
+			mProgressDialog = createDecryptDialog();
+			mProgressDialog.show();
 
-					if (mDecryptionTask != null && mDecryptionTask.getStatus() != AsyncTask.Status.FINISHED)
-						return;
+			mDecryptionTask = new DecryptionTask();
+			mDecryptionTask.setDecryptionListener(ViewCompletedForms.this);
+			mDecryptionTask.execute(f.getInstanceId(), f.getPath());
 
-					mClickedForm = f;
-
-					// schedule alarm to delete the decrypted files even before
-					// decrypt
-					WakefulIntentService.scheduleAlarms(new DeleteDecryptedDataListener(), WakefulIntentService.DELETE_DECRYPTED_DATA, mContext, true);
-
-					mProgressDialog = createDecryptDialog();
-					mProgressDialog.show();
-
-					mDecryptionTask = new DecryptionTask();
-					mDecryptionTask.setDecryptionListener(ViewCompletedForms.this);
-					mDecryptionTask.execute(f.getInstanceId(), f.getPath());
-
-				} else {
-					launchFormView(f);
-				}
-			}
-		});
-		alert.show();
+		} else {
+			launchFormView(f);
+		}
 	}
 
 	@Override
@@ -182,11 +161,11 @@ public class ViewCompletedForms extends ViewFormsActivity implements DecryptionL
 
 	private boolean isFileEncrypted(Form f) {
 		boolean encrypted = false;
-		String encPath = FileUtils.getEncryptedFilePath(f.getPath());
+		String encPath = FileUtils.getEncryptedFilePath(f.getPath()) + FileUtils.ENC_EXT;
 		File encFile = new File(encPath);
 		if (encFile.exists())
 			encrypted = true;
-		Log.e(TAG, "isFileEncrypted=" + encrypted);
+		Log.e(TAG, "File is Encrypted=" + encrypted);
 		return encrypted;
 	}
 
@@ -204,7 +183,7 @@ public class ViewCompletedForms extends ViewFormsActivity implements DecryptionL
 		File decFile = new File(decPath);
 
 		if (decFile.exists() && ((System.currentTimeMillis() - decFile.lastModified()) < maxDecrypt)) {
-			Log.e(TAG, "file is already decrytped!");
+			Log.e(TAG, "File is already decrytped!");
 			return true;
 
 		} else if (decFile.exists()) {
@@ -257,8 +236,7 @@ public class ViewCompletedForms extends ViewFormsActivity implements DecryptionL
 		pD.setButton(getString(R.string.cancel), loadingButtonListener);
 		return pD;
 	}
-
-
+	
 	@Override
 	protected void onPause() {
 		super.onPause();

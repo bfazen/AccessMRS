@@ -82,19 +82,6 @@ public class DashboardActivity extends Activity {
 			showCustomToast(getString(R.string.error, getString(R.string.storage_error)));
 			finish();
 		}
-		
-		Log.e(TAG, "SETTINGS." +
-				"\n  PROVIDER=" + settings.getString(getString(R.string.key_provider), "Z") +
-				"\n SERVER=" + settings.getString(getString(R.string.key_server), "Z") +
-				"\n USERNAME=" + settings.getString(getString(R.string.key_username), "Z") +
-				"\n PASSWORD=" + settings.getString(getString(R.string.key_password), "Z") +
-				"\n COHORT=" + settings.getString(getString(R.string.key_cohort), "Z") +
-				"\n SAVED SEARCH=" + settings.getString(getString(R.string.key_saved_search), "Z") +
-				"\n USE SAVED SEARCH=" + settings.getBoolean(getString(R.string.key_use_saved_searches), true) +
-				"\n CLIENT AUTH=" + settings.getBoolean(getString(R.string.key_client_auth), true) +
-				"\n ACTIVITY LOG=" + settings.getBoolean(getString(R.string.key_enable_activity_log), true) +
-				"\n SHOW MENU=" + settings.getBoolean(getString(R.string.key_show_settings_menu), false) +
-				"\n FIRST RUN=" + settings.getBoolean(getString(R.string.key_first_run), true));
 	}
 
 	@Override

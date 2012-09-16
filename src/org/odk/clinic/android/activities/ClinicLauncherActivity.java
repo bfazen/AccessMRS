@@ -15,6 +15,8 @@ import org.odk.clinic.android.utilities.App;
 import org.odk.clinic.android.utilities.Crypto;
 import org.odk.clinic.android.utilities.FileUtils;
 import org.odk.clinic.android.utilities.KeyStore;
+import org.odk.collect.android.provider.InstanceProviderAPI;
+import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;
@@ -23,7 +25,9 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -46,7 +50,7 @@ import com.commonsware.cwac.wakeful.WakefulIntentService;
 public class ClinicLauncherActivity extends Activity {
 
 	private Context mContext;
-	public static final String TAG = "ClinicKeyChainPwdSetup";
+	public static final String TAG = "ClinicLauncherActivity";
 	public static final String OLD_UNLOCK_ACTION = "android.credentials.UNLOCK";
 	public static final String SQLCIPHER_KEY_NAME = "sqlCipherDbKey";
 	public static final String SQLCIPHER_PREFS_NAME = "sqlCipherDbKey.sharedPreferences";
@@ -81,6 +85,7 @@ public class ClinicLauncherActivity extends Activity {
 	private String mProviderId;
 	private boolean isDecrypting = false;
 	private boolean isFreshInstall = false;
+	private boolean isPrefsSet = false;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -107,38 +112,107 @@ public class ClinicLauncherActivity extends Activity {
 	private void refreshView() {
 
 		createView(LOADING);
+		if (isCollectSetup()) {
 
-		if (DbAdapter.getInstance().isOpen()) {
-			// we are all setup
-			startActivity(new Intent(mContext, DashboardActivity.class));
-			finish();
-		} else {
-			// try setup
-			boolean setupComplete = setupClinic();
+			if (DbAdapter.getInstance().isOpen()) {
+				// we are all setup
+				Log.e(TAG, "all set up in refreshView");
+				startActivity(new Intent(mContext, DashboardActivity.class));
+				finish();
+			} else {
+				Log.e(TAG, "Not all set up in refreshView");
+				// try setup
+				boolean setupComplete = isClinicSetup();
 
-			if (setupComplete) {
-				// try to unlock
-				if (!DbAdapter.getInstance().isOpen()) {
+				if (setupComplete) {
 					// try to unlock
-					unlockDb(SQLCIPHER_KEY_NAME);
-				} else {
-					// we are all setup
-					startActivity(new Intent(mContext, DashboardActivity.class));
-					finish();
+					if (!DbAdapter.getInstance().isOpen()) {
+						// try to unlock
+						unlockDb(SQLCIPHER_KEY_NAME);
+					} else {
+						// we are all setup
+						startActivity(new Intent(mContext, DashboardActivity.class));
+						finish();
+					}
 				}
 			}
+		} else {
+			showCustomToast("Collect Must Be Installed To Use This Software!");
+			Log.e(TAG, "Collect is not installed");
+			finish();
 		}
+	}
+
+	private boolean isCollectSetup() {
+		boolean setupComplete = true;
+
+		// check if collect installed
+		if (!isAppInstalled("org.odk.collect.android"))
+			return !setupComplete;
+
+		// get db
+		File db = null;
+		try {
+			Context collectCtx = App.getApp().createPackageContext("org.odk.collect.android", Context.CONTEXT_RESTRICTED);
+			db = collectCtx.getDatabasePath(InstanceProviderAPI.DATABASE_NAME);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return !setupComplete;
+		}
+
+		// check db password works
+		if (db.exists()) {
+			try {
+				Cursor c = App.getApp().getContentResolver().query(InstanceColumns.CONTENT_URI, null, null, null, null);
+				if (c == null) {
+					Log.e(TAG, "nothing in db");
+				}
+			} catch (Exception e) {
+				// Db exisits but lost key! (clinic reinstalled?) CATASTROPHE...
+				// SO RESET COLLECT
+				Log.e(TAG, getString(R.string.error_lost_db_key));
+				showCustomToast(getString(R.string.error_lost_db_key));
+				Intent i = new Intent(mContext, WipeDataService.class);
+				i.putExtra(WipeDataService.WIPE_CLINIC_DATA, false);
+				WakefulIntentService.sendWakefulWork(mContext, i);
+				createView(LOADING);
+			}
+		}
+
+		// database does not exist yet, or was setup correctly, or is being
+		// reset
+		return setupComplete;
+	}
+
+	private void toastCurrentSettings() {
+		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(mContext);
+		showCustomToast("Encrypting with  Current Settings:" + "\n  PASSWORD=" + settings.getString(getString(R.string.key_provider), "Unknown") + "\n  PROVIDER=" + settings.getString(getString(R.string.key_provider), "Unknown") + "\n USERNAME="
+				+ settings.getString(getString(R.string.key_username), "Z") + "\n PASSWORD=" + settings.getString(getString(R.string.key_password), "Z") + "\n SERVER=" + settings.getString(getString(R.string.key_server), "Z") + "\n COHORT="
+				+ settings.getString(getString(R.string.key_cohort), "Z") + "\n SAVED SEARCH=" + settings.getString(getString(R.string.key_saved_search), "Z") + "\n USE SAVED SEARCH=" + settings.getBoolean(getString(R.string.key_use_saved_searches), true) + "\n CLIENT AUTH="
+				+ settings.getBoolean(getString(R.string.key_client_auth), true) + "\n ACTIVITY LOG=" + settings.getBoolean(getString(R.string.key_enable_activity_log), true) + "\n SHOW MENU=" + settings.getBoolean(getString(R.string.key_show_settings_menu), false)
+				+ "\n FIRST RUN=" + settings.getBoolean(getString(R.string.key_first_run), true));
+	}
+
+	public boolean isAppInstalled(String packageName) {
+
+		PackageManager pm = getPackageManager();
+		try {
+			pm.getPackageInfo(packageName, PackageManager.GET_META_DATA);
+		} catch (NameNotFoundException e) {
+			return false;
+		}
+		return true;
 	}
 
 	/**
 	 * setupClinic assesses and then launches setup for credential storage
 	 * password, Db password, and provider id. NB. Users want to change provider
-	 * on fly to accommodate looking at neighboring clients (but always should be
-	 * same user/name)... so we only have wizard for providerId.
+	 * on fly to accommodate looking at neighboring clients (but always should
+	 * be same user/name)... so we only have wizard for providerId.
 	 * 
 	 * @return
 	 */
-	private boolean setupClinic() {
+	private boolean isClinicSetup() {
 		boolean setupComplete = true;
 
 		// Step 1: check keystore is unlocked -> setup keystore pwd
@@ -149,51 +223,23 @@ public class ClinicLauncherActivity extends Activity {
 			return !setupComplete;
 		}
 
-		// Step 2: check first use -> setup db pwd
+		// Step 2: check first use -> launch setup
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
 		boolean firstRun = settings.getBoolean(getString(R.string.key_first_run), true);
 		if (firstRun) {
-			createView(REQUEST_DB_SETUP);
-
-			setDefaultPreferences();
+			if (!isPrefsSet)
+				setDefaultPreferences();
+			else
+				createView(REQUEST_DB_SETUP);
 			return !setupComplete;
 		}
 
-		// Step 3: check provider setup -> setup provider id
-		mProviderId = settings.getString(getString(R.string.key_provider), getString(R.string.default_provider));
-		if (mProviderId.equals(getString(R.string.default_provider))) {
-			// request provider id setup
-			createView(REQUEST_PROVIDER_SETUP);
-			return !setupComplete;
-		}
-
-		// SHOULD NEVER HAPPEN:
-		// Step 4: check Db exists
+		// SHOULD NEVER HAPPEN: check Db exists, it has a key and pwd
 		File db = App.getApp().getDatabasePath(DbAdapter.DATABASE_NAME);
-		if (db == null || !db.exists()) {
-			// not first run, but have no Db! CATASTROPHE... SO RESET.
-			Log.e(TAG, getString(R.string.error_lost_db_key));
-			showCustomToast(getString(R.string.error_lost_db_key));
-			WakefulIntentService.sendWakefulWork(this, WipeDataService.class);
-			createView(LOADING);
-			return !setupComplete;
-		}
-
-		// Step 5: check encrypted Db password
 		String pwd = settings.getString(SQLCIPHER_KEY_NAME, "");
-		if (pwd.equals("")) {
-			// not first run, but have no pwd! CATASTROPHE... SO RESET.
-			Log.e(TAG, getString(R.string.error_lost_db_pwd));
-			showCustomToast(getString(R.string.error_lost_db_pwd));
-			WakefulIntentService.sendWakefulWork(this, WipeDataService.class);
-			createView(LOADING);
-			return !setupComplete;
-		}
-
-		// Step 6: check for password decryption key
 		SecretKeySpec key = getKey(SQLCIPHER_KEY_NAME);
-		if (key == null) {
-			// not first run, but have no key! CATASTROPHE... SO RESET.
+		if (db == null || !db.exists() || pwd.equals("") || key == null) {
+			// not first run, but have lost Db info! CATASTROPHE... SO RESET.
 			Log.e(TAG, getString(R.string.error_lost_db_key));
 			showCustomToast(getString(R.string.error_lost_db_key));
 			WakefulIntentService.sendWakefulWork(this, WipeDataService.class);
@@ -220,8 +266,11 @@ public class ClinicLauncherActivity extends Activity {
 		// App Default Prefs
 		PreferenceManager.setDefaultValues(this, R.xml.server_preferences, false);
 
-		// Add (or Overwrite) App Defaults settings from config file from SD
-		importConfigFile();
+		// Overwrite app defaults from config file or launch PrefsActivity
+		if (!importConfigFile()) {
+			isPrefsSet = true;
+			startActivity(new Intent(mContext, PreferencesActivity.class));
+		}
 	}
 
 	private boolean importConfigFile() {
@@ -306,6 +355,7 @@ public class ClinicLauncherActivity extends Activity {
 			submitButton.setOnClickListener(mProviderListener);
 			break;
 
+		// TODO! does not work yet b/c also have to rekey collectDb
 		case REQUEST_DB_REKEY:
 			mStep = VERIFY_ENTRY;
 			mInstructionText.setText(R.string.sql_verify_pwd);
@@ -325,6 +375,7 @@ public class ClinicLauncherActivity extends Activity {
 		}
 	}
 
+	// TODO! Consider setting provider ID into its own class...
 	private OnClickListener mProviderListener = new OnClickListener() {
 
 		@Override
@@ -414,6 +465,7 @@ public class ClinicLauncherActivity extends Activity {
 				if (mFirstEntry.equals(userEntry)) {
 					createView(LOADING);
 					encryptDb(userEntry);
+					toastCurrentSettings();
 				} else {
 					mStep = ASK_NEW_ENTRY;
 					mInstructionText.setText(R.string.set_sqlcipher_pwd);
@@ -502,8 +554,9 @@ public class ClinicLauncherActivity extends Activity {
 					editor.commit();
 
 					// save the encryptedPwd to collect
+					Context mCollectCtx = null;
 					try {
-						Context mCollectCtx = App.getApp().createPackageContext("org.odk.collect.android", Context.CONTEXT_RESTRICTED);
+						mCollectCtx = App.getApp().createPackageContext("org.odk.collect.android", Context.CONTEXT_RESTRICTED);
 						SharedPreferences collectPrefs = mCollectCtx.getSharedPreferences(SQLCIPHER_PREFS_NAME, MODE_PRIVATE);
 						collectPrefs.edit().putString(SQLCIPHER_KEY_NAME, encryptedPwd).commit();
 					} catch (NameNotFoundException e) {
@@ -550,6 +603,8 @@ public class ClinicLauncherActivity extends Activity {
 	}
 
 	private SecretKeySpec getKey(String keyName) {
+		if (ks == null)
+			ks = KeyStore.getInstance();
 		byte[] keyBytes = ks.get(keyName);
 		if (keyBytes == null) {
 			Log.w(TAG, "Encryption key not found in keystore: " + keyName);

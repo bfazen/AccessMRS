@@ -53,7 +53,7 @@ public class UploadDataTask extends AsyncTask<Void, String, String> {
 		String uploadResult = "No Completed Forms to Upload";
 
 		if (dataToUpload()) {
-			//TODO! CHECK does this verify uploaded?
+			// TODO! CHECK does this verify uploaded?
 			ArrayList<String> uploaded = uploadInstances(WebUtils.getFormUploadUrl());
 
 			// Encrypt all the instances successfully uploaded
@@ -194,40 +194,24 @@ public class UploadDataTask extends AsyncTask<Void, String, String> {
 		return uploadedInstances;
 	}
 
-	// TODO: do we no longer have a check on these things? ORIGINAL VERSION OF
-	// THE ABOVE:
-	// prepare response and return uploaded
-	// HttpResponse response = null;
-	// try {
-	// response = httpclient.execute(httppost);
-	// } catch (ClientProtocolException e) {
-	// e.printStackTrace();
-	// return uploadedInstances;
-	// } catch (IOException e) {
-	// e.printStackTrace();
-	// return uploadedInstances;
-	// } catch (IllegalStateException e) {
-	// e.printStackTrace();
-	// return uploadedInstances;
-	// }
-	//
-	// // check response.
-	// // TODO This isn't handled correctly.
-	// String serverLocation = null;
-	// Header[] h = response.getHeaders("Location");
-	// if (h != null && h.length > 0) {
-	// serverLocation = h[0].getValue();
-	// } else {
-	// // something should be done here...
-	// Log.e(tag, "Location header was absent");
-	// }
-	// int responseCode = response.getStatusLine().getStatusCode();
-	// Log.d(tag, "Response code:" + responseCode);
-	//
-	// // verify that your response came from a known server
-	// if (serverLocation != null && mUrl.contains(serverLocation)) {
-	// uploadedInstances.add(mInstancesToUpload[i]);
-	// }
+//{//OLD VERSION	
+//	 // check response.
+//	 // TODO This isn't handled correctly.
+//	 String serverLocation = null;
+//	 Header[] h = response.getHeaders("Location");
+//	 if (h != null && h.length > 0) {
+//	 serverLocation = h[0].getValue();
+//	 } else {
+//	 // something should be done here...
+//	 Log.e(tag, "Location header was absent");
+//	 }
+//	 int responseCode = response.getStatusLine().getStatusCode();
+//	 Log.d(tag, "Response code:" + responseCode);
+//	
+//	 // verify that your response came from a known server
+//	 if (serverLocation != null && mUrl.contains(serverLocation)) {
+//	 uploadedInstances.add(mInstancesToUpload[i]);
+//}
 
 	private boolean updateCollectDb(String path) {
 		boolean updated = false;

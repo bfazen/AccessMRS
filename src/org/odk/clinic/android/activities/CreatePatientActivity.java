@@ -98,7 +98,6 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 		if (!dbjrFormId.equals(registrationFormId))
 			XformUtils.insertRegistrationForm();
 
-
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
 		mProviderId = settings.getString(getString(R.string.key_provider), "0");
 
@@ -160,7 +159,7 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 		if (c != null && c.getCount() > 0) {
 			similarFound = true;
 		}
-		
+
 		if (!similarFound && mPatientID != null && mPatientID.length() > 3) {
 			c = DbAdapter.getInstance().open().fetchPatients(null, mPatientID, DashboardActivity.LIST_SIMILAR_CLIENTS);
 			if (c != null && c.getCount() > 0) {
@@ -251,7 +250,7 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 	}
 
 	private void loadNewClientView() {
-		
+
 		// load the newly created patient into ViewPatientActivity
 		Intent ip = new Intent(getApplicationContext(), ViewPatientActivity.class);
 		ip.putExtra(Constants.KEY_PATIENT_ID, mPatient.getPatientId().toString());
@@ -369,7 +368,8 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 	}
 
 	private void addFormToCollect() {
-		
+		if (mPatient == null)
+			Log.e(TAG, "Mpatient is null!?");
 		int instanceId = XformUtils.createRegistrationFormInstance(mPatient);
 		if (instanceId != -1) {
 			Intent intent = new Intent();
@@ -389,8 +389,7 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 
 	}
 
-
-	//TODO! delete this type of swipe action...
+	// TODO! delete this type of swipe action...
 
 	@Override
 	public boolean onTouchEvent(MotionEvent me) {

@@ -22,7 +22,6 @@ public class ODKLocalKeyStore {
 		//there should be only one file in the store as we will only load one file from the store 
 		//if you want several certs load them into one BKS KeyStore and load them here
 
-		
 		try {
 			File keyStoreDir = new File(storePath); 
 			if (!keyStoreDir.isDirectory() && !keyStoreDir.exists()) {

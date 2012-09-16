@@ -8,7 +8,6 @@ import android.app.Application;
 
 public class App extends Application {
 	private static App mSingleton = null;
-	// private static ClinicAdapter.DatabaseHelper openHelper;
 	private static DbAdapter.DatabaseHelper mSqlCipherDbHelper;
 
 	@Override
@@ -22,18 +21,20 @@ public class App extends Application {
 		return mSingleton;
 	}
 	
-	private static void initializeDb(){
+	private static void initializeDb() {
 		SQLiteDatabase.loadLibs(mSingleton);
 		mSqlCipherDbHelper = new DbAdapter.DatabaseHelper(mSingleton);
 	}
 
 	public static SQLiteDatabase getDB(String password) {
+		if (mSqlCipherDbHelper == null)
+			initializeDb();	
 		return mSqlCipherDbHelper.getWritableDatabase(password);
 	}
 
 	/*
 	 * NB: Never close the DB! just ensure always using one DbHelper... its own
-	 * class with db creation, lazy loading, which ClinicAdapter (CA) would call
+	 * class with db creation, lazy loading, which DbAdapter (DA) would call
 	 * and return helper. See: (Mark Murphy) Commonsware and Kevin Galligan
 	 * (TouchLabs)
 	 * (stackoverflow.com/questions/7211941/never-close-android-sqlite
@@ -44,7 +45,7 @@ public class App extends Application {
 	 * getHelper(Context context) { if (instance == null) instance = new
 	 * DatabaseHelper(context); return instance; } }
 	 * 
-	 * B/C CA wraps Db and has same constants, I just initialized public class
+	 * B/C DA wraps Db and has same constants, I just initialized public class
 	 * here. We don't even provide instance of openHelper, just Db itself,
 	 * because the only function you want is to read/write, not close().
 	 */

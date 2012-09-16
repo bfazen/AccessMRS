@@ -54,8 +54,8 @@ public class DeleteDecryptedFilesService extends WakefulIntentService {
 			int id = (Integer) current.get(INSTANCE_ID);
 
 			// get the decrypted instance's parent directory
-			String parentPath = FileUtils.getDecryptedFilePath(dbPath);
-			File parentDir = new File(parentPath);
+			String inPath = FileUtils.getDecryptedFilePath(dbPath);
+			File parentDir = (new File(inPath)).getParentFile();
 
 			// delete everything in the directory
 			boolean thisDeleted = false;

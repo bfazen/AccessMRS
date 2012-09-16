@@ -15,9 +15,12 @@ package org.odk.clinic.android.utilities;
  */
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -37,7 +40,6 @@ import org.kxml2.io.KXmlSerializer;
 import org.kxml2.kdom.Element;
 import org.odk.clinic.android.R;
 import org.odk.clinic.android.activities.CreatePatientActivity;
-import org.odk.clinic.android.activities.PreferencesActivity;
 import org.odk.clinic.android.database.DbAdapter;
 import org.odk.clinic.android.openmrs.Observation;
 import org.odk.clinic.android.openmrs.Patient;
@@ -51,9 +53,9 @@ import org.w3c.dom.NodeList;
 
 import android.content.ContentValues;
 import android.content.SharedPreferences;
+import android.content.res.AssetManager;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
@@ -69,23 +71,94 @@ public class XformUtils {
 	private static final String REGISTRATION_FORM_ID = "-99";
 	public static final String REGISTRATION_FORM_XML = "patient_registration.xml";
 	private static final String REGISTRATION_FORM_NAME = "PatientRegistrationForm";
-	
+
 	private static final DateFormat COLLECT_INSTANCE_NAME_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
+	private static final String TAG = XformUtils.class.getSimpleName();
 	private static HashMap<String, String> mInstanceValues = new HashMap<String, String>();
 	private static Element mFormNode;
 
-    // Suppress default constructor for noninstantiability
-    private XformUtils() {
-        throw new AssertionError();
-    }
-    
+	// Suppress default constructor for noninstantiability
+	private XformUtils() {
+		throw new AssertionError();
+	}
+
 	// XFORMS Utils (excerpted from the ViewPatientActivity, DownloadFormTask)
 	public static boolean insertRegistrationForm() {
 		File registrationForm = new File(FileUtils.getExternalFormsPath(), REGISTRATION_FORM_XML);
+		if (!registrationForm.exists())
+			registrationForm = getDefaultRegistrationForm();
 		return insertSingleForm(registrationForm.getAbsolutePath());
 	}
 
-	// PARSE AND INSERT NEW FORM TO DB
+	private static File getDefaultRegistrationForm() {
+
+		// input path: find default form in assets
+		AssetManager assetManager = App.getApp().getAssets();
+		String[] allAssetPaths = null;
+		String assetPath = null;
+		try {
+			allAssetPaths = assetManager.list("");
+
+			for (String path : allAssetPaths) {
+				Log.e(TAG, "asset path= " + path);
+				if (path.contains(REGISTRATION_FORM_XML)) {
+					assetPath = path;
+
+					Log.e(TAG, "Matching asset path= " + path);
+				}
+			}
+
+		} catch (IOException e) {
+			Log.e(TAG, e.getMessage());
+		}
+
+		// output path:
+		File registrationForm = new File(FileUtils.getExternalFormsPath(), REGISTRATION_FORM_XML);
+		Log.e(TAG, "registrationForm= " + registrationForm.getAbsolutePath());
+		Log.e(TAG, "registrationForm.parentFile= " + registrationForm.getParentFile().getAbsolutePath());
+		Log.e(TAG, "registrationForm.parentPath= " + registrationForm.getParent());
+		registrationForm.getParentFile().mkdirs();
+		String sdPath = registrationForm.getAbsolutePath();
+
+		// move to working dir on sd
+		return copyAssetToSd(assetPath, sdPath);
+	}
+
+	private static File copyAssetToSd(String assetPath, String sdPath) {
+
+		File sdFile = new File(sdPath);
+		if (sdFile.exists())
+			return sdFile;
+
+		AssetManager assetManager = App.getApp().getAssets();
+		try {
+
+			InputStream in = assetManager.open(assetPath);
+			OutputStream out = new FileOutputStream(sdPath);
+
+			byte[] buffer = new byte[1024];
+			int read;
+			while ((read = in.read(buffer)) != -1) {
+				out.write(buffer, 0, read);
+			}
+
+			in.close();
+			in = null;
+			out.flush();
+			out.close();
+			out = null;
+
+		} catch (Exception e) {
+			Log.e(TAG, e.getMessage());
+		}
+
+		if (sdFile.exists())
+			Log.e(TAG, "File has been successfully moved: " + assetPath + " -> " + sdPath);
+
+		return sdFile;
+	}
+
+	// PARSE AND INSERT NEW FORM TO FORMS DB
 	public static boolean insertSingleForm(String formPath) {
 
 		ContentValues values = new ContentValues();
@@ -138,6 +211,21 @@ public class XformUtils {
 			}
 			values.put(FormsColumns.FORM_FILE_PATH, addMe.getAbsolutePath());
 
+			// NB: COLECT REQUIRED FIELDS
+			// Assigned from Xform:
+			// + FormsColumns.JR_FORM_ID
+			// + FormsColumns.DISPLAY_NAME
+
+			// Assigned here:
+			// + FormsColumns.FORM_FILE_PATH
+
+			// Assigned in Collect:
+			// + FormsColumns.DISPLAY_SUBTEXT
+			// + FormsColumns.DATE
+			// + FormsColumns.MD5_HASH
+			// + FormsColumns.FORM_MEDIA_PATH
+			// + FormsColumns.JRCACHE_FILE_PATH
+
 			boolean alreadyExists = false;
 
 			Cursor mCursor;
@@ -184,7 +272,7 @@ public class XformUtils {
 
 	}
 
-	//TODO! change this to retrive the one form you want!
+	// TODO! change this to retrive the one form you want!
 	private static String getNameFromId(Integer id) {
 		String formName = null;
 		Cursor c = DbAdapter.openDb().fetchAllForms();
@@ -218,6 +306,9 @@ public class XformUtils {
 
 	public static int createFormInstance(Patient mPatient, String formPath, String jrFormId, String formname) {
 
+		if(mPatient == null)
+			Log.e(TAG, "lost a patient!");
+		
 		// reading the form
 		// TODO! is this the right document type?!
 		org.kxml2.kdom.Document doc = new org.kxml2.kdom.Document();
@@ -435,7 +526,7 @@ public class XformUtils {
 	}
 
 	private static void prepareInstanceValues(Integer patientId) {
-		
+
 		if (patientId > 0) {
 
 			ArrayList<Observation> mObservations = DbAdapter.openDb().fetchPatientObservationList(patientId);
@@ -445,6 +536,6 @@ public class XformUtils {
 				mInstanceValues.put(o.getFieldName(), o.toString());
 			}
 		}
-		
+
 	}
 }
