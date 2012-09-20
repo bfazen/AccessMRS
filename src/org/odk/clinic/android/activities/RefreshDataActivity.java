@@ -93,13 +93,10 @@ public class RefreshDataActivity extends Activity implements UploadFormListener,
 
 	@Override
 	public void uploadComplete(String result) {
-		// Encrypt the uploaded data with wakelock to ensure it happens!
-		WakefulIntentService.sendWakefulWork(mContext, EncryptionService.class);
 
-		Log.e("louis.fazen", "uploadcomplete String=" + result);
 		showCustomToast(result);
 		mUploadTask = null;
-		downloadData();
+//		downloadData();
 	}
 
 	public void downloadData() {

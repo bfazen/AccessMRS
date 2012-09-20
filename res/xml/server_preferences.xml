@@ -74,7 +74,7 @@
             android:defaultValue="@string/default_use_client_auth"
             android:summaryOff="@string/client_auth_hint"
             android:summaryOn="@string/client_auth_hint"
-            android:title="@string/use_client_auth" />
+            android:title="@string/client_auth" />
 
         <Preference
             android:summary="@string/client_auth_desc"
@@ -88,6 +88,13 @@
             android:title="@string/manage_certs" >
             <intent
                 android:targetClass="org.odk.clinic.android.activities.AddCertificatesActivity"
+                android:targetPackage="org.odk.clinic.android" />
+        </Preference>
+         <Preference
+            android:summary="@string/manage_certs_desc"
+            android:title="@string/test_ssl" >
+            <intent
+                android:targetClass="org.odk.clinic.android.activities.TestSslConnectionActivity"
                 android:targetPackage="org.odk.clinic.android" />
         </Preference>
     </PreferenceCategory>

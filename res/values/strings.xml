@@ -48,20 +48,21 @@ the License.
     <string name="key_enable_activity_log">enable_activity_log</string>
 
     <!-- Defaults -->
-    <string name="default_server">https://41.215.140.67:8443/amrs</string>
-    <string name="default_username">ChangeIt</string>
+    <string name="default_server">https://192.168.5.201:8443/amrs</string>
+    <string name="default_username">JGreen</string>
     <string name="default_info">http://opendatakit.org</string>
-    <string name="default_password">test</string>
-    <string name="default_provider">1234</string>
-    <string name="default_program">0</string>
-    <string name="default_saved_search">0</string>
+    <string name="default_password">Password2012</string>
+    <string name="default_provider">1</string>
+    <string name="default_program">1</string>
+    <string name="default_saved_search">1</string>
     <string name="default_use_saved_searches">true</string>
     <string name="default_show_settings_menu">true</string>
     <string name="default_enable_activity_logging">true</string>
-    <string name="default_use_client_auth">true</string>
+    <string name="default_use_client_auth">false</string>
 
     <!-- SSL Preferences and SSL Activity -->
     <string name="manage_ssl">Manage SSL Connections</string>
+    <string name="test_ssl">Test SSL Connections</string>
     <string name="use_client_auth">Use Client Authentication</string>
     <string name="client_auth_hint"></string>
     <string name="client_auth">Client Authentication</string>
@@ -75,7 +76,7 @@ the License.
     <string name="ssl_remove_success_message">Removed %1$d %2$s(s) from local %3$s store.</string>
     <string name="ssl_remove_alert_message">There was a problem removing this %s.</string>
     <string name="ssl_add_alert_title">Add A New %s</string>
-    <string name="ssl_add_alert_body">To add a new %1$s, please add the %2$s in DER format to the SD Card.</string>
+    <string name="ssl_add_alert_body">To add a new %1$s, please add the %2$s in %3$s format to the SD Card.</string>
     <string name="ssl_remove_alert_title">Remove %s</string>
     <string name="ssl_remove_alert_body">You are about to remove the %s of: \n\n</string>
 
@@ -100,7 +101,7 @@ the License.
     <string name="provider_instructions">Please enter your provider identification number.</string>
     <string name="provider_requirement">You must be a provider to use this device.  Please enter your assigned provider ID.</string>
     <string name="set_provider">Set Provider ID</string>
-    
+
     <!-- ClinicLauncherActivity Db Setup -->
     <string name="error_lost_db_key">ERROR! The key to the Database has been lost! Current Database is useless. Deleting and Reinstalling.</string>
     <string name="error_lost_db_pwd">ERROR! The key to the Database Password has been lost! Current Database is useless. Deleting and Reinstalling.</string>

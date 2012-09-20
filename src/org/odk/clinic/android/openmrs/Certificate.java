@@ -11,6 +11,25 @@ public class Certificate {
 	private String sCN = null;
 	private String iO = null;
 	private String mAlias = null;
+	private String mName = null;
+	private String mDate = null;
+	
+	
+	public void setName(String name){
+		mName = name;
+	}
+	
+	public void setDate(String date){
+		mDate = date;
+	}
+	
+	public String getName(){
+		return mName;
+	}
+	
+	public String getDate(){
+		return mDate;
+	}
 	
 	public void setAlias(String alias){
 		mAlias = alias;

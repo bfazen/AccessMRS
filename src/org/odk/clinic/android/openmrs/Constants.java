@@ -86,17 +86,6 @@ public class Constants {
 
 	public static final String GLOBAL_PROP_KEY_USE_ENCOUNTER_XFORM = "xforms.useEncounterXform";
 	
-	public static final String USER_DOWNLOAD_URL = "/moduleServlet/xforms/userDownload";
-
-	public static final String COHORT_DOWNLOAD_URL = "/module/odkconnector/download/cohort.form";
-
-	public static final String PATIENT_DOWNLOAD_URL = "/module/odkconnector/download/patients.form";
-	
-	public static final String FORMLIST_DOWNLOAD_URL = "/moduleServlet/xformshelper/xfhFormList?type=odk_clinic";
-	
-	public static final String FORM_DOWNLOAD_URL = "/moduleServlet/xformshelper/xfhFormDownload?type=odk_clinic";
-	
-	public static final String INSTANCE_UPLOAD_URL = "/moduleServlet/xformshelper/xfhFormUpload";
 
 	public static final int TYPE_STRING = 1;
 	public static final int TYPE_INT = 2;

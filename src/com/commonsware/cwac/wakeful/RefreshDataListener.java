@@ -50,7 +50,7 @@ public class RefreshDataListener implements WakefulIntentService.AlarmListener {
 
 		// Find the most recent download time, determine the best interval for
 		// the alarms...
-		long recentDownload = DbAdapter.getInstance().open().fetchMostRecentDownload();
+		long recentDownload = DbAdapter.openDb().fetchMostRecentDownload();
 		long timeSinceRefresh = System.currentTimeMillis() - recentDownload;
 		Log.e("louis.fazen", "Minutes since last refresh: " + timeSinceRefresh / (1000 * 60));
 

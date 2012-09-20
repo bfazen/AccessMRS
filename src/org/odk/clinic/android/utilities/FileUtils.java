@@ -17,6 +17,7 @@ package org.odk.clinic.android.utilities;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
@@ -25,8 +26,11 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.odk.clinic.android.R;
+
 import android.content.Context;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.os.AsyncTask;
 import android.os.Environment;
 import android.util.Log;
 
@@ -50,6 +54,8 @@ public class FileUtils {
 	public static final String FORMS = "forms";
 	public static final String XML_EXT = ".xml";
 	public static final String ENC_EXT = ".enc";
+	public static final String MY_TRUSTSTORE = "mytruststore.bks";
+	public static final String MY_KEYSTORE = "mykeystore.bks";
 
 	public static boolean storageReady() {
 		String cardstatus = Environment.getExternalStorageState();
@@ -138,16 +144,20 @@ public class FileUtils {
 						}
 
 					} else {
-						if (ext != null && f.getName().endsWith(ext)) {
-							allFiles.add(f);
+						if (ext != null) {
+							if (f.getName().endsWith(ext))
+								allFiles.add(f);
+
 						} else {
 							allFiles.add(f);
 						}
 					}
 				}
 			} else {
-				if (ext != null && file.getName().endsWith(ext)) {
-					allFiles.add(file);
+				if (ext != null) {
+					if (file.getName().endsWith(ext))
+						allFiles.add(file);
+
 				} else {
 					allFiles.add(file);
 				}
@@ -246,8 +256,8 @@ public class FileUtils {
 
 	}
 
-	//PATHS
-	//INTERNAL (COLLECT)
+	// PATHS
+	// INTERNAL (COLLECT)
 	public static File getInternalInstanceDirectory() {
 		File instanceDir = null;
 		try {
@@ -258,12 +268,12 @@ public class FileUtils {
 		}
 		return instanceDir;
 	}
-	
+
 	public static String getInternalInstancePath() {
 		String path = getInternalInstanceDirectory().getAbsolutePath();
 		return path;
 	}
-	
+
 	public static String getDecryptedFilePath(String dbPath) {
 		if (dbPath == null)
 			Log.e(TAG, "Error retreiving the db path");
@@ -274,27 +284,83 @@ public class FileUtils {
 		return path;
 	}
 
-	//EXTERNAL (GLOBAL)
+	// EXTERNAL (GLOBAL)
 	public static File getExternalRootDirectory() {
 		File sdRootDir = new File(Environment.getExternalStorageDirectory(), SD_ROOT_DIR);
 		return sdRootDir;
 	}
-	
+
 	public static String getExternalInstancesPath() {
 		File instances = new File(getExternalRootDirectory(), INSTANCES);
 		return instances.getAbsolutePath();
 	}
-	
+
 	public static String getExternalFormsPath() {
 		File forms = new File(getExternalRootDirectory(), FORMS);
 		return forms.getAbsolutePath();
 	}
-	
+
 	public static String getEncryptedFilePath(String dbPath) {
 		if (dbPath == null)
 			Log.e(TAG, "Error retreiving the db path");
 		String outPath = getExternalInstancesPath() + dbPath;
 		return outPath;
+	}
+
+	/**
+	 * imports the local truststore from R.raw to local files directory... so as
+	 * to edit them later..
+	 */
+	public static File setupDefaultSslStore(int resourceId) {
+
+		String filename = null;
+		if (resourceId == R.raw.mytruststore)
+			filename = MY_TRUSTSTORE;
+		if (resourceId == R.raw.mykeystore)
+			filename = MY_KEYSTORE;
+		File file = new File(App.getApp().getFilesDir(), filename);
+
+		if (file.exists()) {
+			// we have already set up with default or from sd, so quit
+			Log.e(TAG, "SSL File exists!=" + file.getAbsolutePath());
+			return file;
+		}
+
+		try {
+			File sdFile = new File(FileUtils.getExternalRootDirectory(), file.getName());
+			InputStream in = null;
+			if (sdFile.exists()) {
+				// import the store from the sd if exists
+				in = new FileInputStream(sdFile);
+			} else {
+				// or use use the default
+				in = App.getApp().getResources().openRawResource(resourceId);
+			}
+			FileOutputStream out = new FileOutputStream(file);
+			byte[] buff = new byte[1024];
+			int read = 0;
+
+			try {
+				while ((read = in.read(buff)) > 0) {
+					out.write(buff, 0, read);
+				}
+			} finally {
+				in.close();
+
+				out.flush();
+				out.close();
+			}
+
+			if (sdFile.exists()) {
+				// delete so we don't leave keys around!
+				sdFile.delete();
+			}
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+
+		return file;
+
 	}
 
 }

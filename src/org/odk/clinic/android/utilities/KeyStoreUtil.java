@@ -31,7 +31,7 @@ import android.net.LocalSocketAddress;
  * assumes that private and secret key bytes are available and would
  * preclude the use of hardware crypto.
  */
-public class KeyStore {
+public class KeyStoreUtil {
 
     // ResponseCodes
     public static final int NO_ERROR = 1;
@@ -55,11 +55,11 @@ public class KeyStore {
 
     private int mError = NO_ERROR;
 
-    private KeyStore() {
+    private KeyStoreUtil() {
     }
 
-    public static KeyStore getInstance() {
-        return new KeyStore();
+    public static KeyStoreUtil getInstance() {
+        return new KeyStoreUtil();
     }
 
     public State state() {

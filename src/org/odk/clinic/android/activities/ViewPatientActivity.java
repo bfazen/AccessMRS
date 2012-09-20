@@ -103,7 +103,7 @@ public class ViewPatientActivity extends ViewPatientDataActivity {
 
 		}
 	}
-	
+
 	private View formHistoryView() {
 
 		View formsSummary;
@@ -314,17 +314,17 @@ public class ViewPatientActivity extends ViewPatientDataActivity {
 		String selectionArgs[] = { InstanceProviderAPI.STATUS_ENCRYPTED, InstanceProviderAPI.STATUS_COMPLETE, InstanceProviderAPI.STATUS_SUBMITTED, patientIdStr };
 		Cursor c = App.getApp().getContentResolver().query(InstanceColumns.CONTENT_URI, new String[] { InstanceColumns.PATIENT_ID, "count(*) as count" }, selection, selectionArgs, null);
 
-		if (c.moveToFirst()) {
-			// if (patientIdStr ==
-			// c.getString(c.getColumnIndex(InstanceColumns.PATIENT_ID))) {
-			completedForms = c.getInt(c.getColumnIndex("count"));
-			// }
+		if (c != null) {
+			if (c.moveToFirst()) {
+				// if (patientIdStr ==
+				// c.getString(c.getColumnIndex(InstanceColumns.PATIENT_ID))) {
+				completedForms = c.getInt(c.getColumnIndex("count"));
+				// }
+			}
+			c.close();
 		}
-
-		c.close();
 		return completedForms;
 	}
-	
 
 	protected class onFormClick extends myGestureListener {
 
@@ -341,7 +341,6 @@ public class ViewPatientActivity extends ViewPatientDataActivity {
 		}
 	}
 
-	
 	protected class onFormHistoryClick extends myGestureListener {
 
 		@Override
@@ -354,6 +353,4 @@ public class ViewPatientActivity extends ViewPatientDataActivity {
 
 	}
 
-
-	
 }

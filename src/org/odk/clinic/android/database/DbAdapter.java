@@ -6,8 +6,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 
-import javax.crypto.spec.SecretKeySpec;
-
 import net.sqlcipher.DatabaseUtils;
 import net.sqlcipher.DatabaseUtils.InsertHelper;
 import net.sqlcipher.SQLException;
@@ -16,7 +14,6 @@ import net.sqlcipher.database.SQLiteDatabase;
 import net.sqlcipher.database.SQLiteOpenHelper;
 import net.sqlcipher.database.SQLiteQueryBuilder;
 
-import org.odk.clinic.android.activities.ClinicLauncherActivity;
 import org.odk.clinic.android.activities.DashboardActivity;
 import org.odk.clinic.android.openmrs.ActivityLog;
 import org.odk.clinic.android.openmrs.Cohort;
@@ -26,18 +23,14 @@ import org.odk.clinic.android.openmrs.FormInstance;
 import org.odk.clinic.android.openmrs.Observation;
 import org.odk.clinic.android.openmrs.Patient;
 import org.odk.clinic.android.utilities.App;
-import org.odk.clinic.android.utilities.Crypto;
 import org.odk.clinic.android.utilities.FileUtils;
-import org.odk.clinic.android.utilities.KeyStore;
 import org.odk.collect.android.provider.InstanceProviderAPI;
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
-import android.preference.PreferenceManager;
 import android.util.Log;
 
 public class DbAdapter {
@@ -109,7 +102,7 @@ public class DbAdapter {
 	private static final String FORM_LOG_TABLE = "form_log";
 
 	// private DatabaseHelper mDbHelper;
-	private SQLiteDatabase mDb;
+	private static SQLiteDatabase mDb;
 
 	private static final String DOWNLOAD_TIME = "download_time";
 
@@ -165,13 +158,6 @@ public class DbAdapter {
 
 	private static final String CREATE_DOWNLOAD_LOG_TABLE = "create table " + DOWNLOAD_LOG_TABLE + " (_id integer primary key autoincrement, " + DOWNLOAD_TIME + " integer);";
 
-	public static synchronized DbAdapter getInstance() {
-		if (instance == null) {
-			instance = new DbAdapter();
-		}
-		return instance;
-	}
-
 	public static class DatabaseHelper extends SQLiteOpenHelper {
 		// private static class DatabaseHelper extends ODKSQLiteOpenHelper {
 
@@ -209,71 +195,30 @@ public class DbAdapter {
 
 	}
 
-
-	public static DbAdapter openDb(){
-		return getInstance().open();
-	}
-
-	public DbAdapter open() throws SQLException {
-
+	public static DbAdapter openDb() {
 		if (!isOpen()) {
-			Log.e(t, "!!!Database is not open!!!, trying to open from UI thread!");
-			String pwd = getDbPwd();
-			if (pwd != null) {
-				mDb = App.getDB(pwd);
-			} else {
-				// TODO! if that fails, then launch the SQLCipherActivity to
-				// Request A
-				// Password To be Entered (Should never happen)
-			}
+			Log.w(t, "Database is not open! Opening Now!");
+			mDb = App.getDb();
 		}
 
-		// mDb should be open and ready for business
-		return this;
+		return getInstance();
 	}
 
-	public boolean isOpen() {
+	public static synchronized DbAdapter getInstance() {
+		if (instance == null) {
+			instance = new DbAdapter();
+		}
+		return instance;
+	}
+
+	public static boolean isOpen() {
 		if (mDb != null && mDb.isOpen())
 			return true;
 		else
 			return false;
 	}
 
-	public static String getDbPwd() {
-		// Get the key
-		KeyStore ks = KeyStore.getInstance();
-		byte[] keyBytes = ks.get(ClinicLauncherActivity.SQLCIPHER_KEY_NAME);
-
-		// Get the pwd
-		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(App.getApp());
-		String encryptedPwd = settings.getString(ClinicLauncherActivity.SQLCIPHER_KEY_NAME, null);
-
-		// Decrypt pwd with key
-		String decryptedPwd = null;
-		if (encryptedPwd != null && keyBytes != null) {
-			SecretKeySpec key = new SecretKeySpec(keyBytes, "AES");
-			decryptedPwd = Crypto.decrypt(encryptedPwd, key);
-		} else {
-			Log.w(t, "Encryption key not found in keystore: " + ClinicLauncherActivity.SQLCIPHER_KEY_NAME);
-		}
-
-		return decryptedPwd;
-	}
-
-	public boolean unlock() {
-		return unlock(getDbPwd());
-	}
-
-	public boolean unlock(String password) {
-		mDb = App.getDB(password);
-
-		if (mDb.isOpen())
-			return true;
-		else
-			return false;
-	}
-
-	public boolean rekeyDb(String password) {
+	public static boolean rekeyDb(String password) {
 		Exception error = null;
 
 		try {
@@ -290,11 +235,7 @@ public class DbAdapter {
 			return false;
 	}
 
-	// TODO go through code and delete all instances of close(), but for now
-	public void close() {
-	}
-
-	public void lock() {
+	public static void lock() {
 		mDb.close();
 		mDb = null;
 	}
@@ -707,7 +648,7 @@ public class DbAdapter {
 		}
 		return c;
 	}
-	
+
 	// moved this here, as wanted it in several places...!
 	public ArrayList<Observation> fetchPatientObservationList(Integer patientId) {
 		ArrayList<Observation> mObservations = new ArrayList<Observation>();
@@ -980,37 +921,39 @@ public class DbAdapter {
 				OBSERVATIONS_TABLE + "." + KEY_PATIENT_ID, null, null, null);
 
 		c = mDb.rawQuery(subquery, null);
+		if (c != null) {
+			if (c.moveToFirst()) {
+				do {
+					String patientId = c.getString(c.getColumnIndex(KEY_PATIENT_ID));
+					String formName = c.getString(c.getColumnIndex(KEY_PRIORITY_FORM_NAMES));
+					ContentValues cv = new ContentValues();
+					cv.put(KEY_PRIORITY_FORM_NAMES, formName);
 
-		if (c.moveToFirst()) {
-			do {
-				String patientId = c.getString(c.getColumnIndex(KEY_PATIENT_ID));
-				String formName = c.getString(c.getColumnIndex(KEY_PRIORITY_FORM_NAMES));
-				ContentValues cv = new ContentValues();
-				cv.put(KEY_PRIORITY_FORM_NAMES, formName);
-
-				mDb.update(PATIENTS_TABLE, cv, KEY_PATIENT_ID + "=" + patientId, null);
-			} while (c.moveToNext());
+					mDb.update(PATIENTS_TABLE, cv, KEY_PATIENT_ID + "=" + patientId, null);
+				} while (c.moveToNext());
+			}
+			c.close();
 		}
-		c.close();
 	}
 
 	public void updatePriorityFormNumbers() throws SQLException {
 
 		Cursor c = null;
 		c = mDb.query(OBSERVATIONS_TABLE, new String[] { KEY_PATIENT_ID, "count(*) as " + KEY_PRIORITY_FORM_NUMBER }, KEY_FIELD_NAME + "=" + KEY_FIELD_FORM_VALUE, null, KEY_PATIENT_ID, null, null);
+		if (c != null) {
+			if (c.moveToFirst()) {
+				do {
+					String patientId = c.getString(c.getColumnIndex(KEY_PATIENT_ID));
+					int formNumber = c.getInt(c.getColumnIndex(KEY_PRIORITY_FORM_NUMBER));
+					ContentValues cv = new ContentValues();
+					cv.put(KEY_PRIORITY_FORM_NUMBER, formNumber);
 
-		if (c.moveToFirst()) {
-			do {
-				String patientId = c.getString(c.getColumnIndex(KEY_PATIENT_ID));
-				int formNumber = c.getInt(c.getColumnIndex(KEY_PRIORITY_FORM_NUMBER));
-				ContentValues cv = new ContentValues();
-				cv.put(KEY_PRIORITY_FORM_NUMBER, formNumber);
+					mDb.update(PATIENTS_TABLE, cv, KEY_PATIENT_ID + "=" + patientId, null);
 
-				mDb.update(PATIENTS_TABLE, cv, KEY_PATIENT_ID + "=" + patientId, null);
-
-			} while (c.moveToNext());
+				} while (c.moveToNext());
+			}
+			c.close();
 		}
-		c.close();
 	}
 
 	public void updatePriorityFormsByPatientId(String updatePatientId, String formId) throws SQLException {
@@ -1024,24 +967,26 @@ public class DbAdapter {
 			// 1. Update the PriorityFormNumbers
 			c = mDb.query(OBSERVATIONS_TABLE, new String[] { KEY_PATIENT_ID, "count(*) as " + KEY_PRIORITY_FORM_NUMBER }, KEY_FIELD_NAME + "=? AND " + KEY_PATIENT_ID + "=?", new String[] { KEY_FIELD_FORM_VALUE, updatePatientId }, KEY_PATIENT_ID, null, null);
 			ContentValues cv = new ContentValues();
-			if (c.moveToFirst()) {
-				do {
-					String patientId = c.getString(c.getColumnIndex(KEY_PATIENT_ID));
-					int formNumber = c.getInt(c.getColumnIndex(KEY_PRIORITY_FORM_NUMBER));
+			if (c != null) {
+				if (c.moveToFirst()) {
+					do {
+						String patientId = c.getString(c.getColumnIndex(KEY_PATIENT_ID));
+						int formNumber = c.getInt(c.getColumnIndex(KEY_PRIORITY_FORM_NUMBER));
 
-					cv.put(KEY_PRIORITY_FORM_NUMBER, formNumber);
-					mDb.update(PATIENTS_TABLE, cv, KEY_PATIENT_ID + "=" + patientId, null);
+						cv.put(KEY_PRIORITY_FORM_NUMBER, formNumber);
+						mDb.update(PATIENTS_TABLE, cv, KEY_PATIENT_ID + "=" + patientId, null);
 
-				} while (c.moveToNext());
-			} else {
-				// } else if
-				// (c.isNull(c.getColumnIndex(InstanceColumns.PATIENT_ID))){
-				cv.putNull(KEY_PRIORITY_FORM_NUMBER);
-				mDb.update(PATIENTS_TABLE, cv, KEY_PATIENT_ID + "=" + updatePatientId, null);
+					} while (c.moveToNext());
+				} else {
+					// } else if
+					// (c.isNull(c.getColumnIndex(InstanceColumns.PATIENT_ID))){
+					cv.putNull(KEY_PRIORITY_FORM_NUMBER);
+					mDb.update(PATIENTS_TABLE, cv, KEY_PATIENT_ID + "=" + updatePatientId, null);
 
+				}
+
+				c.close();
 			}
-
-			c.close();
 
 			// 2. Update the PriorityFormNames
 			Cursor cname = null;
@@ -1059,23 +1004,25 @@ public class DbAdapter {
 
 			cname = mDb.rawQuery(subquery, null);
 			ContentValues cvname = new ContentValues();
-			if (cname.moveToFirst()) {
-				do {
-					String patientId = cname.getString(c.getColumnIndex(KEY_PATIENT_ID));
-					String formName = cname.getString(c.getColumnIndex(KEY_PRIORITY_FORM_NAMES));
+			if (cname != null) {
+				if (cname.moveToFirst()) {
+					do {
+						String patientId = cname.getString(c.getColumnIndex(KEY_PATIENT_ID));
+						String formName = cname.getString(c.getColumnIndex(KEY_PRIORITY_FORM_NAMES));
 
-					cvname.put(KEY_PRIORITY_FORM_NAMES, formName);
-					mDb.update(PATIENTS_TABLE, cvname, KEY_PATIENT_ID + "=" + patientId, null);
-				} while (cname.moveToNext());
-			} else {
-				// } else if
-				// (cname.isNull(c.getColumnIndex(InstanceColumns.PATIENT_ID))){
-				cvname.putNull(KEY_PRIORITY_FORM_NAMES);
-				mDb.update(PATIENTS_TABLE, cvname, KEY_PATIENT_ID + "=" + updatePatientId, null);
+						cvname.put(KEY_PRIORITY_FORM_NAMES, formName);
+						mDb.update(PATIENTS_TABLE, cvname, KEY_PATIENT_ID + "=" + patientId, null);
+					} while (cname.moveToNext());
+				} else {
+					// } else if
+					// (cname.isNull(c.getColumnIndex(InstanceColumns.PATIENT_ID))){
+					cvname.putNull(KEY_PRIORITY_FORM_NAMES);
+					mDb.update(PATIENTS_TABLE, cvname, KEY_PATIENT_ID + "=" + updatePatientId, null);
 
+				}
+
+				cname.close();
 			}
-
-			cname.close();
 		}
 	}
 
@@ -1091,17 +1038,19 @@ public class DbAdapter {
 		String selectionArgs[] = { InstanceProviderAPI.STATUS_INCOMPLETE };
 		c = App.getApp().getContentResolver().query(Uri.parse(InstanceColumns.CONTENT_URI + "/groupbypatientid"), new String[] { InstanceColumns.PATIENT_ID, "group_concat( " + InstanceColumns.FORM_NAME + ",\", \") AS " + KEY_SAVED_FORM_NAMES }, selection, selectionArgs, null);
 		ContentValues cv = new ContentValues();
-		if (c.moveToFirst()) {
-			do {
-				String patientId = c.getString(c.getColumnIndex(InstanceColumns.PATIENT_ID));
-				String formName = c.getString(c.getColumnIndex(KEY_SAVED_FORM_NAMES));
-				cv.put(KEY_SAVED_FORM_NAMES, formName);
+		if (c != null) {
+			if (c.moveToFirst()) {
+				do {
+					String patientId = c.getString(c.getColumnIndex(InstanceColumns.PATIENT_ID));
+					String formName = c.getString(c.getColumnIndex(KEY_SAVED_FORM_NAMES));
+					cv.put(KEY_SAVED_FORM_NAMES, formName);
 
-				mDb.update(PATIENTS_TABLE, cv, KEY_PATIENT_ID + "=" + patientId, null);
-			} while (c.moveToNext());
+					mDb.update(PATIENTS_TABLE, cv, KEY_PATIENT_ID + "=" + patientId, null);
+				} while (c.moveToNext());
+			}
+
+			c.close();
 		}
-
-		c.close();
 
 	}
 
@@ -1111,7 +1060,7 @@ public class DbAdapter {
 		String selection = InstanceColumns.STATUS + "=? and " + InstanceColumns.PATIENT_ID + " IS NOT NULL";
 		String selectionArgs[] = { InstanceProviderAPI.STATUS_INCOMPLETE };
 		c = App.getApp().getContentResolver().query(Uri.parse(InstanceColumns.CONTENT_URI + "/groupbypatientid"), new String[] { InstanceColumns.PATIENT_ID, "count(*) as " + InstanceColumns.STATUS }, selection, selectionArgs, null);
-
+		if (c != null) {
 		if (c.moveToFirst()) {
 			do {
 				String patientId = c.getString(c.getColumnIndex(InstanceColumns.PATIENT_ID));
@@ -1124,6 +1073,7 @@ public class DbAdapter {
 		}
 
 		c.close();
+		}
 
 	}
 
@@ -1135,6 +1085,7 @@ public class DbAdapter {
 		c = App.getApp().getContentResolver().query(Uri.parse(InstanceColumns.CONTENT_URI + "/groupbypatientid"), new String[] { InstanceColumns.PATIENT_ID, "group_concat( " + InstanceColumns.FORM_NAME + ",\", \") AS " + KEY_SAVED_FORM_NAMES }, selection, selectionArgs, null);
 
 		ContentValues cv = new ContentValues();
+		if (c != null) {
 		if (c.moveToFirst()) {
 			do {
 				String patientId = c.getString(c.getColumnIndex(InstanceColumns.PATIENT_ID));
@@ -1153,7 +1104,7 @@ public class DbAdapter {
 		}
 
 		c.close();
-
+		}
 	}
 
 	// saved forms are kept in the collect database...
@@ -1163,6 +1114,7 @@ public class DbAdapter {
 		String selectionArgs[] = { InstanceProviderAPI.STATUS_INCOMPLETE, updatePatientId };
 		c = App.getApp().getContentResolver().query(Uri.parse(InstanceColumns.CONTENT_URI + "/groupbypatientid"), new String[] { InstanceColumns.PATIENT_ID, "count(*) as " + InstanceColumns.STATUS }, selection, selectionArgs, null);
 		ContentValues cv = new ContentValues();
+		if (c != null) {
 		if (c.moveToFirst()) {
 			do {
 				String patientId = c.getString(c.getColumnIndex(InstanceColumns.PATIENT_ID));
@@ -1178,6 +1130,7 @@ public class DbAdapter {
 		}
 
 		c.close();
+		}
 
 	}
 

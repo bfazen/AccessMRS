@@ -176,7 +176,7 @@ public class XformUtils {
 				document = documentBuilder.parse(addMe);
 				document.normalize();
 			} catch (Exception e) {
-				Log.e("DownloadFormTask", e.getLocalizedMessage());
+				Log.e(TAG, e.getLocalizedMessage());
 			}
 
 			String name = null;

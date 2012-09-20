@@ -290,8 +290,6 @@ public class RefreshDataService extends Service implements UploadFormListener, D
 
 	@Override
 	public void uploadComplete(String resultString) {
-		// Encrypt the uploaded data with wakelock to ensure it happens!
-		WakefulIntentService.sendWakefulWork(mContext, EncryptionService.class);
 
 		mUploadComplete = true;
 		if (mDownloadComplete)

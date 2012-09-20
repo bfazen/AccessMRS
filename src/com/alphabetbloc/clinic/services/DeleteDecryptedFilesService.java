@@ -90,7 +90,7 @@ public class DeleteDecryptedFilesService extends WakefulIntentService {
 	 *         Id of the decrypted instance file.
 	 */
 	private ArrayList<Map<String, Object>> findDecryptedInstances() {
-		// calculate datetime threshold for deciding whether to delete 
+		// calculate datetime threshold for deciding whether to delete
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
 		Long maxDecryptTime = prefs.getLong(DecryptionTask.MAX_DECRYPT_TIME, AlarmManager.INTERVAL_FIFTEEN_MINUTES / 5);
 		Long now = System.currentTimeMillis();
@@ -121,9 +121,10 @@ public class DeleteDecryptedFilesService extends WakefulIntentService {
 						decryptedList.add(temp);
 
 					} while (c.moveToNext());
-					c.close();
+
 				}
 			}
+			c.close();
 		}
 		return decryptedList;
 	}

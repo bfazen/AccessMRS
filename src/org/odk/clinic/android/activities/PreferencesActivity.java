@@ -3,27 +3,20 @@ package org.odk.clinic.android.activities;
 import java.io.File;
 
 import org.odk.clinic.android.R;
+import org.odk.clinic.android.utilities.App;
 
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
 import android.preference.PreferenceActivity;
+import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.Window;
 
 public class PreferencesActivity extends PreferenceActivity implements OnSharedPreferenceChangeListener {
 
-//	public static String KEY_SERVER = "server";
-//	public static String KEY_USERNAME = "username";
-//	public static String KEY_PASSWORD = "password";
-//	public static String KEY_SAVED_SEARCH = "saved_search";
-//	public static String KEY_PROGRAM = "program";
-//	public static String KEY_PROVIDER = "provider";
-//	public static String KEY_COHORT = "cohort";
-//	public static String KEY_FIRST_RUN = "firstRun";
-//	public static String KEY_INFO = "info";
-//	public static String KEY_USE_SAVED_SEARCHES = "use_saved_searches";
-
+	private static final String TAG = null;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -82,11 +75,8 @@ public class PreferencesActivity extends PreferenceActivity implements OnSharedP
 			s = s.substring(0, s.lastIndexOf(File.separator));
 		}
 		etp.setSummary(s);
-
-		// when you change servers, you should wipe the cohort list.
-//		mPatientDbAdapter.open();
-//		mPatientDbAdapter.deleteAllCohorts();
-//		mPatientDbAdapter.close();
+		// TODO: When server changes, should wipe out cohort list...
+		// mPatientDbAdapter.openDb().deleteAllCohorts();
 	}
 
 	private void updateUsername() {

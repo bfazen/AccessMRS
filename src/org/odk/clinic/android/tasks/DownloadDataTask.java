@@ -12,16 +12,47 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.security.GeneralSecurityException;
+import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
+import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpVersion;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.params.HttpClientParams;
+import org.apache.http.conn.ClientConnectionManager;
+import org.apache.http.conn.params.ConnManagerParams;
+import org.apache.http.conn.params.ConnPerRoute;
+import org.apache.http.conn.params.ConnPerRouteBean;
+import org.apache.http.conn.scheme.PlainSocketFactory;
+import org.apache.http.conn.scheme.Scheme;
+import org.apache.http.conn.scheme.SchemeRegistry;
+import org.apache.http.conn.scheme.SocketFactory;
+import org.apache.http.conn.ssl.BrowserCompatHostnameVerifier;
+import org.apache.http.conn.ssl.SSLSocketFactory;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.HttpConnectionParams;
+import org.apache.http.params.HttpParams;
+import org.apache.http.params.HttpProtocolParams;
+import org.apache.http.protocol.HTTP;
+import org.apache.http.util.EntityUtils;
 import org.odk.clinic.android.R;
+import org.odk.clinic.android.activities.MySSLSocketFactory;
 import org.odk.clinic.android.activities.PreferencesActivity;
 import org.odk.clinic.android.database.DbAdapter;
 import org.odk.clinic.android.listeners.DownloadListener;
@@ -29,8 +60,7 @@ import org.odk.clinic.android.openmrs.Constants;
 import org.odk.clinic.android.openmrs.Form;
 import org.odk.clinic.android.utilities.App;
 import org.odk.clinic.android.utilities.FileUtils;
-import org.odk.clinic.android.utilities.ODKLocalKeyStore;
-import org.odk.clinic.android.utilities.ODKSSLSocketFactory;
+import org.odk.clinic.android.utilities.MyTrustManager;
 import org.odk.clinic.android.utilities.WebUtils;
 import org.odk.clinic.android.utilities.XformUtils;
 import org.odk.collect.android.provider.FormsProviderAPI.FormsColumns;
@@ -54,37 +84,41 @@ public class DownloadDataTask extends AsyncTask<Void, String, String> {
 	public static final String KEY_ERROR = "error";
 	public static final String KEY_PATIENTS = "patients";
 	public static final String KEY_OBSERVATIONS = "observations";
-
 	private static final String NAMESPACE = "org.odk.clinic.android";
 	private static final String DATA_DIR = "/data/" + NAMESPACE;
-
+	private static final int TIMEOUT = 10 * 1000;
 	private static final int CONNECTION_TIMEOUT = 60000;
+	private static final String TAG = DownloadDataTask.class.getSimpleName();
+	
 	protected DownloadListener mStateListener;
-	protected DbAdapter mDb; 
-
+	protected DbAdapter mDb;
 	private int mStep = 0;
 	private int mTotalStep = 10;
-
+	private KeyStore keyStore;
+	private KeyStore trustStore;
+	protected String mStorePassword;
 	private ArrayList<Form> mForms = new ArrayList<Form>();
 
 	@Override
 	protected String doInBackground(Void... values) {
+		mStorePassword = App.getPassword();
+		
 		// DOWNLOAD
 		mDb = DbAdapter.openDb();
 		// FormlistSection:
-		// TODO! HTTPS NEW CODE.. but what about other downloads
+		// TODO! HTTPS NEW  CODE.. but what about other downloads?
 		// initialize @ODKSSLSocketFactory to authorize local
 		// certificates for all subsequent
 		// @HttpsURLConnection
 		try {
-			HttpURLConnection urlConnection = connectURL(WebUtils.getFormListDownloadUrl());
-			InputStream is = urlConnection.getInputStream();
+			InputStream is = connectURL(WebUtils.getFormListDownloadUrl());
 			showProgress("Downloading Forms");
 			String formListResult = downloadFormList(is);
 			if (formListResult != null)
 				return formListResult;
 
 		} catch (IOException e1) {
+			Log.e(TAG, "caught the first Exception...");
 			e1.printStackTrace();
 			return e1.getLocalizedMessage();
 		}
@@ -110,7 +144,6 @@ public class DownloadDataTask extends AsyncTask<Void, String, String> {
 		// PROCESS
 		try {
 			showProgress("Processing");
-			mDb.open();
 			if (zipFile != null) {
 				DataInputStream zdis = new DataInputStream(new FileInputStream(zipFile));
 				// OLD: (new BufferedInputStream(new FileInputStream(zipFile)));
@@ -132,24 +165,174 @@ public class DownloadDataTask extends AsyncTask<Void, String, String> {
 		return null;
 	}
 
-	private HttpURLConnection connectURL(String urlString) throws IOException {
-		HttpURLConnection urlConnection = null;
-		URL url = new URL(urlString);
+		private InputStream connectURL(String urlString) throws IOException {
+		// private HttpURLConnection connectURL(String urlString) throws
+		// IOException {
 
+		// HTTP CLIENT WAY
+		// SSLContext sslContext = null;
+		// try {
+		// sslContext = createSslContext();
+		// } catch (GeneralSecurityException e1) {
+		// // TODO Auto-generated catch block
+		// e1.printStackTrace();
+		// }
+		// MySSLSocketFactory socketFactory = new MySSLSocketFactory(sslContext,
+		// new BrowserCompatHostnameVerifier());
+		// HttpClient httpclient = createHttpClient(socketFactory);
+		// HttpGet get = new HttpGet(urlString));
+		// HttpResponse response = httpclient.execute(get);
+		// if (response.getStatusLine().getStatusCode() != 200) {
+		// Log.e(TAG, "Error: " + response.getStatusLine());
+		// } else {
+		// return EntityUtils.toString(response.getEntity());
+		// }
+
+		// HTTPSURL WAY
+		SSLContext sslCtx = null;
 		try {
-			if (url.getProtocol().toLowerCase().equals("https")) {
-				new ODKSSLSocketFactory(ODKLocalKeyStore.getKeyStore());
-				HttpsURLConnection urlHttpsConnection = null;
-				urlHttpsConnection = (HttpsURLConnection) url.openConnection();
-				urlConnection = urlHttpsConnection;
-			} else
-				urlConnection = (HttpURLConnection) url.openConnection();
-
-		} catch (NoSuchAlgorithmException e) {
+			sslCtx = createSslContext();
+		} catch (GeneralSecurityException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} // uses the httpsUrlConnect API with a new trustmanager...
+
+		URL url = new URL(urlString);
+		HttpsURLConnection urlConnection = (HttpsURLConnection) url.openConnection();
+		urlConnection.setUseCaches(false);
+		urlConnection.setRequestProperty("Connection", "close");
+		urlConnection.setConnectTimeout(TIMEOUT); // nelenkov
+		urlConnection.setReadTimeout(TIMEOUT); // nelenkov
+		urlConnection.setSSLSocketFactory(sslCtx.getSocketFactory());
+		HostnameVerifier verifier = urlConnection.getHostnameVerifier();
+		Log.d(TAG, "hostname verifier: " + verifier.getClass().getName());
+
+		urlConnection.connect();
+
+		if (urlConnection.getResponseCode() != HttpURLConnection.HTTP_OK) {
+			Log.e(TAG, "SERVER RESPONSE != 200 =" + urlConnection.getResponseMessage());
 		}
-		return urlConnection;
+
+		return urlConnection.getInputStream();
+		
+		//NELENKOV EXTRAS....
+		// try {
+		// ....
+		// return readLines(urlConnection.getInputStream(),
+		// urlConnection.getContentEncoding());
+		// } finally {
+		// urlConnection.disconnect();
+		// }
+
+		// SAMS WAY
+		// HttpURLConnection urlConnection = null;
+		// URL url = new URL(urlString);
+		//
+		// try {
+		// if (url.getProtocol().toLowerCase().equals("https")) {
+		// //louis.fazen adding these two lines...
+		// SSLContext sslContext = createSslContext();
+		// MySSLSocketFactory socketFactory = new MySSLSocketFactory(sslContext,
+		// new BrowserCompatHostnameVerifier());
+		// // new ODKSSLSocketFactory(ODKLocalKeyStore.getKeyStore());
+		// HttpsURLConnection urlHttpsConnection = null;
+		// urlHttpsConnection = (HttpsURLConnection) url.openConnection();
+		// urlConnection = urlHttpsConnection;
+		// } else
+		// urlConnection = (HttpURLConnection) url.openConnection();
+		//
+		// } catch (Exception e) {
+		// // TODO Auto-generated catch block
+		// e.printStackTrace();
+		// }
+
+		// return urlConnection;
+	}
+
+	private SSLContext createSslContext() throws GeneralSecurityException {
+
+		// TrustStore
+		KeyStore trustStore = loadTrustStore();
+		MyTrustManager myTrustManager = new MyTrustManager(trustStore);
+		TrustManager[] tms = new TrustManager[] { myTrustManager };
+
+		// KeyStore
+		KeyManager[] kms = null;
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(App.getApp());
+		boolean useClientAuth = prefs.getBoolean(App.getApp().getString(R.string.key_client_auth), false);
+		if (useClientAuth) {
+			KeyStore keyStore = loadKeyStore();
+			KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+			kmf.init(keyStore, mStorePassword.toCharArray());
+			kms = kmf.getKeyManagers();
+		}
+
+		SSLContext context = SSLContext.getInstance("TLS");
+		context.init(kms, tms, null);
+
+		return context;
+	}
+
+	/**
+	 * Load the truststoreFile field (after import from the file itself) into a
+	 * KeyStore object.
+	 * 
+	 * @return the KeyStore object of the localTrustStore
+	 */
+	private KeyStore loadTrustStore() {
+		if (trustStore != null) {
+			return trustStore;
+		}
+
+		File localTrustStoreFile = new File(App.getApp().getFilesDir(), FileUtils.MY_TRUSTSTORE);
+		if (!localTrustStoreFile.exists()) {
+			localTrustStoreFile = FileUtils.setupDefaultSslStore(R.raw.mytruststore);
+		}
+
+		try {
+			trustStore = KeyStore.getInstance("BKS");
+			InputStream in = new FileInputStream(localTrustStoreFile);
+			try {
+				trustStore.load(in, mStorePassword.toCharArray());
+			} finally {
+				in.close();
+			}
+
+			return trustStore;
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	/**
+	 * This goes direct from the local KeyStore Resource into a keyStore without
+	 * asynctask, because we just hold onto this one, and don't ned to do
+	 * dynamic switching between truststores?
+	 * 
+	 * @return
+	 */
+	private KeyStore loadKeyStore() {
+		if (keyStore != null) {
+			return keyStore;
+		}
+
+		File localKeyStoreFile = new File(App.getApp().getFilesDir(), FileUtils.MY_KEYSTORE);
+		if (!localKeyStoreFile.exists()) {
+			localKeyStoreFile = FileUtils.setupDefaultSslStore(R.raw.mykeystore);
+		}
+		try {
+			keyStore = KeyStore.getInstance("PKCS12");
+			InputStream in = new FileInputStream(localKeyStoreFile);
+			try {
+				keyStore.load(in, mStorePassword.toCharArray());
+			} finally {
+				in.close();
+			}
+
+			return keyStore;
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	private void showProgress(String title) {
@@ -203,7 +386,6 @@ public class DownloadDataTask extends AsyncTask<Void, String, String> {
 
 			// clean db, insert reference to forms
 			if (doc != null) {
-				mDb.open();
 				mDb.deleteAllForms();
 				insertForms(doc);
 			}
@@ -289,11 +471,12 @@ public class DownloadDataTask extends AsyncTask<Void, String, String> {
 
 	}
 
+	// TODO! is this separate cnnxn going over SSL or not (we can test this b/c
+	// it doesn't
+	// matter if not)
 	private String downloadNewForms(String baseUrl) {
 		FileUtils.createFolder(FileUtils.getExternalFormsPath());
 		try {
-			// Open db for editing
-			mDb.open();
 			String formId;
 
 			for (int i = 0; i < mForms.size(); i++) {
@@ -383,8 +566,8 @@ public class DownloadDataTask extends AsyncTask<Void, String, String> {
 		String username = settings.getString(App.getApp().getString(R.string.key_username), App.getApp().getString(R.string.default_username));
 		String password = settings.getString(App.getApp().getString(R.string.key_password), App.getApp().getString(R.string.default_password));
 		boolean savedSearch = settings.getBoolean(App.getApp().getString(R.string.key_use_saved_searches), false);
-		int cohort = settings.getInt(App.getApp().getString(R.string.key_saved_search), 0);
-		int program = settings.getInt(App.getApp().getString(R.string.key_program), 0);
+		int cohort = Integer.valueOf(settings.getString(App.getApp().getString(R.string.key_saved_search), "0"));
+		int program = Integer.valueOf(settings.getString(App.getApp().getString(R.string.key_program), "0"));
 
 		// compose url
 		URL u = new URL(url);

@@ -17,6 +17,7 @@ public class MyTrustManager implements X509TrustManager {
 
 	private static final String TAG = MyTrustManager.class.getSimpleName();
 
+//	 LocalStore X509TrustManager finds local certs for MyTrustManager
 	static class LocalStoreX509TrustManager implements X509TrustManager {
 
 		private X509TrustManager trustManager;
@@ -52,6 +53,7 @@ public class MyTrustManager implements X509TrustManager {
 		}
 	}
 
+	// Method used exclusively by the inner LocalStore X509TrustManager
 	static X509TrustManager findX509TrustManager(TrustManagerFactory tmf) {
 		TrustManager tms[] = tmf.getTrustManagers();
 		for (int i = 0; i < tms.length; i++) {
@@ -67,6 +69,7 @@ public class MyTrustManager implements X509TrustManager {
 	private X509TrustManager localTrustManager;
 	private X509Certificate[] acceptedIssuers;
 
+	//combines localManager (above) and defaultManagers into one manager
 	public MyTrustManager(KeyStore localKeyStore) {
 		try {
 			TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
@@ -95,21 +98,23 @@ public class MyTrustManager implements X509TrustManager {
 
 	public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
 		try {
-			Log.d(TAG, "checkServerTrusted() with default trust manager...");
+			// TODO! potentially change this to local first then catch with
+			// default? would be faster?
+			Log.d(TAG, "checkClientTrusted () with default trust manager...");
 			defaultTrustManager.checkClientTrusted(chain, authType);
 		} catch (CertificateException ce) {
-			Log.d(TAG, "checkServerTrusted() with local trust manager...");
+			Log.d(TAG, "checkClientTrusted () with local trust manager...");
 			localTrustManager.checkClientTrusted(chain, authType);
 		}
 	}
 
 	public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
 		try {
-			Log.d(TAG, "checkServerTrusted() with default trust manager...");
-			defaultTrustManager.checkServerTrusted(chain, authType);
-		} catch (CertificateException ce) {
-			Log.d(TAG, "checkServerTrusted() with local trust manager...");
+			Log.d(TAG, "checkServerTrusted () with local trust manager...");
 			localTrustManager.checkServerTrusted(chain, authType);
+		} catch (CertificateException ce) {
+			Log.d(TAG, "checkServerTrusted () with default trust manager...");
+			defaultTrustManager.checkServerTrusted(chain, authType);
 		}
 	}
 

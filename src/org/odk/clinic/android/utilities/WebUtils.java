@@ -7,15 +7,28 @@ import java.net.URLDecoder;
 
 import org.odk.clinic.android.R;
 import org.odk.clinic.android.activities.PreferencesActivity;
-import org.odk.clinic.android.openmrs.Constants;
 
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
 public class WebUtils {
 
+	public static final String USER_DOWNLOAD_URL = "/moduleServlet/xforms/userDownload";
+
+	public static final String COHORT_DOWNLOAD_URL = "/module/odkconnector/download/cohort.form";
+
+	public static final String PATIENT_DOWNLOAD_URL = "/module/odkconnector/download/patients.form";
+
+	public static final String FORMLIST_DOWNLOAD_URL = "/moduleServlet/xformshelper/xfhFormList?type=odk_clinic";
+
+	public static final String FORM_DOWNLOAD_URL = "/moduleServlet/xformshelper/xfhFormDownload?type=odk_clinic";
+
+	public static final String INSTANCE_UPLOAD_URL = "/moduleServlet/xformshelper/xfhFormUpload";
+//	public static final String INSTANCE_UPLOAD_URL = "/moduleServlet/xformshelper/fileUpload"; //old
+
 	private static String mServerUrl;
 	private static String mUserNamePwd;
+	private static String mUserNamePwdUpload;
 
 	/**
 	 * Taken from ODK Collect UrlUtils
@@ -43,41 +56,35 @@ public class WebUtils {
 		String username = settings.getString(App.getApp().getString(R.string.key_username), App.getApp().getString(R.string.default_username));
 		String password = settings.getString(App.getApp().getString(R.string.key_password), App.getApp().getString(R.string.default_password));
 		mUserNamePwd = "&uname=" + username + "&pw=" + password;
+		mUserNamePwdUpload = "?uname=" + username + "&pw=" + password;
 	}
 
 	public static String getFormUploadUrl() {
-		if (mServerUrl == null || mUserNamePwd == null)
-			buildUrls();
-
+		buildUrls();
+        
 		StringBuilder uploadUrl = new StringBuilder(mServerUrl);
-		uploadUrl.append(Constants.INSTANCE_UPLOAD_URL);
-		uploadUrl.append(mUserNamePwd);
+		uploadUrl.append(INSTANCE_UPLOAD_URL);
+		uploadUrl.append(mUserNamePwdUpload);
 		return uploadUrl.toString();
 	}
 
 	public static String getPatientDownloadUrl() {
-		if (mServerUrl == null)
-			buildUrls();
-
-		return mServerUrl + Constants.PATIENT_DOWNLOAD_URL;
+		buildUrls();
+		return mServerUrl + PATIENT_DOWNLOAD_URL;
 	}
 
 	public static String getFormListDownloadUrl() {
-		if (mServerUrl == null || mUserNamePwd == null)
-			buildUrls();
-
+		buildUrls();
 		StringBuilder formlistUrl = new StringBuilder(mServerUrl);
-		formlistUrl.append(Constants.FORMLIST_DOWNLOAD_URL);
+		formlistUrl.append(FORMLIST_DOWNLOAD_URL);
 		formlistUrl.append(mUserNamePwd);
 		return formlistUrl.toString();
 	}
 
 	public static String getFormDownloadUrl() {
-		if (mServerUrl == null || mUserNamePwd == null)
-			buildUrls();
-
+		buildUrls();
 		StringBuilder formUrl = new StringBuilder(mServerUrl);
-		formUrl.append(Constants.FORM_DOWNLOAD_URL);
+		formUrl.append(FORM_DOWNLOAD_URL);
 		formUrl.append(mUserNamePwd);
 		return formUrl.toString();
 	}

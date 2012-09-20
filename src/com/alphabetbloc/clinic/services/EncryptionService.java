@@ -88,16 +88,18 @@ public class EncryptionService extends WakefulIntentService {
 		scheduleAlarms(new EncryptDataListener(), WakefulIntentService.ENCRYPT_DATA, mContext, true);
 
 		boolean allEncrypted = true;
+		int count = 0;
 		for (Map<String, Object> current : submittedFiles) {
 			String dbPath = (String) current.get(INSTANCE_PATH);
 			int id = (Integer) current.get(INSTANCE_ID);
 
-			//construct the instance path from db path
+			// construct the instance path from db path
 			String inPath = FileUtils.getDecryptedFilePath(dbPath);
 			String outPath = FileUtils.getEncryptedFilePath(dbPath);
-			
-			allEncrypted = allEncrypted & encryptFormInstance(id, inPath, outPath);
-			Log.e(TAG, "Encrypting: " + inPath + " -> " + outPath);
+			boolean currentEncrypted = encryptFormInstance(id, inPath, outPath);
+			allEncrypted = allEncrypted & currentEncrypted;
+			if (currentEncrypted)
+				count++;
 		}
 
 		// TODO? add cancel threshold to prevent looping unsuccessful alarms?
@@ -105,9 +107,9 @@ public class EncryptionService extends WakefulIntentService {
 		// performance, and have user complain as we want to know about this ...
 		if (allEncrypted) {
 			cancelAlarms(WakefulIntentService.ENCRYPT_DATA, mContext);
-			Log.e(TAG, "Encryption Sucessful!");
+			Log.i(TAG, count + " files encrypted.");
 		} else {
-			Log.e(TAG, "An error occurred while attempting to encrypt a recently submitted file! ");
+			Log.w(TAG, "An error occurred while attempting to encrypt a recently submitted file! ");
 		}
 	}
 
@@ -172,7 +174,7 @@ public class EncryptionService extends WakefulIntentService {
 		}
 		File parentDir = file.getParentFile();
 
-		//1. get a Cipher and a Key
+		// 1. get a Cipher and a Key
 		Cipher c = generateCipher();
 		byte[] key = generateKey();
 		if (c == null || key == null)
@@ -180,9 +182,9 @@ public class EncryptionService extends WakefulIntentService {
 
 		final SecretKeySpec keySpec = new SecretKeySpec(key, KEYSPEC_ALGORITHM);
 
-		//2. update CollectDb with key and new path
+		// 2. update CollectDb with key and new path
 		boolean logged = false;
-		
+
 		String keyString = Base64.encodeToString(key, Base64.NO_WRAP);
 		if (id != null && keyString != null)
 			logged = updateCollectDb(id, keyString);
@@ -199,17 +201,16 @@ public class EncryptionService extends WakefulIntentService {
 		for (File f : allFiles) {
 			try {
 				result = result & encryptFile(f.getAbsolutePath(), outPath, c, keySpec);
-				Log.e(TAG, "for loop!:" + result);
 			} catch (Exception e) {
 				Log.e(TAG, "Error encrypting: " + file.getName());
 				e.printStackTrace();
 			}
 		}
-		Log.e(TAG, "end of for loop!:" + result);
+
 		// we have now encrypted and stored the key, so safe to delete cleartext
 		if (result)
 			result = FileUtils.deleteAllFiles(parentDir.getAbsolutePath());
-		Log.e(TAG, "end of encryptforminstance method with result=:" + result);
+		
 		return result;
 	}
 
@@ -271,12 +272,12 @@ public class EncryptionService extends WakefulIntentService {
 
 	private static boolean encryptFile(String inPath, String outPath, Cipher cipher, SecretKeySpec keySpec) throws Exception {
 		boolean encrypted = false;
-		
+
 		// input file
 		File inFile = new File(inPath);
 		String inName = inPath.substring(inPath.lastIndexOf(File.separator));
-		
-		//output dir & file
+
+		// output dir & file
 		File outDir = (new File(outPath)).getParentFile();
 		FileUtils.createFolder(outDir.getAbsolutePath());
 		File outFile = new File(outDir.getAbsolutePath(), inName + FileUtils.ENC_EXT);
@@ -284,7 +285,7 @@ public class EncryptionService extends WakefulIntentService {
 			outFile = new File(outDir.getAbsolutePath(), inName + "-" + String.valueOf(System.currentTimeMillis()) + FileUtils.ENC_EXT);
 			System.out.println("File already exists. File has been renamed to " + outFile.getName());
 		}
-		
+
 		try {
 			// make the streams
 			InputStream in = new BufferedInputStream(new FileInputStream(inFile));

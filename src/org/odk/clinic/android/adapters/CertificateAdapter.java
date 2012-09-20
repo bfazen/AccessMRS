@@ -39,6 +39,20 @@ public class CertificateAdapter extends ArrayAdapter<Certificate> {
 		Certificate cert = getItem(position);
 
 		if (cert != null) {
+			//keys
+			if(defaultLayoutId == R.layout.key_item){
+				TextView title = (TextView) v.findViewById(R.id.name_text);
+				TextView filename = (TextView) v.findViewById(R.id.file_name_text);
+				TextView date = (TextView) v.findViewById(R.id.date_text);
+				
+				title.setText(cert.getName());
+				filename.setText(cert.getAlias());
+				date.setText(cert.getDate());
+				
+				return v;
+			}
+			
+			//certs
 			// Name
 			setCertificateView(v, -1, R.id.o_text, cert.getO());
 

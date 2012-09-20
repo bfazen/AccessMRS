@@ -36,7 +36,7 @@ public class AlarmIntentService extends WakefulIntentService {
 		mContext = this;
 
 		// Find the most recent download time
-		long recentDownload = DbAdapter.getInstance().open().fetchMostRecentDownload();
+		long recentDownload = DbAdapter.openDb().fetchMostRecentDownload();
 		long timeSinceRefresh = System.currentTimeMillis() - recentDownload;
 		Log.e(TAG, "Minutes since last refresh: " + timeSinceRefresh / (1000 * 60));
 

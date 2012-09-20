@@ -155,13 +155,13 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 		boolean similarFound = false;
 
 		Cursor c = null;
-		c = DbAdapter.getInstance().open().fetchPatients(mFirstName + " " + mLastName, null, DashboardActivity.LIST_SIMILAR_CLIENTS);
+		c = DbAdapter.openDb().fetchPatients(mFirstName + " " + mLastName, null, DashboardActivity.LIST_SIMILAR_CLIENTS);
 		if (c != null && c.getCount() > 0) {
 			similarFound = true;
 		}
 
 		if (!similarFound && mPatientID != null && mPatientID.length() > 3) {
-			c = DbAdapter.getInstance().open().fetchPatients(null, mPatientID, DashboardActivity.LIST_SIMILAR_CLIENTS);
+			c = DbAdapter.openDb().fetchPatients(null, mPatientID, DashboardActivity.LIST_SIMILAR_CLIENTS);
 			if (c != null && c.getCount() > 0) {
 				similarFound = true;
 			}

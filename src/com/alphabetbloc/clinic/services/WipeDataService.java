@@ -63,10 +63,6 @@ public class WipeDataService extends WakefulIntentService {
 				allDeleted = allDeleted & deleteDirectory(collectExternalCache);
 				allDeleted = allDeleted & deleteDirectory(collectInternalCache);
 
-				// delete db keys
-				SharedPreferences collectPrefs = mCollectCtx.getSharedPreferences(ClinicLauncherActivity.SQLCIPHER_PREFS_NAME, MODE_PRIVATE);
-				allDeleted = allDeleted & deleteSqlCipherDbKeys(collectPrefs);
-
 				// delete instances db
 				allDeleted = allDeleted & deleteCollectInstancesDb();
 
@@ -102,18 +98,21 @@ public class WipeDataService extends WakefulIntentService {
 				}
 			}
 			attempts++;
-
+			
 		} while (!allDeleted && (attempts < 4));
 
-		if (allDeleted) {
-			Intent i = new Intent(WIPE_DATA_COMPLETE);
-			sendBroadcast(i);
+		if (allDeleted)
 			cancelAlarms(WakefulIntentService.WIPE_DATA, getApplicationContext());
-		}
+		
+		Log.e(TAG, "sending a broadcast = ");
+		Intent i = new Intent(WIPE_DATA_COMPLETE);
+		sendBroadcast(i);
 	}
 
 	private boolean deleteDirectory(File dir) {
-
+		if(!dir.exists())
+			return true;
+		
 		boolean success = false;
 
 		try {
