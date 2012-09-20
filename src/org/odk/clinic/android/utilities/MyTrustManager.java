@@ -98,8 +98,6 @@ public class MyTrustManager implements X509TrustManager {
 
 	public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
 		try {
-			// TODO! potentially change this to local first then catch with
-			// default? would be faster?
 			Log.d(TAG, "checkClientTrusted () with default trust manager...");
 			defaultTrustManager.checkClientTrusted(chain, authType);
 		} catch (CertificateException ce) {

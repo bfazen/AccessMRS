@@ -35,6 +35,7 @@ import org.apache.http.util.EntityUtils;
 import org.odk.clinic.android.R;
 import org.odk.clinic.android.utilities.App;
 import org.odk.clinic.android.utilities.FileUtils;
+import org.odk.clinic.android.utilities.MySSLSocketFactory;
 import org.odk.clinic.android.utilities.MyTrustManager;
 
 import android.app.Activity;

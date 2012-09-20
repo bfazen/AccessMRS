@@ -38,11 +38,11 @@ import org.apache.http.params.HttpParams;
 import org.apache.http.params.HttpProtocolParams;
 import org.apache.http.protocol.HTTP;
 import org.odk.clinic.android.R;
-import org.odk.clinic.android.activities.MySSLSocketFactory;
 import org.odk.clinic.android.database.DbAdapter;
 import org.odk.clinic.android.listeners.UploadFormListener;
 import org.odk.clinic.android.utilities.App;
 import org.odk.clinic.android.utilities.FileUtils;
+import org.odk.clinic.android.utilities.MySSLSocketFactory;
 import org.odk.clinic.android.utilities.MyTrustManager;
 import org.odk.clinic.android.utilities.WebUtils;
 import org.odk.collect.android.provider.InstanceProviderAPI;
@@ -64,7 +64,7 @@ public class UploadDataTask extends AsyncTask<Void, String, String> {
 	private static final int CONNECTION_TIMEOUT = 60000;
 	static final int MAX_CONN_PER_ROUTE = 20;
 	static final int MAX_CONNECTIONS = 20;
-	
+
 	protected UploadFormListener mStateListener;
 	private int mTotalCount = -1;
 	private String[] mInstancesToUpload;
@@ -79,8 +79,6 @@ public class UploadDataTask extends AsyncTask<Void, String, String> {
 		int resultSize = 0;
 		if (dataToUpload()) {
 
-			// TODO! CHECK does this verify uploaded?
-			// Encrypt all the instances successfully uploaded
 			String s = WebUtils.getFormUploadUrl();
 			Log.i(tag, "url to use=" + s);
 			ArrayList<String> uploaded = uploadInstances(s);
@@ -138,11 +136,7 @@ public class UploadDataTask extends AsyncTask<Void, String, String> {
 	}
 
 	private ArrayList<String> uploadInstances(String url) {
-		// TODO! if truststore doesn't exist... initialize them... 
-		// FileUtils.setupDefaultSslStore(R.raw.mytruststore);
-		// FileUtils.setupDefaultSslStore(R.raw.mykeystore);
-		
-		
+
 		// 1. get a new ssl context...
 		SSLContext sslContext = null;
 		try {
@@ -151,13 +145,13 @@ public class UploadDataTask extends AsyncTask<Void, String, String> {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
-		MySSLSocketFactory socketFactory = new MySSLSocketFactory(sslContext, new BrowserCompatHostnameVerifier());
 
+		MySSLSocketFactory socketFactory = new MySSLSocketFactory(sslContext, new BrowserCompatHostnameVerifier());
 		ArrayList<String> uploadedInstances = new ArrayList<String>();
-		
+
 		for (int i = 0; i < mTotalCount; i++) {
-			// TODO! Should this really be inside the for loop? should this also
-			// be a DefaultClient? Sam's code?
+			// TODO! Sam's code... Should this really be inside the for loop?
+			// should this also be a DefaultClient?
 			HttpClient httpclient = createHttpClient(socketFactory);
 			try {
 
@@ -173,6 +167,8 @@ public class UploadDataTask extends AsyncTask<Void, String, String> {
 				HttpResponse response = null;
 				response = httpclient.execute(httppost);
 
+				// TODO! CHECK does this verify uploaded? Sam deleted this
+				// section... as it wasn't handled correctly anyway..
 				String serverLocation = null;
 				Header[] h = response.getHeaders("Location");
 				if (h != null && h.length > 0) {
@@ -202,10 +198,10 @@ public class UploadDataTask extends AsyncTask<Void, String, String> {
 	}
 
 	/**
-	 * make the SSLContext and initialize with the local keyStore (ifClientAuth)
-	 * and the combined default and local trustStore via custom MyTrustManager.
-	 * I.e. context now initialized with a local key, and both local and default
-	 * trust stores.
+	 * make the SSLContext and initialize with the local keyStore (if
+	 * useClientAuth) and the combined default and local trustStore via custom
+	 * MyTrustManager. I.e. context now initialized with a local key, and both
+	 * local and default trust stores.
 	 * 
 	 * @param clientAuth
 	 * @return
@@ -248,7 +244,7 @@ public class UploadDataTask extends AsyncTask<Void, String, String> {
 
 		File localTrustStoreFile = new File(App.getApp().getFilesDir(), FileUtils.MY_TRUSTSTORE);
 		if (!localTrustStoreFile.exists()) {
-			Log.e(tag, "truststore does not exist... loading it from res raw!");
+			Log.e(tag, "truststore does not exist... loading it from default!");
 			localTrustStoreFile = FileUtils.setupDefaultSslStore(R.raw.mytruststore);
 		}
 
@@ -300,8 +296,8 @@ public class UploadDataTask extends AsyncTask<Void, String, String> {
 	}
 
 	private HttpClient createHttpClient(SocketFactory socketFactory) {
-		// //
 
+		// TODO! CONSIDER USING CREDENTIAL PROVIDER...
 		// CredentialsProvider credentialsProvider = new
 		// BasicCredentialsProvider();
 		// //set the user credentials for our site "example.com"
@@ -314,7 +310,6 @@ public class UploadDataTask extends AsyncTask<Void, String, String> {
 		// context = new BasicHttpContext();
 		// context.setAttribute("http.auth.credentials-provider",
 		// credentialsProvider);
-		//
 		// /
 
 		HttpParams params = new BasicHttpParams();
@@ -413,8 +408,6 @@ public class UploadDataTask extends AsyncTask<Void, String, String> {
 	}
 
 	private void updateClinicDbPath(String path) {
-		// TODO! WHAT HAPPENED HERE? we should simply be deleting these in the
-		// FormInstances Table, not updating them, no?
 		Cursor c = DbAdapter.openDb().fetchFormInstancesByPath(path);
 		if (c != null) {
 			DbAdapter.openDb().updateFormInstance(path, DbAdapter.STATUS_SUBMITTED);

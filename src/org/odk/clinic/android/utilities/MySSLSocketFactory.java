@@ -1,4 +1,4 @@
-package org.odk.clinic.android.activities;
+package org.odk.clinic.android.utilities;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -56,17 +56,17 @@ public class MySSLSocketFactory implements LayeredSocketFactory {
 		sslsock.connect(remoteAddress, connTimeout);
 
 		sslsock.setSoTimeout(soTimeout);
-		//TODO! add this back in!
-//		try {
-//			hostnameVerifier.verify(host, sslsock);
-//		} catch (IOException iox) {
-//			try {
-//				sslsock.close();
-//			} catch (Exception x) {
-//			}
-//
-//			throw iox;
-//		}
+
+		try {
+			hostnameVerifier.verify(host, sslsock);
+		} catch (IOException iox) {
+			try {
+				sslsock.close();
+			} catch (Exception x) {
+			}
+
+			throw iox;
+		}
 
 		return sslsock;
 	}
@@ -97,9 +97,7 @@ public class MySSLSocketFactory implements LayeredSocketFactory {
 	@Override
 	public Socket createSocket(Socket socket, String host, int port, boolean autoClose) throws IOException, UnknownHostException {
 		SSLSocket sslSocket = (SSLSocket) socketFactory.createSocket(socket, host, port, autoClose);
-		//TODO! add this back in!
-		//		hostnameVerifier.verify(host, sslSocket);
-
+		hostnameVerifier.verify(host, sslSocket);
 		return sslSocket;
 	}
 
