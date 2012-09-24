@@ -15,7 +15,6 @@ import org.odk.clinic.android.utilities.App;
 import org.odk.clinic.android.utilities.Crypto;
 import org.odk.clinic.android.utilities.FileUtils;
 import org.odk.clinic.android.utilities.KeyStoreUtil;
-import org.odk.collect.android.provider.InstanceProviderAPI;
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
 import android.app.Activity;
@@ -27,6 +26,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -81,7 +81,7 @@ public class ClinicLauncherActivity extends Activity {
 	private int mStep;
 	private String mDecryptedPwd;
 	private String mProviderId;
-	private boolean isFreshInstall = false;
+	private boolean isFreshInstall = true;
 	private boolean isPrefsSet = false;
 
 	@Override
@@ -108,103 +108,25 @@ public class ClinicLauncherActivity extends Activity {
 
 	private void refreshView() {
 
-		if (isCollectSetup()) {
-
-			if (getDatabasePath(DbAdapter.DATABASE_NAME).exists() && DbAdapter.isOpen()) {
+		if (isClinicSetup()) {
+			if (isCollectSetup())
 				startActivity(new Intent(mContext, DashboardActivity.class));
-				finish();
-			} else {
-				createView(LOADING);
-				Log.e(TAG, "Not all set up in refreshView");
-				// try setup
-				boolean setupComplete = isClinicSetup();
-
-				if (setupComplete) {
-					// try to unlock
-					if (DbAdapter.isOpen()) {
-						// we are now all setup
-						startActivity(new Intent(mContext, DashboardActivity.class));
-						finish();
-					} else {
-						// try to unlock
-						DbAdapter.openDb();
-						if (!DbAdapter.isOpen()) {
-							finish();
-						} else {
-							startActivity(new Intent(mContext, DashboardActivity.class));
-							finish();
-						}
-					}
-				}
-			}
-		} else {
-			showCustomToast("Collect Must Be Installed To Use This Software!");
-			Log.e(TAG, "Collect is not installed");
 			finish();
 		}
+
 	}
 
-	private boolean isCollectSetup() {
-		boolean setupComplete = true;
+	@Override
+	protected void onPause() {
+		super.onPause();
+		unregisterReceiver(onNotice);
+	}
 
-		// check if collect installed
-		if (!isAppInstalled("org.odk.collect.android"))
-			return !setupComplete;
-
-		// get db
-		File db = null;
-		try {
-			Context collectCtx = App.getApp().createPackageContext("org.odk.collect.android", Context.CONTEXT_RESTRICTED);
-			db = collectCtx.getDatabasePath(InstanceProviderAPI.DATABASE_NAME);
-		} catch (Exception e) {
-			e.printStackTrace();
-			return !setupComplete;
+	protected BroadcastReceiver onNotice = new BroadcastReceiver() {
+		public void onReceive(Context ctxt, Intent i) {
+			refreshView();
 		}
-
-		// check db password works
-		if (db.exists()) {
-			Log.e(TAG, "db exists!");
-			try {
-				Cursor c = App.getApp().getContentResolver().query(InstanceColumns.CONTENT_URI, null, null, null, null);
-				if (c == null) {
-					Log.e(TAG, "nothing in db");
-				}
-			} catch (Exception e) {
-				// Db exisits but lost key! (clinic reinstalled?) CATASTROPHE...
-				// SO RESET COLLECT
-				createView(LOADING);
-				Log.e(TAG, getString(R.string.error_lost_db_key));
-				showCustomToast(getString(R.string.error_lost_db_key));
-				Intent i = new Intent(mContext, WipeDataService.class);
-				i.putExtra(WipeDataService.WIPE_CLINIC_DATA, false);
-				WakefulIntentService.sendWakefulWork(mContext, i);
-			}
-		}
-
-		// database does not exist yet, or was setup correctly, or is being
-		// reset
-		return setupComplete;
-	}
-
-	private void toastCurrentSettings() {
-		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(mContext);
-		showCustomToast("Encrypting with  Current Settings:" + "\n  PASSWORD=" + settings.getString(getString(R.string.key_provider), "Unknown") + "\n  PROVIDER=" + settings.getString(getString(R.string.key_provider), "Unknown") + "\n USERNAME="
-				+ settings.getString(getString(R.string.key_username), "Z") + "\n PASSWORD=" + settings.getString(getString(R.string.key_password), "Z") + "\n SERVER=" + settings.getString(getString(R.string.key_server), "Z") + "\n COHORT="
-				+ settings.getString(getString(R.string.key_cohort), "Z") + "\n SAVED SEARCH=" + settings.getString(getString(R.string.key_saved_search), "Z") + "\n USE SAVED SEARCH=" + settings.getBoolean(getString(R.string.key_use_saved_searches), true) + "\n CLIENT AUTH="
-				+ settings.getBoolean(getString(R.string.key_client_auth), true) + "\n ACTIVITY LOG=" + settings.getBoolean(getString(R.string.key_enable_activity_log), true) + "\n SHOW MENU=" + settings.getBoolean(getString(R.string.key_show_settings_menu), false)
-				+ "\n FIRST RUN=" + settings.getBoolean(getString(R.string.key_first_run), true));
-	}
-
-	public boolean isAppInstalled(String packageName) {
-
-		PackageManager pm = getPackageManager();
-		try {
-			pm.getPackageInfo(packageName, PackageManager.GET_META_DATA);
-		} catch (NameNotFoundException e) {
-			return false;
-		}
-		return true;
-	}
+	};
 
 	/**
 	 * setupClinic assesses and then launches setup for credential storage
@@ -215,7 +137,12 @@ public class ClinicLauncherActivity extends Activity {
 	 * @return
 	 */
 	private boolean isClinicSetup() {
+		createView(LOADING);
 		boolean setupComplete = true;
+
+		// if db open, then it must be setup
+		if (getDatabasePath(DbAdapter.DATABASE_NAME).exists() && DbAdapter.isOpen())
+			return setupComplete;
 
 		// Step 1: check keystore is unlocked -> setup keystore pwd
 		ks = KeyStoreUtil.getInstance();
@@ -229,16 +156,7 @@ public class ClinicLauncherActivity extends Activity {
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
 		boolean firstRun = settings.getBoolean(getString(R.string.key_first_run), true);
 		if (firstRun) {
-			// we move default key and truststore to the Files Dir so that we
-			// can use/edit them there (includes importing them from Sd if
-			// available)
-			FileUtils.setupDefaultSslStore(R.raw.mytruststore);
-			FileUtils.setupDefaultSslStore(R.raw.mykeystore);
-
-			if (!isPrefsSet)
-				setDefaultPreferences();
-			else
-				createView(REQUEST_DB_SETUP);
+			initialDbSetup();
 			return !setupComplete;
 		}
 
@@ -259,29 +177,55 @@ public class ClinicLauncherActivity extends Activity {
 		return setupComplete;
 	}
 
-	@Override
-	protected void onPause() {
-		super.onPause();
-		unregisterReceiver(onNotice);
+	private boolean isCollectSetup() {
+		boolean setupComplete = true;
+
+		// Step 1: check if collect installed
+		try {
+			getPackageManager().getPackageInfo("org.odk.collect.android", PackageManager.GET_META_DATA);
+		} catch (NameNotFoundException e) {
+			showCustomToast("Collect Must Be Installed To Use This Software!");
+			return !setupComplete;
+		}
+
+		// Step 2: Try to open or create the db
+		try {
+			Log.e(TAG, "testing collect");
+			App.getApp().getContentResolver().query(Uri.parse(InstanceColumns.CONTENT_URI + "/reset"), null, null, null, null);
+		} catch (Exception e) {
+			// Lost key! (clinic reinstalled?) CATASTROPHE... SO RESET COLLECT
+			createView(LOADING);
+			Log.e(TAG, getString(R.string.error_lost_db_key));
+			showCustomToast(getString(R.string.error_lost_db_key));
+			Intent i = new Intent(mContext, WipeDataService.class);
+			i.putExtra(WipeDataService.WIPE_CLINIC_DATA, false);
+			WakefulIntentService.sendWakefulWork(mContext, i);
+		}
+
+		return setupComplete;
 	}
 
-	protected BroadcastReceiver onNotice = new BroadcastReceiver() {
-		public void onReceive(Context ctxt, Intent i) {
-			Log.e(TAG, "Intent Received... refreshing View");
-			// make a new clinic db by opening it
-			DbAdapter.openDb();
-			refreshView();
-		}
-	};
-
-	private void setDefaultPreferences() {
-		// App Default Prefs
-		PreferenceManager.setDefaultValues(this, R.xml.server_preferences, false);
-
-		// Overwrite app defaults from config file or launch PrefsActivity
-		if (!importConfigFile()) {
+	private void initialDbSetup() {
+		Log.e(TAG, "this is first run with prefs set =" + isPrefsSet);
+		// Setup Db Key
+		if (!isPrefsSet) {
 			isPrefsSet = true;
-			startActivity(new Intent(mContext, PreferencesActivity.class));
+
+			// setup Key and TrustStores
+			FileUtils.setupDefaultSslStore(FileUtils.MY_KEYSTORE);
+			FileUtils.setupDefaultSslStore(FileUtils.MY_TRUSTSTORE);
+			
+			// Set Default Prefs
+			PreferenceManager.setDefaultValues(this, R.xml.server_preferences, false);
+
+			// Overwrite prefs from config file or launch PrefsActivity
+			if (!importConfigFile())
+				startActivity(new Intent(mContext, PreferencesActivity.class));
+
+		} else {
+			Log.e(TAG, "this is first run with prefs set =" + isPrefsSet);
+			// Setup Db Pwd
+			createView(REQUEST_DB_SETUP);
 		}
 	}
 
@@ -370,6 +314,7 @@ public class ClinicLauncherActivity extends Activity {
 		// TODO! does not work yet b/c also have to rekey collectDb
 		case REQUEST_DB_REKEY:
 			mStep = VERIFY_ENTRY;
+			isFreshInstall = false;
 			mInstructionText.setText(R.string.sql_verify_pwd);
 			submitButton.setOnClickListener(mSqlCipherPwdListener);
 			mDecryptedPwd = App.getPassword();
@@ -479,7 +424,6 @@ public class ClinicLauncherActivity extends Activity {
 				if (mFirstEntry.equals(userEntry)) {
 					createView(LOADING);
 					encryptDb(userEntry);
-					toastCurrentSettings();
 				} else {
 					mStep = ASK_NEW_ENTRY;
 					mInstructionText.setText(R.string.set_sqlcipher_pwd);
@@ -516,15 +460,17 @@ public class ClinicLauncherActivity extends Activity {
 					SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
 					prefs.edit().putString(SQLCIPHER_KEY_NAME, encryptedPwd).commit();
 
-					// encrypt a new Db
-					File db = App.getApp().getDatabasePath(DbAdapter.DATABASE_NAME);
-					if(db.exists())
-						db.delete();
-					DbAdapter.openDb();
-					if (!isFreshInstall)
-						DbAdapter.rekeyDb(userEntry);
+					if (isFreshInstall) {
+						// encrypt a new Clinic Db
+						File db = App.getApp().getDatabasePath(DbAdapter.DATABASE_NAME);
+						if (db.exists())
+							db.delete();
+						App.getDb();
 
-					success = success & DbAdapter.isOpen();
+						// encrypt a new Collect instances Db
+
+					} else
+						DbAdapter.rekeyDb(userEntry);
 
 					return success;
 
@@ -542,7 +488,12 @@ public class ClinicLauncherActivity extends Activity {
 					final SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
 					settings.edit().putBoolean(getString(R.string.key_first_run), false).commit();
 
-					startActivity(new Intent(mContext, DashboardActivity.class));
+					// reinstall CollectDb if need be
+					isCollectSetup();
+
+					Intent i = new Intent(mContext, DashboardActivity.class);
+					i.putExtra(DashboardActivity.FIRST_RUN, true);
+					startActivity(i);
 					finish();
 
 				} else {
@@ -621,6 +572,22 @@ public class ClinicLauncherActivity extends Activity {
 		t.show();
 	}
 
+	// OLD COLLECT VERIFICATION
+	// File db = null;
+	// try {
+	// Context collectCtx =
+	// App.getApp().createPackageContext("org.odk.collect.android",
+	// Context.CONTEXT_RESTRICTED);
+	// db = collectCtx.getDatabasePath(InstanceProviderAPI.DATABASE_NAME);
+	// } catch (Exception e) {
+	// e.printStackTrace();
+	// return !setupComplete;
+	// }
+	//
+	// // check db password works
+	// if (db.exists()) {
+	// Log.e(TAG, "db exists!");
+
 	// case VERIFY_PWD: //technically, this should never happen?
 	// if (userEntry.equals(mDecryptedPwd)) {
 	// mCla.unlock(userEntry);
@@ -630,4 +597,48 @@ public class ClinicLauncherActivity extends Activity {
 	// }
 	// break;
 
+	// OLD CLINIC VERIFICATION
+	// else {
+	// createView(LOADING);
+	// Log.e(TAG, "Not all set up in refreshView");
+	// }
+	//
+	// if (isCollectSetup()) {
+	//
+	// if (getDatabasePath(DbAdapter.DATABASE_NAME).exists() &&
+	// DbAdapter.isOpen()) {
+	// if (isCollectSetup()) {
+	// startActivity(new Intent(mContext, DashboardActivity.class));
+	// finish();
+	// }
+	// } else {
+	// createView(LOADING);
+	// Log.e(TAG, "Not all set up in refreshView");
+	// // try setup
+	// boolean setupComplete = isClinicSetup();
+	//
+	// if (setupComplete) {
+	// // try to unlock
+	// if (DbAdapter.isOpen() && isCollectSetup()) {
+	// // we are now all setup
+	// startActivity(new Intent(mContext, DashboardActivity.class));
+	// finish();
+	// } else {
+	// // try to unlock
+	// DbAdapter.openDb();
+	// if (!DbAdapter.isOpen()) {
+	//
+	// finish();
+	// } else {
+	// startActivity(new Intent(mContext, DashboardActivity.class));
+	// finish();
+	// }
+	// }
+	// }
+	// }
+	// } else {
+	// showCustomToast("Collect Must Be Installed To Use This Software!");
+	// Log.e(TAG, "Collect is not installed");
+	// finish();
+	// }
 }

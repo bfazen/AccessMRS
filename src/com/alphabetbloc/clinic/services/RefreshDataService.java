@@ -9,6 +9,7 @@ import org.odk.clinic.android.activities.DashboardActivity;
 import org.odk.clinic.android.activities.ListPatientActivity;
 import org.odk.clinic.android.activities.RefreshDataActivity;
 import org.odk.clinic.android.listeners.DownloadListener;
+import org.odk.clinic.android.listeners.SyncDataListener;
 import org.odk.clinic.android.listeners.UploadFormListener;
 import org.odk.clinic.android.tasks.DownloadDataTask;
 import org.odk.clinic.android.tasks.UploadDataTask;
@@ -44,7 +45,7 @@ import com.commonsware.cwac.wakeful.WakefulIntentService;
  *         This checks the signal strength, data connectivity and user activity
  *         before refreshing the patient list as background service.
  */
-public class RefreshDataService extends Service implements UploadFormListener, DownloadListener {
+public class RefreshDataService extends Service implements SyncDataListener {
 
 	private static volatile PowerManager.WakeLock lockStatic = null;
 	static final String NAME = "com.alphabetbloc.clinic.android.RefreshDataActivity";
@@ -188,12 +189,12 @@ public class RefreshDataService extends Service implements UploadFormListener, D
 			} else {
 				mUploadComplete = false;
 				mUploadTask = new UploadDataTask();
-				mUploadTask.setUploadListener(this);
+				mUploadTask.setSyncListener(this);
 				mUploadTask.execute();
 
 				mDownloadComplete = false;
 				mDownloadTask = new DownloadDataTask();
-				mDownloadTask.setDownloadListener(this);
+				mDownloadTask.setSyncListener(this);
 				mDownloadTask.execute();
 			}
 		}
@@ -386,6 +387,18 @@ public class RefreshDataService extends Service implements UploadFormListener, D
 			// WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
 		}
 
+	}
+
+	@Override
+	public void sslSetupComplete(String result) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void syncComplete(String result) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

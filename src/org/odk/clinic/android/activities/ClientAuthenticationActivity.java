@@ -32,14 +32,14 @@ public class ClientAuthenticationActivity extends ManageSSLActivity {
 	@Override
 	protected void onResume() {
 		mContext = this;
-		mLocalStoreFileName = "mykeystore.bks";
+		mLocalStoreFileName = FileUtils.MY_KEYSTORE;
 		mLocalStoreResourceId = R.raw.mykeystore;
 		mStoreString = "key";
 		mStoreTitleString = "Key";
 		mImportFormat = "BKS";
 		mLocalStoreFile = new File(getFilesDir(), mLocalStoreFileName);
 		if(!mLocalStoreFile.exists())
-			FileUtils.setupDefaultSslStore(R.raw.mytruststore);
+			FileUtils.setupDefaultSslStore(mLocalStoreFileName);
 		super.onResume();
 	}
 

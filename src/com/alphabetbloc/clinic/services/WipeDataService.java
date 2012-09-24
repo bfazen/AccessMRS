@@ -3,6 +3,7 @@ package com.alphabetbloc.clinic.services;
 import java.io.File;
 import java.util.List;
 
+import org.odk.clinic.android.R;
 import org.odk.clinic.android.activities.ClinicLauncherActivity;
 import org.odk.clinic.android.database.DbAdapter;
 import org.odk.clinic.android.utilities.App;
@@ -48,7 +49,7 @@ public class WipeDataService extends WakefulIntentService {
 
 			// COLLECT
 			try {
-				// most insecure files:
+				// delete most insecure files first:
 				File internalInstancesDir = FileUtils.getInternalInstanceDirectory();
 				allDeleted = allDeleted & deleteDirectory(internalInstancesDir);
 
@@ -86,33 +87,43 @@ public class WipeDataService extends WakefulIntentService {
 					// delete clinic db
 					allDeleted = allDeleted & deleteClinicDb();
 
-					// Finally
 					// Delete the entire external instances dir (which is
 					// encrypted)
 					String instancePath = FileUtils.getExternalInstancesPath();
 					File externalInstanceDir = new File(instancePath);
 					allDeleted = allDeleted & deleteDirectory(externalInstanceDir);
 
+					// Delete the local trust and key store
+					File trustStore = new File(App.getApp().getFilesDir(), FileUtils.MY_TRUSTSTORE);
+					allDeleted = allDeleted & trustStore.delete();
+					File keyStore = new File(App.getApp().getFilesDir(), FileUtils.MY_KEYSTORE);
+					allDeleted = allDeleted & keyStore.delete();
+
+					// reset helper to null
+					App.resetDb();
+
+					// next clinic run, treat it as a fresh setup
+					clinicPrefs.edit().putBoolean(getString(R.string.key_first_run), true).commit();
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
 			}
 			attempts++;
-			
+
 		} while (!allDeleted && (attempts < 4));
 
 		if (allDeleted)
 			cancelAlarms(WakefulIntentService.WIPE_DATA, getApplicationContext());
-		
+
 		Log.e(TAG, "sending a broadcast = ");
 		Intent i = new Intent(WIPE_DATA_COMPLETE);
 		sendBroadcast(i);
 	}
 
 	private boolean deleteDirectory(File dir) {
-		if(!dir.exists())
+		if (!dir.exists())
 			return true;
-		
+
 		boolean success = false;
 
 		try {

@@ -1,54 +1,26 @@
 package org.odk.clinic.android.utilities;
 
-import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLDecoder;
-
 import org.odk.clinic.android.R;
-import org.odk.clinic.android.activities.PreferencesActivity;
 
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
+import android.util.Log;
 
 public class WebUtils {
+	// POST
+	public static final String INSTANCE_UPLOAD_URL = "/moduleServlet/xformshelper/xfhFormUpload";
 
-	public static final String USER_DOWNLOAD_URL = "/moduleServlet/xforms/userDownload";
-
-	public static final String COHORT_DOWNLOAD_URL = "/module/odkconnector/download/cohort.form";
-
+	// SECURE GET
 	public static final String PATIENT_DOWNLOAD_URL = "/module/odkconnector/download/patients.form";
 
+	// INSECURE GET
 	public static final String FORMLIST_DOWNLOAD_URL = "/moduleServlet/xformshelper/xfhFormList?type=odk_clinic";
-
 	public static final String FORM_DOWNLOAD_URL = "/moduleServlet/xformshelper/xfhFormDownload?type=odk_clinic";
-
-	public static final String INSTANCE_UPLOAD_URL = "/moduleServlet/xformshelper/xfhFormUpload";
-//	public static final String INSTANCE_UPLOAD_URL = "/moduleServlet/xformshelper/fileUpload"; //old
 
 	private static String mServerUrl;
 	private static String mUserNamePwd;
 	private static String mUserNamePwdUpload;
 
-	/**
-	 * Taken from ODK Collect UrlUtils
-	 * 
-	 * @param url
-	 * @return true if url is of x-www-form-urlencoded MIME type with utf-8
-	 *         encoding
-	 */
-	public static boolean isValidUrl(String url) {
-
-		try {
-			new URL(URLDecoder.decode(url, "utf-8"));
-			return true;
-		} catch (MalformedURLException e) {
-			return false;
-		} catch (UnsupportedEncodingException e) {
-			return false;
-		}
-
-	}
 
 	private static void buildUrls() {
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(App.getApp());
@@ -61,15 +33,26 @@ public class WebUtils {
 
 	public static String getFormUploadUrl() {
 		buildUrls();
-        
+
 		StringBuilder uploadUrl = new StringBuilder(mServerUrl);
 		uploadUrl.append(INSTANCE_UPLOAD_URL);
-		uploadUrl.append(mUserNamePwdUpload);
+		// uploadUrl.append(mUserNamePwdUpload);
+		Log.d("WebUtils", "FormUpload URL= " + uploadUrl.toString());
 		return uploadUrl.toString();
 	}
 
 	public static String getPatientDownloadUrl() {
 		buildUrls();
+
+		Log.d("WebUtils", "PatientDownload URL= " + mServerUrl + PATIENT_DOWNLOAD_URL);
+//		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(App.getApp());
+//		String username = settings.getString(App.getApp().getString(R.string.key_username), App.getApp().getString(R.string.default_username));
+//		String password = settings.getString(App.getApp().getString(R.string.key_password), App.getApp().getString(R.string.default_password));
+//		boolean savedSearch = settings.getBoolean(App.getApp().getString(R.string.key_use_saved_searches), false);
+//		int cohort = Integer.valueOf(settings.getString(App.getApp().getString(R.string.key_saved_search), "0"));
+//		int program = Integer.valueOf(settings.getString(App.getApp().getString(R.string.key_program), "0"));
+//
+//		String url = mServerUrl + PATIENT_DOWNLOAD_URL + username + password + savedSearch + cohort + program;
 		return mServerUrl + PATIENT_DOWNLOAD_URL;
 	}
 
@@ -77,7 +60,8 @@ public class WebUtils {
 		buildUrls();
 		StringBuilder formlistUrl = new StringBuilder(mServerUrl);
 		formlistUrl.append(FORMLIST_DOWNLOAD_URL);
-		formlistUrl.append(mUserNamePwd);
+		// formlistUrl.append(mUserNamePwd);
+		Log.d("WebUtils", "FormList URL= " + formlistUrl.toString());
 		return formlistUrl.toString();
 	}
 
@@ -85,7 +69,8 @@ public class WebUtils {
 		buildUrls();
 		StringBuilder formUrl = new StringBuilder(mServerUrl);
 		formUrl.append(FORM_DOWNLOAD_URL);
-		formUrl.append(mUserNamePwd);
+		// formUrl.append(mUserNamePwd);
+		Log.d("WebUtils", "FormDownload URL= " + formUrl.toString());
 		return formUrl.toString();
 	}
 

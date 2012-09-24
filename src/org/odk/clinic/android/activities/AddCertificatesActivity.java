@@ -48,14 +48,14 @@ public class AddCertificatesActivity extends ManageSSLActivity {
 	@Override
 	protected void onResume() {
 		mContext = this;
-		mLocalStoreFileName = "mytruststore.bks";
+		mLocalStoreFileName = FileUtils.MY_TRUSTSTORE;
 		mLocalStoreResourceId = R.raw.mytruststore;
 		mStoreString = "certificate";
 		mStoreTitleString = "Certificate";
 		mImportFormat = "DER";
 		mLocalStoreFile = new File(getFilesDir(), mLocalStoreFileName);
 		if(!mLocalStoreFile.exists())
-			FileUtils.setupDefaultSslStore(R.raw.mytruststore);
+			FileUtils.setupDefaultSslStore(mLocalStoreFileName);
 		super.onResume();
 	}
 
@@ -193,7 +193,7 @@ public class AddCertificatesActivity extends ManageSSLActivity {
 
 	protected KeyStore loadTrustStore() {
 		if(!mLocalStoreFile.exists())
-			FileUtils.setupDefaultSslStore(R.raw.mytruststore);
+			FileUtils.setupDefaultSslStore(mLocalStoreFileName);
 		
 		try {
 			Log.e(TAG, "localStoreFilePath=" + mLocalStoreFile.getAbsolutePath());

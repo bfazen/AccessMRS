@@ -1,84 +1,40 @@
 package org.odk.clinic.android.tasks;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.security.GeneralSecurityException;
-import java.security.KeyStore;
 import java.util.ArrayList;
 
-import javax.net.ssl.KeyManager;
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-
-import org.apache.http.Header;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpVersion;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.params.HttpClientParams;
-import org.apache.http.conn.ClientConnectionManager;
-import org.apache.http.conn.params.ConnManagerParams;
-import org.apache.http.conn.params.ConnPerRoute;
-import org.apache.http.conn.params.ConnPerRouteBean;
-import org.apache.http.conn.scheme.PlainSocketFactory;
-import org.apache.http.conn.scheme.Scheme;
-import org.apache.http.conn.scheme.SchemeRegistry;
-import org.apache.http.conn.scheme.SocketFactory;
-import org.apache.http.conn.ssl.BrowserCompatHostnameVerifier;
-import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.FileBody;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
-import org.apache.http.params.BasicHttpParams;
-import org.apache.http.params.HttpConnectionParams;
-import org.apache.http.params.HttpParams;
-import org.apache.http.params.HttpProtocolParams;
-import org.apache.http.protocol.HTTP;
 import org.odk.clinic.android.R;
 import org.odk.clinic.android.database.DbAdapter;
-import org.odk.clinic.android.listeners.UploadFormListener;
 import org.odk.clinic.android.utilities.App;
 import org.odk.clinic.android.utilities.FileUtils;
-import org.odk.clinic.android.utilities.MySSLSocketFactory;
-import org.odk.clinic.android.utilities.MyTrustManager;
 import org.odk.clinic.android.utilities.WebUtils;
 import org.odk.collect.android.provider.InstanceProviderAPI;
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
 import android.content.ContentValues;
-import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.os.AsyncTask;
-import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.alphabetbloc.clinic.services.EncryptionService;
 import com.commonsware.cwac.wakeful.WakefulIntentService;
 
-public class UploadDataTask extends AsyncTask<Void, String, String> {
+public class UploadDataTask extends SyncDataTask {
+
 	private static String tag = "UploadDataTask";
-
-	private static final int CONNECTION_TIMEOUT = 60000;
-	static final int MAX_CONN_PER_ROUTE = 20;
-	static final int MAX_CONNECTIONS = 20;
-
-	protected UploadFormListener mStateListener;
 	private int mTotalCount = -1;
 	private String[] mInstancesToUpload;
-	private KeyStore keyStore;
-	private KeyStore trustStore;
-	protected String mStorePassword;
 
 	@Override
 	protected String doInBackground(Void... values) {
-		mStorePassword = App.getPassword();
+		mUploadComplete = false;
 		String uploadResult = "No Completed Forms to Upload";
 		int resultSize = 0;
+
 		if (dataToUpload()) {
 
+			setUploadSteps(mTotalCount);
 			String s = WebUtils.getFormUploadUrl();
 			Log.i(tag, "url to use=" + s);
 			ArrayList<String> uploaded = uploadInstances(s);
@@ -88,6 +44,7 @@ public class UploadDataTask extends AsyncTask<Void, String, String> {
 					String path = uploaded.get(i);
 					updateClinicDbPath(path);
 					updateCollectDb(path);
+					showProgress("Uploading Completed Forms");
 				}
 			}
 
@@ -137,204 +94,27 @@ public class UploadDataTask extends AsyncTask<Void, String, String> {
 
 	private ArrayList<String> uploadInstances(String url) {
 
-		// 1. get a new ssl context...
-		SSLContext sslContext = null;
-		try {
-			sslContext = createSslContext();
-		} catch (GeneralSecurityException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-
-		MySSLSocketFactory socketFactory = new MySSLSocketFactory(sslContext, new BrowserCompatHostnameVerifier());
 		ArrayList<String> uploadedInstances = new ArrayList<String>();
-
 		for (int i = 0; i < mTotalCount; i++) {
-			// TODO! Sam's code... Should this really be inside the for loop?
-			// should this also be a DefaultClient?
-			HttpClient httpclient = createHttpClient(socketFactory);
 			try {
 
-				HttpPost httppost = new HttpPost(url);
-				String dbPath = mInstancesToUpload[i];
-				String instancePath = FileUtils.getDecryptedFilePath(dbPath);
+				String instancePath = FileUtils.getDecryptedFilePath(mInstancesToUpload[i]);
 				MultipartEntity entity = createMultipartEntity(instancePath);
-				if (entity == null) {
+				if (entity == null)
 					continue;
-				}
 
-				httppost.setEntity(entity);
-				HttpResponse response = null;
-				response = httpclient.execute(httppost);
-
-				// TODO! CHECK does this verify uploaded? Sam deleted this
-				// section... as it wasn't handled correctly anyway..
-				String serverLocation = null;
-				Header[] h = response.getHeaders("Location");
-				if (h != null && h.length > 0) {
-					serverLocation = h[0].getValue();
-					Log.e(tag, "server location = " + serverLocation);
-				} else {
-					// something should be done here...
-					Log.e(tag, "Location header was absent");
-				}
-
-				int responseCode = response.getStatusLine().getStatusCode();
-				Log.d(tag, "httppost response=" + responseCode + " executed on path=" + instancePath);
-
-				// verify that your response came from a known server
-				if (serverLocation != null && url.contains(serverLocation)) {
+				if (postEntityToUrl(url, entity)) {
 					uploadedInstances.add(mInstancesToUpload[i]);
 					Log.e(tag, "everything okay! adding some instances...");
 				}
 
 			} catch (Exception e) {
-				Log.e(tag, "httpclient DID NOT execute httpost! caught an exception!");
+				Log.e(tag, "Exception on uploading instance =" + mInstancesToUpload[i]);
 				e.printStackTrace();
 			}
 
 		}
 		return uploadedInstances;
-	}
-
-	/**
-	 * make the SSLContext and initialize with the local keyStore (if
-	 * useClientAuth) and the combined default and local trustStore via custom
-	 * MyTrustManager. I.e. context now initialized with a local key, and both
-	 * local and default trust stores.
-	 * 
-	 * @param clientAuth
-	 * @return
-	 * @throws GeneralSecurityException
-	 */
-	private SSLContext createSslContext() throws GeneralSecurityException {
-
-		// TrustStore
-		KeyStore trustStore = loadTrustStore();
-		MyTrustManager myTrustManager = new MyTrustManager(trustStore);
-		TrustManager[] tms = new TrustManager[] { myTrustManager };
-
-		// KeyStore
-		KeyManager[] kms = null;
-		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(App.getApp());
-		boolean useClientAuth = prefs.getBoolean(App.getApp().getString(R.string.key_client_auth), false);
-		if (useClientAuth) {
-			KeyStore keyStore = loadKeyStore();
-			KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-			kmf.init(keyStore, mStorePassword.toCharArray());
-			kms = kmf.getKeyManagers();
-		}
-
-		SSLContext context = SSLContext.getInstance("TLS");
-		context.init(kms, tms, null);
-
-		return context;
-	}
-
-	/**
-	 * Load the truststoreFile field (after import from the file itself) into a
-	 * KeyStore object.
-	 * 
-	 * @return the KeyStore object of the localTrustStore
-	 */
-	private KeyStore loadTrustStore() {
-		if (trustStore != null) {
-			return trustStore;
-		}
-
-		File localTrustStoreFile = new File(App.getApp().getFilesDir(), FileUtils.MY_TRUSTSTORE);
-		if (!localTrustStoreFile.exists()) {
-			Log.e(tag, "truststore does not exist... loading it from default!");
-			localTrustStoreFile = FileUtils.setupDefaultSslStore(R.raw.mytruststore);
-		}
-
-		try {
-			trustStore = KeyStore.getInstance("BKS");
-			InputStream in = new FileInputStream(localTrustStoreFile);
-			try {
-				trustStore.load(in, mStorePassword.toCharArray());
-			} finally {
-				in.close();
-			}
-
-			return trustStore;
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	/**
-	 * This goes direct from the local KeyStore Resource into a keyStore without
-	 * asynctask, because we just hold onto this one, and don't ned to do
-	 * dynamic switching between truststores?
-	 * 
-	 * @return
-	 */
-	private KeyStore loadKeyStore() {
-		if (keyStore != null) {
-			return keyStore;
-		}
-
-		File localKeyStoreFile = new File(App.getApp().getFilesDir(), FileUtils.MY_KEYSTORE);
-		if (!localKeyStoreFile.exists()) {
-			localKeyStoreFile = FileUtils.setupDefaultSslStore(R.raw.mykeystore);
-		}
-		try {
-			keyStore = KeyStore.getInstance("PKCS12");
-			// keyStore = KeyStore.getInstance("PKCS12");
-			InputStream in = new FileInputStream(localKeyStoreFile);
-			try {
-				keyStore.load(in, mStorePassword.toCharArray());
-			} finally {
-				in.close();
-			}
-
-			return keyStore;
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	private HttpClient createHttpClient(SocketFactory socketFactory) {
-
-		// TODO! CONSIDER USING CREDENTIAL PROVIDER...
-		// CredentialsProvider credentialsProvider = new
-		// BasicCredentialsProvider();
-		// //set the user credentials for our site "example.com"
-		// credentialsProvider.setCredentials(new AuthScope("example.com",
-		// AuthScope.ANY_PORT),
-		// new UsernamePasswordCredentials("UserNameHere", "UserPasswordHere"));
-		// clientConnectionManager = new ThreadSafeClientConnManager(params,
-		// schemeRegistry);
-		//
-		// context = new BasicHttpContext();
-		// context.setAttribute("http.auth.credentials-provider",
-		// credentialsProvider);
-		// /
-
-		HttpParams params = new BasicHttpParams();
-		HttpProtocolParams.setVersion(params, HttpVersion.HTTP_1_1); // yaw
-		HttpProtocolParams.setContentCharset(params, HTTP.UTF_8); // yaw
-		HttpProtocolParams.setUseExpectContinue(params, false); // yaw
-		HttpConnectionParams.setConnectionTimeout(params, CONNECTION_TIMEOUT);
-		HttpConnectionParams.setSoTimeout(params, CONNECTION_TIMEOUT); // yaw
-		HttpClientParams.setRedirecting(params, false); // yaw
-
-		ConnManagerParams.setTimeout(params, CONNECTION_TIMEOUT); // yaw
-		ConnPerRoute connPerRoute = new ConnPerRouteBean(MAX_CONN_PER_ROUTE);
-		ConnManagerParams.setMaxConnectionsPerRoute(params, connPerRoute);
-		ConnManagerParams.setMaxTotalConnections(params, MAX_CONNECTIONS);
-
-		SchemeRegistry schemeRegistry = new SchemeRegistry();
-		schemeRegistry.register(new Scheme("http", PlainSocketFactory.getSocketFactory(), 80));
-		SocketFactory sslSocketFactory = SSLSocketFactory.getSocketFactory();
-		if (socketFactory != null) {
-			sslSocketFactory = socketFactory;
-		}
-		schemeRegistry.register(new Scheme("https", sslSocketFactory, 8443));
-		ClientConnectionManager cm = new ThreadSafeClientConnManager(params, schemeRegistry);
-
-		return new DefaultHttpClient(cm, params);
 	}
 
 	private MultipartEntity createMultipartEntity(String path) {
@@ -416,26 +196,16 @@ public class UploadDataTask extends AsyncTask<Void, String, String> {
 	}
 
 	@Override
-	protected void onProgressUpdate(String... values) {
-		Log.e(tag, "UploadInstanceTask.onProgressUpdate=" + values[0] + ", " + values[1] + ", " + values[2] + ", ");
-		synchronized (this) {
-			if (mStateListener != null)
-				mStateListener.progressUpdate(values[0], Integer.valueOf(values[1]), Integer.valueOf(values[2]));
-		}
-
-	}
-
-	@Override
 	protected void onPostExecute(String result) {
+		mUploadComplete = true;
 		synchronized (this) {
-			if (mStateListener != null)
-				mStateListener.uploadComplete(result);
+			if (mStateListener != null) {
+				if (mUploadComplete && mDownloadComplete)
+					mStateListener.syncComplete(result);
+				else
+					mStateListener.uploadComplete(result);
+			}
 		}
 	}
 
-	public void setUploadListener(UploadFormListener sl) {
-		synchronized (this) {
-			mStateListener = sl;
-		}
-	}
 }

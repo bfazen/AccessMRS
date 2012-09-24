@@ -100,11 +100,8 @@ public class XformUtils {
 			allAssetPaths = assetManager.list("");
 
 			for (String path : allAssetPaths) {
-				Log.e(TAG, "asset path= " + path);
 				if (path.contains(REGISTRATION_FORM_XML)) {
 					assetPath = path;
-
-					Log.e(TAG, "Matching asset path= " + path);
 				}
 			}
 
@@ -114,9 +111,6 @@ public class XformUtils {
 
 		// output path:
 		File registrationForm = new File(FileUtils.getExternalFormsPath(), REGISTRATION_FORM_XML);
-		Log.e(TAG, "registrationForm= " + registrationForm.getAbsolutePath());
-		Log.e(TAG, "registrationForm.parentFile= " + registrationForm.getParentFile().getAbsolutePath());
-		Log.e(TAG, "registrationForm.parentPath= " + registrationForm.getParent());
 		registrationForm.getParentFile().mkdirs();
 		String sdPath = registrationForm.getAbsolutePath();
 
@@ -153,7 +147,7 @@ public class XformUtils {
 		}
 
 		if (sdFile.exists())
-			Log.e(TAG, "File has been successfully moved: " + assetPath + " -> " + sdPath);
+			Log.i(TAG, "File has been successfully moved: " + assetPath + " -> " + sdPath);
 
 		return sdFile;
 	}
@@ -178,7 +172,8 @@ public class XformUtils {
 			} catch (Exception e) {
 				Log.e(TAG, e.getLocalizedMessage());
 			}
-
+			
+			
 			String name = null;
 			int id = -1;
 			String version = null;

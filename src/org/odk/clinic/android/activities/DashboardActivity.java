@@ -6,6 +6,7 @@ import java.util.Date;
 import org.odk.clinic.android.R;
 import org.odk.clinic.android.database.DbAdapter;
 import org.odk.clinic.android.openmrs.Constants;
+import org.odk.clinic.android.utilities.App;
 import org.odk.clinic.android.utilities.FileUtils;
 
 import android.app.Activity;
@@ -54,6 +55,7 @@ public class DashboardActivity extends Activity {
 	public static final int LIST_INCOMPLETE = 3;
 	public static final int LIST_COMPLETE = 4;
 	public static final int LIST_SIMILAR_CLIENTS = 5;
+	public static final String FIRST_RUN = "first_run";
 
 	private int patients = 0;
 	private int priorityToDoForms = 0;
@@ -82,6 +84,9 @@ public class DashboardActivity extends Activity {
 			showCustomToast(getString(R.string.error, getString(R.string.storage_error)));
 			finish();
 		}
+		
+		if(getIntent().getBooleanExtra(FIRST_RUN, false))
+			showCustomToast("Device setup Complete! Please Remember Your Password!" + "\n\n  PASSWORD= " + App.getPassword());
 	}
 
 	@Override
@@ -337,7 +342,7 @@ public class DashboardActivity extends Activity {
 
 		Toast t = new Toast(this);
 		t.setView(view);
-		t.setDuration(Toast.LENGTH_SHORT);
+		t.setDuration(Toast.LENGTH_LONG);
 		t.setGravity(Gravity.CENTER, 0, 0);
 		t.show();
 	}

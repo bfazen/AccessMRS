@@ -76,6 +76,8 @@ public class TestSslConnectionActivity extends Activity {
 		resultText = (TextView) findViewById(R.id.result_text);
 		editText = (EditText) findViewById(R.id.edit_text);
 		editText.setText(getString(R.string.default_server));
+		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(App.getApp());
+		editText.setText(settings.getString(App.getApp().getString(R.string.key_server), App.getApp().getString(R.string.default_server)));
 		Button httpClientConnectButton = (Button) findViewById(R.id.http_client_connect_button);
 		httpClientConnectButton.setOnClickListener(new OnClickListener() {
 			

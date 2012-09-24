@@ -195,6 +195,10 @@ public class DbAdapter {
 
 	}
 
+	public static void createDb() {
+		mDb = App.getDb();
+	}
+
 	public static DbAdapter openDb() {
 		if (!isOpen()) {
 			Log.w(t, "Database is not open! Opening Now!");
@@ -1061,18 +1065,18 @@ public class DbAdapter {
 		String selectionArgs[] = { InstanceProviderAPI.STATUS_INCOMPLETE };
 		c = App.getApp().getContentResolver().query(Uri.parse(InstanceColumns.CONTENT_URI + "/groupbypatientid"), new String[] { InstanceColumns.PATIENT_ID, "count(*) as " + InstanceColumns.STATUS }, selection, selectionArgs, null);
 		if (c != null) {
-		if (c.moveToFirst()) {
-			do {
-				String patientId = c.getString(c.getColumnIndex(InstanceColumns.PATIENT_ID));
-				int formNumber = c.getInt(c.getColumnIndex(InstanceColumns.STATUS));
-				ContentValues cv = new ContentValues();
-				cv.put(KEY_SAVED_FORM_NUMBER, formNumber);
+			if (c.moveToFirst()) {
+				do {
+					String patientId = c.getString(c.getColumnIndex(InstanceColumns.PATIENT_ID));
+					int formNumber = c.getInt(c.getColumnIndex(InstanceColumns.STATUS));
+					ContentValues cv = new ContentValues();
+					cv.put(KEY_SAVED_FORM_NUMBER, formNumber);
 
-				mDb.update(PATIENTS_TABLE, cv, KEY_PATIENT_ID + "=" + patientId, null);
-			} while (c.moveToNext());
-		}
+					mDb.update(PATIENTS_TABLE, cv, KEY_PATIENT_ID + "=" + patientId, null);
+				} while (c.moveToNext());
+			}
 
-		c.close();
+			c.close();
 		}
 
 	}
@@ -1086,24 +1090,24 @@ public class DbAdapter {
 
 		ContentValues cv = new ContentValues();
 		if (c != null) {
-		if (c.moveToFirst()) {
-			do {
-				String patientId = c.getString(c.getColumnIndex(InstanceColumns.PATIENT_ID));
-				String formName = c.getString(c.getColumnIndex(KEY_SAVED_FORM_NAMES));
+			if (c.moveToFirst()) {
+				do {
+					String patientId = c.getString(c.getColumnIndex(InstanceColumns.PATIENT_ID));
+					String formName = c.getString(c.getColumnIndex(KEY_SAVED_FORM_NAMES));
 
-				cv.put(KEY_SAVED_FORM_NAMES, formName);
+					cv.put(KEY_SAVED_FORM_NAMES, formName);
 
-				mDb.update(PATIENTS_TABLE, cv, KEY_PATIENT_ID + "=" + patientId, null);
-			} while (c.moveToNext());
-		} else {
-			// } else if
-			// (c.isNull(c.getColumnIndex(InstanceColumns.PATIENT_ID))){
-			cv.putNull(KEY_SAVED_FORM_NAMES);
-			mDb.update(PATIENTS_TABLE, cv, KEY_PATIENT_ID + "=" + updatePatientId, null);
+					mDb.update(PATIENTS_TABLE, cv, KEY_PATIENT_ID + "=" + patientId, null);
+				} while (c.moveToNext());
+			} else {
+				// } else if
+				// (c.isNull(c.getColumnIndex(InstanceColumns.PATIENT_ID))){
+				cv.putNull(KEY_SAVED_FORM_NAMES);
+				mDb.update(PATIENTS_TABLE, cv, KEY_PATIENT_ID + "=" + updatePatientId, null);
 
-		}
+			}
 
-		c.close();
+			c.close();
 		}
 	}
 
@@ -1115,21 +1119,21 @@ public class DbAdapter {
 		c = App.getApp().getContentResolver().query(Uri.parse(InstanceColumns.CONTENT_URI + "/groupbypatientid"), new String[] { InstanceColumns.PATIENT_ID, "count(*) as " + InstanceColumns.STATUS }, selection, selectionArgs, null);
 		ContentValues cv = new ContentValues();
 		if (c != null) {
-		if (c.moveToFirst()) {
-			do {
-				String patientId = c.getString(c.getColumnIndex(InstanceColumns.PATIENT_ID));
-				int formNumber = c.getInt(c.getColumnIndex(InstanceColumns.STATUS));
-				cv.put(KEY_SAVED_FORM_NUMBER, formNumber);
+			if (c.moveToFirst()) {
+				do {
+					String patientId = c.getString(c.getColumnIndex(InstanceColumns.PATIENT_ID));
+					int formNumber = c.getInt(c.getColumnIndex(InstanceColumns.STATUS));
+					cv.put(KEY_SAVED_FORM_NUMBER, formNumber);
 
-				mDb.update(PATIENTS_TABLE, cv, KEY_PATIENT_ID + "=" + patientId, null);
-			} while (c.moveToNext());
-		} else {
-			cv.putNull(KEY_SAVED_FORM_NUMBER);
-			mDb.update(PATIENTS_TABLE, cv, KEY_PATIENT_ID + "=" + updatePatientId, null);
+					mDb.update(PATIENTS_TABLE, cv, KEY_PATIENT_ID + "=" + patientId, null);
+				} while (c.moveToNext());
+			} else {
+				cv.putNull(KEY_SAVED_FORM_NUMBER);
+				mDb.update(PATIENTS_TABLE, cv, KEY_PATIENT_ID + "=" + updatePatientId, null);
 
-		}
+			}
 
-		c.close();
+			c.close();
 		}
 
 	}
@@ -1324,7 +1328,7 @@ public class DbAdapter {
 		mDb.beginTransaction();
 		try {
 			int icount = zdis.readInt();
-			Log.e(t, "insertPatients icount: " + icount);
+			Log.e(t, "insertPatientForms icount: " + icount);
 			for (int i = 1; i < icount + 1; i++) {
 
 				ih.prepareForInsert();
@@ -1361,11 +1365,12 @@ public class DbAdapter {
 
 		try {
 			int icount = zdis.readInt();
-			Log.e(t, "insertObservations icount: " + icount);
+			Log.e(t, "insertPatients icount: " + icount);
 			for (int i = 1; i < icount + 1; i++) {
 
 				ih.prepareForInsert();
-				ih.bind(ptIdIndex, zdis.readInt());
+				int win = zdis.readInt();
+				ih.bind(ptIdIndex, win);
 				ih.bind(ptFamilyIndex, zdis.readUTF());
 				ih.bind(ptMiddleIndex, zdis.readUTF());
 				ih.bind(ptGivenIndex, zdis.readUTF());
@@ -1373,7 +1378,7 @@ public class DbAdapter {
 				ih.bind(ptBirthIndex, parseDate(zdis.readUTF()));
 				ih.bind(ptIdentifierIndex, zdis.readUTF());
 				ih.execute();
-
+				Log.e(t, "Win wants patient id=" + win);
 			}
 			mDb.setTransactionSuccessful();
 		} finally {

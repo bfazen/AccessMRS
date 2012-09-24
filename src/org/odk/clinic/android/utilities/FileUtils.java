@@ -21,16 +21,19 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
+import java.security.KeyStore;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.odk.clinic.android.R;
+import org.odk.collect.android.provider.FormsProviderAPI.FormsColumns;
 
 import android.content.Context;
 import android.content.pm.PackageManager.NameNotFoundException;
-import android.os.AsyncTask;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteException;
 import android.os.Environment;
 import android.util.Log;
 
@@ -256,6 +259,49 @@ public class FileUtils {
 
 	}
 
+	/**
+	 * Checks if a form exists in Collect Db and on Sd. If it does, we already
+	 * have the form, and there is no need to download!
+	 * 
+	 * @param formId
+	 * @return true if form exists in Collect Db.
+	 */
+	public static boolean doesXformExist(String formId) {
+
+		boolean alreadyExists = false;
+
+		Cursor mCursor;
+		try {
+			mCursor = App.getApp().getContentResolver().query(FormsColumns.CONTENT_URI, null, null, null, null);
+		} catch (SQLiteException e) {
+			Log.e("DownloadFormActivity", e.getLocalizedMessage());
+			return false;
+		}
+
+		if (mCursor == null) {
+			return false;
+		}
+
+		mCursor.moveToPosition(-1);
+		while (mCursor.moveToNext()) {
+
+			String dbFormId = mCursor.getString(mCursor.getColumnIndex(FormsColumns.JR_FORM_ID));
+
+			// if the exact form exists, leave it be. else, insert it.
+			if (dbFormId.equalsIgnoreCase(formId + "") && (new File(FileUtils.getExternalFormsPath() + File.separator + formId + FileUtils.XML_EXT)).exists()) {
+				alreadyExists = true;
+			}
+
+		}
+
+		if (mCursor != null) {
+			mCursor.close();
+		}
+
+		return alreadyExists;
+
+	}
+
 	// PATHS
 	// INTERNAL (COLLECT)
 	public static File getInternalInstanceDirectory() {
@@ -311,29 +357,26 @@ public class FileUtils {
 	 * imports the local truststore from R.raw to local files directory... so as
 	 * to edit them later..
 	 */
-	public static File setupDefaultSslStore(int resourceId) {
+	public static File setupDefaultSslStore(String sslStore) {
 
-		String filename = null;
-		if (resourceId == R.raw.mytruststore)
-			filename = MY_TRUSTSTORE;
-		if (resourceId == R.raw.mykeystore)
-			filename = MY_KEYSTORE;
-		File file = new File(App.getApp().getFilesDir(), filename);
-
-		if (file.exists()) {
-			// we have already set up with default or from sd, so quit
-			Log.e(TAG, "SSL File exists!=" + file.getAbsolutePath());
+		File file = new File(App.getApp().getFilesDir(), sslStore);
+		if (file.exists())
 			return file;
-		}
 
 		try {
 			File sdFile = new File(FileUtils.getExternalRootDirectory(), file.getName());
 			InputStream in = null;
+
 			if (sdFile.exists()) {
-				// import the store from the sd if exists
+				// if a file exists on sd, import
 				in = new FileInputStream(sdFile);
 			} else {
-				// or use use the default
+				// load app default from res/raw
+				int resourceId = 0;
+				if (sslStore.equalsIgnoreCase(MY_TRUSTSTORE))
+					resourceId = R.raw.mytruststore;
+				if (sslStore.equalsIgnoreCase(MY_KEYSTORE))
+					resourceId = R.raw.mykeystore;
 				in = App.getApp().getResources().openRawResource(resourceId);
 			}
 			FileOutputStream out = new FileOutputStream(file);
@@ -363,4 +406,39 @@ public class FileUtils {
 
 	}
 
+	/**
+	 * 
+	 * Load the truststore or keystore object, loading default from SD or res/raw if it does not exist
+	 * 
+	 * @param sslStoreType
+	 *            The type of Store (Either FileUtils.MY_TRUSTORE or
+	 *            FileUtils.MY_KEYSTORE)
+	 * @return the KeyStore object of the local Trust or Key Store
+	 */
+	public static KeyStore loadSslStore(String sslStoreType) {
+		
+		File localTrustStoreFile = new File(App.getApp().getFilesDir(), sslStoreType);
+		if (!localTrustStoreFile.exists()) {
+			localTrustStoreFile = FileUtils.setupDefaultSslStore(sslStoreType);
+		}
+
+		String instance = null;
+		if (sslStoreType.equalsIgnoreCase(MY_KEYSTORE))
+			instance = "PKCS12";
+		if (sslStoreType.equalsIgnoreCase(MY_TRUSTSTORE))
+			instance = "BKS";
+		try {
+			KeyStore sslStore = KeyStore.getInstance(instance);
+			InputStream in = new FileInputStream(localTrustStoreFile);
+			try {
+				sslStore.load(in, App.getPassword().toCharArray());
+			} finally {
+				in.close();
+			}
+
+			return sslStore;
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
 }

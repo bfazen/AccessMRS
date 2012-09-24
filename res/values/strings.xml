@@ -48,7 +48,7 @@ the License.
     <string name="key_enable_activity_log">enable_activity_log</string>
 
     <!-- Defaults -->
-    <string name="default_server">https://192.168.5.201:8443/amrs</string>
+    <string name="default_server">https://41.57.100.29:8443/amrs</string>
     <string name="default_username">JGreen</string>
     <string name="default_info">http://opendatakit.org</string>
     <string name="default_password">Password2012</string>

@@ -31,6 +31,10 @@ public class App extends Application {
 		SQLiteDatabase.loadLibs(mSingleton);
 		mSqlCipherDbHelper = new DbAdapter.DatabaseHelper(mSingleton);
 	}
+	
+	public static void resetDb() {
+		mSqlCipherDbHelper = null;
+	}
 
 	public static SQLiteDatabase getDb() {
 		if (mSqlCipherDbHelper == null)

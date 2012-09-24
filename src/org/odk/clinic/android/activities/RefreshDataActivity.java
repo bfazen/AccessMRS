@@ -1,9 +1,9 @@
 package org.odk.clinic.android.activities;
 
 import org.odk.clinic.android.R;
-import org.odk.clinic.android.listeners.DownloadListener;
-import org.odk.clinic.android.listeners.UploadFormListener;
+import org.odk.clinic.android.listeners.SyncDataListener;
 import org.odk.clinic.android.tasks.DownloadDataTask;
+import org.odk.clinic.android.tasks.SyncDataTask;
 import org.odk.clinic.android.tasks.UploadDataTask;
 import org.odk.clinic.android.utilities.FileUtils;
 
@@ -23,21 +23,22 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.alphabetbloc.clinic.services.EncryptionService;
 import com.alphabetbloc.clinic.services.RefreshDataService;
 import com.commonsware.cwac.wakeful.RefreshDataListener;
 import com.commonsware.cwac.wakeful.WakefulIntentService;
 
-public class RefreshDataActivity extends Activity implements UploadFormListener, DownloadListener {
+public class RefreshDataActivity extends Activity implements SyncDataListener {
 
 	public final static int ASK_TO_DOWNLOAD = 1;
 	public final static int DIRECT_TO_DOWNLOAD = 2;
 	public final static String DIALOG = "showdialog";
+	private static final String TAG = RefreshDataActivity.class.getSimpleName();
 	private Context mContext;
 	private ProgressDialog mProgressDialog;
 	private AlertDialog mAlertDialog;
 	private DownloadDataTask mDownloadTask;
 	private UploadDataTask mUploadTask;
+	private SyncDataTask mSyncTask;
 	private int showProgress;
 
 	@Override
@@ -52,16 +53,17 @@ public class RefreshDataActivity extends Activity implements UploadFormListener,
 			finish();
 		}
 
+		mSyncTask = (SyncDataTask) getLastNonConfigurationInstance();
 		mUploadTask = (UploadDataTask) getLastNonConfigurationInstance();
 		mDownloadTask = (DownloadDataTask) getLastNonConfigurationInstance();
 
 		showProgress = getIntent().getIntExtra(DIALOG, ASK_TO_DOWNLOAD);
 
 		// get the task if we've changed orientations.
-		if (mUploadTask == null && mDownloadTask == null) {
+		if (mSyncTask == null && mUploadTask == null && mDownloadTask == null) {
 			showDialog(showProgress);
 			if (showProgress == DIRECT_TO_DOWNLOAD)
-				uploadData();
+				syncData();
 		}
 
 	}
@@ -70,11 +72,14 @@ public class RefreshDataActivity extends Activity implements UploadFormListener,
 	protected void onResume() {
 		super.onResume();
 
+		if (mSyncTask != null) {
+			mSyncTask.setSyncListener(this);
+		}
 		if (mUploadTask != null) {
-			mUploadTask.setUploadListener(this);
+			mUploadTask.setSyncListener(this);
 		}
 		if (mDownloadTask != null) {
-			mDownloadTask.setDownloadListener(this);
+			mDownloadTask.setSyncListener(this);
 		}
 
 		if (mProgressDialog != null && !mProgressDialog.isShowing()) {
@@ -83,41 +88,47 @@ public class RefreshDataActivity extends Activity implements UploadFormListener,
 
 	}
 
-	private void uploadData() {
-		if (mUploadTask != null)
+	private void syncData() {
+		if (mSyncTask != null)
 			return;
-		mUploadTask = new UploadDataTask();
-		mUploadTask.setUploadListener(this);
-		mUploadTask.execute();
+		mSyncTask = new SyncDataTask();
+		mSyncTask.setSyncListener(this);
+		mSyncTask.execute();
+	}
+
+	@Override
+	public void sslSetupComplete(String result) {
+		if (result != null && result.equalsIgnoreCase(SyncDataTask.HTTP_CLIENT_SETUP)) {
+			mUploadTask = new UploadDataTask();
+			mUploadTask.setSyncListener(this);
+			mUploadTask.execute();
+			mDownloadTask = new DownloadDataTask();
+			mDownloadTask.setSyncListener(this);
+			mDownloadTask.execute();
+		}
 	}
 
 	@Override
 	public void uploadComplete(String result) {
-
-		showCustomToast(result);
+		Log.e(TAG, "Upload Complete");
+		if (result != null)
+			showCustomToast(result);
 		mUploadTask = null;
-//		downloadData();
 	}
 
-	public void downloadData() {
-		if (mDownloadTask != null)
-			return;
-
-		mDownloadTask = new DownloadDataTask();
-		mDownloadTask.setDownloadListener(RefreshDataActivity.this);
-		mDownloadTask.execute();
-	}
-
+	@Override
 	public void downloadComplete(String result) {
+		Log.e(TAG, "Download Complete");
+		if (result != null)
+			showCustomToast(getString(R.string.error, result));
+		mDownloadTask = null;
+	}
 
+	@Override
+	public void syncComplete(String result) {
 		if (mProgressDialog != null) {
 			mProgressDialog.dismiss();
 		}
-
-		if (result != null)
-			showCustomToast(getString(R.string.error, result));
-
-		mDownloadTask = null;
 		stopRefreshDataActivity(true);
 	}
 
@@ -155,7 +166,7 @@ public class RefreshDataActivity extends Activity implements UploadFormListener,
 				case DialogInterface.BUTTON_POSITIVE:
 					dialog.dismiss();
 					showDialog(DIRECT_TO_DOWNLOAD);
-					uploadData();
+					syncData();
 					break;
 
 				case DialogInterface.BUTTON_NEGATIVE:
@@ -180,14 +191,20 @@ public class RefreshDataActivity extends Activity implements UploadFormListener,
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
 				dialog.dismiss();
-				if (mUploadTask != null) {
-					mUploadTask.setUploadListener(null);
-					mUploadTask.cancel(true);
+				if (mSyncTask != null) {
+					mSyncTask.setSyncListener(null);
+					mSyncTask.cancel(true);
+					mSyncTask = null;
 				}
-
 				if (mDownloadTask != null) {
-					mDownloadTask.setDownloadListener(null);
+					mDownloadTask.setSyncListener(null);
 					mDownloadTask.cancel(true);
+					mDownloadTask = null;
+				}
+				if (mUploadTask != null) {
+					mUploadTask.setSyncListener(null);
+					mUploadTask.cancel(true);
+					mUploadTask = null;
 				}
 				stopRefreshDataActivity(true);
 			}
@@ -213,6 +230,8 @@ public class RefreshDataActivity extends Activity implements UploadFormListener,
 
 	@Override
 	public Object onRetainNonConfigurationInstance() {
+		if (mSyncTask != null && mSyncTask.getStatus() != AsyncTask.Status.FINISHED)
+			return mSyncTask;
 		if (mUploadTask != null && mUploadTask.getStatus() != AsyncTask.Status.FINISHED)
 			return mUploadTask;
 		if (mDownloadTask != null && mDownloadTask.getStatus() != AsyncTask.Status.FINISHED)
@@ -247,18 +266,18 @@ public class RefreshDataActivity extends Activity implements UploadFormListener,
 		if (mAlertDialog != null && mAlertDialog.isShowing()) {
 			mAlertDialog.dismiss();
 		}
-		if (mUploadTask != null) {
-			mUploadTask.setUploadListener(null);
-			if (mUploadTask.getStatus() == AsyncTask.Status.FINISHED) {
-				mUploadTask.cancel(true);
-			}
-		}
 
+		if (mSyncTask != null) {
+			mSyncTask.cancel(true);
+			mSyncTask = null;
+		}
+		if (mUploadTask != null) {
+			mUploadTask.cancel(true);
+			mUploadTask = null;
+		}
 		if (mDownloadTask != null) {
-			mDownloadTask.setDownloadListener(null);
-			if (mDownloadTask.getStatus() == AsyncTask.Status.FINISHED) {
-				mDownloadTask.cancel(true);
-			}
+			mDownloadTask.cancel(true);
+			mDownloadTask = null;
 		}
 		super.onDestroy();
 	}
