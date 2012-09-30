@@ -17,6 +17,7 @@
         android:paddingBottom="10dip" >
 
         <ImageView
+             android:contentDescription="@string/icon_count_priority_forms"
             android:id="@+id/priority_image"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
@@ -71,6 +72,7 @@
         android:textSize="16sp" />
 
     <ImageView
+        android:contentDescription="@string/icon_arrow_forward"
         android:id="@+id/arrow_image"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

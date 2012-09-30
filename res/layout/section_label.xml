@@ -11,7 +11,7 @@
         android:background="@color/medium_gray" />
 
     <ImageView
-        android:contentDescription="icon"
+        android:contentDescription="@string/icon_section_label"
         android:id="@+id/section_image"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

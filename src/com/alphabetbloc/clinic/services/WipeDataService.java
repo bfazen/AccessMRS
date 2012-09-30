@@ -3,11 +3,7 @@ package com.alphabetbloc.clinic.services;
 import java.io.File;
 import java.util.List;
 
-import org.odk.clinic.android.R;
-import org.odk.clinic.android.activities.ClinicLauncherActivity;
-import org.odk.clinic.android.database.DbAdapter;
-import org.odk.clinic.android.utilities.App;
-import org.odk.clinic.android.utilities.FileUtils;
+import com.alphabetbloc.clinic.R;
 import org.odk.collect.android.provider.InstanceProviderAPI;
 
 import android.content.Context;
@@ -16,7 +12,10 @@ import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
-import com.commonsware.cwac.wakeful.WakefulIntentService;
+import com.alphabetbloc.clinic.data.DbAdapter;
+import com.alphabetbloc.clinic.ui.admin.ClinicLauncherActivity;
+import com.alphabetbloc.clinic.utilities.App;
+import com.alphabetbloc.clinic.utilities.FileUtils;
 
 /**
  * @author Louis.Fazen@gmail.com

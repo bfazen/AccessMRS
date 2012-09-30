@@ -1,23 +1,91 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-   android:layout_width="fill_parent"
+    android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:orientation="vertical"
-    android:fillViewport="true" >
+    android:fillViewport="true"
+    android:orientation="vertical" >
 
-    <LinearLayout
+    <RelativeLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical" >
 
+        <ImageView
+            android:id="@+id/center_image"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="60dip"
+            android:contentDescription="@string/icon" />
+
+        <TextView
+            android:id="@+id/server_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:layout_toLeftOf="@+id/center_image"
+            android:padding="7dp"
+            android:text="@string/pref_server"
+            android:textSize="18dp" />
+
         <EditText
-            android:id="@+id/edit_text"
+            android:id="@+id/server_edittext"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp"
             android:layout_marginLeft="8dp"
             android:layout_marginRight="10dp"
             android:layout_marginTop="20dp"
+            android:layout_toRightOf="@+id/server_text"
+            android:hint="@string/key_server"
+            android:inputType="text" >
+
+            <requestFocus />
+        </EditText>
+
+        <TextView
+            android:id="@+id/username_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/server_edittext"
+            android:layout_toLeftOf="@+id/center_image"
+            android:padding="7dp"
+            android:text="@string/auth_server_user"
+            android:textSize="18dp" />
+
+        <EditText
+            android:id="@+id/username_edittext"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/server_edittext"
+            android:layout_marginLeft="8dp"
+            android:layout_marginRight="10dp"
+            android:layout_toRightOf="@+id/username_text"
+            android:hint="@string/key_username"
+            android:inputType="text" >
+
+            <requestFocus />
+        </EditText>
+
+        <TextView
+            android:id="@+id/password_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/username_edittext"
+            android:layout_toLeftOf="@+id/center_image"
+            android:padding="7dp"
+            android:text="@string/auth_server_password"
+            android:textSize="18dp" />
+
+        <EditText
+            android:id="@+id/password_edittext"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/username_edittext"
+            android:layout_marginLeft="8dp"
+            android:layout_marginRight="10dp"
+            android:layout_toRightOf="@+id/password_text"
+            android:hint="@string/key_password"
             android:inputType="text" >
 
             <requestFocus />
@@ -27,12 +95,30 @@
             android:id="@+id/http_client_connect_button"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:text="Connect" />
+            android:layout_below="@+id/password_edittext"
+            android:layout_marginBottom="20dp"
+            android:layout_marginLeft="40dp"
+            android:layout_marginRight="40dp"
+            android:layout_marginTop="20dp"
+            android:text="@string/ssl_connect" />
 
         <TextView
             android:id="@+id/result_text"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content" />
-    </LinearLayout>
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/http_client_connect_button"
+            android:layout_centerHorizontal="true"
+            android:textSize="20dp"
+            android:layout_margin="10dp"
+            android:textStyle="bold" />
+
+        <ProgressBar
+            android:id="@+id/progress_wheel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/http_client_connect_button"
+            android:layout_centerHorizontal="true"
+            android:visibility="gone" />
+    </RelativeLayout>
 
 </ScrollView>

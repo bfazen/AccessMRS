@@ -15,6 +15,7 @@
         android:paddingTop="10dip" >
 
         <ImageView
+            android:contentDescription="@string/icon_add_client"
             android:id="@+id/add_client_image"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -27,7 +28,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
             android:paddingLeft="20dip"
-            android:text="Add New Client"
+            android:text="@string/add_new_client"
             android:textSize="18sp"
             android:textStyle="bold" />
     </LinearLayout>
@@ -60,7 +61,7 @@
                 android:paddingBottom="3dip"
                 android:paddingLeft="8dip"
                 android:paddingRight="8dip"
-                android:text="ID Number from AMRS Card:"
+                android:text="@string/add_id"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
@@ -87,7 +88,7 @@
                 android:paddingLeft="8dip"
                 android:paddingRight="8dip"
                 android:paddingTop="30dip"
-                android:text="First Name:"
+                android:text="@string/add_first_name"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
@@ -110,7 +111,7 @@
                 android:paddingLeft="8dip"
                 android:paddingRight="8dip"
                 android:paddingTop="20dip"
-                android:text="Middle Name:"
+                android:text="@string/add_middle_name"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
@@ -131,7 +132,7 @@
                 android:paddingLeft="8dip"
                 android:paddingRight="8dip"
                 android:paddingTop="20dip"
-                android:text="Last Name:"
+                android:text="@string/add_last_name"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
@@ -158,7 +159,7 @@
                 android:paddingLeft="8dip"
                 android:paddingRight="8dip"
                 android:paddingTop="25dip"
-                android:text="Sex:"
+                android:text="@string/add_sex"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
@@ -173,7 +174,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:paddingLeft="55dip"
-                    android:text="Female"
+                    android:text="@string/female"
                     android:textSize="18sp" />
 
                 <RadioButton
@@ -181,7 +182,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:paddingLeft="55dip"
-                    android:text="Male"
+                    android:text="@string/male"
                     android:textSize="18sp" />
             </RadioGroup>
 
@@ -198,7 +199,7 @@
                 android:layout_marginTop="30dip"
                 android:paddingLeft="8dip"
                 android:paddingRight="8dip"
-                android:text="Birth Date:"
+                android:text="@string/add_birthdate"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
@@ -210,7 +211,7 @@
                 android:layout_marginRight="30dip"
                 android:layout_marginTop="15dip"
                 android:paddingLeft="55dip"
-                android:text="This is an Estimated Date of Birth"
+                android:text="@string/add_estimated_birthdate"
                 android:textSize="18sp" />
 
             <DatePicker
@@ -245,13 +246,13 @@
                 android:background="@color/medium_gray" />
 
             <TextView
-                android:id="@+id/id_text"
+                android:id="@+id/list_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="30dip"
                 android:paddingLeft="8dip"
                 android:paddingRight="8dip"
-                android:text="Add Client to your list:"
+                android:text="@string/add_to_list"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
@@ -267,7 +268,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:paddingLeft="55dip"
-                    android:text="For this visit only"
+                    android:text="@string/add_temporary"
                     android:textSize="18sp" />
 
                 <RadioButton
@@ -276,7 +277,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dip"
                     android:paddingLeft="55dip"
-                    android:text="Permanently: Keep Me Updated on This Client"
+                    android:text="@string/add_permanent"
                     android:textSize="18sp" />
             </RadioGroup>
 
@@ -294,7 +295,7 @@
                 android:layout_marginTop="30dip"
                 android:layout_marginBottom="30dip"
                 android:padding="30dip"
-                android:text="Create New Client"
+                android:text="@string/add_create_new"
                 android:textSize="20sp" />
         </LinearLayout>
     </ScrollView>

@@ -16,21 +16,13 @@ the License.
 -->
 <resources xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- NON UI STRING CONSTANTS (referenced in both java and xml). -->
+    <!-- APP -->
     <string name="app_name">Clinic for CHWs</string>
-    <string name="app_version">1.1.1</string>
-
-    <!-- PREFERENCES -->
-    <!-- Strings -->
-    <string name="change_password">Change Password</string>
-    <string name="change_server">Change URL</string>
-    <string name="change_username">Change Username</string>
-
-    <!-- Manage Device Prefs -->
-    <string name="manage_device_pref">Device Management</string>
-    <string name="enable_activity_logging">Log User Activity</string>
-    <string name="activity_logging_hint">Log forms loaded for each client</string>
-    <string name="show_settings_menu">Show Settings Menu</string>
-    <string name="show_menu_hint">Allow access to this menu</string>
+    <string name="app_version">1.0.2</string>
+    <string name="app_package_name">com.alphabetbloc.clinic</string>
+    <string name="app_provider_authority">com.alphabetbloc.clinic.providers.dbprovider</string>
+    <string name="app_account_type">com.alphabetbloc.clinic.account</string>
 
     <!-- Keys -->
     <string name="key_server">server</string>
@@ -39,9 +31,7 @@ the License.
     <string name="key_saved_search">saved_search</string>
     <string name="key_program">program</string>
     <string name="key_provider">provider</string>
-    <string name="key_cohort">cohort</string>
     <string name="key_first_run">first_run</string>
-    <string name="key_info">info</string>
     <string name="key_use_saved_searches">use_saved_searches</string>
     <string name="key_client_auth">client_authentication</string>
     <string name="key_show_settings_menu">show_settings_menu</string>
@@ -50,7 +40,6 @@ the License.
     <!-- Defaults -->
     <string name="default_server">https://41.57.100.29:8443/amrs</string>
     <string name="default_username">JGreen</string>
-    <string name="default_info">http://opendatakit.org</string>
     <string name="default_password">Password2012</string>
     <string name="default_provider">1</string>
     <string name="default_program">1</string>
@@ -60,15 +49,39 @@ the License.
     <string name="default_enable_activity_logging">true</string>
     <string name="default_use_client_auth">false</string>
 
+    <!-- UI STRINGS -->
+    <!-- PREFERENCES -->
+    <!-- Android Account Settings -->
+    <string name="account_admin_section_title">Account Settings</string>
+    <string name="account_admin_settings">Administrator Settings</string>
+    <string name="account_admin_settings_summary">Server Setup, SSL, User Interface, etc.</string>
+
+    <!-- Manage Device Prefs -->
+    <string name="pref_user_settings">User Settings</string>
+    <string name="pref_settings">Settings</string>
+    <string name="pref_manage_device_pref">Device Management</string>
+    <string name="pref_enable_activity_logging">Log User Activity</string>
+    <string name="pref_activity_logging_hint">Log forms loaded for each client</string>
+    <string name="pref_show_settings_menu">Show Settings Menu</string>
+    <string name="pref_show_menu_hint">Allow access to this menu</string>
+    <string name="pref_change_server">Change URL</string>
+    <string name="pref_use_saved_search">Use Saved Searches</string>
+    <string name="pref_saved_search_hint">Use Saved Searches instead of Cohorts</string>
+    <string name="pref_server">Server</string>
+    <string name="pref_saved_search">Cohort or Search ID</string>
+    <string name="pref_change_saved_search">Change Cohort or Search ID</string>
+    <string name="pref_program">Program</string>
+    <string name="pref_change_program">Change Program</string>
+
     <!-- SSL Preferences and SSL Activity -->
-    <string name="manage_ssl">Manage SSL Connections</string>
-    <string name="test_ssl">Test SSL Connections</string>
-    <string name="use_client_auth">Use Client Authentication</string>
-    <string name="client_auth_hint"></string>
-    <string name="client_auth">Client Authentication</string>
-    <string name="client_auth_desc">Manage Authentication Keys</string>
-    <string name="manage_certs">Manage Certificates</string>
-    <string name="manage_certs_desc">Add or Remove Server Certificates</string>
+    <string name="ssl_server_settings">Server Settings</string>
+    <string name="ssl_test_ssl">Test SSL Connections</string>
+    <string name="ssl_use_client_auth">Use Client Authentication</string>
+    <string name="ssl_client_auth_hint"></string>
+    <string name="ssl_client_auth">Client Authentication</string>
+    <string name="ssl_client_auth_desc">Manage Authentication Keys</string>
+    <string name="ssl_manage_certs">Manage Certificates</string>
+    <string name="ssl_manage_certs_desc">Add or Remove Server Certificates</string>
     <string name="ssl_store_title">Manage %ss</string>
     <string name="ssl_add_success_message">Added %1$d %2$s(s) to local %3$s store.</string>
     <string name="ssl_add_alert_message">No %1$ss found.  Please place a %2$s in DER format on the SD Card.</string>
@@ -79,130 +92,92 @@ the License.
     <string name="ssl_add_alert_body">To add a new %1$s, please add the %2$s in %3$s format to the SD Card.</string>
     <string name="ssl_remove_alert_title">Remove %s</string>
     <string name="ssl_remove_alert_body">You are about to remove the %s of: \n\n</string>
+    <string name="ssl_cert_domain">Domain:</string>
+    <string name="ssl_cert_location">Location:</string>
+    <string name="ssl_cert_division">Division:</string>
+    <string name="ssl_cert_issued_by">Issued By:</string>
+    <string name="ssl_cert_filename">File Name:</string>
+    <string name="ssl_cert_file_modified">File Modified:</string>
+    <string name="ssl_connect">Connect</string>
+    <string name="ssl_cert_email">Email:</string>
+    <string name="ssl_test_success">Success! Connected to Server.</string>
+    <string name="ssl_test_failure">Unable to Connect to Server.</string>
 
-    <!-- UI STRINGS -->
-    <!-- ClinicLauncherActivity Cipher Password -->
-    <string name="button_ok">Okay</string>
-    <string name="button_cancel">Cancel</string>
-    <string name="do_rekey">Encrypting database with the new passphrase... Please be patient...</string>
+    <!-- DEVICE SETUP -->
+    <!-- ClinicLauncherActivity SQLLite Setup with SQLCipher Password -->
     <string name="sql_verify_pwd">Enter your passphrase:</string>
-    <string name="set_sqlcipher_pwd">Please enter a secure password for your database.</string>
-    <string name="change_sqlcipher_pwd">Please enter a new password for your database.</string>
-    <string name="confirm_sqlcipher_pwd">Please Re-enter Your Password.</string>
-    <string name="reset_new_pwd">Enter a strong passphrase to secure your data. It must contain at least one uppercase, one lowercase and one number, and be longer than six characters.</string>
-    <string name="reset_confirm_pwd">Please reenter your passphrase to confirm. Do NOT forget this password. You will be unable to recover your data if something happens to your phone.</string>
+    <string name="sql_set_sqlcipher_pwd">Please enter a secure password for your database.</string>
+    <string name="sql_change_sqlcipher_pwd">Please enter a new password for your database.</string>
+    <string name="sql_confirm_sqlcipher_pwd">Please Re-enter Your Password.</string>
+    <string name="sql_error_lost_db_key">ERROR! The key to the Database has been lost! Current Database is useless. Deleting and Reinstalling.</string>
+    <!--
+	<string name="sql_do_rekey">Encrypting database with the new passphrase... Please be patient...</string>
+    <string name="sql_reset_new_pwd">Enter a strong passphrase to secure your data. It must contain at least one uppercase, one lowercase and one number, and be longer than six characters.</string>
+    <string name="sql_reset_confirm_pwd">Please reenter your passphrase to confirm. Do NOT forget this password. You will be unable to recover your data if something happens to your phone.</string>
+    -->
 
-    <!-- ClinicLauncherActivity Set Provider ID -->
-    <string name="submit">Submit</string>
-    <string name="provider_id">Enter Your Provider ID:</string>
-    <string name="change_provider_id">Enter a New Provider ID:</string>
-    <string name="confirm_id">Please Re-Enter Provider ID:</string>
-    <string name="btn_confirm">Confirm</string>
-    <string name="provider_instructions">Please enter your provider identification number.</string>
-    <string name="provider_requirement">You must be a provider to use this device.  Please enter your assigned provider ID.</string>
-    <string name="set_provider">Set Provider ID</string>
 
-    <!-- ClinicLauncherActivity Db Setup -->
-    <string name="error_lost_db_key">ERROR! The key to the Database has been lost! Current Database is useless. Deleting and Reinstalling.</string>
-    <string name="error_lost_db_pwd">ERROR! The key to the Database Password has been lost! Current Database is useless. Deleting and Reinstalling.</string>
+    <!-- AccountAuthenticator OpenMRS username/password -->
+    <string name="auth_server_account_setup">Please setup a new account with Username and Password.</string>
+    <string name="auth_server_username">Username</string>
+    <string name="auth_server_user">User</string>
+    <string name="auth_server_password">Password</string>
+    <string name="auth_server_error_login">Unable to login. Please ensure all preferences are correct.</string>
+    <string name="auth_server_verify_account">You can only use one account with this device. Please verify your current login information.</string>
+    <string name="auth_server_verify_error">Password is incorrect. Please try again.</string>
+    <string name="auth_verifying_server_account">Verifying account with OpenMRS server. Please wait.</string>
+    <string name="auth_server_setup_complete">Congratulations, you have now setup an account with OpenMRS.</string>
 
-    <!-- MISC -->
-    <string name="barcode_error">Barcode Scanner not installed.</string>
-    <string name="cancel">Cancel</string>
-    <string name="cancel_download">Cancel Download</string>
-    <string name="connecting_server">Connecting …</string>
-    <string name="create_patient">Create Patient</string>
-    <string name="download">Download</string>
-    <string name="download_forms">Update Data</string>
-    <string name="download_patients">Refresh Data</string>
-    <string name="download_selected">Download Selected</string>
-    <string name="downloading">%s…</string>
-    <string name="please_wait">Please wait a few moments.</string>
-    <string name="unlocking_db">Unlocking databases...</string>
-    <string name="error">Error: %s</string>
-    <string name="fill_forms">Fill Blank Forms</string>
-    <string name="fill_patient_forms">Fill Patient Forms</string>
-    <string name="find_patient">List Patients</string>
-    <string name="finding_patient">Finding patients…</string>
-    <string name="forms">Get Forms</string>
-    <string name="go_back">Go Back</string>
-    <string name="no_cohort">No cohorts. Try Refresh Data.</string>
-    <string name="no_forms">No forms found.</string>
-    <string name="no_certs">No certificates found.</string>
-    <string name="no_patients">No patients found.</string>
-    <string name="no_patient">No patient found.</string>
-    <string name="no_select_error">Sorry, you have not selected any patients!</string>
-    <string name="no_upload_patients">No forms to upload!</string>
-    <string name="odk">Open Data Kit</string>
-    <string name="form_find_error">Error: Try getting forms.</string>
-    <string name="odk_collect_error">Error: ODK Collect not installed.</string>
-    <string name="openmrs">OpenMRS</string>
-    <string name="password">Password</string>
-    <string name="refresh">Refresh</string>
-    <string name="use_saved_search">Use Saved Searches</string>
-    <string name="saved_search_hint">Use Saved Searches instead of Cohorts</string>
-    <string name="search_hint">Click to Search Name or ID</string>
-    <string name="select_cohort">Select Cohort</string>
-    <string name="select_forms">Select Forms</string>
-    <string name="server">URL</string>
-    <string name="get_forms">Refresh Forms</string>
-    <string name="server_preferences">Change Settings</string>
-    <string name="show_patient">Show Patient</string>
-    <string name="storage_error">SD card not ready.</string>
-    <string name="toggle_selected">Toggle All</string>
-    <string name="update_list">Update List</string>
-    <string name="upload_all_successful">%s forms(s) uploaded successfully.</string>
-    <string name="upload_patients">Upload Forms</string>
-    <string name="upload_some_failed">Sorry, %s forms(s) failed to upload!</string>
-    <string name="uploading_patients">Uploading Forms…</string>
-    <string name="username">Username</string>
-    <string name="view_patient">View Patient</string>
-    <string name="view_patient_detail">View Observation</string>
-    <string name="saved_search">Cohort or Search ID</string>
-    <string name="change_saved_search">Change Cohort or Search ID</string>
-    <string name="provider">Provider</string>
-    <string name="change_provider">Change Provider</string>
-    <string name="xform_parse_error">XForm parse error</string>
-    <string name="program">Program</string>
-    <string name="change_program">Change Program</string>
-    <string name="chw_menu_pref">Change Menu View Settings</string>
-    <string name="priority_form_section">To Do Forms:</string>
-    <string name="nonpriority_form_section">Additional Forms:</string>
-    <string name="all_form_section">All Available Forms:</string>
-    <string name="clinical_form_section">Fill Forms:</string>
-    <string name="clinical_data_section">Clinical Data:</string>
-    <string name="completed_form_section">Completed Forms:</string>
-    <string name="saved_form_section">Incomplete Forms:</string>
-    <string name="all_clients_section">All Available Clients</string>
-    <string name="incomplete_clients_section">Clients with Saved Forms</string>
-    <string name="completed_clients_section">Clients with Completed Forms</string>
-    <string name="suggested_clients_section">Clients with Suggested Forms</string>
+    <!-- Accessibility Services: Content Description -->
+    <string name="icon">Small Icon</string>
+    <string name="icon_section_label">Section Label Icon</string>
+    <string name="icon_info">Information Icon</string>
+    <string name="icon_app">Application Icon</string>
+    <string name="icon_add_cert">Add Certificate Icon</string>
+    <string name="icon_delete_cert">Delete Certificate Icon</string>
+    <string name="icon_delete">Delete Icon</string>
+    <string name="icon_add_client">Add Client Icon</string>
+    <string name="icon_arrow_forward">Arrow Forward Icon</string>
+    <string name="icon_refresh_data">Refresh Data Icon</string>
+    <string name="icon_count_priority_forms">Count Priority Forms Background Icon</string>
+    <string name="icon_count_saved_forms">Count Saved Forms Background Icon</string>
+    <string name="icon_count_all_forms">Count All Forms Background Icon</string>
+    <string name="icon_gender">Gender Icon</string>
+    <string name="icon_patient_id">Patient I.D. Icon</string>
+    <string name="icon_provider_id">Patient I.D. Icon</string>
+    <string name="icon_last_download_time">Last Download Time Icon</string>
+
+    <!-- GENERAL UI STRINGS (By Activity) -->
+    <!-- Add New Client -->
+    <string name="add_new_client">Add New Client</string>
+    <string name="add_id">ID Number from AMRS Card:</string>
+    <string name="add_first_name">First Name:</string>
+    <string name="add_middle_name">Middle Name:</string>
+    <string name="add_last_name">Last Name:</string>
+    <string name="add_birthdate">Birth Date:</string>
+    <string name="add_estimated_birthdate">This is an Estimated Date of Birth</string>
+    <string name="add_sex">Sex:</string>
+    <string name="add_to_list">Add Client to your list:</string>
+    <string name="add_temporary">For this visit only</string>
+    <string name="add_permanent">Permanently: Keep Me Updated on This Client</string>
+    <string name="add_create_new">Create New Client</string>
     <string name="similar_clients_section">Similar Clients Found. Only create a new client if they are not listed below:</string>
     <string name="similar_client_section">Similar Client Found. Only create a new client if they are not listed below:</string>
-    <string name="similar_client_button_text">Add New Client</string>
-    <string name="view_all_forms">View All Forms</string>
-    <string name="view_only_form">This form is for viewing only.  Changes will not be saved.</string>
-    <string name="form_history_section">Your Previous Visits:</string>
-    <string name="instances_last_day">Visits in the past day:</string>
-    <string name="instances_last_week">Visits in the past week:</string>
-    <string name="instances_last_month">Visits in the past month:</string>
-    <string name="instances_last_six_months">Visits in the past 6 months:</string>
-    <string name="instances_last_year">Visits in the past year:</string>
-    <string name="instances_unknown_gt_year">All other visits:</string>
 
-    <!-- Dashboard Activity Forms -->
-    <string name="downloaded_forms">Available Forms</string>
-    <string name="downloaded_form">Available Form</string>
-    <string name="to_do_forms">Suggested Forms To Fill</string>
-    <string name="to_do_form">Suggested Form To Fill</string>
-    <string name="completed_forms">Completed Forms To Be Sent</string>
-    <string name="completed_form">Completed Form To Be Sent</string>
-    <string name="incomplete_forms">Incomplete Forms To Fill</string>
-    <string name="incomplete_form">Incomplete Form To Fill</string>
-    <string name="decrypting_data">Unlocking data...</string>
-    <string name="decrypting_data_body">Please be patient.</string>
+    <!-- Refreshing Data -->
+    <string name="download_patients">Refresh Data</string>
+    <string name="downloading">%s…</string>
+    <string name="sync_in_progress_title">Please wait …</string>
+    <string name="sync_in_progress">Currently refreshing data.  Please be patient.</string>
+    <string name="upload_all_successful">%s forms(s) uploaded successfully.</string>
+    <string name="upload_some_failed">Sorry, %s forms(s) failed to upload!</string>
+    <string name="uploading_patients">Uploading Forms…</string>
+    <string name="refresh_clients_title">Refresh Client List</string>
+    <string name="refresh_clients_text">Your client list is out of date. Please refresh data now.</string>
+    <string name="refresh">Refresh</string>
+    <string name="click_to_refresh">Click to Refresh Client Data</string>
 
-    <!-- Dashboard Activity Clients -->
+    <!-- Dashboard Activity And Patient List Actvity -->
     <string name="provider_lists_section">Current Client Lists:</string>
     <string name="current_clients">All Current Clients</string>
     <string name="current_client">Current Client</string>
@@ -213,13 +188,58 @@ the License.
     <string name="incomplete_clients">Incomplete Clients</string>
     <string name="incomplete_client">Incomplete Client</string>
     <string name="dashboard_title">Clinic For CHWs</string>
-    <string name="dashboard_task_title">Forms:</string>
-    <string name="ss_service_connected">Trying to Update Clients</string>
-    <string name="ss_service_disconnected">Stopped Updating Clients</string>
     <string name="ss_service_started">Update Clients Started</string>
-    <string name="ss_service_stopped">Update Clients Stopped</string>
     <string name="ss_service_label">Update Client List</string>
-    <string name="refresh_clients_title">Refresh Client List</string>
-    <string name="refresh_clients_text">Your client list is out of date. Please refresh data now.</string>
+    <string name="all_clients_section">All Available Clients</string>
+    <string name="incomplete_clients_section">Clients with Saved Forms</string>
+    <string name="completed_clients_section">Clients with Completed Forms</string>
+    <string name="suggested_clients_section">Clients with Suggested Forms</string>
+    <string name="similar_client_button_text">Add New Client</string>
+    <string name="decrypting_data">Unlocking data …</string>
+    <string name="search_hint">Click to Search Name or ID</string>
+    <!-- <string name="barcode_error">Barcode Scanner not installed.</string> -->
+
+
+    <!-- Individual Client Info -->
+    <string name="chw_menu_pref">Change Menu View Settings</string>
+    <string name="priority_form_section">To Do Forms:</string>
+    <string name="nonpriority_form_section">Additional Forms:</string>
+    <string name="all_form_section">All Available Forms:</string>
+    <string name="clinical_form_section">Fill Forms:</string>
+    <string name="clinical_data_section">Clinical Data:</string>
+    <string name="completed_form_section">Completed Forms:</string>
+    <string name="saved_form_section">Incomplete Forms:</string>
+    <string name="view_all_forms">View All Forms</string>
+    <string name="form_history_section">Your Previous Visits:</string>
+    <string name="to_do_forms">Suggested Forms To Fill</string>
+    <string name="incomplete_forms">Incomplete Forms To Fill</string>
+    <string name="note">Note:</string>
+
+    <!-- Previous Encounters -->
+    <string name="instances_last_day">Visits in the past day:</string>
+    <string name="instances_last_week">Visits in the past week:</string>
+    <string name="instances_last_month">Visits in the past month:</string>
+    <string name="instances_last_six_months">Visits in the past 6 months:</string>
+    <string name="instances_last_year">Visits in the past year:</string>
+    <string name="instances_unknown_gt_year">All other visits:</string>
+
+    <!-- Error Strings -->
+    <string name="unlocking_db">Unlocking databases.</string>
+    <string name="error">Error: %s</string>
+    <string name="no_forms">No forms found.</string>
+    <string name="no_patients">No patients found.</string>
+    <string name="no_patient">No patient found.</string>
+    <string name="no_upload_patients">No forms to upload!</string>
+    <string name="odk_collect_error">Error: ODK Collect not installed.</string>
+    <string name="storage_error">SD card not ready.</string>
+
+    <!-- Misc Resources -->
+    <string name="female">Female</string>
+    <string name="male">Male</string>
+    <string name="submit">Submit</string>
+    <string name="finish">Finish</string>
+    <string name="cancel">Cancel</string>
+    <string name="find_patient">List Patients</string>
+    <string name="view_patient_detail">View Observation</string>
 
 </resources>

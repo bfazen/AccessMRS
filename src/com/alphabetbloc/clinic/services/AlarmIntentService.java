@@ -1,7 +1,8 @@
 package com.alphabetbloc.clinic.services;
 
-import org.odk.clinic.android.database.DbAdapter;
 import org.odk.clinic.android.openmrs.Constants;
+
+import com.alphabetbloc.clinic.data.DbAdapter;
 
 import android.content.ComponentName;
 import android.content.Context;
@@ -9,7 +10,6 @@ import android.content.Intent;
 import android.os.SystemClock;
 import android.util.Log;
 
-import com.commonsware.cwac.wakeful.WakefulIntentService;
 
 /**
  *  IntentService is called by Alarm Listener at periodic intervals.

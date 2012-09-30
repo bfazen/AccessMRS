@@ -27,6 +27,7 @@
         android:paddingLeft="8dip" >
 
         <ImageView
+            android:contentDescription="@string/icon_gender"
             android:id="@+id/gender_image"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -43,6 +44,7 @@
             android:textSize="14sp" />
 
         <ImageView
+             android:contentDescription="@string/icon"
             android:id="@+id/center_image"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -51,6 +53,7 @@
             android:layout_marginLeft="45dip" />
 
         <ImageView
+             android:contentDescription="@string/icon_patient_id"
             android:id="@+id/identifier_image"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -76,6 +79,7 @@
             >
 
             <ImageView
+                 android:contentDescription="@string/icon_count_saved_forms"
                 android:id="@+id/saved_image"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"/>
@@ -127,6 +131,7 @@
             -->
 
             <ImageView
+                 android:contentDescription="@string/icon_count_priority_forms"
                 android:id="@+id/priority_image"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" 
@@ -149,6 +154,7 @@
     </RelativeLayout>
 
     <ImageView
+         android:contentDescription="@string/icon_arrow_forward"
         android:id="@+id/arrow_image"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

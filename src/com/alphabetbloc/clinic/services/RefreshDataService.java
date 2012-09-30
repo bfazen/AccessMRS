@@ -3,127 +3,169 @@ package com.alphabetbloc.clinic.services;
 import java.util.Iterator;
 import java.util.List;
 
-import org.odk.clinic.android.R;
-import org.odk.clinic.android.activities.CreatePatientActivity;
-import org.odk.clinic.android.activities.DashboardActivity;
-import org.odk.clinic.android.activities.ListPatientActivity;
-import org.odk.clinic.android.activities.RefreshDataActivity;
-import org.odk.clinic.android.listeners.DownloadListener;
-import org.odk.clinic.android.listeners.SyncDataListener;
-import org.odk.clinic.android.listeners.UploadFormListener;
-import org.odk.clinic.android.tasks.DownloadDataTask;
-import org.odk.clinic.android.tasks.UploadDataTask;
+import org.odk.clinic.android.openmrs.Constants;
 
+import android.accounts.Account;
+import android.accounts.OperationCanceledException;
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningAppProcessInfo;
-import android.app.ActivityManager.RunningServiceInfo;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.AbstractThreadedSyncAdapter;
 import android.content.ComponentName;
+import android.content.ContentProviderClient;
 import android.content.Context;
 import android.content.Intent;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
+import android.content.SyncResult;
+import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
-import android.os.PowerManager;
+import android.os.Looper;
 import android.support.v4.content.LocalBroadcastManager;
-import android.telephony.PhoneStateListener;
-import android.telephony.ServiceState;
-import android.telephony.SignalStrength;
-import android.telephony.TelephonyManager;
 import android.util.Log;
 
-import com.commonsware.cwac.wakeful.WakefulIntentService;
+import com.alphabetbloc.clinic.R;
+import com.alphabetbloc.clinic.data.DbAdapter;
+import com.alphabetbloc.clinic.listeners.SyncDataListener;
+import com.alphabetbloc.clinic.tasks.DownloadDataTask;
+import com.alphabetbloc.clinic.tasks.SyncDataTask;
+import com.alphabetbloc.clinic.tasks.UploadDataTask;
+import com.alphabetbloc.clinic.ui.user.CreatePatientActivity;
+import com.alphabetbloc.clinic.ui.user.DashboardActivity;
+import com.alphabetbloc.clinic.ui.user.ListPatientActivity;
+import com.alphabetbloc.clinic.ui.user.RefreshDataActivity;
+import com.alphabetbloc.clinic.utilities.App;
 
 /**
  * 
- * @author Louis Fazen (louis.fazen@gmail.com) (excerpts from curioustechizen
- *         from stackoverflow)
- * 
- *         This checks the signal strength, data connectivity and user activity
- *         before refreshing the patient list as background service.
+ * @author Louis Fazen (louis.fazen@gmail.com) This checks the user activity
+ *         before refreshing the patient list as background service or
+ *         foreground activity.
  */
 public class RefreshDataService extends Service implements SyncDataListener {
 
-	private static volatile PowerManager.WakeLock lockStatic = null;
-	static final String NAME = "com.alphabetbloc.clinic.android.RefreshDataActivity";
-
-	private NotificationManager mNM;
-	private int NOTIFICATION = 1;
-	private static int countN;
-	private static int countS;
-	private Context mContext;
-
-	private ActivityManager mActivityManager;
-	private TelephonyManager mTelephonyManager;
-	private PhoneStateListener mPhoneStateListener;
-	private static final String TAG = "SignalStrengthService";
-	private boolean mClinicInForeground;
-
+	private static final String TAG = RefreshDataService.class.getSimpleName();
+	private static NotificationManager mNM;
+	private static int NOTIFICATION = 1;
 	public static final String REFRESH_BROADCAST = "com.alphabetbloc.clinic.services.SignalStrengthService";
-	private static Intent broadcast = new Intent(REFRESH_BROADCAST);
-	// CM7
-	public static final String MOBILE_DATA_CHANGED = "com.alphabetbloc.android.telephony.MOBILE_DATA_CHANGED";
+	private static ActivityManager mActivityManager;
+	private static boolean sRequestUserToSync;
+	private static SyncAdapterImpl mSyncAdapter = null;
 
-	private DownloadDataTask mDownloadTask;
-	private UploadDataTask mUploadTask;
+	private static class SyncAdapterImpl extends AbstractThreadedSyncAdapter {
+		private Context mSyncAdapterContext;
 
-	private boolean mUploadComplete;
-	private boolean mDownloadComplete;
+		public SyncAdapterImpl(Context context) {
+			super(context, true);
+			mSyncAdapterContext = context;
+		}
+
+		@Override
+		public void onPerformSync(Account account, Bundle extras, String authority, ContentProviderClient provider, SyncResult syncResult) {
+			// Can't send SyncResult asynchronously to syncManager!?
+			// so we manage sync by checking previous download time
+
+			// boolean isSyncActive = ContentResolver.isSyncActive(account,
+			// authority);
+			// if (isSyncActive){
+			// syncResult = SyncResult.ALREADY_IN_PROGRESS;
+			// Log.e(TAG, "Sync is already in progress!");
+			// return;
+			// }
+
+			// establish threshold for syncing (i.e. do not sync continuously)
+			long recentDownload = DbAdapter.openDb().fetchMostRecentDownload();
+			long timeSinceRefresh = System.currentTimeMillis() - recentDownload;
+			Log.e("louis.fazen", "Minutes since last refresh: " + timeSinceRefresh / (1000 * 60));
+			if (timeSinceRefresh < Constants.MAXIMUM_REFRESH_TIME) {
+
+				long timeToNextSync = Constants.MAXIMUM_REFRESH_TIME - timeSinceRefresh;
+				syncResult.delayUntil = timeToNextSync;
+				Log.e(TAG, "Synced recently... lets delay the sync until ! timetosync=" + timeToNextSync);
+
+			} else {
+
+				try {
+					showNotification();
+					RefreshDataService.performSync(mSyncAdapterContext, account, extras, authority, provider, syncResult);
+
+				} catch (OperationCanceledException e) {
+					e.printStackTrace();
+					Intent i = new Intent(App.getApp(), RefreshDataService.class);
+					App.getApp().stopService(i);
+				}
+			}
+
+		}
+
+	}
 
 	@Override
 	public IBinder onBind(Intent intent) {
-		return null;
+		IBinder ret = null;
+		ret = getSyncAdapter().getSyncAdapterBinder();
+		return ret;
 	}
 
-	@Override
-	public void onCreate() {
-		createWakeLock();
-		mContext = this;
-		showNotification();
+	private SyncAdapterImpl getSyncAdapter() {
+		if (mSyncAdapter == null)
+			mSyncAdapter = new SyncAdapterImpl(this);
+		return mSyncAdapter;
 
-		mTelephonyManager = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
-		mPhoneStateListener = new PhoneStateListener() {
-			@Override
-			public void onSignalStrengthsChanged(SignalStrength signalStrength) {
-				int asu = signalStrength.getGsmSignalStrength();
+	}
 
-				if (asu >= 7 && asu < 32) {
-					if (networkAvailable())
-						refreshClientsNow();
-					else if (countN++ > 5)
-						updateService();
-				} else if (asu < 1 || asu > 32 || countS++ > 8)
-					stopSelf();
+	private static void performSync(Context context, Account account, Bundle extras, String authority, ContentProviderClient provider, final SyncResult syncResult) throws OperationCanceledException {
 
-				Log.e(TAG, "asu=" + asu + " countN=" + countN + " countS=" + countS);
-				super.onSignalStrengthsChanged(signalStrength);
+		Log.e(TAG, "perform sync with authority=" + authority + " provider=" + provider + " account=" + account);
+		if (!enteringClientData()) {
+
+			if (sRequestUserToSync) {
+				// ask user if they wish to start sync
+				Intent broadcast = new Intent(REFRESH_BROADCAST);
+				LocalBroadcastManager.getInstance(App.getApp()).sendBroadcast(broadcast);
+
+				Intent i = new Intent(App.getApp(), RefreshDataService.class);
+				Log.e(TAG, "about to kill RefreshDataService!");
+				App.getApp().stopService(i);
+
+			} else {
+
+				Handler h = new Handler(Looper.getMainLooper());
+				h.post(new Runnable() {
+					public void run() {
+						try {
+							SyncDataTask syncTask = new SyncDataTask();
+							syncTask.setSyncListener(getInstance());
+							syncTask.execute(syncResult);
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+					}
+				});
+
 			}
 
-			@Override
-			public void onServiceStateChanged(ServiceState serviceState) {
-				Log.d("louis.fazen", "Service State changed! New state = " + serviceState.getState());
-				super.onServiceStateChanged(serviceState);
-			}
-		};
-		super.onCreate();
+		} else {
+
+			++syncResult.stats.numIoExceptions;
+			Log.e(TAG, "User Entering Data... so do nothing.  syncResult=" + syncResult);
+			Intent i = new Intent(App.getApp(), RefreshDataService.class);
+			App.getApp().stopService(i);
+			// user is actively entering data, so sync later
+			// TODO return false to sync manager
+		}
+
 	}
 
-	@Override
-	public int onStartCommand(Intent intent, int flags, int startId) {
-		mTelephonyManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_SIGNAL_STRENGTHS | PhoneStateListener.LISTEN_SERVICE_STATE);
-		return super.onStartCommand(intent, flags, startId);
-	}
+	private static void showNotification() {
 
-	private void showNotification() {
-
-		mNM = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-		CharSequence text = getText(R.string.ss_service_started);
+		mNM = (NotificationManager) App.getApp().getSystemService(NOTIFICATION_SERVICE);
+		CharSequence text = App.getApp().getText(R.string.ss_service_started);
 		Notification notification = new Notification(R.drawable.icon, text, System.currentTimeMillis());
-		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, new Intent(this, DashboardActivity.class), Intent.FLAG_ACTIVITY_NEW_TASK);
-		notification.setLatestEventInfo(this, getText(R.string.ss_service_label), text, contentIntent);
+		PendingIntent contentIntent = PendingIntent.getActivity(App.getApp(), 0, new Intent(App.getApp(), DashboardActivity.class), Intent.FLAG_ACTIVITY_NEW_TASK);
+		notification.setLatestEventInfo(App.getApp(), App.getApp().getText(R.string.ss_service_label), text, contentIntent);
 		mNM.notify(NOTIFICATION, notification);
 
 		// if (notification != null) {
@@ -132,121 +174,56 @@ public class RefreshDataService extends Service implements SyncDataListener {
 		// }
 	}
 
-	private boolean networkAvailable() {
-		boolean dataNetwork = false;
-		ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-		NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
-		if (activeNetworkInfo != null)
-			dataNetwork = true;
-		return dataNetwork;
-	}
+	private static RefreshDataService instance;
 
-	// TODO! Update the service connection!!!
-	private void updateService() {
-		// if 2G, then update to 3G?
-		int nt = mTelephonyManager.getNetworkType();
-		if (nt < 3)
-			Log.d(TAG, "network type =" + nt);
-		ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-
-		Intent launchIntent = new Intent(MOBILE_DATA_CHANGED);
-		// sendBroadcast(launchIntent);
-		PendingIntent pi = PendingIntent.getBroadcast(getApplicationContext(), 0, launchIntent, 0);
-		Log.e(TAG, "Sending a broadcast intent to change the network!");
-		/*
-		 * Intent launchIntent = new Intent(); launchIntent.setClass(context,
-		 * SettingsAppWidgetProvider.class);
-		 * launchIntent.addCategory(Intent.CATEGORY_ALTERNATIVE);
-		 * launchIntent.setData(Uri.parse("custom:" + buttonId)); PendingIntent
-		 * pi = PendingIntent.getBroadcast(getApplicationContext(), 0,
-		 * launchIntent, 0);
-		 */
-
-		countS = 0;
-		countN = 0;
-
-		/*
-		 * int iconLevel = -1; if (asu <= 2 || asu == 99) iconLevel = 0; // 0 or
-		 * 99 = no signal else if (asu >= 12) iconLevel = 4; // very good signal
-		 * else if (asu >= 8) iconLevel = 3; // good signal else if (asu >= 5)
-		 * iconLevel = 2; // poor signal else iconLevel = 1; // <5 is very poor
-		 * signal
-		 */
-
-		/*
-		 * switch (nt) { case 1: return GPRS; case 2: return EDGE; case 3:
-		 * return UMTS; case 8: return HSDPA; case 9: return HSUPA; case 10:
-		 * return HSPA; default: return UNKNOWN; }
-		 */
-
-	}
-
-	private void refreshClientsNow() {
-
-		if (!enteringClientData()) {
-			if (mClinicInForeground) {
-				LocalBroadcastManager.getInstance(this).sendBroadcast(broadcast);
-			} else {
-				mUploadComplete = false;
-				mUploadTask = new UploadDataTask();
-				mUploadTask.setSyncListener(this);
-				mUploadTask.execute();
-
-				mDownloadComplete = false;
-				mDownloadTask = new DownloadDataTask();
-				mDownloadTask.setSyncListener(this);
-				mDownloadTask.execute();
-			}
+	public static synchronized RefreshDataService getInstance() {
+		if (instance == null) {
+			instance = new RefreshDataService();
 		}
-
+		return instance;
 	}
 
-	private boolean enteringClientData() {
-		mClinicInForeground = false;
+	private static boolean enteringClientData() {
+		boolean enteringData = true;
+		sRequestUserToSync = false;
 
-		RunningAppProcessInfo info = null;
+		RunningAppProcessInfo foregroundApp = getForegroundApp();
 		String collectPackage = "org.odk.collect.android";
-		String clinicPackage = "org.odk.clinic.android";
-		String createPatientClass = (new CreatePatientActivity()).getClass().getName().toString();
-		String listPatientClass = (new ListPatientActivity()).getClass().getName().toString();
-		String refreshDataClass = (new RefreshDataActivity()).getClass().getName().toString();
 
-		if (mActivityManager == null)
-			mActivityManager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
-		List<RunningAppProcessInfo> l = mActivityManager.getRunningAppProcesses();
-		Iterator<RunningAppProcessInfo> i = l.iterator();
-		while (i.hasNext()) {
-			info = i.next();
-			if (info.importance == RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
+		// Collect: Never Sync
+		if (foregroundApp.processName.equals(collectPackage)) {
+			return enteringData;
+		}
 
-				// do nothing if in collect:
-				if (info.processName.equals(collectPackage)) {
-					return true;
-				}
+		// Clinic: Depends on Current Activity
+		if (foregroundApp.processName.equals(App.getApp().getPackageName())) {
+			ComponentName foreGround = getActivityForApp(foregroundApp);
+			if (foreGround != null) {
 
-				// send broadcast if in clinic:
-				if (info.processName.equals(clinicPackage)) {
-					mClinicInForeground = true;
+				String createPatientClass = CreatePatientActivity.class.getSimpleName();
+				String listPatientClass = ListPatientActivity.class.getSimpleName();
+				String refreshDataClass = RefreshDataActivity.class.getSimpleName();
+				if (foreGround.getClassName().equals(createPatientClass) || foreGround.getClassName().equals(refreshDataClass) || (foreGround.getClassName().equals(listPatientClass) && ListPatientActivity.mListType == DashboardActivity.LIST_SIMILAR_CLIENTS)) {
 
-					// but not for these activities:
-					ComponentName foreGround = getActivityForApp(info);
-					if (foreGround != null) {
-						if (foreGround.getClassName().equals(createPatientClass) || foreGround.getClassName().equals(refreshDataClass) || (foreGround.getClassName().equals(listPatientClass) && ListPatientActivity.mListType == DashboardActivity.LIST_SIMILAR_CLIENTS)) {
-							return true;
-						}
-					}
+					// do nothing for these clinic activities
+					return enteringData;
+
+				} else {
+					// request user to sync otherwise
+					sRequestUserToSync = true;
 				}
 			}
+
 		}
-		return false;
+
+		return !enteringData;
 	}
 
-	private RunningAppProcessInfo getForegroundApp() {
+	private static RunningAppProcessInfo getForegroundApp() {
 		RunningAppProcessInfo result = null, info = null;
 
 		if (mActivityManager == null)
-			mActivityManager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
-		// mContext.getSystemService(Context.ACTIVITY_SERVICE);
+			mActivityManager = (ActivityManager) App.getApp().getSystemService(Context.ACTIVITY_SERVICE);
 		List<RunningAppProcessInfo> l = mActivityManager.getRunningAppProcesses();
 		Iterator<RunningAppProcessInfo> i = l.iterator();
 		while (i.hasNext()) {
@@ -259,7 +236,7 @@ public class RefreshDataService extends Service implements SyncDataListener {
 		return result;
 	}
 
-	private ComponentName getActivityForApp(RunningAppProcessInfo target) {
+	private static ComponentName getActivityForApp(RunningAppProcessInfo target) {
 		ComponentName result = null;
 		ActivityManager.RunningTaskInfo info;
 
@@ -267,7 +244,7 @@ public class RefreshDataService extends Service implements SyncDataListener {
 			return null;
 
 		if (mActivityManager == null)
-			mActivityManager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+			mActivityManager = (ActivityManager) App.getApp().getSystemService(Context.ACTIVITY_SERVICE);
 		// mContext.getSystemService(Context.ACTIVITY_SERVICE);
 		List<ActivityManager.RunningTaskInfo> l = mActivityManager.getRunningTasks(9999);
 		Iterator<ActivityManager.RunningTaskInfo> i = l.iterator();
@@ -284,121 +261,109 @@ public class RefreshDataService extends Service implements SyncDataListener {
 	}
 
 	@Override
-	public void progressUpdate(String message, int progress, int max) {
-		// Do nothing
+	public void sslSetupComplete(String success, SyncResult syncResult) {
+		Log.e(TAG, "sslSetupComplete is called");
 
+		if (Boolean.valueOf(success)) {
+			Log.e(TAG, "successfully setup connection, about to create a new upload task:");
+			UploadDataTask uploadTask = new UploadDataTask();
+			uploadTask.setSyncListener(getInstance());
+			uploadTask.execute(syncResult);
+
+			DownloadDataTask downloadTask = new DownloadDataTask();
+			downloadTask.setSyncListener(getInstance());
+			downloadTask.execute(syncResult);
+		} else {
+
+			Log.e(TAG, "sslSetup Failed!  Finishing Service... with syncResult=" + syncResult);
+			stopSelf();
+		}
+	}
+
+	@Override
+	public void progressUpdate(String message, int progress, int max) {
+		// don't really need to do anything here, b/c not updating UI
 	}
 
 	@Override
 	public void uploadComplete(String resultString) {
-
-		mUploadComplete = true;
-		if (mDownloadComplete)
-			stopSelf();
+		// don't really need to do anything here, b/c not updating UI
 	}
 
 	@Override
 	public void downloadComplete(String result) {
-		mDownloadComplete = true;
-		if (mUploadComplete)
-			stopSelf();
+		// don't really need to do anything here, b/c not updating UI
+	}
+
+	@Override
+	public void syncComplete(String result, SyncResult syncResult) {
+		// TODO return success to syncmanager
+		// update the time?!
+		Log.e(TAG, "RefreshDataService Calling stopself! after syncComplete! with syncResult=" + syncResult);
+		stopSelf();
 	}
 
 	@Override
 	public void onDestroy() {
 		Log.d(TAG, "Shutting down the Service" + TAG);
-		mNM.cancel(NOTIFICATION);
-		mTelephonyManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_NONE);
-		countS = 0;
-		countN = 0;
+		if (mNM != null)
+			mNM.cancel(NOTIFICATION);
 
-		// then call:
-		if (lockStatic.isHeld()) {
-			lockStatic.release();
-			Log.e("louis.fazen", "Called lockStatic.release()=" + lockStatic.toString());
-		}
 		super.onDestroy();
 	}
 
 	// //// Not using the following:
-	private boolean isStillActive(RunningAppProcessInfo process, ComponentName activity) {
-		// activity can be null in cases, where one app starts another. for
-		// example, astro
-		// starting rock player when a move file was clicked. we dont have an
-		// activity then,
-		// but the package exits as soon as back is hit. so we can ignore the
-		// activity
-		// in this case
-		if (process == null)
-			return false;
 
-		RunningAppProcessInfo currentFg = getForegroundApp();
-		ComponentName currentActivity = getActivityForApp(currentFg);
-
-		if (currentFg != null && currentFg.processName.equals(process.processName) && (activity == null || currentActivity.compareTo(activity) == 0))
-			return true;
-
-		Log.i("RefreshClientServive", "isStillActive returns false - CallerProcess: " + process.processName + " CurrentProcess: " + (currentFg == null ? "null" : currentFg.processName) + " CallerActivity:" + (activity == null ? "null" : activity.toString())
-				+ " CurrentActivity: " + (currentActivity == null ? "null" : currentActivity.toString()));
-		return false;
-	}
-
-	private boolean isRunningService(String processname) {
-		// if(processname==null || processname.isEmpty())
-		if (processname == null || processname.length() < 1)
-			return false;
-
-		RunningServiceInfo service;
-
-		if (mActivityManager == null)
-			mActivityManager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
-		// mContext.getSystemService(Context.ACTIVITY_SERVICE);
-		List<RunningServiceInfo> l = mActivityManager.getRunningServices(9999);
-		Iterator<RunningServiceInfo> i = l.iterator();
-		while (i.hasNext()) {
-			service = i.next();
-			if (service.process.equals(processname))
-				return true;
-		}
-
-		return false;
-	}
-
-	private void createWakeLock() {
-		// first call:
-		if (lockStatic == null) {
-			PowerManager mgr = (PowerManager) getSystemService(Context.POWER_SERVICE);
-			lockStatic = mgr.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, NAME);
-			lockStatic.setReferenceCounted(true);
-			lockStatic.acquire();
-
-			Log.e("louis.fazen", "lockStatic.acquire()=" + lockStatic.toString());
-
-			// PowerManager pm = (PowerManager)
-			// getSystemService(Context.POWER_SERVICE);
-			// lockStatic =
-			// mgr.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK|PowerManager.ACQUIRE_CAUSES_WAKEUP,
-			// "bbbb");
-			// lockStatic.acquire();
-
-			// may need:
-			// getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN |
-			// WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
-			// WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
-		}
-
-	}
-
-	@Override
-	public void sslSetupComplete(String result) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void syncComplete(String result) {
-		// TODO Auto-generated method stub
-		
-	}
+	// private boolean isStillActive(RunningAppProcessInfo process,
+	// ComponentName activity) {
+	// // activity can be null in cases, where one app starts another. for
+	// // example, astro
+	// // starting rock player when a move file was clicked. we dont have an
+	// // activity then,
+	// // but the package exits as soon as back is hit. so we can ignore the
+	// // activity
+	// // in this case
+	// if (process == null)
+	// return false;
+	//
+	// RunningAppProcessInfo currentFg = getForegroundApp();
+	// ComponentName currentActivity = getActivityForApp(currentFg);
+	//
+	// if (currentFg != null &&
+	// currentFg.processName.equals(process.processName) && (activity == null ||
+	// currentActivity.compareTo(activity) == 0))
+	// return true;
+	//
+	// Log.i("RefreshClientServive",
+	// "isStillActive returns false - CallerProcess: " + process.processName +
+	// " CurrentProcess: " + (currentFg == null ? "null" :
+	// currentFg.processName) + " CallerActivity:" + (activity == null ? "null"
+	// : activity.toString())
+	// + " CurrentActivity: " + (currentActivity == null ? "null" :
+	// currentActivity.toString()));
+	// return false;
+	// }
+	//
+	// private boolean isRunningService(String processname) {
+	// // if(processname==null || processname.isEmpty())
+	// if (processname == null || processname.length() < 1)
+	// return false;
+	//
+	// RunningServiceInfo service;
+	//
+	// if (mActivityManager == null)
+	// mActivityManager = (ActivityManager)
+	// getSystemService(Context.ACTIVITY_SERVICE);
+	// // mContext.getSystemService(Context.ACTIVITY_SERVICE);
+	// List<RunningServiceInfo> l = mActivityManager.getRunningServices(9999);
+	// Iterator<RunningServiceInfo> i = l.iterator();
+	// while (i.hasNext()) {
+	// service = i.next();
+	// if (service.process.equals(processname))
+	// return true;
+	// }
+	//
+	// return false;
+	// }
 
 }

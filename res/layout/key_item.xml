@@ -37,7 +37,7 @@
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
                 android:paddingLeft="8dip"
-                android:text="File Name:"
+                android:text="@string/ssl_cert_filename"
                 android:textSize="14sp"
                 android:textStyle="bold" />
 
@@ -64,7 +64,7 @@
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
                 android:paddingLeft="8dip"
-                android:text="File Modified:"
+                android:text="@string/ssl_cert_file_modified"
                 android:textSize="14sp"
                 android:textStyle="bold" />
 
@@ -81,6 +81,7 @@
     </LinearLayout>
 
     <ImageView
+         android:contentDescription="@string/icon_delete"
         android:id="@+id/delete_image"
         android:layout_width="30dp"
         android:layout_height="30dp"

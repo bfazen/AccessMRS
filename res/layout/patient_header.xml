@@ -28,6 +28,7 @@
             android:orientation="horizontal" >
 
             <ImageView
+                android:contentDescription="@string/icon_gender"
                 android:id="@+id/gender_image"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -45,6 +46,7 @@
                 android:textSize="14sp" />
 
             <ImageView
+                android:contentDescription="@string/icon_patient_id"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"

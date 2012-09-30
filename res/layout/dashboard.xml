@@ -26,6 +26,7 @@
             android:textStyle="bold" />
 
         <ImageView
+            android:contentDescription="@string/icon_provider_id"
             android:id="@+id/id_image"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -47,6 +48,7 @@
             android:textStyle="bold" />
 
         <ImageView
+            android:contentDescription="@string/icon_last_download_time"
             android:id="@+id/clock_image"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

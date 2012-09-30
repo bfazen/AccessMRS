@@ -5,9 +5,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.odk.clinic.android.tasks.DecryptionTask;
-import org.odk.clinic.android.utilities.App;
-import org.odk.clinic.android.utilities.FileUtils;
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
 import android.app.AlarmManager;
@@ -19,7 +16,9 @@ import android.database.Cursor;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
-import com.commonsware.cwac.wakeful.WakefulIntentService;
+import com.alphabetbloc.clinic.tasks.DecryptionTask;
+import com.alphabetbloc.clinic.utilities.App;
+import com.alphabetbloc.clinic.utilities.FileUtils;
 
 /**
  * 

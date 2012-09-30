@@ -15,6 +15,7 @@
         android:paddingTop="10dip" >
 
         <ImageView
+            android:contentDescription="@string/icon_add_cert"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"

@@ -8,6 +8,7 @@
     android:orientation="vertical" >
 
     <ImageView
+        android:contentDescription="@string/icon_add_client"
         android:id="@+id/add_client_image"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -29,11 +30,12 @@
         android:layout_toRightOf="@+id/add_client_image"
         android:paddingLeft="8dip"
         android:textColor="@color/dark_gray"
-        android:text="Add New Client"
+        android:text="@string/add_new_client"
         android:textSize="18sp"
         android:textStyle="bold" />
 
     <ImageView
+         android:contentDescription="@string/icon_arrow_forward"
         android:id="@+id/arrow_image"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

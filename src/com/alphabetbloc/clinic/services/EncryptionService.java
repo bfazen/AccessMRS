@@ -20,8 +20,6 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
-import org.odk.clinic.android.utilities.App;
-import org.odk.clinic.android.utilities.FileUtils;
 import org.odk.collect.android.provider.InstanceProviderAPI;
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
@@ -32,8 +30,9 @@ import android.database.Cursor;
 import android.util.Base64;
 import android.util.Log;
 
-import com.commonsware.cwac.wakeful.EncryptDataListener;
-import com.commonsware.cwac.wakeful.WakefulIntentService;
+import com.alphabetbloc.clinic.listeners.EncryptDataListener;
+import com.alphabetbloc.clinic.utilities.App;
+import com.alphabetbloc.clinic.utilities.FileUtils;
 
 /**
  * Encrypts Xform instances and their associated media files on the SD Card, and

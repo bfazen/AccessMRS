@@ -7,6 +7,7 @@
     android:paddingTop="38dp" >
 
     <ImageView
+         android:contentDescription="@string/icon_app"
         android:id="@+id/icon"
         android:layout_width="80dp"
         android:layout_height="wrap_content"

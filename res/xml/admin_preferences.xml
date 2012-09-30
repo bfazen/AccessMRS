@@ -1,0 +1,82 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <PreferenceCategory android:title="@string/pref_user_settings" >
+        <EditTextPreference
+            android:id="@+id/program"
+            android:defaultValue="@string/default_program"
+            android:dialogTitle="@string/pref_change_program"
+            android:inputType="phone"
+            android:key="@string/key_program"
+            android:title="@string/pref_program" />
+        <EditTextPreference
+            android:id="@+id/saved_search"
+            android:defaultValue="@string/default_saved_search"
+            android:dialogTitle="@string/pref_change_saved_search"
+            android:inputType="phone"
+            android:key="@string/key_saved_search"
+            android:title="@string/pref_saved_search" />
+
+        <CheckBoxPreference
+            android:id="@+id/use_saved_searches"
+            android:defaultValue="@string/default_use_saved_searches"
+            android:key="@string/key_use_saved_searches"
+            android:summaryOff="@string/pref_saved_search_hint"
+            android:summaryOn="@string/pref_saved_search_hint"
+            android:title="@string/pref_use_saved_search" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="@string/pref_manage_device_pref" >
+        <CheckBoxPreference
+            android:id="@+id/show_settings_menu"
+            android:defaultValue="@string/default_show_settings_menu"
+            android:key="@string/key_show_settings_menu"
+            android:summaryOff="@string/pref_show_menu_hint"
+            android:summaryOn="@string/pref_show_menu_hint"
+            android:title="@string/pref_show_settings_menu" />
+        <CheckBoxPreference
+            android:id="@+id/enable_activity_logging"
+            android:defaultValue="@string/default_enable_activity_logging"
+            android:key="@string/key_enable_activity_log"
+            android:summaryOff="@string/pref_activity_logging_hint"
+            android:summaryOn="@string/pref_activity_logging_hint"
+            android:title="@string/pref_enable_activity_logging" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="@string/ssl_server_settings" >
+        <EditTextPreference
+            android:id="@+id/server"
+            android:defaultValue="@string/default_server"
+            android:dialogTitle="@string/pref_change_server"
+            android:key="@string/key_server"
+            android:title="@string/pref_server" />
+
+        <CheckBoxPreference
+            android:id="@+id/use_client_auth"
+            android:defaultValue="@string/default_use_client_auth"
+            android:key="@string/key_client_auth"
+            android:summaryOff="@string/ssl_client_auth_hint"
+            android:summaryOn="@string/ssl_client_auth_hint"
+            android:title="@string/ssl_use_client_auth" />
+
+        <Preference
+            android:summary="@string/ssl_client_auth_desc"
+            android:title="@string/ssl_client_auth" >
+            <intent
+                android:targetClass="com.alphabetbloc.clinic.ui.admin.ClientAuthenticationActivity"
+                android:targetPackage="@string/app_package_name" />
+        </Preference>
+        <Preference
+            android:summary="@string/ssl_manage_certs_desc"
+            android:title="@string/ssl_manage_certs" >
+            <intent
+                android:targetClass="com.alphabetbloc.clinic.ui.admin.AddCertificatesActivity"
+                android:targetPackage="@string/app_package_name" />
+        </Preference>
+        <Preference
+            android:summary="@string/ssl_manage_certs_desc"
+            android:title="@string/ssl_test_ssl" >
+            <intent
+                android:targetClass="com.alphabetbloc.clinic.ui.admin.TestSslConnectionActivity"
+                android:targetPackage="@string/app_package_name" />
+        </Preference>
+    </PreferenceCategory>
+
+</PreferenceScreen>
