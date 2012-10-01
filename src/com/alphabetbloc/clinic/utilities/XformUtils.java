@@ -49,7 +49,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.NodeList;
 
-import com.alphabetbloc.clinic.data.DbAdapter;
+import com.alphabetbloc.clinic.providers.DbProvider;
 import com.alphabetbloc.clinic.ui.user.CreatePatientActivity;
 
 import android.content.ContentValues;
@@ -234,7 +234,7 @@ public class XformUtils {
 
 			if (mCursor == null) {
 				System.out.println("Something bad happened");
-				DbAdapter.openDb().deleteAllForms();
+				DbProvider.openDb().deleteAllForms();
 				return false;
 			}
 
@@ -270,12 +270,12 @@ public class XformUtils {
 	// TODO! change this to retrive the one form you want!
 	private static String getNameFromId(Integer id) {
 		String formName = null;
-		Cursor c = DbAdapter.openDb().fetchAllForms();
+		Cursor c = DbProvider.openDb().fetchAllForms();
 
 		if (c != null && c.getCount() >= 0) {
 
-			int formIdIndex = c.getColumnIndex(DbAdapter.KEY_FORM_ID);
-			int nameIndex = c.getColumnIndex(DbAdapter.KEY_NAME);
+			int formIdIndex = c.getColumnIndex(DbProvider.KEY_FORM_ID);
+			int nameIndex = c.getColumnIndex(DbProvider.KEY_NAME);
 
 			if (c.getCount() > 0) {
 				do {
@@ -526,7 +526,7 @@ public class XformUtils {
 
 		if (patientId > 0) {
 
-			ArrayList<Observation> mObservations = DbAdapter.openDb().fetchPatientObservationList(patientId);
+			ArrayList<Observation> mObservations = DbProvider.openDb().fetchPatientObservationList(patientId);
 
 			for (int i = 0; i < mObservations.size(); i++) {
 				Observation o = mObservations.get(i);

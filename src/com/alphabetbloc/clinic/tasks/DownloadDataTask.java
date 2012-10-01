@@ -19,7 +19,6 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import net.sqlcipher.DatabaseUtils.InsertHelper;
 import net.sqlcipher.database.SQLiteDatabase;
 
-import org.odk.clinic.android.openmrs.Constants;
 import org.odk.clinic.android.openmrs.Form;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -28,7 +27,8 @@ import org.w3c.dom.NodeList;
 import android.content.SyncResult;
 import android.util.Log;
 
-import com.alphabetbloc.clinic.data.DbAdapter;
+import com.alphabetbloc.clinic.providers.DbProvider;
+import com.alphabetbloc.clinic.providers.DbProvider;
 import com.alphabetbloc.clinic.utilities.App;
 import com.alphabetbloc.clinic.utilities.FileUtils;
 import com.alphabetbloc.clinic.utilities.WebUtils;
@@ -37,7 +37,7 @@ import com.alphabetbloc.clinic.utilities.XformUtils;
 public class DownloadDataTask extends SyncDataTask {
 
 	private static final String TAG = DownloadDataTask.class.getSimpleName();
-	private DbAdapter mDbHelper;
+	private DbProvider mDbHelper;
 	private static boolean updateIndices = true;
 	// Patient Table
 	// static int ptIdIndex_pt = indexcursor.getColumnIndex(KEY_PATIENT_ID_PT);
@@ -66,7 +66,7 @@ public class DownloadDataTask extends SyncDataTask {
 	protected String doInBackground(SyncResult... values) {
 		sSyncResult = values[0];
 		Log.e(TAG, "DownloadDataTask Called");
-		mDbHelper = DbAdapter.openDb();
+		mDbHelper = DbProvider.openDb();
 		mDownloadComplete = false;
 		String error = null;
 
@@ -340,29 +340,29 @@ public class DownloadDataTask extends SyncDataTask {
 	// ih is 71% faster than Cursor (even w/ cursor limit=1)
 	public void makeIndices() {
 		// Patient Table
-		InsertHelper patientIh = new InsertHelper(DbAdapter.getDb(), DbAdapter.PATIENTS_TABLE);
-		ptIdentifierIndex = patientIh.getColumnIndex(DbAdapter.KEY_IDENTIFIER);
-		ptGivenIndex = patientIh.getColumnIndex(DbAdapter.KEY_GIVEN_NAME);
-		ptFamilyIndex = patientIh.getColumnIndex(DbAdapter.KEY_FAMILY_NAME);
-		ptMiddleIndex = patientIh.getColumnIndex(DbAdapter.KEY_MIDDLE_NAME);
-		ptBirthIndex = patientIh.getColumnIndex(DbAdapter.KEY_BIRTH_DATE);
-		ptGenderIndex = patientIh.getColumnIndex(DbAdapter.KEY_GENDER);
-		ptFormIndex = patientIh.getColumnIndex(DbAdapter.KEY_PRIORITY_FORM_NAMES);
-		ptFormNumberIndex = patientIh.getColumnIndex(DbAdapter.KEY_PRIORITY_FORM_NUMBER);
+		InsertHelper patientIh = new InsertHelper(DbProvider.getDb(), DbProvider.PATIENTS_TABLE);
+		ptIdentifierIndex = patientIh.getColumnIndex(DbProvider.KEY_IDENTIFIER);
+		ptGivenIndex = patientIh.getColumnIndex(DbProvider.KEY_GIVEN_NAME);
+		ptFamilyIndex = patientIh.getColumnIndex(DbProvider.KEY_FAMILY_NAME);
+		ptMiddleIndex = patientIh.getColumnIndex(DbProvider.KEY_MIDDLE_NAME);
+		ptBirthIndex = patientIh.getColumnIndex(DbProvider.KEY_BIRTH_DATE);
+		ptGenderIndex = patientIh.getColumnIndex(DbProvider.KEY_GENDER);
+		ptFormIndex = patientIh.getColumnIndex(DbProvider.KEY_PRIORITY_FORM_NAMES);
+		ptFormNumberIndex = patientIh.getColumnIndex(DbProvider.KEY_PRIORITY_FORM_NUMBER);
 		patientIh.close();
 
 		// Obs Table
 		// NB KEY_PATIENT_ID used as Index in all tables (happens to be same)
 		// seems problematic, but how Yaw has coded it... so i am keeping
-		InsertHelper obsIh = new InsertHelper(DbAdapter.getDb(), DbAdapter.OBSERVATIONS_TABLE);
-		ptIdIndex = obsIh.getColumnIndex(DbAdapter.KEY_PATIENT_ID);
-		obsTextIndex = obsIh.getColumnIndex(DbAdapter.KEY_VALUE_TEXT);
-		obsNumIndex = obsIh.getColumnIndex(DbAdapter.KEY_VALUE_NUMERIC);
-		obsDateIndex = obsIh.getColumnIndex(DbAdapter.KEY_VALUE_DATE);
-		obsIntIndex = obsIh.getColumnIndex(DbAdapter.KEY_VALUE_INT);
-		obsFieldIndex = obsIh.getColumnIndex(DbAdapter.KEY_FIELD_NAME);
-		obsTypeIndex = obsIh.getColumnIndex(DbAdapter.KEY_DATA_TYPE);
-		obsEncDateIndex = obsIh.getColumnIndex(DbAdapter.KEY_ENCOUNTER_DATE);
+		InsertHelper obsIh = new InsertHelper(DbProvider.getDb(), DbProvider.OBSERVATIONS_TABLE);
+		ptIdIndex = obsIh.getColumnIndex(DbProvider.KEY_PATIENT_ID);
+		obsTextIndex = obsIh.getColumnIndex(DbProvider.KEY_VALUE_TEXT);
+		obsNumIndex = obsIh.getColumnIndex(DbProvider.KEY_VALUE_NUMERIC);
+		obsDateIndex = obsIh.getColumnIndex(DbProvider.KEY_VALUE_DATE);
+		obsIntIndex = obsIh.getColumnIndex(DbProvider.KEY_VALUE_INT);
+		obsFieldIndex = obsIh.getColumnIndex(DbProvider.KEY_FIELD_NAME);
+		obsTypeIndex = obsIh.getColumnIndex(DbProvider.KEY_DATA_TYPE);
+		obsEncDateIndex = obsIh.getColumnIndex(DbProvider.KEY_ENCOUNTER_DATE);
 		obsIh.close();
 
 		updateIndices = false;
@@ -373,8 +373,8 @@ public class DownloadDataTask extends SyncDataTask {
 
 		if (updateIndices)
 			makeIndices();
-		SQLiteDatabase db = DbAdapter.getDb();
-		InsertHelper ih = new InsertHelper(DbAdapter.getDb(), DbAdapter.OBSERVATIONS_TABLE);
+		SQLiteDatabase db = DbProvider.getDb();
+		InsertHelper ih = new InsertHelper(DbProvider.getDb(), DbProvider.OBSERVATIONS_TABLE);
 		db.beginTransaction();
 		int progress = 0;
 		try {
@@ -386,13 +386,13 @@ public class DownloadDataTask extends SyncDataTask {
 				ih.bind(ptIdIndex, zdis.readInt());
 				ih.bind(obsFieldIndex, zdis.readUTF());
 				byte dataType = zdis.readByte();
-				if (dataType == Constants.TYPE_STRING) {
+				if (dataType == DbProvider.TYPE_STRING) {
 					ih.bind(obsTextIndex, zdis.readUTF());
-				} else if (dataType == Constants.TYPE_INT) {
+				} else if (dataType == DbProvider.TYPE_INT) {
 					ih.bind(obsIntIndex, zdis.readInt());
-				} else if (dataType == Constants.TYPE_DOUBLE) {
+				} else if (dataType == DbProvider.TYPE_DOUBLE) {
 					ih.bind(obsNumIndex, zdis.readDouble());
-				} else if (dataType == Constants.TYPE_DATE) {
+				} else if (dataType == DbProvider.TYPE_DATE) {
 					ih.bind(obsDateIndex, parseDate(zdis.readUTF()));
 				}
 				ih.bind(obsTypeIndex, dataType);
@@ -418,10 +418,10 @@ public class DownloadDataTask extends SyncDataTask {
 
 	public void insertPatients(DataInputStream zdis) throws Exception {
 		showProgress("Processing Clients");
-		InsertHelper ih = new InsertHelper(DbAdapter.getDb(), DbAdapter.PATIENTS_TABLE);
+		InsertHelper ih = new InsertHelper(DbProvider.getDb(), DbProvider.PATIENTS_TABLE);
 		if (updateIndices)
 			makeIndices();
-		SQLiteDatabase db = DbAdapter.getDb();
+		SQLiteDatabase db = DbProvider.getDb();
 		db.beginTransaction();
 
 		int progress = 0;
@@ -460,10 +460,10 @@ public class DownloadDataTask extends SyncDataTask {
 
 	public void insertObservations(DataInputStream zdis) throws Exception {
 		showProgress("Processing Data");
-		InsertHelper ih = new InsertHelper(DbAdapter.getDb(), DbAdapter.OBSERVATIONS_TABLE);
+		InsertHelper ih = new InsertHelper(DbProvider.getDb(), DbProvider.OBSERVATIONS_TABLE);
 		if (updateIndices)
 			makeIndices();
-		SQLiteDatabase db = DbAdapter.getDb();
+		SQLiteDatabase db = DbProvider.getDb();
 		db.beginTransaction();
 
 		int progress = 0;
@@ -476,13 +476,13 @@ public class DownloadDataTask extends SyncDataTask {
 				ih.bind(ptIdIndex, zdis.readInt());
 				ih.bind(obsFieldIndex, zdis.readUTF());
 				byte dataType = zdis.readByte();
-				if (dataType == Constants.TYPE_STRING) {
+				if (dataType == DbProvider.TYPE_STRING) {
 					ih.bind(obsTextIndex, zdis.readUTF());
-				} else if (dataType == Constants.TYPE_INT) {
+				} else if (dataType == DbProvider.TYPE_INT) {
 					ih.bind(obsIntIndex, zdis.readInt());
-				} else if (dataType == Constants.TYPE_DOUBLE) {
+				} else if (dataType == DbProvider.TYPE_DOUBLE) {
 					ih.bind(obsNumIndex, zdis.readDouble());
-				} else if (dataType == Constants.TYPE_DATE) {
+				} else if (dataType == DbProvider.TYPE_DATE) {
 					ih.bind(obsDateIndex, parseDate(zdis.readUTF()));
 				}
 				ih.bind(obsTypeIndex, dataType);

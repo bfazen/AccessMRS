@@ -2,10 +2,7 @@ package com.alphabetbloc.clinic.ui.user;
 
 import java.util.ArrayList;
 
-import com.alphabetbloc.clinic.R;
-import org.odk.clinic.android.openmrs.Constants;
 import org.odk.clinic.android.openmrs.Observation;
-import org.odk.clinic.android.openmrs.ObservationAdapter;
 import org.odk.clinic.android.openmrs.Patient;
 import org.odk.collect.android.provider.InstanceProviderAPI;
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
@@ -30,8 +27,10 @@ import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.alphabetbloc.clinic.R;
 import com.alphabetbloc.clinic.adapters.MergeAdapter;
-import com.alphabetbloc.clinic.data.DbAdapter;
+import com.alphabetbloc.clinic.adapters.ObservationAdapter;
+import com.alphabetbloc.clinic.providers.DbProvider;
 import com.alphabetbloc.clinic.services.RefreshDataService;
 import com.alphabetbloc.clinic.utilities.App;
 
@@ -62,7 +61,7 @@ public class ViewPatientActivity extends ViewDataActivity {
 		mContext = this;
 		res = this.getResources();
 
-		patientIdStr = getIntent().getStringExtra(Constants.KEY_PATIENT_ID);
+		patientIdStr = getIntent().getStringExtra(KEY_PATIENT_ID);
 		Integer patientId = Integer.valueOf(patientIdStr);
 		mPatient = getPatient(patientId);
 		if (mPatient == null) {
@@ -115,7 +114,7 @@ public class ViewPatientActivity extends ViewDataActivity {
 		// public void onClick(View v) {
 		// Intent i = new Intent(getApplicationContext(),
 		// ViewCompletedForms.class);
-		// i.putExtra(Constants.KEY_PATIENT_ID, patientIdStr);
+		// i.putExtra(KEY_PATIENT_ID, patientIdStr);
 		// startActivity(i);
 		//
 		// }
@@ -149,7 +148,7 @@ public class ViewPatientActivity extends ViewDataActivity {
 	private boolean checkForForms() {
 		boolean checkForms = false;
 
-		Cursor c = DbAdapter.openDb().fetchAllForms();
+		Cursor c = DbProvider.openDb().fetchAllForms();
 		if (c != null && c.getCount() >= 0) {
 			checkForms = true;
 		}
@@ -160,14 +159,14 @@ public class ViewPatientActivity extends ViewDataActivity {
 
 	private void getPatientForms(Integer patientId) {
 
-		Cursor c = DbAdapter.openDb().fetchPatient(patientId);
+		Cursor c = DbProvider.openDb().fetchPatient(patientId);
 
 		if (c != null && c.getCount() > 0) {
 
-			int priorityIndex = c.getColumnIndexOrThrow(DbAdapter.KEY_PRIORITY_FORM_NUMBER);
-			int priorityFormIndex = c.getColumnIndexOrThrow(DbAdapter.KEY_PRIORITY_FORM_NAMES);
-			int savedNumberIndex = c.getColumnIndexOrThrow(DbAdapter.KEY_SAVED_FORM_NUMBER);
-			int savedFormIndex = c.getColumnIndexOrThrow(DbAdapter.KEY_SAVED_FORM_NAMES);
+			int priorityIndex = c.getColumnIndexOrThrow(DbProvider.KEY_PRIORITY_FORM_NUMBER);
+			int priorityFormIndex = c.getColumnIndexOrThrow(DbProvider.KEY_PRIORITY_FORM_NAMES);
+			int savedNumberIndex = c.getColumnIndexOrThrow(DbProvider.KEY_SAVED_FORM_NUMBER);
+			int savedFormIndex = c.getColumnIndexOrThrow(DbProvider.KEY_SAVED_FORM_NAMES);
 
 			mPatient.setPriorityNumber(c.getInt(priorityIndex));
 			mPatient.setPriorityForms(c.getString(priorityFormIndex));
@@ -195,7 +194,7 @@ public class ViewPatientActivity extends ViewDataActivity {
 	}
 
 	private void getAllObservations(Integer patientId) {
-		mObservations = DbAdapter.openDb().fetchPatientObservationList(patientId);
+		mObservations = DbProvider.openDb().fetchPatientObservationList(patientId);
 	}
 
 	/*
@@ -209,14 +208,14 @@ public class ViewPatientActivity extends ViewDataActivity {
 	 * (Observation) getListAdapter().getItem(position);
 	 * 
 	 * Intent ip; int dataType = obs.getDataType(); if (dataType ==
-	 * Constants.TYPE_INT || dataType == Constants.TYPE_DOUBLE) { ip = new
+	 * DbProvider.TYPE_INT || dataType == DbProvider.TYPE_DOUBLE) { ip = new
 	 * Intent(getApplicationContext(), ObservationChartActivity.class);
-	 * ip.putExtra(Constants.KEY_PATIENT_ID, mPatient.getPatientId()
-	 * .toString()); ip.putExtra(Constants.KEY_OBSERVATION_FIELD_NAME,
+	 * ip.putExtra(KEY_PATIENT_ID, mPatient.getPatientId()
+	 * .toString()); ip.putExtra(KEY_OBSERVATION_FIELD_NAME,
 	 * obs.getFieldName()); startActivity(ip); } else { ip = new
 	 * Intent(getApplicationContext(), ObservationTimelineActivity.class);
-	 * ip.putExtra(Constants.KEY_PATIENT_ID, mPatient.getPatientId()
-	 * .toString()); ip.putExtra(Constants.KEY_OBSERVATION_FIELD_NAME,
+	 * ip.putExtra(KEY_PATIENT_ID, mPatient.getPatientId()
+	 * .toString()); ip.putExtra(KEY_OBSERVATION_FIELD_NAME,
 	 * obs.getFieldName()); startActivity(ip); } } }
 	 */
 
@@ -259,7 +258,7 @@ public class ViewPatientActivity extends ViewDataActivity {
 		// public void onClick(View v) {
 		// if (checkForForms()) {
 		// Intent i = new Intent(getApplicationContext(), ViewAllForms.class);
-		// i.putExtra(Constants.KEY_PATIENT_ID, patientIdStr);
+		// i.putExtra(KEY_PATIENT_ID, patientIdStr);
 		// startActivity(i);
 		// } else {
 		// showCustomToast(getString(R.string.no_forms));
@@ -332,7 +331,7 @@ public class ViewPatientActivity extends ViewDataActivity {
 		public boolean onSingleTapUp(MotionEvent e) {
 			if (checkForForms()) {
 				Intent i = new Intent(getApplicationContext(), ViewAllForms.class);
-				i.putExtra(Constants.KEY_PATIENT_ID, patientIdStr);
+				i.putExtra(KEY_PATIENT_ID, patientIdStr);
 				startActivity(i);
 			} else {
 				showCustomToast(getString(R.string.no_forms));
@@ -346,7 +345,7 @@ public class ViewPatientActivity extends ViewDataActivity {
 		@Override
 		public boolean onSingleTapUp(MotionEvent e) {
 			Intent i = new Intent(getApplicationContext(), ViewCompletedForms.class);
-			i.putExtra(Constants.KEY_PATIENT_ID, patientIdStr);
+			i.putExtra(KEY_PATIENT_ID, patientIdStr);
 			startActivity(i);
 			return false;
 		}

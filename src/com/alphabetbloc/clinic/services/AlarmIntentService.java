@@ -1,14 +1,15 @@
 package com.alphabetbloc.clinic.services;
 
-import org.odk.clinic.android.openmrs.Constants;
-
-import com.alphabetbloc.clinic.data.DbAdapter;
-
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.SystemClock;
+import android.preference.PreferenceManager;
 import android.util.Log;
+
+import com.alphabetbloc.clinic.R;
+import com.alphabetbloc.clinic.providers.DbProvider;
 
 
 /**
@@ -25,7 +26,7 @@ import android.util.Log;
 public class AlarmIntentService extends WakefulIntentService {
 
 	private Context mContext;
-	private static final String TAG = "RefreshClientService";
+	private static final String TAG = AlarmIntentService.class.getSimpleName();
 
 	public AlarmIntentService() {
 		super("AppService");
@@ -36,11 +37,13 @@ public class AlarmIntentService extends WakefulIntentService {
 		mContext = this;
 
 		// Find the most recent download time
-		long recentDownload = DbAdapter.openDb().fetchMostRecentDownload();
+		long recentDownload = DbProvider.openDb().fetchMostRecentDownload();
 		long timeSinceRefresh = System.currentTimeMillis() - recentDownload;
 		Log.e(TAG, "Minutes since last refresh: " + timeSinceRefresh / (1000 * 60));
-
-		if (timeSinceRefresh > Constants.MINIMUM_REFRESH_TIME) {
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
+		String minRefreshSeconds = prefs.getString(getString(R.string.key_min_refresh_seconds), getString(R.string.default_min_refresh_seconds));
+		long minRefreshMs = 1000L * Long.valueOf(minRefreshSeconds);
+		if (timeSinceRefresh > minRefreshMs) {
 			Log.e(TAG, "RefreshClientService about to start SS service");
 			ComponentName comp = new ComponentName(mContext.getPackageName(), RefreshDataService.class.getName());
 			Intent i = new Intent();

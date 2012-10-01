@@ -50,7 +50,7 @@ import com.alphabetbloc.clinic.utilities.FileUtils;
  */
 public class DecryptionTask extends AsyncTask<Object, Void, Boolean> {
 
-	private static final String TAG = "DecryptionTask";
+	private static final String TAG = DecryptionTask.class.getSimpleName();
 	public static final String COLLECT_INSTANCE_ID = "collect_instance_id";
 	public static final String MAX_DECRYPT_TIME = "maximum_time_decrypted";
 	private DecryptionListener mListener;

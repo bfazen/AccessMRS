@@ -3,8 +3,6 @@ package com.alphabetbloc.clinic.services;
 import java.util.Iterator;
 import java.util.List;
 
-import org.odk.clinic.android.openmrs.Constants;
-
 import android.accounts.Account;
 import android.accounts.OperationCanceledException;
 import android.app.ActivityManager;
@@ -18,17 +16,19 @@ import android.content.ComponentName;
 import android.content.ContentProviderClient;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.SyncResult;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.alphabetbloc.clinic.R;
-import com.alphabetbloc.clinic.data.DbAdapter;
 import com.alphabetbloc.clinic.listeners.SyncDataListener;
+import com.alphabetbloc.clinic.providers.DbProvider;
 import com.alphabetbloc.clinic.tasks.DownloadDataTask;
 import com.alphabetbloc.clinic.tasks.SyncDataTask;
 import com.alphabetbloc.clinic.tasks.UploadDataTask;
@@ -76,12 +76,16 @@ public class RefreshDataService extends Service implements SyncDataListener {
 			// }
 
 			// establish threshold for syncing (i.e. do not sync continuously)
-			long recentDownload = DbAdapter.openDb().fetchMostRecentDownload();
+			long recentDownload = DbProvider.openDb().fetchMostRecentDownload();
 			long timeSinceRefresh = System.currentTimeMillis() - recentDownload;
+			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(App.getApp());
+			String maxRefreshSeconds = prefs.getString(App.getApp().getString(R.string.key_max_refresh_seconds), App.getApp().getString(R.string.default_max_refresh_seconds));
+			long maxRefreshMs = 1000L * Long.valueOf(maxRefreshSeconds);
+			
 			Log.e("louis.fazen", "Minutes since last refresh: " + timeSinceRefresh / (1000 * 60));
-			if (timeSinceRefresh < Constants.MAXIMUM_REFRESH_TIME) {
+			if (timeSinceRefresh < maxRefreshMs) {
 
-				long timeToNextSync = Constants.MAXIMUM_REFRESH_TIME - timeSinceRefresh;
+				long timeToNextSync = maxRefreshMs - timeSinceRefresh;
 				syncResult.delayUntil = timeToNextSync;
 				Log.e(TAG, "Synced recently... lets delay the sync until ! timetosync=" + timeToNextSync);
 

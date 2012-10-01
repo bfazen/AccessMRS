@@ -2,9 +2,7 @@ package com.alphabetbloc.clinic.ui.user;
 
 import java.util.ArrayList;
 
-import org.odk.clinic.android.openmrs.Constants;
 import org.odk.clinic.android.openmrs.Patient;
-import org.odk.clinic.android.openmrs.PatientAdapter;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
@@ -45,7 +43,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.alphabetbloc.clinic.R;
-import com.alphabetbloc.clinic.data.DbAdapter;
+import com.alphabetbloc.clinic.adapters.PatientAdapter;
+import com.alphabetbloc.clinic.providers.DbProvider;
 import com.alphabetbloc.clinic.services.RefreshDataService;
 import com.alphabetbloc.clinic.ui.admin.PreferencesActivity;
 import com.alphabetbloc.clinic.utilities.App;
@@ -215,7 +214,7 @@ public class ListPatientActivity extends ListActivity implements SyncStatusObser
 				Patient p = (Patient) mPatientAdapter.getItem(pos);
 				String patientIdStr = p.getPatientId().toString();
 				Intent ip = new Intent(getApplicationContext(), ViewPatientActivity.class);
-				ip.putExtra(Constants.KEY_PATIENT_ID, patientIdStr);
+				ip.putExtra(ViewDataActivity.KEY_PATIENT_ID, patientIdStr);
 				startActivity(ip);
 			}
 			return false;
@@ -304,7 +303,7 @@ public class ListPatientActivity extends ListActivity implements SyncStatusObser
 
 	private void getPatients(String searchString, String patientId) {
 
-		DbAdapter ca = DbAdapter.openDb();
+		DbProvider ca = DbProvider.openDb();
 
 		Cursor c = null;
 		if (mSearchPatientStr != null || mSearchPatientId != null) {
@@ -316,17 +315,17 @@ public class ListPatientActivity extends ListActivity implements SyncStatusObser
 
 		if (c != null && c.getCount() >= 0) {
 
-			int patientIdIndex = c.getColumnIndex(DbAdapter.KEY_PATIENT_ID);
-			int identifierIndex = c.getColumnIndex(DbAdapter.KEY_IDENTIFIER);
-			int givenNameIndex = c.getColumnIndex(DbAdapter.KEY_GIVEN_NAME);
-			int familyNameIndex = c.getColumnIndex(DbAdapter.KEY_FAMILY_NAME);
-			int middleNameIndex = c.getColumnIndex(DbAdapter.KEY_MIDDLE_NAME);
-			int birthDateIndex = c.getColumnIndex(DbAdapter.KEY_BIRTH_DATE);
-			int genderIndex = c.getColumnIndex(DbAdapter.KEY_GENDER);
-			int priorityIndex = c.getColumnIndexOrThrow(DbAdapter.KEY_PRIORITY_FORM_NUMBER);
-			int priorityFormIndex = c.getColumnIndexOrThrow(DbAdapter.KEY_PRIORITY_FORM_NAMES);
-			int savedIndex = c.getColumnIndexOrThrow(DbAdapter.KEY_SAVED_FORM_NUMBER);
-			int savedFormIndex = c.getColumnIndexOrThrow(DbAdapter.KEY_SAVED_FORM_NAMES);
+			int patientIdIndex = c.getColumnIndex(DbProvider.KEY_PATIENT_ID);
+			int identifierIndex = c.getColumnIndex(DbProvider.KEY_IDENTIFIER);
+			int givenNameIndex = c.getColumnIndex(DbProvider.KEY_GIVEN_NAME);
+			int familyNameIndex = c.getColumnIndex(DbProvider.KEY_FAMILY_NAME);
+			int middleNameIndex = c.getColumnIndex(DbProvider.KEY_MIDDLE_NAME);
+			int birthDateIndex = c.getColumnIndex(DbProvider.KEY_BIRTH_DATE);
+			int genderIndex = c.getColumnIndex(DbProvider.KEY_GENDER);
+			int priorityIndex = c.getColumnIndexOrThrow(DbProvider.KEY_PRIORITY_FORM_NUMBER);
+			int priorityFormIndex = c.getColumnIndexOrThrow(DbProvider.KEY_PRIORITY_FORM_NAMES);
+			int savedIndex = c.getColumnIndexOrThrow(DbProvider.KEY_SAVED_FORM_NUMBER);
+			int savedFormIndex = c.getColumnIndexOrThrow(DbProvider.KEY_SAVED_FORM_NAMES);
 
 			if (c.getCount() > 0) {
 

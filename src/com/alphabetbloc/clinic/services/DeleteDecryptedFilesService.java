@@ -29,7 +29,7 @@ import com.alphabetbloc.clinic.utilities.FileUtils;
 public class DeleteDecryptedFilesService extends WakefulIntentService {
 
 	private Context mContext;
-	private static final String TAG = "DeleteDecryptedFiles";
+	private static final String TAG = DeleteDecryptedFilesService.class.getSimpleName();
 	private static final String INSTANCE_ID = "id";
 	private static final String INSTANCE_PATH = "path";
 

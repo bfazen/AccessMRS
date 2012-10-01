@@ -15,7 +15,6 @@
             android:inputType="phone"
             android:key="@string/key_saved_search"
             android:title="@string/pref_saved_search" />
-
         <CheckBoxPreference
             android:id="@+id/use_saved_searches"
             android:defaultValue="@string/default_use_saved_searches"
@@ -39,6 +38,20 @@
             android:summaryOff="@string/pref_activity_logging_hint"
             android:summaryOn="@string/pref_activity_logging_hint"
             android:title="@string/pref_enable_activity_logging" />
+        <EditTextPreference
+            android:id="@+id/min_refresh_time"
+            android:defaultValue="@string/default_min_refresh_seconds"
+            android:dialogTitle="@string/pref_min_refresh_seconds"
+            android:inputType="phone"
+            android:key="@string/key_min_refresh_seconds"
+            android:title="@string/pref_min_refresh_seconds" />
+        <EditTextPreference
+            android:id="@+id/max_refresh_time"
+            android:defaultValue="@string/default_max_refresh_seconds"
+            android:dialogTitle="@string/pref_max_refresh_seconds"
+            android:inputType="phone"
+            android:key="@string/key_max_refresh_seconds"
+            android:title="@string/pref_max_refresh_seconds" />
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/ssl_server_settings" >
         <EditTextPreference
@@ -47,7 +60,6 @@
             android:dialogTitle="@string/pref_change_server"
             android:key="@string/key_server"
             android:title="@string/pref_server" />
-
         <CheckBoxPreference
             android:id="@+id/use_client_auth"
             android:defaultValue="@string/default_use_client_auth"
@@ -55,7 +67,6 @@
             android:summaryOff="@string/ssl_client_auth_hint"
             android:summaryOn="@string/ssl_client_auth_hint"
             android:title="@string/ssl_use_client_auth" />
-
         <Preference
             android:summary="@string/ssl_client_auth_desc"
             android:title="@string/ssl_client_auth" >

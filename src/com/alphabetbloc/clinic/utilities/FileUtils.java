@@ -46,7 +46,7 @@ import android.util.Log;
  */
 public class FileUtils {
 
-	private static final String TAG = "FileUtils";
+	private static final String TAG = FileUtils.class.getSimpleName();
 
 	// Used to validate and display valid form names.
 	public static final String VALID_FILENAME = "[ _\\-A-Za-z0-9]*.x[ht]*ml";

@@ -10,8 +10,6 @@ import net.sqlcipher.database.SQLiteDatabase;
 import net.sqlcipher.database.SQLiteOpenHelper;
 import net.sqlcipher.database.SQLiteQueryBuilder;
 
-import org.odk.clinic.android.openmrs.Cohort;
-import org.odk.clinic.android.openmrs.Constants;
 import org.odk.clinic.android.openmrs.Form;
 import org.odk.clinic.android.openmrs.FormInstance;
 import org.odk.clinic.android.openmrs.Observation;
@@ -27,14 +25,14 @@ import android.net.Uri;
 import android.util.Log;
 
 import com.alphabetbloc.clinic.data.ActivityLog;
-import com.alphabetbloc.clinic.data.DbAdapter;
 import com.alphabetbloc.clinic.ui.user.DashboardActivity;
 import com.alphabetbloc.clinic.utilities.App;
 import com.alphabetbloc.clinic.utilities.FileUtils;
 
 public class DbProvider extends ContentProvider {
-	private final static String t = "PatientDbAdapter";
-//	public static final String AUTHORITY = "com.alphabetbloc.clinic.providers.dbprovider";
+	private final static String TAG = DbProvider.class.getSimpleName();
+	// public static final String AUTHORITY =
+	// "com.alphabetbloc.clinic.providers.dbprovider";
 	private static DbProvider instance;
 
 	// general columns
@@ -70,8 +68,11 @@ public class DbProvider extends ContentProvider {
 	// observation values
 	public static final String KEY_FIELD_FORM_VALUE = "\"odkconnector.property.form\"";
 
-	// cohort columns
-	public static final String KEY_COHORT_ID = "cohort_id";
+	// observation types
+	public static final int TYPE_STRING = 1;
+	public static final int TYPE_INT = 2;
+	public static final int TYPE_DOUBLE = 3;
+	public static final int TYPE_DATE = 4;
 
 	// form columns
 	public static final String KEY_FORM_ID = "form_id";
@@ -108,7 +109,6 @@ public class DbProvider extends ContentProvider {
 	public static final String DATABASE_NAME = "clinic.sqlite3";
 	public static final String PATIENTS_TABLE = "patients";
 	public static final String OBSERVATIONS_TABLE = "observations";
-	private static final String COHORTS_TABLE = "cohorts";
 	private static final String FORMS_TABLE = "forms";
 	private static final String FORMINSTANCES_TABLE = "instances";
 	private static final String DOWNLOAD_LOG_TABLE = "download_log";
@@ -120,8 +120,6 @@ public class DbProvider extends ContentProvider {
 
 	private static final String CREATE_OBSERVATIONS_TABLE = "create table " + OBSERVATIONS_TABLE + " (_id integer primary key autoincrement, " + KEY_PATIENT_ID + " integer not null, " + KEY_DATA_TYPE + " integer not null, " + KEY_VALUE_TEXT + " text, " + KEY_VALUE_NUMERIC
 			+ " double, " + KEY_VALUE_DATE + " text, " + KEY_VALUE_INT + " integer, " + KEY_FIELD_NAME + " text not null, " + KEY_ENCOUNTER_DATE + " text not null);";
-
-	private static final String CREATE_COHORTS_TABLE = "create table " + COHORTS_TABLE + " (_id integer primary key autoincrement, " + KEY_COHORT_ID + " integer not null, " + KEY_NAME + " text);";
 
 	private static final String CREATE_FORMS_TABLE = "create table " + FORMS_TABLE + " (_id integer primary key autoincrement, " + KEY_FORM_ID + " integer not null, " + KEY_NAME + " text, " + KEY_PATH + " text);";
 
@@ -145,10 +143,9 @@ public class DbProvider extends ContentProvider {
 
 		@Override
 		public void onCreate(SQLiteDatabase db) {
-			Log.e(t, "creating tables");
+			Log.e(TAG, "creating tables");
 			db.execSQL(CREATE_PATIENTS_TABLE);
 			db.execSQL(CREATE_OBSERVATIONS_TABLE);
-			db.execSQL(CREATE_COHORTS_TABLE);
 			db.execSQL(CREATE_FORMS_TABLE);
 			db.execSQL(CREATE_FORMINSTANCES_TABLE);
 			db.execSQL(CREATE_FORM_LOG_TABLE);
@@ -160,7 +157,6 @@ public class DbProvider extends ContentProvider {
 		public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 			db.execSQL("DROP TABLE IF EXISTS " + PATIENTS_TABLE);
 			db.execSQL("DROP TABLE IF EXISTS " + OBSERVATIONS_TABLE);
-			db.execSQL("DROP TABLE IF EXISTS " + COHORTS_TABLE);
 			db.execSQL("DROP TABLE IF EXISTS " + FORMS_TABLE);
 			db.execSQL("DROP TABLE IF EXISTS " + FORMINSTANCES_TABLE);
 			db.execSQL("DROP TABLE IF EXISTS " + FORM_LOG_TABLE);
@@ -176,7 +172,7 @@ public class DbProvider extends ContentProvider {
 
 	public static DbProvider openDb() {
 		if (!isOpen()) {
-			Log.w(t, "Database is not open! Opening Now!");
+			Log.w(TAG, "Database is not open! Opening Now!");
 			sDb = App.getDb();
 		}
 
@@ -205,7 +201,7 @@ public class DbProvider extends ContentProvider {
 			System.gc();
 		} catch (Exception e) {
 			error = e;
-			Log.e(t, "Error rekeying the database: " + e.getMessage());
+			Log.e(TAG, "Error rekeying the database: " + e.getMessage());
 		}
 
 		if (error == null)
@@ -274,7 +270,7 @@ public class DbProvider extends ContentProvider {
 		try {
 			id = sDb.insert(PATIENTS_TABLE, null, cv);
 		} catch (SQLiteConstraintException e) {
-			Log.e(t, "Caught SQLiteConstraitException: " + e);
+			Log.e(TAG, "Caught SQLiteConstraitException: " + e);
 		}
 
 		return id;
@@ -296,23 +292,7 @@ public class DbProvider extends ContentProvider {
 		try {
 			id = sDb.insert(OBSERVATIONS_TABLE, null, cv);
 		} catch (SQLiteConstraintException e) {
-			Log.e(t, "Caught SQLiteConstraitException: " + e);
-		}
-
-		return id;
-	}
-
-	public long createCohort(Cohort cohort) {
-
-		ContentValues cv = new ContentValues();
-		cv.put(KEY_COHORT_ID, cohort.getCohortId());
-		cv.put(KEY_NAME, cohort.getName());
-
-		long id = -1;
-		try {
-			id = sDb.insert(COHORTS_TABLE, null, cv);
-		} catch (SQLiteConstraintException e) {
-			Log.e(t, "Caught SQLiteConstraitException: " + e);
+			Log.e(TAG, "Caught SQLiteConstraitException: " + e);
 		}
 
 		return id;
@@ -329,7 +309,7 @@ public class DbProvider extends ContentProvider {
 		try {
 			id = sDb.insert(FORMS_TABLE, null, cv);
 		} catch (SQLiteConstraintException e) {
-			Log.e(t, "Caught SQLiteConstraitException: " + e);
+			Log.e(TAG, "Caught SQLiteConstraitException: " + e);
 		}
 
 		return id;
@@ -349,7 +329,7 @@ public class DbProvider extends ContentProvider {
 		try {
 			id = sDb.insert(FORMINSTANCES_TABLE, null, cv);
 		} catch (SQLiteConstraintException e) {
-			Log.e(t, "Caught SQLiteConstraitException: " + e);
+			Log.e(TAG, "Caught SQLiteConstraitException: " + e);
 		}
 
 		return id;
@@ -365,7 +345,7 @@ public class DbProvider extends ContentProvider {
 		try {
 			sDb.insert(DOWNLOAD_LOG_TABLE, null, cv);
 		} catch (SQLiteConstraintException e) {
-			Log.e(t, "Caught SQLiteConstraitException: " + e);
+			Log.e(TAG, "Caught SQLiteConstraitException: " + e);
 		}
 
 	}
@@ -387,7 +367,7 @@ public class DbProvider extends ContentProvider {
 			id = sDb.insert(FORM_LOG_TABLE, null, cv);
 			sDb.setTransactionSuccessful();
 		} catch (SQLiteConstraintException e) {
-			Log.e(t, "Caught SQLiteConstraitException: " + e);
+			Log.e(TAG, "Caught SQLiteConstraitException: " + e);
 
 		} finally {
 			sDb.endTransaction();
@@ -408,10 +388,6 @@ public class DbProvider extends ContentProvider {
 
 	public boolean deleteAllObservations() {
 		return sDb.delete(OBSERVATIONS_TABLE, null, null) > 0;
-	}
-
-	public boolean deleteAllCohorts() {
-		return sDb.delete(COHORTS_TABLE, null, null) > 0;
 	}
 
 	public boolean deleteAllForms() {
@@ -605,16 +581,6 @@ public class DbProvider extends ContentProvider {
 		return c;
 	}
 
-	public Cursor fetchAllCohorts() throws SQLException {
-		Cursor c = null;
-		c = sDb.query(true, COHORTS_TABLE, new String[] { KEY_ID, KEY_COHORT_ID, KEY_NAME }, null, null, null, null, null, null);
-
-		if (c != null) {
-			c.moveToFirst();
-		}
-		return c;
-	}
-
 	public Cursor fetchAllForms() throws SQLException {
 		Cursor c = null;
 		c = sDb.query(true, FORMS_TABLE, new String[] { KEY_ID, KEY_FORM_ID, KEY_NAME, KEY_PATH }, null, null, null, null, null, null);
@@ -644,13 +610,13 @@ public class DbProvider extends ContentProvider {
 
 		if (c != null && c.getCount() > 0) {
 
-			int valueTextIndex = c.getColumnIndex(DbAdapter.KEY_VALUE_TEXT);
-			int valueIntIndex = c.getColumnIndex(DbAdapter.KEY_VALUE_INT);
-			int valueDateIndex = c.getColumnIndex(DbAdapter.KEY_VALUE_DATE);
-			int valueNumericIndex = c.getColumnIndex(DbAdapter.KEY_VALUE_NUMERIC);
-			int fieldNameIndex = c.getColumnIndex(DbAdapter.KEY_FIELD_NAME);
-			int encounterDateIndex = c.getColumnIndex(DbAdapter.KEY_ENCOUNTER_DATE);
-			int dataTypeIndex = c.getColumnIndex(DbAdapter.KEY_DATA_TYPE);
+			int valueTextIndex = c.getColumnIndex(DbProvider.KEY_VALUE_TEXT);
+			int valueIntIndex = c.getColumnIndex(DbProvider.KEY_VALUE_INT);
+			int valueDateIndex = c.getColumnIndex(DbProvider.KEY_VALUE_DATE);
+			int valueNumericIndex = c.getColumnIndex(DbProvider.KEY_VALUE_NUMERIC);
+			int fieldNameIndex = c.getColumnIndex(DbProvider.KEY_FIELD_NAME);
+			int encounterDateIndex = c.getColumnIndex(DbProvider.KEY_ENCOUNTER_DATE);
+			int dataTypeIndex = c.getColumnIndex(DbProvider.KEY_DATA_TYPE);
 
 			Observation obs;
 			String prevFieldName = null;
@@ -668,13 +634,13 @@ public class DbProvider extends ContentProvider {
 					int dataType = c.getInt(dataTypeIndex);
 					obs.setDataType((byte) dataType);
 					switch (dataType) {
-					case Constants.TYPE_INT:
+					case TYPE_INT:
 						obs.setValueInt(c.getInt(valueIntIndex));
 						break;
-					case Constants.TYPE_DOUBLE:
+					case TYPE_DOUBLE:
 						obs.setValueNumeric(c.getDouble(valueNumericIndex));
 						break;
-					case Constants.TYPE_DATE:
+					case TYPE_DATE:
 						obs.setValueDate(c.getString(valueDateIndex));
 
 						break;

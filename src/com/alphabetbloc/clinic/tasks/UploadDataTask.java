@@ -14,7 +14,7 @@ import android.content.SyncResult;
 import android.database.Cursor;
 import android.util.Log;
 
-import com.alphabetbloc.clinic.data.DbAdapter;
+import com.alphabetbloc.clinic.providers.DbProvider;
 import com.alphabetbloc.clinic.services.EncryptionService;
 import com.alphabetbloc.clinic.services.WakefulIntentService;
 import com.alphabetbloc.clinic.utilities.App;
@@ -23,12 +23,12 @@ import com.alphabetbloc.clinic.utilities.WebUtils;
 
 public class UploadDataTask extends SyncDataTask {
 
-	private static String tag = "UploadDataTask";
+	private static final String TAG = UploadDataTask.class.getSimpleName();
 
 	@Override
 	protected String doInBackground(SyncResult... values) {
 		sSyncResult = values[0];
-		Log.e(tag, "UploadDataTask Called");
+		Log.e(TAG, "UploadDataTask Called");
 		
 		mUploadComplete = false;
 		String uploadResult = "No Completed Forms to Upload";
@@ -54,7 +54,7 @@ public class UploadDataTask extends SyncDataTask {
 						progress = current;
 						showProgress("Uploading Forms", progress);
 					}
-					Log.e(tag, "i=" + i + " current=" + current + " progress=" + progress + " total instances=" + instancesToUpload.length);
+					Log.e(TAG, "i=" + i + " current=" + current + " progress=" + progress + " total instances=" + instancesToUpload.length);
 				}
 
 				// Encrypt the uploaded data with wakelock to ensure it happens!
@@ -75,11 +75,11 @@ public class UploadDataTask extends SyncDataTask {
 
 		ArrayList<String> selectedInstances = new ArrayList<String>();
 
-		Cursor c = DbAdapter.openDb().fetchFormInstancesByStatus(DbAdapter.STATUS_UNSUBMITTED);
+		Cursor c = DbProvider.openDb().fetchFormInstancesByStatus(DbProvider.STATUS_UNSUBMITTED);
 		if (c != null) {
 			if (c.moveToFirst()) {
 				do {
-					String dbPath = c.getString(c.getColumnIndex(DbAdapter.KEY_PATH));
+					String dbPath = c.getString(c.getColumnIndex(DbProvider.KEY_PATH));
 					selectedInstances.add(dbPath);
 				} while (c.moveToNext());
 			}
@@ -90,7 +90,7 @@ public class UploadDataTask extends SyncDataTask {
 	}
 
 	private ArrayList<String> uploadInstances(String[] instancePaths) {
-		Log.e(tag, "UploadInstances Called");
+		Log.e(TAG, "UploadInstances Called");
 		ArrayList<String> uploadedInstances = new ArrayList<String>();
 		for (int i = 0; i < instancePaths.length; i++) {
 			try {
@@ -102,11 +102,11 @@ public class UploadDataTask extends SyncDataTask {
 
 				if (postEntityToUrl(WebUtils.getFormUploadUrl(), entity)) {
 					uploadedInstances.add(instancePaths[i]);
-					Log.e(tag, "everything okay! adding some instances...");
+					Log.e(TAG, "everything okay! adding some instances...");
 				}
 
 			} catch (Exception e) {
-				Log.e(tag, "Exception on uploading instance =" + instancePaths[i]);
+				Log.e(TAG, "Exception on uploading instance =" + instancePaths[i]);
 				e.printStackTrace();
 				++sSyncResult.stats.numIoExceptions;
 			}
@@ -132,29 +132,29 @@ public class UploadDataTask extends SyncDataTask {
 				if (f.getName().endsWith(".xml")) {
 					fb = new FileBody(f, "text/xml");
 					entity.addPart("xml_submission_file", fb);
-					Log.i(tag, "added xml file " + f.getName());
+					Log.i(TAG, "added xml file " + f.getName());
 				} else if (f.getName().endsWith(".jpg")) {
 					fb = new FileBody(f, "image/jpeg");
 					entity.addPart(f.getName(), fb);
-					Log.i(tag, "added image file " + f.getName());
+					Log.i(TAG, "added image file " + f.getName());
 				} else if (f.getName().endsWith(".3gpp")) {
 					fb = new FileBody(f, "audio/3gpp");
 					entity.addPart(f.getName(), fb);
-					Log.i(tag, "added audio file " + f.getName());
+					Log.i(TAG, "added audio file " + f.getName());
 				} else if (f.getName().endsWith(".3gp")) {
 					fb = new FileBody(f, "video/3gpp");
 					entity.addPart(f.getName(), fb);
-					Log.i(tag, "added video file " + f.getName());
+					Log.i(TAG, "added video file " + f.getName());
 				} else if (f.getName().endsWith(".mp4")) {
 					fb = new FileBody(f, "video/mp4");
 					entity.addPart(f.getName(), fb);
-					Log.i(tag, "added video file " + f.getName());
+					Log.i(TAG, "added video file " + f.getName());
 				} else {
-					Log.w(tag, "unsupported file type, not adding file: " + f.getName());
+					Log.w(TAG, "unsupported file type, not adding file: " + f.getName());
 				}
 			}
 		} else {
-			Log.e(tag, "no files to upload in instance");
+			Log.e(TAG, "no files to upload in instance");
 		}
 
 		return entity;
@@ -170,12 +170,12 @@ public class UploadDataTask extends SyncDataTask {
 			int updatedrows = App.getApp().getContentResolver().update(InstanceColumns.CONTENT_URI, insertValues, where, whereArgs);
 
 			if (updatedrows > 1) {
-				Log.e(tag, "Error! updated more than one entry when tyring to update: " + path.toString());
+				Log.e(TAG, "Error! updated more than one entry when tyring to update: " + path.toString());
 			} else if (updatedrows == 1) {
-				Log.i(tag, "Instance successfully updated to Submitted Status");
+				Log.i(TAG, "Instance successfully updated to Submitted Status");
 				updated = true;
 			} else {
-				Log.e(tag, "Error, Instance doesn't exist but we have its path!! " + path.toString());
+				Log.e(TAG, "Error, Instance doesn't exist but we have its path!! " + path.toString());
 			}
 
 		} catch (Exception e) {
@@ -187,9 +187,9 @@ public class UploadDataTask extends SyncDataTask {
 	}
 
 	private void updateClinicDbPath(String path) {
-		Cursor c = DbAdapter.openDb().fetchFormInstancesByPath(path);
+		Cursor c = DbProvider.openDb().fetchFormInstancesByPath(path);
 		if (c != null) {
-			DbAdapter.openDb().updateFormInstance(path, DbAdapter.STATUS_SUBMITTED);
+			DbProvider.openDb().updateFormInstance(path, DbProvider.STATUS_SUBMITTED);
 			c.close();
 		}
 	}

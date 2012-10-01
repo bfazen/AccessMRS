@@ -2,11 +2,6 @@ package org.odk.clinic.android.unused;
 
 import java.util.ArrayList;
 
-import com.alphabetbloc.clinic.R;
-import com.alphabetbloc.clinic.data.DbAdapter;
-import com.alphabetbloc.clinic.utilities.FileUtils;
-
-import org.odk.clinic.android.openmrs.Constants;
 import org.odk.clinic.android.openmrs.Observation;
 import org.odk.clinic.android.openmrs.Patient;
 
@@ -20,6 +15,12 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.alphabetbloc.clinic.R;
+import com.alphabetbloc.clinic.providers.DbProvider;
+import com.alphabetbloc.clinic.providers.DbProvider;
+import com.alphabetbloc.clinic.ui.user.ViewDataActivity;
+import com.alphabetbloc.clinic.utilities.FileUtils;
 
 public class ObservationTimelineActivity extends ListActivity {
 
@@ -40,7 +41,7 @@ public class ObservationTimelineActivity extends ListActivity {
 			finish();
 		}
 
-		String patientIdStr = getIntent().getStringExtra(Constants.KEY_PATIENT_ID);
+		String patientIdStr = getIntent().getStringExtra(ViewDataActivity.KEY_PATIENT_ID);
 		Integer patientId = Integer.valueOf(patientIdStr);
 		mPatient = getPatient(patientId);
 		if (mPatient == null) {
@@ -48,7 +49,7 @@ public class ObservationTimelineActivity extends ListActivity {
 			finish();
 		}
 		
-		mObservationFieldName = getIntent().getStringExtra(Constants.KEY_OBSERVATION_FIELD_NAME);
+		mObservationFieldName = getIntent().getStringExtra(ViewDataActivity.KEY_OBSERVATION_FIELD_NAME);
 		
 		setTitle(getString(R.string.app_name) + " > "
 				+ getString(R.string.view_patient_detail));
@@ -63,22 +64,22 @@ public class ObservationTimelineActivity extends ListActivity {
 
 		Patient p = null;
 
-		Cursor c = DbAdapter.openDb().fetchPatient(patientId);
+		Cursor c = DbProvider.openDb().fetchPatient(patientId);
 
 		if (c != null && c.getCount() > 0) {
 			int patientIdIndex = c
-					.getColumnIndex(DbAdapter.KEY_PATIENT_ID);
+					.getColumnIndex(DbProvider.KEY_PATIENT_ID);
 			int identifierIndex = c
-					.getColumnIndex(DbAdapter.KEY_IDENTIFIER);
+					.getColumnIndex(DbProvider.KEY_IDENTIFIER);
 			int givenNameIndex = c
-					.getColumnIndex(DbAdapter.KEY_GIVEN_NAME);
+					.getColumnIndex(DbProvider.KEY_GIVEN_NAME);
 			int familyNameIndex = c
-					.getColumnIndex(DbAdapter.KEY_FAMILY_NAME);
+					.getColumnIndex(DbProvider.KEY_FAMILY_NAME);
 			int middleNameIndex = c
-					.getColumnIndex(DbAdapter.KEY_MIDDLE_NAME);
+					.getColumnIndex(DbProvider.KEY_MIDDLE_NAME);
 			int birthDateIndex = c
-					.getColumnIndex(DbAdapter.KEY_BIRTH_DATE);
-			int genderIndex = c.getColumnIndex(DbAdapter.KEY_GENDER);
+					.getColumnIndex(DbProvider.KEY_BIRTH_DATE);
+			int genderIndex = c.getColumnIndex(DbProvider.KEY_GENDER);
 			
 			p = new Patient();
 			p.setPatientId(c.getInt(patientIdIndex));
@@ -99,18 +100,18 @@ public class ObservationTimelineActivity extends ListActivity {
 	
 	private void getObservations(Integer patientId, String fieldName) {
 		
-		Cursor c = DbAdapter.openDb().fetchPatientObservation(patientId, fieldName);
+		Cursor c = DbProvider.openDb().fetchPatientObservation(patientId, fieldName);
 		
 		if (c != null && c.getCount() >= 0) {
 			
 			mEncounters.clear();
 
-			int valueTextIndex = c.getColumnIndex(DbAdapter.KEY_VALUE_TEXT);
-			int valueIntIndex = c.getColumnIndex(DbAdapter.KEY_VALUE_INT);
-			int valueDateIndex = c.getColumnIndex(DbAdapter.KEY_VALUE_DATE);
-			int valueNumericIndex = c.getColumnIndex(DbAdapter.KEY_VALUE_NUMERIC);
-			int encounterDateIndex = c.getColumnIndex(DbAdapter.KEY_ENCOUNTER_DATE);
-			int dataTypeIndex = c.getColumnIndex(DbAdapter.KEY_DATA_TYPE);
+			int valueTextIndex = c.getColumnIndex(DbProvider.KEY_VALUE_TEXT);
+			int valueIntIndex = c.getColumnIndex(DbProvider.KEY_VALUE_INT);
+			int valueDateIndex = c.getColumnIndex(DbProvider.KEY_VALUE_DATE);
+			int valueNumericIndex = c.getColumnIndex(DbProvider.KEY_VALUE_NUMERIC);
+			int encounterDateIndex = c.getColumnIndex(DbProvider.KEY_ENCOUNTER_DATE);
+			int dataTypeIndex = c.getColumnIndex(DbProvider.KEY_DATA_TYPE);
 
 			Observation obs;
 			do {
@@ -122,13 +123,13 @@ public class ObservationTimelineActivity extends ListActivity {
 				int dataType = c.getInt(dataTypeIndex);
 				obs.setDataType((byte) dataType);
 				switch (dataType) {
-				case Constants.TYPE_INT:
+				case DbProvider.TYPE_INT:
 					obs.setValueInt(c.getInt(valueIntIndex));
 					break;
-				case Constants.TYPE_DOUBLE:
+				case DbProvider.TYPE_DOUBLE:
 					obs.setValueNumeric(c.getDouble(valueNumericIndex));
 					break;
-				case Constants.TYPE_DATE:
+				case DbProvider.TYPE_DATE:
 						obs.setValueDate(c
 								.getString(valueDateIndex));
 

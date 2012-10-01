@@ -3,11 +3,11 @@ package com.alphabetbloc.clinic.utilities;
 import net.sqlcipher.database.SQLiteDatabase;
 import android.app.Application;
 
-import com.alphabetbloc.clinic.data.DbAdapter;
+import com.alphabetbloc.clinic.providers.DbProvider;
 
 public class App extends Application {
 	private static App mSingleton = null;
-	private static DbAdapter.DatabaseHelper mSqlCipherDbHelper;
+	private static DbProvider.DatabaseHelper mSqlCipherDbHelper;
 
 	@Override
 	public void onCreate() {
@@ -22,7 +22,7 @@ public class App extends Application {
 	
 	private static void initializeDb() {
 		SQLiteDatabase.loadLibs(mSingleton);
-		mSqlCipherDbHelper = new DbAdapter.DatabaseHelper(mSingleton);
+		mSqlCipherDbHelper = new DbProvider.DatabaseHelper(mSingleton);
 	}
 	
 	public static void resetDb() {

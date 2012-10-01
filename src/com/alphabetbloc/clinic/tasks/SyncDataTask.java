@@ -42,7 +42,6 @@ import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.params.HttpProtocolParams;
 import org.apache.http.protocol.HTTP;
-import org.odk.clinic.android.openmrs.Constants;
 
 import android.content.SharedPreferences;
 import android.content.SyncResult;
@@ -51,8 +50,8 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.alphabetbloc.clinic.R;
-import com.alphabetbloc.clinic.data.DbAdapter;
 import com.alphabetbloc.clinic.listeners.SyncDataListener;
+import com.alphabetbloc.clinic.providers.DbProvider;
 import com.alphabetbloc.clinic.utilities.App;
 import com.alphabetbloc.clinic.utilities.EncryptionUtil;
 import com.alphabetbloc.clinic.utilities.FileUtils;
@@ -68,7 +67,7 @@ public class SyncDataTask extends AsyncTask<SyncResult, String, String> {
 	static final int MAX_CONNECTIONS = 20;
 
 	protected SyncDataListener mStateListener;
-	protected DbAdapter mDb;
+	protected DbProvider mDb;
 	protected String mError;
 	protected static boolean mUploadComplete;
 	protected static boolean mDownloadComplete;
@@ -295,13 +294,13 @@ public class SyncDataTask extends AsyncTask<SyncResult, String, String> {
 
 		DataInputStream zdis = new DataInputStream(new GZIPInputStream(responseEntity.getContent()));
 		Log.e(TAG, "got the inputstream at=" + System.currentTimeMillis());
-		int status = zdis.readInt();
-		if (status == Constants.STATUS_FAILURE) {
-			zdis.close();
-			throw new IOException("Connection failed. Please try again.");
-		} else if (status == HttpURLConnection.HTTP_UNAUTHORIZED) {
+		int status = zdis.readInt();	
+		if (status == HttpURLConnection.HTTP_UNAUTHORIZED) {
 			zdis.close();
 			throw new IOException("Access denied. Check your username and password.");
+		} else if (status <= 0 || status >= HttpURLConnection.HTTP_BAD_REQUEST) {
+			zdis.close();
+			throw new IOException("Connection Failed. Please Try Again.");
 		} else {
 			assert (status == HttpURLConnection.HTTP_OK); // success
 			return zdis;

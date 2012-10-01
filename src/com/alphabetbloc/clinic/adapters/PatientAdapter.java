@@ -1,6 +1,8 @@
-package org.odk.clinic.android.openmrs;
+package com.alphabetbloc.clinic.adapters;
 
 import java.util.List;
+
+import org.odk.clinic.android.openmrs.Patient;
 
 import com.alphabetbloc.clinic.R;
 

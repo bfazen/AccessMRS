@@ -32,7 +32,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.alphabetbloc.clinic.data.DbAdapter;
+import com.alphabetbloc.clinic.providers.DbProvider;
 import com.alphabetbloc.clinic.services.WakefulIntentService;
 import com.alphabetbloc.clinic.services.WipeDataService;
 import com.alphabetbloc.clinic.utilities.App;
@@ -44,7 +44,7 @@ import com.alphabetbloc.clinic.utilities.KeyStoreUtil;
 public class InitialSetupActivity extends Activity {
 
 	private Context mContext;
-	public static final String TAG = "ClinicLauncherActivity";
+	public static final String TAG = InitialSetupActivity.class.getSimpleName();
 	public static final String SQLCIPHER_KEY_NAME = "sqlCipherDbKey";
 	private static final String CONFIG_FILE = "config.txt";
 	private static final String HIDDEN_CONFIG_FILE = ".config.txt";
@@ -289,7 +289,7 @@ public class InitialSetupActivity extends Activity {
 
 					if (isFreshInstall) {
 						// encrypt a new Clinic Db
-						File db = App.getApp().getDatabasePath(DbAdapter.DATABASE_NAME);
+						File db = App.getApp().getDatabasePath(DbProvider.DATABASE_NAME);
 						if (db.exists())
 							db.delete();
 						App.getDb();
@@ -297,7 +297,7 @@ public class InitialSetupActivity extends Activity {
 						// encrypt a new Collect instances Db
 
 					} else
-						DbAdapter.rekeyDb(userEntry);
+						DbProvider.rekeyDb(userEntry);
 
 					return success;
 

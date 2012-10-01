@@ -2,8 +2,6 @@ package org.odk.clinic.android.unused;
 
 import java.util.List;
 
-import com.alphabetbloc.clinic.R;
-import org.odk.clinic.android.openmrs.Constants;
 import org.odk.clinic.android.openmrs.Observation;
 
 import android.content.Context;
@@ -12,6 +10,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
+
+import com.alphabetbloc.clinic.R;
+import com.alphabetbloc.clinic.providers.DbProvider;
 
 public class EncounterAdapter extends ArrayAdapter<Observation> {
 
@@ -34,13 +35,13 @@ public class EncounterAdapter extends ArrayAdapter<Observation> {
 			TextView textView = (TextView) v.findViewById(R.id.value_text);
 			if (textView != null) {
 				switch (obs.getDataType()) {
-				case Constants.TYPE_INT:
+				case DbProvider.TYPE_INT:
 					textView.setText(obs.getValueInt().toString());
 					break;
-				case Constants.TYPE_DOUBLE:
+				case DbProvider.TYPE_DOUBLE:
 					textView.setText(obs.getValueNumeric().toString());
 					break;
-				case Constants.TYPE_DATE:
+				case DbProvider.TYPE_DATE:
 					textView.setText(obs.getValueDate());
 				default:
 					textView.setText(obs.getValueText());

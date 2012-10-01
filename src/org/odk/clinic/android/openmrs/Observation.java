@@ -1,5 +1,7 @@
 package org.odk.clinic.android.openmrs;
 
+import com.alphabetbloc.clinic.providers.DbProvider;
+
 
 public class Observation {
 
@@ -14,11 +16,11 @@ public class Observation {
 
 	public String toString() {
 		switch (dataType) {
-			case Constants.TYPE_INT :
+			case DbProvider.TYPE_INT :
 				return valueInt.toString();
-			case Constants.TYPE_DOUBLE:
+			case DbProvider.TYPE_DOUBLE:
 				return valueNumeric.toString();
-			case Constants.TYPE_DATE :
+			case DbProvider.TYPE_DATE :
 				return valueDate.toString();
 			default :
 				return valueText;

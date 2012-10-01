@@ -12,11 +12,6 @@ import org.achartengine.model.XYMultipleSeriesDataset;
 import org.achartengine.model.XYSeries;
 import org.achartengine.renderer.XYMultipleSeriesRenderer;
 import org.achartengine.renderer.XYSeriesRenderer;
-import com.alphabetbloc.clinic.R;
-import com.alphabetbloc.clinic.data.DbAdapter;
-import com.alphabetbloc.clinic.utilities.FileUtils;
-
-import org.odk.clinic.android.openmrs.Constants;
 import org.odk.clinic.android.openmrs.Patient;
 
 import android.app.Activity;
@@ -30,6 +25,12 @@ import android.view.ViewGroup.LayoutParams;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.alphabetbloc.clinic.R;
+import com.alphabetbloc.clinic.providers.DbProvider;
+import com.alphabetbloc.clinic.providers.DbProvider;
+import com.alphabetbloc.clinic.ui.user.ViewDataActivity;
+import com.alphabetbloc.clinic.utilities.FileUtils;
 
 public class ObservationChartActivity extends Activity {
 
@@ -52,7 +53,7 @@ public class ObservationChartActivity extends Activity {
 			finish();
 		}
 
-		String patientIdStr = getIntent().getStringExtra(Constants.KEY_PATIENT_ID);
+		String patientIdStr = getIntent().getStringExtra(ViewDataActivity.KEY_PATIENT_ID);
 		Integer patientId = Integer.valueOf(patientIdStr);
 		mPatient = getPatient(patientId);
 		if (mPatient == null) {
@@ -60,7 +61,7 @@ public class ObservationChartActivity extends Activity {
 			finish();
 		}
 		
-		mObservationFieldName = getIntent().getStringExtra(Constants.KEY_OBSERVATION_FIELD_NAME);
+		mObservationFieldName = getIntent().getStringExtra(ViewDataActivity.KEY_OBSERVATION_FIELD_NAME);
 		
 		setTitle(getString(R.string.app_name) + " > "
 				+ getString(R.string.view_patient_detail));
@@ -90,22 +91,22 @@ public class ObservationChartActivity extends Activity {
 
 		Patient p = null;
 
-		Cursor c = DbAdapter.openDb().fetchPatient(patientId);
+		Cursor c = DbProvider.openDb().fetchPatient(patientId);
 
 		if (c != null && c.getCount() > 0) {
 			int patientIdIndex = c
-					.getColumnIndex(DbAdapter.KEY_PATIENT_ID);
+					.getColumnIndex(DbProvider.KEY_PATIENT_ID);
 			int identifierIndex = c
-					.getColumnIndex(DbAdapter.KEY_IDENTIFIER);
+					.getColumnIndex(DbProvider.KEY_IDENTIFIER);
 			int givenNameIndex = c
-					.getColumnIndex(DbAdapter.KEY_GIVEN_NAME);
+					.getColumnIndex(DbProvider.KEY_GIVEN_NAME);
 			int familyNameIndex = c
-					.getColumnIndex(DbAdapter.KEY_FAMILY_NAME);
+					.getColumnIndex(DbProvider.KEY_FAMILY_NAME);
 			int middleNameIndex = c
-					.getColumnIndex(DbAdapter.KEY_MIDDLE_NAME);
+					.getColumnIndex(DbProvider.KEY_MIDDLE_NAME);
 			int birthDateIndex = c
-					.getColumnIndex(DbAdapter.KEY_BIRTH_DATE);
-			int genderIndex = c.getColumnIndex(DbAdapter.KEY_GENDER);
+					.getColumnIndex(DbProvider.KEY_BIRTH_DATE);
+			int genderIndex = c.getColumnIndex(DbProvider.KEY_GENDER);
 			
 			p = new Patient();
 			p.setPatientId(c.getInt(patientIdIndex));
@@ -128,7 +129,7 @@ public class ObservationChartActivity extends Activity {
 		
 		DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		
-		Cursor c = DbAdapter.openDb().fetchPatientObservation(patientId, fieldName);
+		Cursor c = DbProvider.openDb().fetchPatientObservation(patientId, fieldName);
 		
 		if (c != null && c.getCount() >= 0) {
 			
@@ -141,10 +142,10 @@ public class ObservationChartActivity extends Activity {
 				mDataset.addSeries(series);
 			}
 
-			int valueIntIndex = c.getColumnIndex(DbAdapter.KEY_VALUE_INT);
-			int valueNumericIndex = c.getColumnIndex(DbAdapter.KEY_VALUE_NUMERIC);
-			int encounterDateIndex = c.getColumnIndex(DbAdapter.KEY_ENCOUNTER_DATE);
-			int dataTypeIndex = c.getColumnIndex(DbAdapter.KEY_DATA_TYPE);
+			int valueIntIndex = c.getColumnIndex(DbProvider.KEY_VALUE_INT);
+			int valueNumericIndex = c.getColumnIndex(DbProvider.KEY_VALUE_NUMERIC);
+			int encounterDateIndex = c.getColumnIndex(DbProvider.KEY_ENCOUNTER_DATE);
+			int dataTypeIndex = c.getColumnIndex(DbProvider.KEY_DATA_TYPE);
 
 			do {
 				try {
@@ -152,10 +153,10 @@ public class ObservationChartActivity extends Activity {
 					int dataType = c.getInt(dataTypeIndex);
 					
 					double value;
-					if (dataType == Constants.TYPE_INT) {
+					if (dataType == DbProvider.TYPE_INT) {
 						value = c.getInt(valueIntIndex);
 						series.add(encounterDate.getTime(), value);
-					} else if (dataType == Constants.TYPE_DOUBLE) {
+					} else if (dataType == DbProvider.TYPE_DOUBLE) {
 						value = c.getDouble(valueNumericIndex);
 						series.add(encounterDate.getTime(), value);
 					}

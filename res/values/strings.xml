@@ -1,19 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-Copyright (C) 2009 Google Inc.
-
-Licensed under the Apache License, Version 2.0 (the "License"); you may not
-use this file except in compliance with the License. You may obtain a copy of
-the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
-License for the specific language governing permissions and limitations under
-the License.
--->
 <resources xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!-- NON UI STRING CONSTANTS (referenced in both java and xml). -->
@@ -36,6 +21,8 @@ the License.
     <string name="key_client_auth">client_authentication</string>
     <string name="key_show_settings_menu">show_settings_menu</string>
     <string name="key_enable_activity_log">enable_activity_log</string>
+    <string name="key_min_refresh_seconds">minimum_refresh_time</string>
+    <string name="key_max_refresh_seconds">maximum_refresh_time</string>
 
     <!-- Defaults -->
     <string name="default_server">https://41.57.100.29:8443/amrs</string>
@@ -48,6 +35,8 @@ the License.
     <string name="default_show_settings_menu">true</string>
     <string name="default_enable_activity_logging">true</string>
     <string name="default_use_client_auth">false</string>
+    <string name="default_min_refresh_seconds">60</string>
+    <string name="default_max_refresh_seconds">120</string>
 
     <!-- UI STRINGS -->
     <!-- PREFERENCES -->
@@ -72,6 +61,8 @@ the License.
     <string name="pref_change_saved_search">Change Cohort or Search ID</string>
     <string name="pref_program">Program</string>
     <string name="pref_change_program">Change Program</string>
+    <string name="pref_min_refresh_seconds">Don\'t Refresh Data Before (Seconds)</string>
+    <string name="pref_max_refresh_seconds">Refresh Data After (Seconds)</string>
 
     <!-- SSL Preferences and SSL Activity -->
     <string name="ssl_server_settings">Server Settings</string>

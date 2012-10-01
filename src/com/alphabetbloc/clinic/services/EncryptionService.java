@@ -61,7 +61,7 @@ import com.alphabetbloc.clinic.utilities.FileUtils;
  */
 public class EncryptionService extends WakefulIntentService {
 
-	private static final String TAG = "EncryptionService";
+	private static final String TAG = EncryptionService.class.getSimpleName();
 	public static final String CIPHER_ALGORITHM = "AES/CBC/PKCS5Padding"; // "AES/CFB/PKCS5Padding"
 	public static final String KEYSPEC_ALGORITHM = "AES";
 	public static final String DECRYPTED_HIDDEN_DIR = ".dec";

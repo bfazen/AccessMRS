@@ -8,7 +8,6 @@ import java.util.zip.GZIPInputStream;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
-import org.odk.clinic.android.openmrs.Constants;
 
 import android.content.SharedPreferences;
 import android.content.SyncResult;
@@ -96,12 +95,12 @@ public class CheckConnectivityTask extends SyncDataTask {
 		DataInputStream zdis = new DataInputStream(new GZIPInputStream(responseEntity.getContent()));
 
 		int status = zdis.readInt();
-		if (status == Constants.STATUS_FAILURE) {
-			zdis.close();
-			throw new IOException("Connection failed. Please try again.");
-		} else if (status == HttpURLConnection.HTTP_UNAUTHORIZED) {
+		if (status == HttpURLConnection.HTTP_UNAUTHORIZED) {
 			zdis.close();
 			throw new IOException("Access denied. Check your username and password.");
+		} else if (status <= 0 || status >= HttpURLConnection.HTTP_BAD_REQUEST) {
+			zdis.close();
+			throw new IOException("Connection Failed. Please Try Again.");
 		} else {
 			assert (status == HttpURLConnection.HTTP_OK); // success
 			return zdis;

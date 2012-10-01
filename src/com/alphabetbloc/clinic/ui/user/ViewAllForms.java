@@ -3,15 +3,6 @@ package com.alphabetbloc.clinic.ui.user;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import com.alphabetbloc.clinic.R;
-import com.alphabetbloc.clinic.adapters.FormAdapter;
-import com.alphabetbloc.clinic.adapters.MergeAdapter;
-import com.alphabetbloc.clinic.data.DbAdapter;
-import com.alphabetbloc.clinic.utilities.App;
-import com.alphabetbloc.clinic.utilities.FileUtils;
-import com.alphabetbloc.clinic.utilities.XformUtils;
-
-import org.odk.clinic.android.openmrs.Constants;
 import org.odk.clinic.android.openmrs.Form;
 import org.odk.clinic.android.openmrs.Patient;
 import org.odk.collect.android.provider.FormsProviderAPI.FormsColumns;
@@ -38,6 +29,14 @@ import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.alphabetbloc.clinic.R;
+import com.alphabetbloc.clinic.adapters.FormAdapter;
+import com.alphabetbloc.clinic.adapters.MergeAdapter;
+import com.alphabetbloc.clinic.providers.DbProvider;
+import com.alphabetbloc.clinic.utilities.App;
+import com.alphabetbloc.clinic.utilities.FileUtils;
+import com.alphabetbloc.clinic.utilities.XformUtils;
 
 /**
  * @author Louis Fazen (louis.fazen@gmail.com)
@@ -77,7 +76,7 @@ public class ViewAllForms extends ViewFormsActivity {
 		getDownloadedForms();
 
 		// We should always have a patient here, so getPatient
-		String patientIdStr = getIntent().getStringExtra(Constants.KEY_PATIENT_ID);
+		String patientIdStr = getIntent().getStringExtra(KEY_PATIENT_ID);
 		Integer patientId = Integer.valueOf(patientIdStr);
 		mPatient = getPatient(patientId);
 
@@ -99,14 +98,14 @@ public class ViewAllForms extends ViewFormsActivity {
 
 	private void getDownloadedForms() {
 
-		Cursor c = DbAdapter.openDb().fetchAllForms();
+		Cursor c = DbProvider.openDb().fetchAllForms();
 
 		if (c != null && c.getCount() >= 0) {
 
 			mTotalForms.clear();
-			int formIdIndex = c.getColumnIndex(DbAdapter.KEY_FORM_ID);
-			int nameIndex = c.getColumnIndex(DbAdapter.KEY_NAME);
-			int pathIndex = c.getColumnIndex(DbAdapter.KEY_PATH);
+			int formIdIndex = c.getColumnIndex(DbProvider.KEY_FORM_ID);
+			int nameIndex = c.getColumnIndex(DbProvider.KEY_NAME);
+			int pathIndex = c.getColumnIndex(DbProvider.KEY_PATH);
 
 			if (c.getCount() > 0) {
 				Form form;
@@ -283,7 +282,7 @@ public class ViewAllForms extends ViewFormsActivity {
 		// public void onClick(View v) {
 		//
 		// Intent i = new Intent(getApplicationContext(), ViewSavedForms.class);
-		// i.putExtra(Constants.KEY_PATIENT_ID,
+		// i.putExtra(KEY_PATIENT_ID,
 		// mPatient.getPatientId().toString());
 		// startActivity(i);
 		// }
@@ -339,7 +338,7 @@ public class ViewAllForms extends ViewFormsActivity {
 		public boolean onSingleTapUp(MotionEvent e) {
 
 			Intent i = new Intent(getApplicationContext(), ViewSavedForms.class);
-			i.putExtra(Constants.KEY_PATIENT_ID, mPatient.getPatientId().toString());
+			i.putExtra(KEY_PATIENT_ID, mPatient.getPatientId().toString());
 			startActivity(i);
 
 			return false;

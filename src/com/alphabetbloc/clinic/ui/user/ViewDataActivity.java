@@ -3,7 +3,7 @@ package com.alphabetbloc.clinic.ui.user;
 import com.alphabetbloc.clinic.R;
 import org.odk.clinic.android.openmrs.Patient;
 
-import com.alphabetbloc.clinic.data.DbAdapter;
+import com.alphabetbloc.clinic.providers.DbProvider;
 import com.alphabetbloc.clinic.services.RefreshDataService;
 import com.alphabetbloc.clinic.utilities.App;
 import com.alphabetbloc.clinic.utilities.FileUtils;
@@ -47,6 +47,10 @@ public class ViewDataActivity extends ListActivity implements SyncStatusObserver
 	private static final int SWIPE_MAX_OFF_PATH = 250;
 	private static final int SWIPE_THRESHOLD_VELOCITY = 200;
 	public static final int PROGRESS_DIALOG = 1;
+	
+	//intent extras
+	public static final String KEY_PATIENT_ID = "PATIENT_ID";
+	public static final String KEY_OBSERVATION_FIELD_NAME = "KEY_OBSERVATION_FIELD_NAME";
 	
 	protected OnTouchListener mSwipeListener;
 	protected GestureDetector mSwipeDetector;
@@ -145,18 +149,18 @@ public class ViewDataActivity extends ListActivity implements SyncStatusObserver
 
 		Patient p = null;
 
-		Cursor c = DbAdapter.openDb().fetchPatient(patientId);
+		Cursor c = DbProvider.openDb().fetchPatient(patientId);
 
 		if (c != null && c.getCount() > 0) {
-			int patientIdIndex = c.getColumnIndex(DbAdapter.KEY_PATIENT_ID);
-			int identifierIndex = c.getColumnIndex(DbAdapter.KEY_IDENTIFIER);
-			int givenNameIndex = c.getColumnIndex(DbAdapter.KEY_GIVEN_NAME);
-			int familyNameIndex = c.getColumnIndex(DbAdapter.KEY_FAMILY_NAME);
-			int middleNameIndex = c.getColumnIndex(DbAdapter.KEY_MIDDLE_NAME);
-			int birthDateIndex = c.getColumnIndex(DbAdapter.KEY_BIRTH_DATE);
-			int genderIndex = c.getColumnIndex(DbAdapter.KEY_GENDER);
-			int priorityIndex = c.getColumnIndexOrThrow(DbAdapter.KEY_PRIORITY_FORM_NUMBER);
-			int priorityFormIndex = c.getColumnIndexOrThrow(DbAdapter.KEY_PRIORITY_FORM_NAMES);
+			int patientIdIndex = c.getColumnIndex(DbProvider.KEY_PATIENT_ID);
+			int identifierIndex = c.getColumnIndex(DbProvider.KEY_IDENTIFIER);
+			int givenNameIndex = c.getColumnIndex(DbProvider.KEY_GIVEN_NAME);
+			int familyNameIndex = c.getColumnIndex(DbProvider.KEY_FAMILY_NAME);
+			int middleNameIndex = c.getColumnIndex(DbProvider.KEY_MIDDLE_NAME);
+			int birthDateIndex = c.getColumnIndex(DbProvider.KEY_BIRTH_DATE);
+			int genderIndex = c.getColumnIndex(DbProvider.KEY_GENDER);
+			int priorityIndex = c.getColumnIndexOrThrow(DbProvider.KEY_PRIORITY_FORM_NUMBER);
+			int priorityFormIndex = c.getColumnIndexOrThrow(DbProvider.KEY_PRIORITY_FORM_NAMES);
 
 			p = new Patient();
 			p.setPatientId(c.getInt(patientIdIndex));

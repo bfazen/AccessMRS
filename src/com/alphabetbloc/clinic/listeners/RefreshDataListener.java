@@ -14,17 +14,19 @@
 
 package com.alphabetbloc.clinic.listeners;
 
-import org.odk.clinic.android.openmrs.Constants;
-
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.SystemClock;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
-import com.alphabetbloc.clinic.data.DbAdapter;
+import com.alphabetbloc.clinic.R;
+import com.alphabetbloc.clinic.providers.DbProvider;
 import com.alphabetbloc.clinic.services.AlarmIntentService;
 import com.alphabetbloc.clinic.services.WakefulIntentService;
+import com.alphabetbloc.clinic.utilities.App;
 
 public class RefreshDataListener implements WakefulIntentService.AlarmListener {
 
@@ -50,13 +52,18 @@ public class RefreshDataListener implements WakefulIntentService.AlarmListener {
 
 		// Find the most recent download time, determine the best interval for
 		// the alarms...
-		long recentDownload = DbAdapter.openDb().fetchMostRecentDownload();
+		long recentDownload = DbProvider.openDb().fetchMostRecentDownload();
 		long timeSinceRefresh = System.currentTimeMillis() - recentDownload;
 		Log.e("louis.fazen", "Minutes since last refresh: " + timeSinceRefresh / (1000 * 60));
 
 		long days = 1000 * 60 * 60 * 24;
 		//establishes threshold for Setting Alarm Frequency
-		if (timeSinceRefresh < Constants.MAXIMUM_REFRESH_TIME) {
+		
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(App.getApp());
+		String maxRefreshSeconds = prefs.getString(App.getApp().getString(R.string.key_max_refresh_seconds), App.getApp().getString(R.string.default_max_refresh_seconds));
+		long maxRefreshMs = 1000L * Long.valueOf(maxRefreshSeconds);
+		
+		if (timeSinceRefresh < maxRefreshMs) {
 			mgr.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + (5*days), (5*days), pi);
 		} else {
 			mgr.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + (5*days), (5*days), pi);

@@ -14,7 +14,7 @@ import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 import com.alphabetbloc.clinic.adapters.FormAdapter;
 import com.alphabetbloc.clinic.adapters.MergeAdapter;
 import com.alphabetbloc.clinic.data.ActivityLog;
-import com.alphabetbloc.clinic.data.DbAdapter;
+import com.alphabetbloc.clinic.providers.DbProvider;
 import com.alphabetbloc.clinic.tasks.ActivityLogTask;
 import com.alphabetbloc.clinic.utilities.App;
 
@@ -71,10 +71,10 @@ public class ViewFormsActivity extends ViewDataActivity {
 	protected ArrayList<Integer> getPriorityForms(Integer patientId) {
 		ArrayList<Integer> selectedFormIds = new ArrayList<Integer>();
 
-		Cursor c = DbAdapter.openDb().fetchPriorityFormIdByPatientId(patientId);
+		Cursor c = DbProvider.openDb().fetchPriorityFormIdByPatientId(patientId);
 
 		if (c != null && c.getCount() > 0) {
-			int valueIntIndex = c.getColumnIndex(DbAdapter.KEY_VALUE_INT);
+			int valueIntIndex = c.getColumnIndex(DbProvider.KEY_VALUE_INT);
 			do {
 				selectedFormIds.add(c.getInt(valueIntIndex));
 			} while (c.moveToNext());
@@ -260,7 +260,7 @@ public class ViewFormsActivity extends ViewDataActivity {
 		// Allows for faster PatientList Queries using ONLY patient table
 		// otherwise, for patient list, need: patients, instances, and obs
 		// tables
-		DbAdapter ca = DbAdapter.openDb();
+		DbProvider ca = DbProvider.openDb();
 		if (patientId > 0) {
 			ca.updateSavedFormNumbersByPatientId(patientId.toString());
 			ca.updateSavedFormsListByPatientId(patientId.toString());
@@ -273,7 +273,7 @@ public class ViewFormsActivity extends ViewDataActivity {
 			fi.setPatientId(patientId);
 			fi.setFormId(Integer.parseInt(dbjrFormId));
 			fi.setPath(fileDbPath);
-			fi.setStatus(DbAdapter.STATUS_UNSUBMITTED);
+			fi.setStatus(DbProvider.STATUS_UNSUBMITTED);
 			Date date = new Date();
 			date.setTime(System.currentTimeMillis());
 			String dateString = "Completed: " + (new SimpleDateFormat("EEE, MMM dd, yyyy 'at' HH:mm").format(date));

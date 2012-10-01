@@ -2,8 +2,6 @@ package com.alphabetbloc.clinic.ui.user;
 
 import java.io.File;
 
-import com.alphabetbloc.clinic.R;
-import org.odk.clinic.android.openmrs.Constants;
 import org.odk.clinic.android.openmrs.Form;
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
@@ -26,6 +24,7 @@ import android.view.View.OnTouchListener;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.alphabetbloc.clinic.R;
 import com.alphabetbloc.clinic.adapters.MergeAdapter;
 import com.alphabetbloc.clinic.listeners.DecryptionListener;
 import com.alphabetbloc.clinic.listeners.DeleteDecryptedDataListener;
@@ -47,7 +46,7 @@ public class ViewCompletedForms extends ViewFormsActivity implements DecryptionL
 
 	public static final String EDIT_FORM = "edit_form";
 	public static final int VIEW_FORM_ONLY = 4;
-	private static final String TAG = "ViewCompletedForms";
+	private static final String TAG = ViewCompletedForms.class.getSimpleName();
 	private ProgressDialog mProgressDialog;
 	private static Integer mPatientId;
 	private Context mContext;
@@ -64,7 +63,7 @@ public class ViewCompletedForms extends ViewFormsActivity implements DecryptionL
 		setContentView(R.layout.example_cw_main);
 
 		mContext = this;
-		String patientIdString = getIntent().getStringExtra(Constants.KEY_PATIENT_ID);
+		String patientIdString = getIntent().getStringExtra(KEY_PATIENT_ID);
 		mPatientId = Integer.valueOf(patientIdString);
 
 		mDecryptionTask = (DecryptionTask) getLastNonConfigurationInstance();

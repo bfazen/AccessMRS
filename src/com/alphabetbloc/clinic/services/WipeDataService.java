@@ -12,7 +12,7 @@ import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
-import com.alphabetbloc.clinic.data.DbAdapter;
+import com.alphabetbloc.clinic.providers.DbProvider;
 import com.alphabetbloc.clinic.ui.admin.ClinicLauncherActivity;
 import com.alphabetbloc.clinic.utilities.App;
 import com.alphabetbloc.clinic.utilities.FileUtils;
@@ -28,7 +28,7 @@ import com.alphabetbloc.clinic.utilities.FileUtils;
 
 public class WipeDataService extends WakefulIntentService {
 
-	private static final String TAG = "WipeDataService";
+	private static final String TAG = WipeDataService.class.getSimpleName();
 	public static final String WIPE_DATA_COMPLETE = "com.alphabetbloc.android.settings.WIPE_DATA_SERVICE_COMPLETE";
 	public static final String WIPE_CLINIC_DATA = "wipe_clinic_data";
 	private Context mCollectCtx;
@@ -191,11 +191,11 @@ public class WipeDataService extends WakefulIntentService {
 		boolean success = false;
 		try {
 			// first try
-			success = this.deleteDatabase(DbAdapter.DATABASE_NAME);
+			success = this.deleteDatabase(DbProvider.DATABASE_NAME);
 
 			// second try
 			if (!success) {
-				File db = this.getDatabasePath(DbAdapter.DATABASE_NAME);
+				File db = this.getDatabasePath(DbProvider.DATABASE_NAME);
 				success = db.delete();
 			}
 		} catch (Exception e) {

@@ -30,7 +30,7 @@ import android.os.IBinder;
 import android.util.Log;
 
 public class AccountAuthenticatorService extends Service {
-	private static final String TAG = "AccountAuthenticatorService";
+	private static final String TAG = AccountAuthenticatorService.class.getSimpleName();
 	private static AccountAuthenticatorImpl mAccountAuthenticator = null;
 
 	public AccountAuthenticatorService() {

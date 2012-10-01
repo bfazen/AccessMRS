@@ -2,10 +2,6 @@ package com.alphabetbloc.clinic.ui.user;
 
 import java.util.ArrayList;
 
-import com.alphabetbloc.clinic.R;
-import com.alphabetbloc.clinic.adapters.MergeAdapter;
-
-import org.odk.clinic.android.openmrs.Constants;
 import org.odk.clinic.android.openmrs.Form;
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
@@ -18,6 +14,9 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
 import android.widget.ListView;
+
+import com.alphabetbloc.clinic.R;
+import com.alphabetbloc.clinic.adapters.MergeAdapter;
 
 /**
  * Displays all the Saved forms from Collect instances.db. * This View is only
@@ -43,7 +42,7 @@ public class ViewSavedForms extends ViewFormsActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.example_cw_main);
 
-		String patientIdString = getIntent().getStringExtra(Constants.KEY_PATIENT_ID);
+		String patientIdString = getIntent().getStringExtra(KEY_PATIENT_ID);
 		mPatientId = Integer.valueOf(patientIdString);
 
 		mFormDetector = new GestureDetector(new onFormClick());

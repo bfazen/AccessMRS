@@ -5,20 +5,11 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.UUID;
 
-import com.alphabetbloc.clinic.R;
-import org.odk.clinic.android.openmrs.Constants;
 import org.odk.clinic.android.openmrs.FormInstance;
 import org.odk.clinic.android.openmrs.Patient;
 import org.odk.collect.android.provider.FormsProviderAPI.FormsColumns;
 import org.odk.collect.android.provider.InstanceProviderAPI;
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
-
-import com.alphabetbloc.clinic.data.ActivityLog;
-import com.alphabetbloc.clinic.data.DbAdapter;
-import com.alphabetbloc.clinic.services.RefreshDataService;
-import com.alphabetbloc.clinic.tasks.ActivityLogTask;
-import com.alphabetbloc.clinic.utilities.App;
-import com.alphabetbloc.clinic.utilities.XformUtils;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
@@ -53,6 +44,14 @@ import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Toast;
+
+import com.alphabetbloc.clinic.R;
+import com.alphabetbloc.clinic.data.ActivityLog;
+import com.alphabetbloc.clinic.providers.DbProvider;
+import com.alphabetbloc.clinic.services.RefreshDataService;
+import com.alphabetbloc.clinic.tasks.ActivityLogTask;
+import com.alphabetbloc.clinic.utilities.App;
+import com.alphabetbloc.clinic.utilities.XformUtils;
 
 public class CreatePatientActivity extends Activity implements OnGestureListener, SyncStatusObserver {
 	public static final Integer PERMANENT_NEW_CLIENT = 1;
@@ -252,13 +251,13 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 		boolean similarFound = false;
 
 		Cursor c = null;
-		c = DbAdapter.openDb().fetchPatients(mFirstName + " " + mLastName, null, DashboardActivity.LIST_SIMILAR_CLIENTS);
+		c = DbProvider.openDb().fetchPatients(mFirstName + " " + mLastName, null, DashboardActivity.LIST_SIMILAR_CLIENTS);
 		if (c != null && c.getCount() > 0) {
 			similarFound = true;
 		}
 
 		if (!similarFound && mPatientID != null && mPatientID.length() > 3) {
-			c = DbAdapter.openDb().fetchPatients(null, mPatientID, DashboardActivity.LIST_SIMILAR_CLIENTS);
+			c = DbProvider.openDb().fetchPatients(null, mPatientID, DashboardActivity.LIST_SIMILAR_CLIENTS);
 			if (c != null && c.getCount() > 0) {
 				similarFound = true;
 			}
@@ -329,13 +328,13 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 					fi.setPatientId(mPatient.getPatientId());
 					fi.setFormId(Integer.parseInt(dbjrFormId));
 					fi.setPath(fileDbPath);
-					fi.setStatus(DbAdapter.STATUS_UNSUBMITTED);
+					fi.setStatus(DbProvider.STATUS_UNSUBMITTED);
 					Date date = new Date();
 					date.setTime(System.currentTimeMillis());
 					String dateString = "Completed: " + (new SimpleDateFormat("EEE, MMM dd, yyyy 'at' HH:mm").format(date));
 					fi.setCompletionSubtext(dateString);
 
-					DbAdapter.openDb().createFormInstance(fi, displayName);
+					DbProvider.openDb().createFormInstance(fi, displayName);
 				}
 
 				loadNewClientView();
@@ -350,7 +349,7 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 
 		// load the newly created patient into ViewPatientActivity
 		Intent ip = new Intent(getApplicationContext(), ViewPatientActivity.class);
-		ip.putExtra(Constants.KEY_PATIENT_ID, mPatient.getPatientId().toString());
+		ip.putExtra(ViewDataActivity.KEY_PATIENT_ID, mPatient.getPatientId().toString());
 		startActivity(ip);
 
 		// and quit
@@ -436,7 +435,7 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 	private void addClientToDb() {
 		mPatient = new Patient();
 
-		int minPatientId = DbAdapter.openDb().findLastClientCreatedId();
+		int minPatientId = DbProvider.openDb().findLastClientCreatedId();
 		if (minPatientId < 0)
 			mPatient.setPatientId(Integer.valueOf(minPatientId - 1));
 		else
@@ -461,7 +460,7 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 		String randomUUID = uuid.toString();
 		mPatient.setUuid(randomUUID);
 
-		DbAdapter.openDb().createPatient(mPatient);
+		DbProvider.openDb().createPatient(mPatient);
 	}
 
 	private void addFormToCollect() {

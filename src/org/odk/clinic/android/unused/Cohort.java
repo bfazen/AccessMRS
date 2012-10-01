@@ -1,4 +1,4 @@
-package org.odk.clinic.android.openmrs;
+package org.odk.clinic.android.unused;
 
 
 // TODO add description

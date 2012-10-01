@@ -3,8 +3,6 @@ package com.alphabetbloc.clinic.ui.user;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import org.odk.clinic.android.openmrs.Constants;
-
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.app.Activity;
@@ -35,10 +33,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.alphabetbloc.clinic.R;
-import com.alphabetbloc.clinic.data.DbAdapter;
-import com.alphabetbloc.clinic.listeners.RefreshDataListener;
+import com.alphabetbloc.clinic.providers.DbProvider;
 import com.alphabetbloc.clinic.services.RefreshDataService;
-import com.alphabetbloc.clinic.services.WakefulIntentService;
 import com.alphabetbloc.clinic.ui.admin.PreferencesActivity;
 import com.alphabetbloc.clinic.utilities.App;
 import com.alphabetbloc.clinic.utilities.EncryptionUtil;
@@ -124,7 +120,7 @@ public class DashboardActivity extends Activity implements SyncStatusObserver {
 
 	private void setRefreshDataUi() {
 		// REFRESH TIME
-		long refreshDate = DbAdapter.openDb().fetchMostRecentDownload();
+		long refreshDate = DbProvider.openDb().fetchMostRecentDownload();
 		Date date = new Date();
 		date.setTime(refreshDate);
 		String refreshDateString = new SimpleDateFormat("MMM dd, 'at' HH:mm").format(date) + " ";
@@ -136,7 +132,11 @@ public class DashboardActivity extends Activity implements SyncStatusObserver {
 		refreshButtonGroup.removeAllViews();
 
 		long timeSinceRefresh = System.currentTimeMillis() - refreshDate;
-		if (timeSinceRefresh > Constants.MAXIMUM_REFRESH_TIME) {
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(App.getApp());
+		String maxRefreshSeconds = prefs.getString(App.getApp().getString(R.string.key_max_refresh_seconds), App.getApp().getString(R.string.default_max_refresh_seconds));
+		long maxRefreshMs = 1000L * Long.valueOf(maxRefreshSeconds);
+	
+		if (timeSinceRefresh > maxRefreshMs) {
 			View downloadButton = mLayout.inflate(R.layout.dashboard_refresh, null);
 			downloadButton.setClickable(true);
 			downloadButton.setOnClickListener(new OnClickListener() {
@@ -150,7 +150,7 @@ public class DashboardActivity extends Activity implements SyncStatusObserver {
 
 	private void setPriorityListUi(ViewGroup vg) {
 		// Suggested / Priority Forms
-		priorityToDoForms = DbAdapter.openDb().countAllPriorityFormNumbers();
+		priorityToDoForms = DbProvider.openDb().countAllPriorityFormNumbers();
 		if (priorityToDoForms > 0) {
 			View priorityButton = mLayout.inflate(R.layout.dashboard_patients, null);
 			priorityButton.setClickable(true);
@@ -184,7 +184,7 @@ public class DashboardActivity extends Activity implements SyncStatusObserver {
 
 	private void setSavedListUi(ViewGroup vg) {
 		// Incomplete/Saved Form Section
-		incompleteForms = DbAdapter.openDb().countAllSavedFormNumbers();
+		incompleteForms = DbProvider.openDb().countAllSavedFormNumbers();
 		if (incompleteForms > 0) {
 			View incompleteButton = mLayout.inflate(R.layout.dashboard_patients, null);
 			incompleteButton.setClickable(true);
@@ -217,7 +217,7 @@ public class DashboardActivity extends Activity implements SyncStatusObserver {
 
 	private void setCompletedListUi(ViewGroup vg) {
 		// Completed Form Section
-		completedForms = DbAdapter.openDb().countAllCompletedUnsentForms();
+		completedForms = DbProvider.openDb().countAllCompletedUnsentForms();
 		if (completedForms > 0) {
 			View completedButton = mLayout.inflate(R.layout.dashboard_patients, null);
 			completedButton.setClickable(true);
@@ -250,7 +250,7 @@ public class DashboardActivity extends Activity implements SyncStatusObserver {
 
 	private void setAllClientsListUi(ViewGroup vg) {
 		// All Clients Section
-		patients = DbAdapter.openDb().countAllPatients();
+		patients = DbProvider.openDb().countAllPatients();
 		if (patients > 0) {
 			View patientsButton = mLayout.inflate(R.layout.dashboard_patients, null);
 			patientsButton.setClickable(true);
