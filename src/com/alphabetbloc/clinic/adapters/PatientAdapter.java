@@ -2,7 +2,6 @@ package com.alphabetbloc.clinic.adapters;
 
 import java.util.List;
 
-
 import com.alphabetbloc.clinic.R;
 import com.alphabetbloc.clinic.data.Patient;
 
@@ -15,6 +14,11 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+/**
+ * 
+ * @author Louis Fazen (louis.fazen@gmail.com)
+ * @author Yaw Anokwa (starting version was from ODK Clinic)
+ */
 public class PatientAdapter extends ArrayAdapter<Patient> {
 	Context mContext;
 

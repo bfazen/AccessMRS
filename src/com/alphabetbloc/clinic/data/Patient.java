@@ -5,6 +5,11 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
+/**
+ * 
+ * @author Louis Fazen (louis.fazen@gmail.com)
+ * @author Yaw Anokwa (starting version was from ODK Clinic)
+ */
 public class Patient {
 
 	private Integer patientId = null;
@@ -23,18 +28,18 @@ public class Patient {
 	private Integer savedFormNumber = null;
 	private String savedForms = null;
 	private Integer totalCompletedForms = null;
-	
-	//For Client Registration Forms:
+
+	// For Client Registration Forms:
 	private String uuid = null;
 	private String birthdayEstimated = null;
-	
-	//used to specify info about the reason for creating a new patient
+
+	// used to specify info about the reason for creating a new patient
 	private Integer createCode = null;
-	
+
 	public Patient() {
 
 	}
-	
+
 	@Override
 	public String toString() {
 		return givenName + " " + middleName + " " + familyName + " " + identifier;
@@ -63,7 +68,7 @@ public class Patient {
 	public String getBirthdate() {
 		return birthDate;
 	}
-	
+
 	public String getAge() {
 		return age;
 	}
@@ -71,19 +76,19 @@ public class Patient {
 	public String getGender() {
 		return gender;
 	}
-	
+
 	public Boolean getPriority() {
 		return priorityStatus;
 	}
-	
+
 	public Boolean getSaved() {
 		return savedStatus;
 	}
-	
+
 	public Integer getPriorityNumber() {
 		return priorityFormNumber;
 	}
-	
+
 	public String getPriorityForms() {
 		return priorityForms;
 	}
@@ -91,18 +96,19 @@ public class Patient {
 	public Integer getSavedNumber() {
 		return savedFormNumber;
 	}
-	
+
 	public String getSavedForms() {
 		return savedForms;
 	}
-	
+
 	public void setPatientId(Integer pid) {
 		patientId = pid;
 	}
-	
+
 	public void setCreateCode(Integer createcode) {
 		createCode = createcode;
 	}
+
 	public Integer getCreateCode() {
 		return createCode;
 	}
@@ -126,59 +132,58 @@ public class Patient {
 	public void setPriority(Boolean priority) {
 		priorityStatus = priority;
 	}
-		
-	
+
 	public void setPriorityNumber(Integer formNumber) {
 		priorityFormNumber = formNumber;
 	}
-	
+
 	public void setPriorityForms(String forms) {
 		priorityForms = forms;
 	}
-	
+
 	public void setSaved(Boolean saved) {
 		savedStatus = saved;
 	}
-	
+
 	public void setSavedNumber(Integer formNumber) {
 		savedFormNumber = formNumber;
 	}
-	
+
 	public void setSavedForms(String forms) {
 		savedForms = forms;
 	}
-	
+
 	public void setUuid(String n) {
 		uuid = n;
 	}
-	
+
 	public String getUuid() {
 		return uuid;
 	}
-	
+
 	public void setbirthEstimated(String birth) {
 		birthdayEstimated = birth;
 	}
-	
+
 	public String getbirthEstimated() {
 		return birthdayEstimated;
 	}
-	
+
 	public void setTotalCompletedForms(Integer totalforms) {
 		totalCompletedForms = totalforms;
 	}
-	
+
 	public Integer getTotalCompletedForms() {
 		return totalCompletedForms;
 	}
-	
+
 	public void setBirthDate(String date) {
 		birthDate = date;
-		
+
 		// set Age as well
 		Date patientBirthDate = null;
 		String outputAge = "";
-		
+
 		SimpleDateFormat inputFormat = new SimpleDateFormat("MMM dd, yyyy");
 		try {
 			patientBirthDate = inputFormat.parse(date);
@@ -197,12 +202,12 @@ public class Patient {
 		}
 		age = outputAge;
 	}
-	
+
 	public void setDbBirthDate(String date) {
 		dbBirthDate = date;
 	}
-	
-	public String getDbBirthDate(){
+
+	public String getDbBirthDate() {
 		return dbBirthDate;
 	}
 

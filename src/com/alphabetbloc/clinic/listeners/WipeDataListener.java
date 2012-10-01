@@ -21,7 +21,11 @@ import android.os.SystemClock;
 
 import com.alphabetbloc.clinic.services.WakefulIntentService;
 import com.alphabetbloc.clinic.services.WipeDataService;
-
+/**
+ * 
+ * @author Louis Fazen (louis.fazen@gmail.com)
+ *
+ */
 public class WipeDataListener implements WakefulIntentService.AlarmListener {
 
 	public void scheduleAlarms(AlarmManager mgr, PendingIntent pi, Context ctxt) {

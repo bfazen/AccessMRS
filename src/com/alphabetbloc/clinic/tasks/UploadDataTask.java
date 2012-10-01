@@ -21,6 +21,11 @@ import com.alphabetbloc.clinic.utilities.App;
 import com.alphabetbloc.clinic.utilities.FileUtils;
 import com.alphabetbloc.clinic.utilities.WebUtils;
 
+/**
+ * 
+ * @author Louis Fazen (louis.fazen@gmail.com)
+ * @author Yaw Anokwa. Sam Mbugua (I think? starting version was from ODK Clinic)
+ */
 public class UploadDataTask extends SyncDataTask {
 
 	private static final String TAG = UploadDataTask.class.getSimpleName();
@@ -29,7 +34,7 @@ public class UploadDataTask extends SyncDataTask {
 	protected String doInBackground(SyncResult... values) {
 		sSyncResult = values[0];
 		Log.e(TAG, "UploadDataTask Called");
-		
+
 		mUploadComplete = false;
 		String uploadResult = "No Completed Forms to Upload";
 
@@ -39,16 +44,16 @@ public class UploadDataTask extends SyncDataTask {
 		if (instancesToUpload.length > 0) {
 
 			ArrayList<String> uploaded = uploadInstances(instancesToUpload);
-			
+
 			if (!uploaded.isEmpty() && uploaded.size() > 0) {
-				
+
 				// update the databases with new status submitted
 				int progress = 0;
 				for (int i = 0; i < uploaded.size(); i++) {
 					String path = uploaded.get(i);
 					updateClinicDbPath(path);
 					updateCollectDb(path);
-					long c = Math.round(((float) i / (float)instancesToUpload.length) * 10.0);
+					long c = Math.round(((float) i / (float) instancesToUpload.length) * 10.0);
 					int current = (int) c;
 					if (current != progress) {
 						progress = current;
@@ -180,7 +185,8 @@ public class UploadDataTask extends SyncDataTask {
 
 		} catch (Exception e) {
 			e.printStackTrace();
-			++sSyncResult.stats.numIoExceptions;;
+			++sSyncResult.stats.numIoExceptions;
+			;
 		}
 
 		return updated;

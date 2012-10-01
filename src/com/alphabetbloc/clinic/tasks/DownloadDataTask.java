@@ -28,12 +28,15 @@ import android.util.Log;
 
 import com.alphabetbloc.clinic.data.Form;
 import com.alphabetbloc.clinic.providers.DbProvider;
-import com.alphabetbloc.clinic.providers.DbProvider;
 import com.alphabetbloc.clinic.utilities.App;
 import com.alphabetbloc.clinic.utilities.FileUtils;
 import com.alphabetbloc.clinic.utilities.WebUtils;
 import com.alphabetbloc.clinic.utilities.XformUtils;
-
+/**
+ * 
+ * @author Louis Fazen (louis.fazen@gmail.com)
+ * @author Yaw Anokwa, Sam Mbugua (I think? ...starting version was from ODK Clinic)
+ */
 public class DownloadDataTask extends SyncDataTask {
 
 	private static final String TAG = DownloadDataTask.class.getSimpleName();

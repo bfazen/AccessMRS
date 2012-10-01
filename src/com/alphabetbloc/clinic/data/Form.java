@@ -1,6 +1,10 @@
 package com.alphabetbloc.clinic.data;
 
-
+/**
+ * 
+ * @author Louis Fazen (louis.fazen@gmail.com)
+ * @author Yaw Anokwa (starting version was from ODK Clinic)
+ */
 public class Form {
 	//_id in Collect instances.db
 	private Integer instanceId = null;

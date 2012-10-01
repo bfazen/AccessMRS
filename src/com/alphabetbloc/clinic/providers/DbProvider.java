@@ -29,6 +29,11 @@ import com.alphabetbloc.clinic.ui.user.DashboardActivity;
 import com.alphabetbloc.clinic.utilities.App;
 import com.alphabetbloc.clinic.utilities.FileUtils;
 
+/**
+ * 
+ * @author Louis Fazen (louis.fazen@gmail.com)
+ * @author Yaw Anokwa (I think the only one... but could be Sam Mbugua?)
+ */
 public class DbProvider extends ContentProvider {
 	private final static String TAG = DbProvider.class.getSimpleName();
 	// public static final String AUTHORITY =

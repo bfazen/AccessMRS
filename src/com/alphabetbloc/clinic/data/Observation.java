@@ -2,7 +2,11 @@ package com.alphabetbloc.clinic.data;
 
 import com.alphabetbloc.clinic.providers.DbProvider;
 
-
+/**
+ * 
+ * @author Yaw Anokwa (starting version was from ODK Clinic)
+ *
+ */
 public class Observation {
 
 	private Integer patientId = null;

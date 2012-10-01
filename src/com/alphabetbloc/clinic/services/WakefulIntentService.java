@@ -27,6 +27,11 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.PowerManager;
 
+/**
+ * 
+ * @author Louis Fazen (louis.fazen@gmail.com)
+ *
+ */
 abstract public class WakefulIntentService extends IntentService {
 	abstract protected void doWakefulWork(Intent intent);
 

@@ -32,7 +32,11 @@ import android.view.View;
 import android.view.Window;
 import android.widget.TextView;
 import android.widget.Toast;
-
+/**
+ * 
+ * @author Louis Fazen (louis.fazen@gmail.com)
+ *
+ */
 public class ClinicLauncherActivity extends Activity {
 
 	public static final String TAG = ClinicLauncherActivity.class.getSimpleName();

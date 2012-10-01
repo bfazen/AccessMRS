@@ -36,9 +36,9 @@ import android.util.Log;
 import android.widget.Toast;
 
 /**
- * @author (Nikolay Elenkov) only imported here by Louis.Fazen@gmail.com // CODE
- *         Taken, more or less wholesale from: Nikolay Elenkov!
- *         https://github.com/nelenkov/custom-cert-https
+ * @author Louis Fazen (louis.fazen@gmail.com)
+ * @author (Much code here is derived from Nikolay Elenkov
+ *         https://github.com/nelenkov/custom-cert-https)
  */
 
 public class AddCertificatesActivity extends ManageSSLActivity {

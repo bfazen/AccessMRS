@@ -40,7 +40,11 @@ import com.alphabetbloc.clinic.utilities.Crypto;
 import com.alphabetbloc.clinic.utilities.EncryptionUtil;
 import com.alphabetbloc.clinic.utilities.FileUtils;
 import com.alphabetbloc.clinic.utilities.KeyStoreUtil;
-
+/**
+ * 
+ * @author Louis Fazen (louis.fazen@gmail.com)
+ *
+ */
 public class InitialSetupActivity extends Activity {
 
 	private Context mContext;

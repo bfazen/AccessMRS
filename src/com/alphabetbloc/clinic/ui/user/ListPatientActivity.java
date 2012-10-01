@@ -2,7 +2,6 @@ package com.alphabetbloc.clinic.ui.user;
 
 import java.util.ArrayList;
 
-
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.app.Dialog;
@@ -50,7 +49,14 @@ import com.alphabetbloc.clinic.ui.admin.PreferencesActivity;
 import com.alphabetbloc.clinic.utilities.App;
 import com.alphabetbloc.clinic.utilities.FileUtils;
 
-public class ListPatientActivity extends ListActivity implements SyncStatusObserver{
+/**
+ * 
+ * @author Louis Fazen (louis.fazen@gmail.com) (All Methods except where noted otherwise)
+ * 
+ * @Author Yaw Anokwa, Carl Hartung (Respectively, I think... Wrote the
+ *         findPatients and ShowCustomToast methods for ODK Clinic and Collect)
+ */
+public class ListPatientActivity extends ListActivity implements SyncStatusObserver {
 
 	// Menu ID's
 	private static final int MENU_PREFERENCES = Menu.FIRST;
@@ -61,7 +67,7 @@ public class ListPatientActivity extends ListActivity implements SyncStatusObser
 	private static final int SWIPE_MAX_OFF_PATH = 250;
 	private static final int SWIPE_THRESHOLD_VELOCITY = 200;
 	public static final int PROGRESS_DIALOG = 1;
-	
+
 	public static int mListType;
 	private EditText mSearchText;
 	private TextWatcher mFilterTextWatcher;
@@ -149,7 +155,7 @@ public class ListPatientActivity extends ListActivity implements SyncStatusObser
 		});
 
 		// Verify Similar Clients on Add New Client
-//		mSearchBar = (RelativeLayout) findViewById(R.id.searchholder);
+		// mSearchBar = (RelativeLayout) findViewById(R.id.searchholder);
 		mSearchBar = (RelativeLayout) findViewById(R.id.search_holder);
 		mSimilarClientButton = (Button) findViewById(R.id.similar_client_button);
 		mSimilarClientButton.setOnClickListener(new OnClickListener() {
@@ -271,12 +277,12 @@ public class ListPatientActivity extends ListActivity implements SyncStatusObser
 		if (mProgressDialog != null && !mProgressDialog.isShowing()) {
 			mProgressDialog.show();
 		}
-		
+
 		// NB: get immediate view position
 		if (mClientListView != null)
 			mClientListView.setSelectionFromTop(mIndex, mTop);
 
-		//then refresh the view
+		// then refresh the view
 		findPatients();
 	}
 
@@ -423,9 +429,10 @@ public class ListPatientActivity extends ListActivity implements SyncStatusObser
 
 		mClientListView.setOnTouchListener(mClientListener);
 		listLayout.setOnTouchListener(mSwipeListener);
-		
-		//get the same item position as before (but now should have updated numbers)
-		if (mIndex > 0 || mTop > 0){
+
+		// get the same item position as before (but now should have updated
+		// numbers)
+		if (mIndex > 0 || mTop > 0) {
 			mClientListView.setSelectionFromTop(mIndex, mTop);
 			mIndex = 0;
 			mTop = 0;
@@ -522,7 +529,6 @@ public class ListPatientActivity extends ListActivity implements SyncStatusObser
 		return mProgressDialog;
 	}
 
-	
 	// LIFECYCLE
 	@Override
 	protected void onPause() {

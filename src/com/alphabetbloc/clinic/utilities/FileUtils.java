@@ -41,8 +41,12 @@ import android.util.Log;
  * Static methods used for common file operations. LF Added common deletion
  * operations used by encryption services.
  * 
- * @author Carl Hartung (carlhartung@gmail.com)
- * @author Louis Fazen (louis.fazen@gmail.com)
+ * @author Louis Fazen (louis.fazen@gmail.com) (All methods except where
+ *         otherwise noted)
+ * @author Yaw Anokwa, Carl Hartung (carlhartung@gmail.com) (StorageReady(),
+ *         deleteFile(), createFolder(), getMD5Hash(), and doesXFormExist taken
+ *         from ODK Clinic/Collect)
+ * 
  */
 public class FileUtils {
 
@@ -408,7 +412,8 @@ public class FileUtils {
 
 	/**
 	 * 
-	 * Load the truststore or keystore object, loading default from SD or res/raw if it does not exist
+	 * Load the truststore or keystore object, loading default from SD or
+	 * res/raw if it does not exist
 	 * 
 	 * @param sslStoreType
 	 *            The type of Store (Either FileUtils.MY_TRUSTORE or
@@ -416,7 +421,7 @@ public class FileUtils {
 	 * @return the KeyStore object of the local Trust or Key Store
 	 */
 	public static KeyStore loadSslStore(String sslStoreType) {
-		
+
 		File localTrustStoreFile = new File(App.getApp().getFilesDir(), sslStoreType);
 		if (!localTrustStoreFile.exists()) {
 			localTrustStoreFile = FileUtils.setupDefaultSslStore(sslStoreType);

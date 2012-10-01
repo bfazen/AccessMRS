@@ -18,6 +18,10 @@ import com.alphabetbloc.clinic.providers.DbProvider;
 // TODO! Add the ability to click into obs when there are many observations of the same type..
 // TODO! redo the observation_list_item to make it thinner to allow for more obs to be veiwed at one time
 // if many obs, should change the view, as was done with saved forms etc. 
+/**
+ * @author Yaw Anokwa (starting version was from ODK Clinic)
+ *
+ */
 public class ObservationAdapter extends ArrayAdapter<Observation> {
 
 	public ObservationAdapter(Context context, int textViewResourceId, List<Observation> items) {

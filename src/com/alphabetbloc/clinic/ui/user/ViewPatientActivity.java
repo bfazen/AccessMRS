@@ -36,11 +36,7 @@ import com.alphabetbloc.clinic.utilities.App;
 
 /**
  * 
- * Louis Fazen (louis.fazen@gmail.com) has simplified this ListActivity and
- * moved most of the code to ViewAllForms
- * 
- * @author Louis Fazen
- * @author Yaw Anokwa
+ * @author Louis Fazen (louis.fazen@gmail.com)
  * 
  */
 public class ViewPatientActivity extends ViewDataActivity {
@@ -210,13 +206,13 @@ public class ViewPatientActivity extends ViewDataActivity {
 	 * Intent ip; int dataType = obs.getDataType(); if (dataType ==
 	 * DbProvider.TYPE_INT || dataType == DbProvider.TYPE_DOUBLE) { ip = new
 	 * Intent(getApplicationContext(), ObservationChartActivity.class);
-	 * ip.putExtra(KEY_PATIENT_ID, mPatient.getPatientId()
-	 * .toString()); ip.putExtra(KEY_OBSERVATION_FIELD_NAME,
-	 * obs.getFieldName()); startActivity(ip); } else { ip = new
-	 * Intent(getApplicationContext(), ObservationTimelineActivity.class);
-	 * ip.putExtra(KEY_PATIENT_ID, mPatient.getPatientId()
-	 * .toString()); ip.putExtra(KEY_OBSERVATION_FIELD_NAME,
-	 * obs.getFieldName()); startActivity(ip); } } }
+	 * ip.putExtra(KEY_PATIENT_ID, mPatient.getPatientId() .toString());
+	 * ip.putExtra(KEY_OBSERVATION_FIELD_NAME, obs.getFieldName());
+	 * startActivity(ip); } else { ip = new Intent(getApplicationContext(),
+	 * ObservationTimelineActivity.class); ip.putExtra(KEY_PATIENT_ID,
+	 * mPatient.getPatientId() .toString());
+	 * ip.putExtra(KEY_OBSERVATION_FIELD_NAME, obs.getFieldName());
+	 * startActivity(ip); } } }
 	 */
 
 	private void refreshView() {

@@ -8,6 +8,11 @@ import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+/**
+ * 
+ * @author Louis Fazen (louis.fazen@gmail.com)
+ *
+ */
 public class WebUtils {
 	public static final String TAG = WebUtils.class.getSimpleName();
 	// POST

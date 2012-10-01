@@ -17,7 +17,11 @@ import com.alphabetbloc.clinic.listeners.SyncDataListener;
 import com.alphabetbloc.clinic.tasks.CheckConnectivityTask;
 import com.alphabetbloc.clinic.utilities.App;
 import com.alphabetbloc.clinic.utilities.WebUtils;
-
+/**
+ * 
+ * @author Louis Fazen (louis.fazen@gmail.com)
+ *
+ */
 public class TestSslConnectionActivity extends Activity implements SyncDataListener {
 
 	// private static final String TAG =

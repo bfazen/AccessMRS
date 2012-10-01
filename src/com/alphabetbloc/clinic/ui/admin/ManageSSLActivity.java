@@ -22,9 +22,9 @@ import com.alphabetbloc.clinic.data.Certificate;
 import com.alphabetbloc.clinic.utilities.EncryptionUtil;
 
 /**
- * @author (Nikolay Elenkov) only imported here by Louis.Fazen@gmail.com // CODE
- *         Taken, more or less wholesale from: Nikolay Elenkov!
- *         https://github.com/nelenkov/custom-cert-https
+ * 
+ * @author Louis Fazen (louis.fazen@gmail.com)
+ *
  */
 
 public abstract class ManageSSLActivity extends ListActivity {

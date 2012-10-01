@@ -61,11 +61,13 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 
 /**
- * Static methods used for common file operations. LF Added common deletion
- * operations used by encryption services.
  * 
- * @author Louis Fazen (louis.fazen@gmail.com)
- * @author Yaw Anokwa (check on this?)
+ * @author Louis Fazen (louis.fazen@gmail.com) (Other remaining methods)
+ * 
+ * @author Yaw Anokwa (InsertSingleForm(), getNameFromId(),
+ *         CreateFormInstance(), findFormNode(), parseDate(),
+ *         traverseInstanceNodes(), and prepareInstanceValues() are all taken
+ *         wholesale from ODK Clinic!)
  */
 public class XformUtils {
 

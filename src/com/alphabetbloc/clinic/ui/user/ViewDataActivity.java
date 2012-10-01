@@ -37,7 +37,8 @@ import android.widget.Toast;
 /**
  * Displays ArrayList<Form> in a Time-Separated List with patient header
  * 
- * @author Louis Fazen (louis.fazen@gmail.com)
+ * @author Louis Fazen (louis.fazen@gmail.com) (All Methods except where noted otherwise)
+ * @ author Yaw Anoka, Carl Hartung (getPatient() taken from ODK Clinic, ShowCustomToast() from ODK Collect)
  * 
  */
 

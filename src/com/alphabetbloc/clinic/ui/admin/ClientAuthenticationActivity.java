@@ -23,6 +23,8 @@ import com.alphabetbloc.clinic.utilities.FileUtils;
 
 /**
  * @author Louis Fazen (louis.fazen@gmail.com)
+ * @author (Some code here is derived from Nikolay Elenkov
+ *         https://github.com/nelenkov/custom-cert-https)
  */
 
 public class ClientAuthenticationActivity extends ManageSSLActivity {

@@ -25,13 +25,20 @@ import com.alphabetbloc.clinic.tasks.SyncDataTask;
 import com.alphabetbloc.clinic.tasks.UploadDataTask;
 import com.alphabetbloc.clinic.utilities.FileUtils;
 
+/**
+ * 
+ * @author Louis Fazen (louis.fazen@gmail.com) (All Methods except where noted otherwise)
+ * 
+ * @author Yaw Anokwa, Carl Hartung (specifically, ShowCustomToast Method was derived from ODK Clinic/Collect not sure
+ *         of authorship?)
+ */
 public class RefreshDataActivity extends Activity implements SyncDataListener {
 
 	public final static int ASK_TO_DOWNLOAD = 1;
 	public final static int DIRECT_TO_DOWNLOAD = 2;
 	public final static String DIALOG = "showdialog";
 	private static final String TAG = RefreshDataActivity.class.getSimpleName();
-//	private Context mContext;
+	// private Context mContext;
 	private ProgressDialog mProgressDialog;
 	private AlertDialog mAlertDialog;
 	private DownloadDataTask mDownloadTask;
@@ -43,7 +50,7 @@ public class RefreshDataActivity extends Activity implements SyncDataListener {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setTitle(getString(R.string.app_name) + " > " + getString(R.string.download_patients));
-//		mContext = this;
+		// mContext = this;
 
 		if (!FileUtils.storageReady()) {
 			showCustomToast(getString(R.string.error, R.string.storage_error));
@@ -241,7 +248,8 @@ public class RefreshDataActivity extends Activity implements SyncDataListener {
 		stopService(stopintent);
 		// reschedule alarms (b/c either user is hitting cancel or recent sync)
 		// TODO! check if this should be false!
-//		WakefulIntentService.scheduleAlarms(new RefreshDataListener(), WakefulIntentService.REFRESH_DATA, mContext, true);
+		// WakefulIntentService.scheduleAlarms(new RefreshDataListener(),
+		// WakefulIntentService.REFRESH_DATA, mContext, true);
 
 		if (reloadDashboard) {
 			Intent startintent = new Intent(getApplicationContext(), DashboardActivity.class);

@@ -17,6 +17,11 @@ import com.alphabetbloc.clinic.R;
 import com.alphabetbloc.clinic.utilities.App;
 import com.alphabetbloc.clinic.utilities.WebUtils;
 
+/**
+ * 
+ * @author Louis Fazen (louis.fazen@gmail.com)
+ *
+ */
 public class CheckConnectivityTask extends SyncDataTask {
 
 	private String mServer;

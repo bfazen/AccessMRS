@@ -59,6 +59,11 @@ import com.alphabetbloc.clinic.utilities.MySSLSocketFactory;
 import com.alphabetbloc.clinic.utilities.MyTrustManager;
 import com.alphabetbloc.clinic.utilities.WebUtils;
 
+/**
+ * 
+ * @author Louis Fazen (louis.fazen@gmail.com)
+ *
+ */
 public class SyncDataTask extends AsyncTask<SyncResult, String, String> {
 
 	private static final String TAG = SyncDataTask.class.getSimpleName();

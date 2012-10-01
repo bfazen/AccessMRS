@@ -18,7 +18,11 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 
 import android.util.Log;
-
+/**
+ * 
+ * @author unattributed code from the Nelenkov keystore application
+ *
+ */
 public class Crypto {
 
     private static final String TAG = Crypto.class.getSimpleName();

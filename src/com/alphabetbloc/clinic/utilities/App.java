@@ -4,7 +4,11 @@ import net.sqlcipher.database.SQLiteDatabase;
 import android.app.Application;
 
 import com.alphabetbloc.clinic.providers.DbProvider;
-
+/**
+ * 
+ * @author Louis Fazen (louis.fazen@gmail.com) (All methods except where otherwise noted)
+ * @author Yaw Anokwa (getApp() taken from ODK Clinic)
+ */
 public class App extends Application {
 	private static App mSingleton = null;
 	private static DbProvider.DatabaseHelper mSqlCipherDbHelper;

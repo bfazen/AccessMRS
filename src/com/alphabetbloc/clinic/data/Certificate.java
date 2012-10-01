@@ -1,5 +1,9 @@
 package com.alphabetbloc.clinic.data;
-
+/**
+ * 
+ * @author Louis Fazen (louis.fazen@gmail.com)
+ *
+ */
 public class Certificate {
 
 	private String sO = null;

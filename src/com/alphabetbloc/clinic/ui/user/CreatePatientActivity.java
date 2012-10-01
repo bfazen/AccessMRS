@@ -52,7 +52,11 @@ import com.alphabetbloc.clinic.services.RefreshDataService;
 import com.alphabetbloc.clinic.tasks.ActivityLogTask;
 import com.alphabetbloc.clinic.utilities.App;
 import com.alphabetbloc.clinic.utilities.XformUtils;
-
+/**
+ * 
+ * @author Louis Fazen (louis.fazen@gmail.com)
+ *
+ */
 public class CreatePatientActivity extends Activity implements OnGestureListener, SyncStatusObserver {
 	public static final Integer PERMANENT_NEW_CLIENT = 1;
 	public static final Integer TEMPORARY_NEW_CLIENT = 2;

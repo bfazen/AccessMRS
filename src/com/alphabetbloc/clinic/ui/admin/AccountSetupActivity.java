@@ -29,6 +29,11 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+/**
+ * 
+ * @author Louis Fazen (louis.fazen@gmail.com)
+ *
+ */
 public class AccountSetupActivity extends Activity implements SyncDataListener {
 
 	// setAccountAuthenticatorResult(android.os.Bundle);

@@ -13,6 +13,11 @@ import javax.net.ssl.X509TrustManager;
 
 import android.util.Log;
 
+/**
+ * 
+ * @author Nikolay Nelenkov (I think... unattributed code from custom-certs project)
+ *
+ */
 public class MyTrustManager implements X509TrustManager {
 
 	private static final String TAG = MyTrustManager.class.getSimpleName();

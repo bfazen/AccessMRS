@@ -27,7 +27,11 @@ import com.alphabetbloc.clinic.providers.DbProvider;
 import com.alphabetbloc.clinic.services.AlarmIntentService;
 import com.alphabetbloc.clinic.services.WakefulIntentService;
 import com.alphabetbloc.clinic.utilities.App;
-
+/**
+ * 
+ * @author Louis Fazen (louis.fazen@gmail.com)
+ *
+ */
 public class RefreshDataListener implements WakefulIntentService.AlarmListener {
 
 	public void scheduleAlarms(AlarmManager mgr, PendingIntent pi, Context ctxt) {

@@ -16,15 +16,21 @@ import org.apache.http.conn.ssl.X509HostnameVerifier;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 
-// loosely based on org.apache.http.conn.ssl.SSLSocketFactory
+/**
+ * 
+ * @author Nikolay Nelenkov (I think... unattributed code from custom-certs
+ *         project with the note:
+ *         "loosely based on org.apache.http.conn.ssl.SSLSocketFactory")
+ * 
+ */
 public class MySSLSocketFactory implements LayeredSocketFactory {
 
-//	private SSLContext sslCtx;
+	// private SSLContext sslCtx;
 	private SSLSocketFactory socketFactory;
 	private X509HostnameVerifier hostnameVerifier;
 
 	public MySSLSocketFactory(SSLContext sslCtx, X509HostnameVerifier hostnameVerifier) {
-//		this.sslCtx = sslCtx;
+		// this.sslCtx = sslCtx;
 		this.socketFactory = sslCtx.getSocketFactory();
 		this.hostnameVerifier = hostnameVerifier;
 	}

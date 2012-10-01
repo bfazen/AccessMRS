@@ -21,7 +21,11 @@ import android.os.SystemClock;
 
 import com.alphabetbloc.clinic.services.DeleteDecryptedFilesService;
 import com.alphabetbloc.clinic.services.WakefulIntentService;
-
+/**
+ * 
+ * @author Louis Fazen (louis.fazen@gmail.com)
+ *
+ */
 public class DeleteDecryptedDataListener implements WakefulIntentService.AlarmListener {
 
 	public void scheduleAlarms(AlarmManager mgr, PendingIntent pi, Context ctxt) {

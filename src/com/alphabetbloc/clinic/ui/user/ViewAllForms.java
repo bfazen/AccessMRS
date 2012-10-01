@@ -39,7 +39,9 @@ import com.alphabetbloc.clinic.utilities.FileUtils;
 import com.alphabetbloc.clinic.utilities.XformUtils;
 
 /**
- * @author Louis Fazen (louis.fazen@gmail.com)
+ * @author Louis Fazen (louis.fazen@gmail.com) (All Methods except where noted otherwise)
+ * @author Yaw Anokwa (getDownloadedForms() and LaunchFormEntry() were taken from
+ *         ODK Clinic)
  */
 
 public class ViewAllForms extends ViewFormsActivity {
@@ -390,7 +392,6 @@ public class ViewAllForms extends ViewFormsActivity {
 		startActivityForResult(intent, priority);
 	}
 
-	
 	// NB: RESULT_OK based on:
 	// Collect.FormEntryActivity.finishReturnInstance() line1654
 	// Uri instance = Uri.withAppendedPath(InstanceColumns.CONTENT_URI, id);
@@ -399,12 +400,12 @@ public class ViewAllForms extends ViewFormsActivity {
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
 		super.onActivityResult(requestCode, resultCode, intent);
-		
+
 		if (resultCode == RESULT_OK && (requestCode == FILL_FORM || requestCode == FILL_PRIORITY_FORM) && intent != null)
 			updateDatabases(requestCode, intent, mPatient.getPatientId());
 
 	}
-	
+
 	// LAUNCH FORM ENTRY
 	// TODO All of the below should be made into an loadForm IntentService
 	private void launchFormEntry(String jrFormId, String formname, int priority) {

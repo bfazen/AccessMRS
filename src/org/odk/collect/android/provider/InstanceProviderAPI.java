@@ -20,7 +20,10 @@ import android.net.Uri;
 import android.provider.BaseColumns;
 
 /**
- * Convenience definitions for NotePadProvider
+ * 
+ * @author Louis Fazen (louis.fazen@gmail.com)
+ * @author Yaw Anokwa, Carl Hartung (other authors? taken from ODK Clinic/Collect, originally from NotePadProvider Tutorial)
+ *
  */
 public final class InstanceProviderAPI {
     public static final String AUTHORITY = "org.odk.collect.android.provider.odk.instances";

@@ -7,6 +7,11 @@ import com.alphabetbloc.clinic.providers.DbProvider;
 import android.os.AsyncTask;
 import android.util.Log;
 
+/**
+ * 
+ * @author Louis Fazen (louis.fazen@gmail.com)
+ *
+ */
 public class ActivityLogTask extends AsyncTask<Void, Void, Void> {
 	
 	private static final boolean ACTIVITY_LOGGING = true;

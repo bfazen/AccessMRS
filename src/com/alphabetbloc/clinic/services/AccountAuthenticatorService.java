@@ -29,6 +29,11 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 
+/**
+ * 
+ * @author Louis Fazen (louis.fazen@gmail.com)
+ *
+ */
 public class AccountAuthenticatorService extends Service {
 	private static final String TAG = AccountAuthenticatorService.class.getSimpleName();
 	private static AccountAuthenticatorImpl mAccountAuthenticator = null;

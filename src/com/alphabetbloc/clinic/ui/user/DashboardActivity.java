@@ -39,7 +39,11 @@ import com.alphabetbloc.clinic.ui.admin.PreferencesActivity;
 import com.alphabetbloc.clinic.utilities.App;
 import com.alphabetbloc.clinic.utilities.EncryptionUtil;
 import com.alphabetbloc.clinic.utilities.FileUtils;
-
+/**
+ * 
+ * @author Louis Fazen (louis.fazen@gmail.com)
+ *
+ */
 public class DashboardActivity extends Activity implements SyncStatusObserver {
 
 	// Menu ID's
