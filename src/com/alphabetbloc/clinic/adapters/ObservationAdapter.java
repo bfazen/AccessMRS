@@ -2,7 +2,6 @@ package com.alphabetbloc.clinic.adapters;
 
 import java.util.List;
 
-import org.odk.clinic.android.openmrs.Observation;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -12,6 +11,7 @@ import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
 import com.alphabetbloc.clinic.R;
+import com.alphabetbloc.clinic.data.Observation;
 import com.alphabetbloc.clinic.providers.DbProvider;
 
 //TODO!  This is a remnant from ODK Clinic and needs to be changed significantly to work...

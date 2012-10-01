@@ -1,4 +1,4 @@
-package org.odk.clinic.android.openmrs;
+package com.alphabetbloc.clinic.data;
 
 import com.alphabetbloc.clinic.providers.DbProvider;
 

@@ -5,8 +5,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.UUID;
 
-import org.odk.clinic.android.openmrs.FormInstance;
-import org.odk.clinic.android.openmrs.Patient;
 import org.odk.collect.android.provider.FormsProviderAPI.FormsColumns;
 import org.odk.collect.android.provider.InstanceProviderAPI;
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
@@ -47,6 +45,8 @@ import android.widget.Toast;
 
 import com.alphabetbloc.clinic.R;
 import com.alphabetbloc.clinic.data.ActivityLog;
+import com.alphabetbloc.clinic.data.FormInstance;
+import com.alphabetbloc.clinic.data.Patient;
 import com.alphabetbloc.clinic.providers.DbProvider;
 import com.alphabetbloc.clinic.services.RefreshDataService;
 import com.alphabetbloc.clinic.tasks.ActivityLogTask;

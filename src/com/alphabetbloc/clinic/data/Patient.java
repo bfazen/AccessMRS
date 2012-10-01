@@ -1,4 +1,4 @@
-package org.odk.clinic.android.openmrs;
+package com.alphabetbloc.clinic.data;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -9,33 +9,25 @@ public class Patient {
 
 	private Integer patientId = null;
 	private String identifier = null;
-	
-
-
 	private String givenName = null;
 	private String familyName = null;
 	private String middleName = null;
-
 	private String gender = null;
-	
-//	private String birthDateDb = null;
 	private String birthDate = null;
 	private String dbBirthDate = null;
-	
 	private String age = null;
 	private Boolean priorityStatus = false;
 	private Integer priorityFormNumber = null;
 	private String priorityForms = null;
-	
 	private Boolean savedStatus = false;
 	private Integer savedFormNumber = null;
 	private String savedForms = null;
-	
 	private Integer totalCompletedForms = null;
 	
 	//For Client Registration Forms:
 	private String uuid = null;
 	private String birthdayEstimated = null;
+	
 	//used to specify info about the reason for creating a new patient
 	private Integer createCode = null;
 	

@@ -1,4 +1,4 @@
-package org.odk.clinic.android.openmrs;
+package com.alphabetbloc.clinic.data;
 
 
 public class Form {

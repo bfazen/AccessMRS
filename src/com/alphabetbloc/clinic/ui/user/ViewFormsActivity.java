@@ -6,14 +6,14 @@ import java.util.Arrays;
 import java.util.Date;
 
 import com.alphabetbloc.clinic.R;
-import org.odk.clinic.android.openmrs.Form;
-import org.odk.clinic.android.openmrs.FormInstance;
 import org.odk.collect.android.provider.InstanceProviderAPI;
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
 import com.alphabetbloc.clinic.adapters.FormAdapter;
 import com.alphabetbloc.clinic.adapters.MergeAdapter;
 import com.alphabetbloc.clinic.data.ActivityLog;
+import com.alphabetbloc.clinic.data.Form;
+import com.alphabetbloc.clinic.data.FormInstance;
 import com.alphabetbloc.clinic.providers.DbProvider;
 import com.alphabetbloc.clinic.tasks.ActivityLogTask;
 import com.alphabetbloc.clinic.utilities.App;

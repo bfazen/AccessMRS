@@ -3,8 +3,6 @@ package com.alphabetbloc.clinic.ui.user;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import org.odk.clinic.android.openmrs.Form;
-import org.odk.clinic.android.openmrs.Patient;
 import org.odk.collect.android.provider.FormsProviderAPI.FormsColumns;
 import org.odk.collect.android.provider.InstanceProviderAPI;
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
@@ -33,6 +31,8 @@ import android.widget.Toast;
 import com.alphabetbloc.clinic.R;
 import com.alphabetbloc.clinic.adapters.FormAdapter;
 import com.alphabetbloc.clinic.adapters.MergeAdapter;
+import com.alphabetbloc.clinic.data.Form;
+import com.alphabetbloc.clinic.data.Patient;
 import com.alphabetbloc.clinic.providers.DbProvider;
 import com.alphabetbloc.clinic.utilities.App;
 import com.alphabetbloc.clinic.utilities.FileUtils;

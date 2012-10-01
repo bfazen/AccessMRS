@@ -2,9 +2,9 @@ package com.alphabetbloc.clinic.adapters;
 
 import java.util.List;
 
-import org.odk.clinic.android.openmrs.Patient;
 
 import com.alphabetbloc.clinic.R;
+import com.alphabetbloc.clinic.data.Patient;
 
 import android.content.Context;
 import android.content.res.Resources;

@@ -2,7 +2,6 @@ package com.alphabetbloc.clinic.ui.user;
 
 import java.util.ArrayList;
 
-import org.odk.clinic.android.openmrs.Form;
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
 import android.content.ComponentName;
@@ -17,6 +16,7 @@ import android.widget.ListView;
 
 import com.alphabetbloc.clinic.R;
 import com.alphabetbloc.clinic.adapters.MergeAdapter;
+import com.alphabetbloc.clinic.data.Form;
 
 /**
  * Displays all the Saved forms from Collect instances.db. * This View is only

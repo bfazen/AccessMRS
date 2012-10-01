@@ -39,8 +39,6 @@ import org.kxml2.io.KXmlParser;
 import org.kxml2.io.KXmlSerializer;
 import org.kxml2.kdom.Element;
 import com.alphabetbloc.clinic.R;
-import org.odk.clinic.android.openmrs.Observation;
-import org.odk.clinic.android.openmrs.Patient;
 import org.odk.collect.android.provider.FormsProviderAPI.FormsColumns;
 import org.odk.collect.android.provider.InstanceProviderAPI;
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
@@ -49,6 +47,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.NodeList;
 
+import com.alphabetbloc.clinic.data.Observation;
+import com.alphabetbloc.clinic.data.Patient;
 import com.alphabetbloc.clinic.providers.DbProvider;
 import com.alphabetbloc.clinic.ui.user.CreatePatientActivity;
 

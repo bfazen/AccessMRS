@@ -2,8 +2,6 @@ package com.alphabetbloc.clinic.ui.user;
 
 import java.util.ArrayList;
 
-import org.odk.clinic.android.openmrs.Observation;
-import org.odk.clinic.android.openmrs.Patient;
 import org.odk.collect.android.provider.InstanceProviderAPI;
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
@@ -30,6 +28,8 @@ import android.widget.TextView;
 import com.alphabetbloc.clinic.R;
 import com.alphabetbloc.clinic.adapters.MergeAdapter;
 import com.alphabetbloc.clinic.adapters.ObservationAdapter;
+import com.alphabetbloc.clinic.data.Observation;
+import com.alphabetbloc.clinic.data.Patient;
 import com.alphabetbloc.clinic.providers.DbProvider;
 import com.alphabetbloc.clinic.services.RefreshDataService;
 import com.alphabetbloc.clinic.utilities.App;

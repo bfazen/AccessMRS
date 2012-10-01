@@ -3,7 +3,7 @@ package com.alphabetbloc.clinic.adapters;
 import java.util.List;
 
 import com.alphabetbloc.clinic.R;
-import org.odk.clinic.android.openmrs.Form;
+import com.alphabetbloc.clinic.data.Form;
 
 import android.content.Context;
 import android.view.LayoutInflater;

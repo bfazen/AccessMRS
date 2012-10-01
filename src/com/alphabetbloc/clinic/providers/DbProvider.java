@@ -10,10 +10,6 @@ import net.sqlcipher.database.SQLiteDatabase;
 import net.sqlcipher.database.SQLiteOpenHelper;
 import net.sqlcipher.database.SQLiteQueryBuilder;
 
-import org.odk.clinic.android.openmrs.Form;
-import org.odk.clinic.android.openmrs.FormInstance;
-import org.odk.clinic.android.openmrs.Observation;
-import org.odk.clinic.android.openmrs.Patient;
 import org.odk.collect.android.provider.InstanceProviderAPI;
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
@@ -25,6 +21,10 @@ import android.net.Uri;
 import android.util.Log;
 
 import com.alphabetbloc.clinic.data.ActivityLog;
+import com.alphabetbloc.clinic.data.Form;
+import com.alphabetbloc.clinic.data.FormInstance;
+import com.alphabetbloc.clinic.data.Observation;
+import com.alphabetbloc.clinic.data.Patient;
 import com.alphabetbloc.clinic.ui.user.DashboardActivity;
 import com.alphabetbloc.clinic.utilities.App;
 import com.alphabetbloc.clinic.utilities.FileUtils;

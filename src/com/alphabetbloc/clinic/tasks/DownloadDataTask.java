@@ -19,7 +19,6 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import net.sqlcipher.DatabaseUtils.InsertHelper;
 import net.sqlcipher.database.SQLiteDatabase;
 
-import org.odk.clinic.android.openmrs.Form;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -27,6 +26,7 @@ import org.w3c.dom.NodeList;
 import android.content.SyncResult;
 import android.util.Log;
 
+import com.alphabetbloc.clinic.data.Form;
 import com.alphabetbloc.clinic.providers.DbProvider;
 import com.alphabetbloc.clinic.providers.DbProvider;
 import com.alphabetbloc.clinic.utilities.App;

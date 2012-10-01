@@ -2,7 +2,6 @@ package com.alphabetbloc.clinic.ui.user;
 
 import java.io.File;
 
-import org.odk.clinic.android.openmrs.Form;
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
 import android.app.AlarmManager;
@@ -26,6 +25,7 @@ import android.widget.Toast;
 
 import com.alphabetbloc.clinic.R;
 import com.alphabetbloc.clinic.adapters.MergeAdapter;
+import com.alphabetbloc.clinic.data.Form;
 import com.alphabetbloc.clinic.listeners.DecryptionListener;
 import com.alphabetbloc.clinic.listeners.DeleteDecryptedDataListener;
 import com.alphabetbloc.clinic.services.WakefulIntentService;
