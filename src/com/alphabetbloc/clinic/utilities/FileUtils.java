@@ -28,6 +28,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.alphabetbloc.clinic.R;
+import com.alphabetbloc.clinic.providers.DbProvider;
+
+import org.odk.collect.android.provider.InstanceProviderAPI;
 import org.odk.collect.android.provider.FormsProviderAPI.FormsColumns;
 
 import android.content.Context;
@@ -445,5 +448,27 @@ public class FileUtils {
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
+	}
+	
+	
+	public static boolean isDataWiped() {
+
+		File clinicDb = App.getApp().getDatabasePath(DbProvider.DATABASE_NAME);
+		if (clinicDb != null && clinicDb.exists()) {
+			Log.e(TAG, "clinic data was not wiped properly");
+			return false;
+		}
+		Context collectCtx = null;
+		try {
+			collectCtx = App.getApp().createPackageContext("org.odk.collect.android", Context.CONTEXT_RESTRICTED);
+		} catch (NameNotFoundException e) {
+			e.printStackTrace();
+		}
+		File collectDb = collectCtx.getDatabasePath(InstanceProviderAPI.DATABASE_NAME);
+		if (collectDb != null && collectDb.exists()) {
+			Log.e(TAG, "collect data was not wiped properly");
+			return false;
+		}
+		return true;
 	}
 }

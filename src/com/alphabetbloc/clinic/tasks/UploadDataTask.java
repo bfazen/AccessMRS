@@ -24,7 +24,8 @@ import com.alphabetbloc.clinic.utilities.WebUtils;
 /**
  * 
  * @author Louis Fazen (louis.fazen@gmail.com)
- * @author Yaw Anokwa. Sam Mbugua (I think? starting version was from ODK Clinic)
+ * @author Yaw Anokwa. Sam Mbugua (I think? starting version was from ODK
+ *         Clinic)
  */
 public class UploadDataTask extends SyncDataTask {
 
@@ -44,6 +45,9 @@ public class UploadDataTask extends SyncDataTask {
 		if (instancesToUpload.length > 0) {
 
 			ArrayList<String> uploaded = uploadInstances(instancesToUpload);
+
+			if (mDownloadComplete)
+				dropHttpClient();
 
 			if (!uploaded.isEmpty() && uploaded.size() > 0) {
 
@@ -205,9 +209,10 @@ public class UploadDataTask extends SyncDataTask {
 		mUploadComplete = true;
 		synchronized (this) {
 			if (mStateListener != null) {
-				if (mUploadComplete && mDownloadComplete)
+				if (mUploadComplete && mDownloadComplete) {
+					dropHttpClient();
 					mStateListener.syncComplete(result, sSyncResult);
-				else
+				} else
 					mStateListener.uploadComplete(result);
 			}
 		}

@@ -1,0 +1,153 @@
+package com.alphabetbloc.clinic.ui.user;
+
+import android.content.Context;
+import android.content.SyncStatusObserver;
+import android.database.Cursor;
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import com.alphabetbloc.clinic.R;
+import com.alphabetbloc.clinic.data.Patient;
+import com.alphabetbloc.clinic.providers.DbProvider;
+
+/**
+ * Displays ArrayList<Form> in a Time-Separated List with patient header
+ * 
+ * @author Louis Fazen (louis.fazen@gmail.com) (All Methods except where noted
+ *         otherwise)
+ * @author Yaw Anokwa (getPatient() taken from ODK Clinic)
+ * 
+ */
+
+public class BasePatientActivity extends BaseListActivity implements SyncStatusObserver {
+
+	// intent extras
+	public static final String KEY_PATIENT_ID = "PATIENT_ID";
+	public static final String KEY_OBSERVATION_FIELD_NAME = "KEY_OBSERVATION_FIELD_NAME";
+
+	protected void createPatientHeader(Integer patientId) {
+
+		Patient focusPt = getPatient(patientId);
+
+		View v = (View) findViewById(R.id.client_header);
+		if (v != null) {
+			v.setOnTouchListener(mSwipeListener);
+		}
+
+		TextView textView = (TextView) findViewById(R.id.identifier_text);
+		if (textView != null) {
+			textView.setText(focusPt.getIdentifier());
+		}
+
+		textView = (TextView) findViewById(R.id.name_text);
+		if (textView != null) {
+			StringBuilder nameBuilder = new StringBuilder();
+			nameBuilder.append(focusPt.getGivenName());
+			nameBuilder.append(' ');
+			nameBuilder.append(focusPt.getMiddleName());
+			nameBuilder.append(' ');
+			nameBuilder.append(focusPt.getFamilyName());
+			textView.setText(nameBuilder.toString());
+		}
+
+		textView = (TextView) findViewById(R.id.birthdate_text);
+		if (textView != null) {
+			textView.setText(focusPt.getBirthdate());
+		}
+
+		ImageView imageView = (ImageView) findViewById(R.id.gender_image);
+		if (imageView != null) {
+			if (focusPt.getGender().equals("M")) {
+				imageView.setImageResource(R.drawable.male_gray);
+			} else if (focusPt.getGender().equals("F")) {
+				imageView.setImageResource(R.drawable.female_gray);
+			}
+		}
+
+	}
+
+	protected View buildSectionLabel(String section, boolean icon) {
+		View v;
+		LayoutInflater vi = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+		v = vi.inflate(R.layout.section_label, null);
+		v.setBackgroundResource(R.color.medium_gray);
+		TextView textView = (TextView) v.findViewById(R.id.name_text);
+		ImageView sectionImage = (ImageView) v.findViewById(R.id.section_image);
+		if (icon)
+			sectionImage.setVisibility(View.VISIBLE);
+		else
+			sectionImage.setVisibility(View.GONE);
+		textView.setText(section);
+		v.setOnTouchListener(mSwipeListener);
+		return (v);
+	}
+
+	// TODO better resource management if Patient were Parceable object?
+	protected Patient getPatient(Integer patientId) {
+
+		Patient p = null;
+
+		Cursor c = DbProvider.openDb().fetchPatient(patientId);
+
+		if (c != null && c.getCount() > 0) {
+			int patientIdIndex = c.getColumnIndex(DbProvider.KEY_PATIENT_ID);
+			int identifierIndex = c.getColumnIndex(DbProvider.KEY_IDENTIFIER);
+			int givenNameIndex = c.getColumnIndex(DbProvider.KEY_GIVEN_NAME);
+			int familyNameIndex = c.getColumnIndex(DbProvider.KEY_FAMILY_NAME);
+			int middleNameIndex = c.getColumnIndex(DbProvider.KEY_MIDDLE_NAME);
+			int birthDateIndex = c.getColumnIndex(DbProvider.KEY_BIRTH_DATE);
+			int genderIndex = c.getColumnIndex(DbProvider.KEY_GENDER);
+			int priorityIndex = c.getColumnIndexOrThrow(DbProvider.KEY_PRIORITY_FORM_NUMBER);
+			int priorityFormIndex = c.getColumnIndexOrThrow(DbProvider.KEY_PRIORITY_FORM_NAMES);
+
+			p = new Patient();
+			p.setPatientId(c.getInt(patientIdIndex));
+			p.setIdentifier(c.getString(identifierIndex));
+			p.setGivenName(c.getString(givenNameIndex));
+			p.setFamilyName(c.getString(familyNameIndex));
+			p.setMiddleName(c.getString(middleNameIndex));
+			p.setBirthDate(c.getString(birthDateIndex));
+			p.setGender(c.getString(genderIndex));
+			p.setPriorityNumber(c.getInt(priorityIndex));
+			p.setPriorityForms(c.getString(priorityFormIndex));
+
+			if (c.getInt(priorityIndex) > 0) {
+				p.setPriority(true);
+			}
+
+		}
+
+		if (c != null) {
+			c.close();
+		}
+
+		return p;
+	}
+
+	// BUTTONS: Dont show the menu
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		return false;
+	}
+	
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		return false;
+	}
+
+	// LIFECYCLE
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+	}
+
+	@Override
+	protected void onPause() {
+		super.onPause();
+	}
+}

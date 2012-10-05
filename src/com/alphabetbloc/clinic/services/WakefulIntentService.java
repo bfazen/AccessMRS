@@ -30,7 +30,7 @@ import android.os.PowerManager;
 /**
  * 
  * @author Louis Fazen (louis.fazen@gmail.com)
- *
+ * 
  */
 abstract public class WakefulIntentService extends IntentService {
 	abstract protected void doWakefulWork(Intent intent);
@@ -41,7 +41,7 @@ abstract public class WakefulIntentService extends IntentService {
 	public static final String ENCRYPT_DATA = "encrypt.data";
 	public static final String DELETE_DECRYPTED_DATA = "delete.decrypted.data";
 	public static final String WIPE_DATA = "wipe.all.data";
-	
+
 	private static volatile PowerManager.WakeLock lockStatic = null;
 
 	synchronized private static PowerManager.WakeLock getLock(Context context) {
@@ -76,6 +76,7 @@ abstract public class WakefulIntentService extends IntentService {
 			AlarmManager mgr = (AlarmManager) ctxt.getSystemService(Context.ALARM_SERVICE);
 
 			Intent i = null;
+			// TODO! Delete this IF STATEMENT is syncadapter works!
 			if (receiver.equals(REFRESH_DATA)) {
 				i = new Intent(ctxt, RefreshDataReceiver.class);
 			} else if (receiver.equals(ENCRYPT_DATA)) {
@@ -100,7 +101,7 @@ abstract public class WakefulIntentService extends IntentService {
 			i = new Intent(ctxt, EncryptDataReceiver.class);
 		} else if (receiver.equals(DELETE_DECRYPTED_DATA)) {
 			i = new Intent(ctxt, DeleteDecryptedDataReceiver.class);
-		}else if (receiver.equals(WIPE_DATA)) {
+		} else if (receiver.equals(WIPE_DATA)) {
 			i = new Intent(ctxt, WipeDataReceiver.class);
 		}
 

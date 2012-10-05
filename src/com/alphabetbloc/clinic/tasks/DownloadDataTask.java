@@ -9,6 +9,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.security.KeyStore;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -32,54 +33,33 @@ import com.alphabetbloc.clinic.utilities.App;
 import com.alphabetbloc.clinic.utilities.FileUtils;
 import com.alphabetbloc.clinic.utilities.WebUtils;
 import com.alphabetbloc.clinic.utilities.XformUtils;
+
 /**
  * 
  * @author Louis Fazen (louis.fazen@gmail.com)
- * @author Yaw Anokwa, Sam Mbugua (I think? ...starting version was from ODK Clinic)
+ * @author Yaw Anokwa, Sam Mbugua (I think? ...starting version was from ODK
+ *         Clinic)
  */
 public class DownloadDataTask extends SyncDataTask {
 
-	private static final String TAG = DownloadDataTask.class.getSimpleName();
+	private final String TAG = DownloadDataTask.class.getSimpleName();
 	private DbProvider mDbHelper;
-	private static boolean updateIndices = true;
-	// Patient Table
-	// static int ptIdIndex_pt = indexcursor.getColumnIndex(KEY_PATIENT_ID_PT);
-	private static int ptIdentifierIndex = 0;
-	private static int ptGivenIndex = 0;
-	private static int ptFamilyIndex = 0;
-	private static int ptMiddleIndex = 0;
-	private static int ptBirthIndex = 0;
-	private static int ptGenderIndex = 0;
-	private static int ptFormIndex = 0;
-	private static int ptFormNumberIndex = 0;
-
-	// Obs Table
-	// note that the KEY_PATIENT_ID has the same Index in all Tables, so this
-	// seems to be how Yaw has coded it...?!
-	private static int ptIdIndex = 0;
-	private static int obsTextIndex = 0;
-	private static int obsNumIndex = 0;
-	private static int obsDateIndex = 0;
-	private static int obsIntIndex = 0;
-	private static int obsFieldIndex = 0;
-	private static int obsTypeIndex = 0;
-	private static int obsEncDateIndex = 0;
 
 	@Override
 	protected String doInBackground(SyncResult... values) {
 		sSyncResult = values[0];
-		Log.e(TAG, "DownloadDataTask Called");
+		Log.i(TAG, "DownloadDataTask Called");
 		mDbHelper = DbProvider.openDb();
 		mDownloadComplete = false;
 		String error = null;
 
-		// Update Forms Section:
-		error = updateForms();
+		// Update Clients Section:
+		error = updateClients();
 		if (error != null)
 			return error;
 
-		// Update Clients Section:
-		error = updateClients();
+		// Update Forms Section:
+		error = updateForms();
 		if (error != null)
 			return error;
 
@@ -94,26 +74,23 @@ public class DownloadDataTask extends SyncDataTask {
 	 * @return error message or null if successful
 	 */
 	private String updateForms() {
-		Log.e(TAG, "UpdateForms Called");
+		Log.i(TAG, "UpdateForms Called");
 		// Create Form List
 
 		ArrayList<Form> allServerForms = new ArrayList<Form>();
 		try {
 			showProgress("Updating Forms");
 			InputStream is = getUrlStream(WebUtils.getFormListDownloadUrl());
-			Log.e(TAG, "UpdateForms got the inputStream");
 			Document doc = null;
 			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-			Log.e(TAG, "UpdateForms got the DBF");
 			DocumentBuilder db = dbf.newDocumentBuilder();
 			doc = db.parse(is);
-			Log.e(TAG, "UpdateForms parsed the Builder into a Doc");
 			if (doc != null)
 				allServerForms = createFormList(doc);
-			Log.e(TAG, "Finished the FormList");
 			is.close();
 
 		} catch (Exception e) {
+
 			e.printStackTrace();
 			++sSyncResult.stats.numIoExceptions;
 			return e.toString();
@@ -144,7 +121,7 @@ public class DownloadDataTask extends SyncDataTask {
 	 * @throws Exception
 	 */
 	private ArrayList<Form> createFormList(Document doc) throws Exception {
-		Log.e(TAG, "CreateFormList Called");
+		Log.i(TAG, "CreateFormList Called");
 		mDbHelper.deleteAllForms();
 		NodeList formElements = doc.getElementsByTagName("xform");
 		int count = formElements.getLength();
@@ -167,7 +144,7 @@ public class DownloadDataTask extends SyncDataTask {
 			long c = Math.round(((float) i / (float) count) * 10.0);
 			int current = (int) c;
 			if (current != progress) {
-				Log.e(TAG, "i=" + i + " current=" + current + " progress=" + progress + " icount=" + count);
+				Log.i(TAG, "i=" + i + " current=" + current + " progress=" + progress + " icount=" + count);
 				progress = current;
 				showProgress("Processing Forms", 1);
 			}
@@ -185,7 +162,7 @@ public class DownloadDataTask extends SyncDataTask {
 	 * @return error message or null if successful
 	 */
 	private String downloadForms(ArrayList<Form> serverForms) {
-		Log.e(TAG, "DownloadNewForms Called");
+		Log.i(TAG, "DownloadNewForms Called");
 		showProgress("Downloading Forms");
 
 		FileUtils.createFolder(FileUtils.getExternalFormsPath());
@@ -224,7 +201,7 @@ public class DownloadDataTask extends SyncDataTask {
 				long c = Math.round(((float) i / (float) totalForms) * 10.0);
 				int current = (int) c;
 				if (current != progress) {
-					Log.e(TAG, "i=" + i + " current=" + current + " progress=" + progress + " icount=" + totalForms);
+					Log.i(TAG, "i=" + i + " current=" + current + " progress=" + progress + " icount=" + totalForms);
 					progress = current;
 					showProgress("Processing Forms", 1);
 				}
@@ -258,6 +235,9 @@ public class DownloadDataTask extends SyncDataTask {
 			++sSyncResult.stats.numIoExceptions;
 			return e.getLocalizedMessage();
 		}
+
+		if (mUploadComplete)
+			dropHttpClient();
 
 		// PROCESS
 		try {
@@ -308,7 +288,7 @@ public class DownloadDataTask extends SyncDataTask {
 	}
 
 	private void insertData(DataInputStream dis) throws Exception {
-		Log.e(TAG, "InsertData Called");
+		Log.i(TAG, "InsertData Called");
 
 		// open db and clean entries
 		showProgress("Processing", 10);
@@ -317,7 +297,6 @@ public class DownloadDataTask extends SyncDataTask {
 		mDbHelper.deleteAllFormInstances();
 
 		// download and insert patients and obs
-		makeIndices();
 		insertPatients(dis);
 		insertObservations(dis);
 		insertPatientForms(dis);
@@ -341,48 +320,28 @@ public class DownloadDataTask extends SyncDataTask {
 	// Cursor has different indices than IH b/c it does not include _id
 	// i.e. Cursor.getColumnIndex = (IH.getColumnIndex -1)
 	// ih is 71% faster than Cursor (even w/ cursor limit=1)
-	public void makeIndices() {
-		// Patient Table
-		InsertHelper patientIh = new InsertHelper(DbProvider.getDb(), DbProvider.PATIENTS_TABLE);
-		ptIdentifierIndex = patientIh.getColumnIndex(DbProvider.KEY_IDENTIFIER);
-		ptGivenIndex = patientIh.getColumnIndex(DbProvider.KEY_GIVEN_NAME);
-		ptFamilyIndex = patientIh.getColumnIndex(DbProvider.KEY_FAMILY_NAME);
-		ptMiddleIndex = patientIh.getColumnIndex(DbProvider.KEY_MIDDLE_NAME);
-		ptBirthIndex = patientIh.getColumnIndex(DbProvider.KEY_BIRTH_DATE);
-		ptGenderIndex = patientIh.getColumnIndex(DbProvider.KEY_GENDER);
-		ptFormIndex = patientIh.getColumnIndex(DbProvider.KEY_PRIORITY_FORM_NAMES);
-		ptFormNumberIndex = patientIh.getColumnIndex(DbProvider.KEY_PRIORITY_FORM_NUMBER);
-		patientIh.close();
-
-		// Obs Table
-		// NB KEY_PATIENT_ID used as Index in all tables (happens to be same)
-		// seems problematic, but how Yaw has coded it... so i am keeping
-		InsertHelper obsIh = new InsertHelper(DbProvider.getDb(), DbProvider.OBSERVATIONS_TABLE);
-		ptIdIndex = obsIh.getColumnIndex(DbProvider.KEY_PATIENT_ID);
-		obsTextIndex = obsIh.getColumnIndex(DbProvider.KEY_VALUE_TEXT);
-		obsNumIndex = obsIh.getColumnIndex(DbProvider.KEY_VALUE_NUMERIC);
-		obsDateIndex = obsIh.getColumnIndex(DbProvider.KEY_VALUE_DATE);
-		obsIntIndex = obsIh.getColumnIndex(DbProvider.KEY_VALUE_INT);
-		obsFieldIndex = obsIh.getColumnIndex(DbProvider.KEY_FIELD_NAME);
-		obsTypeIndex = obsIh.getColumnIndex(DbProvider.KEY_DATA_TYPE);
-		obsEncDateIndex = obsIh.getColumnIndex(DbProvider.KEY_ENCOUNTER_DATE);
-		obsIh.close();
-
-		updateIndices = false;
-	}
-
 	public void insertPatientForms(final DataInputStream zdis) throws Exception {
-		showProgress("Processing Forms");
+		long start = System.currentTimeMillis();
 
-		if (updateIndices)
-			makeIndices();
+		showProgress("Processing Forms");
 		SQLiteDatabase db = DbProvider.getDb();
-		InsertHelper ih = new InsertHelper(DbProvider.getDb(), DbProvider.OBSERVATIONS_TABLE);
+		InsertHelper ih = new InsertHelper(db, DbProvider.OBSERVATIONS_TABLE);
+
+		int ptIdIndex = ih.getColumnIndex(DbProvider.KEY_PATIENT_ID);
+		int obsTextIndex = ih.getColumnIndex(DbProvider.KEY_VALUE_TEXT);
+		int obsNumIndex = ih.getColumnIndex(DbProvider.KEY_VALUE_NUMERIC);
+		int obsDateIndex = ih.getColumnIndex(DbProvider.KEY_VALUE_DATE);
+		int obsIntIndex = ih.getColumnIndex(DbProvider.KEY_VALUE_INT);
+		int obsFieldIndex = ih.getColumnIndex(DbProvider.KEY_FIELD_NAME);
+		int obsTypeIndex = ih.getColumnIndex(DbProvider.KEY_DATA_TYPE);
+		int obsEncDateIndex = ih.getColumnIndex(DbProvider.KEY_ENCOUNTER_DATE);
+
 		db.beginTransaction();
 		int progress = 0;
+		int icount = 0;
 		try {
-			int icount = zdis.readInt();
-			Log.e(TAG, "insertPatientForms icount: " + icount);
+			icount = zdis.readInt();
+			Log.i(TAG, "insertPatientForms icount: " + icount);
 			for (int i = 1; i < icount + 1; i++) {
 
 				ih.prepareForInsert();
@@ -406,7 +365,7 @@ public class DownloadDataTask extends SyncDataTask {
 				int current = (int) c;
 
 				if (current != progress) {
-					Log.e(TAG, "i=" + i + " current=" + current + " progress=" + progress + " icount=" + icount);
+					Log.i(TAG, "i=" + i + " current=" + current + " progress=" + progress + " icount=" + icount);
 					progress = current;
 					showProgress("Processing Forms", 1);
 				}
@@ -417,20 +376,31 @@ public class DownloadDataTask extends SyncDataTask {
 			db.endTransaction();
 		}
 
+		long end = System.currentTimeMillis();
+		Log.i("Test", String.format("InsertHelper, Speed: %d ms, Records per second: %.2f", (int) (end - start), 1000 * (double) icount / (double) (end - start)));
+
 	}
 
 	public void insertPatients(DataInputStream zdis) throws Exception {
 		showProgress("Processing Clients");
-		InsertHelper ih = new InsertHelper(DbProvider.getDb(), DbProvider.PATIENTS_TABLE);
-		if (updateIndices)
-			makeIndices();
+		long start = System.currentTimeMillis();
 		SQLiteDatabase db = DbProvider.getDb();
-		db.beginTransaction();
 
+		InsertHelper ih = new InsertHelper(db, DbProvider.PATIENTS_TABLE);
+		int ptIdIndex = ih.getColumnIndex(DbProvider.KEY_PATIENT_ID);
+		int ptIdentifierIndex = ih.getColumnIndex(DbProvider.KEY_IDENTIFIER);
+		int ptGivenIndex = ih.getColumnIndex(DbProvider.KEY_GIVEN_NAME);
+		int ptFamilyIndex = ih.getColumnIndex(DbProvider.KEY_FAMILY_NAME);
+		int ptMiddleIndex = ih.getColumnIndex(DbProvider.KEY_MIDDLE_NAME);
+		int ptBirthIndex = ih.getColumnIndex(DbProvider.KEY_BIRTH_DATE);
+		int ptGenderIndex = ih.getColumnIndex(DbProvider.KEY_GENDER);
+
+		db.beginTransaction();
 		int progress = 0;
+		int icount = 0;
 		try {
-			int icount = zdis.readInt();
-			Log.e(TAG, "insertPatients icount: " + icount);
+			icount = zdis.readInt();
+			Log.i(TAG, "insertPatients icount: " + icount);
 			for (int i = 1; i < icount + 1; i++) {
 
 				ih.prepareForInsert();
@@ -459,21 +429,37 @@ public class DownloadDataTask extends SyncDataTask {
 			db.endTransaction();
 		}
 
+		long end = System.currentTimeMillis();
+		Log.i("Test", String.format("InsertHelper, Speed: %d ms, Records per second: %.2f", (int) (end - start), 1000 * (double) icount / (double) (end - start)));
+
 	}
 
 	public void insertObservations(DataInputStream zdis) throws Exception {
+		long start = System.currentTimeMillis();
+
 		showProgress("Processing Data");
-		InsertHelper ih = new InsertHelper(DbProvider.getDb(), DbProvider.OBSERVATIONS_TABLE);
-		if (updateIndices)
-			makeIndices();
 		SQLiteDatabase db = DbProvider.getDb();
-		db.beginTransaction();
+		InsertHelper ih = new InsertHelper(db, DbProvider.OBSERVATIONS_TABLE);
+		int ptIdIndex = ih.getColumnIndex(DbProvider.KEY_PATIENT_ID);
+		int obsTextIndex = ih.getColumnIndex(DbProvider.KEY_VALUE_TEXT);
+		int obsNumIndex = ih.getColumnIndex(DbProvider.KEY_VALUE_NUMERIC);
+		int obsDateIndex = ih.getColumnIndex(DbProvider.KEY_VALUE_DATE);
+		int obsIntIndex = ih.getColumnIndex(DbProvider.KEY_VALUE_INT);
+		int obsFieldIndex = ih.getColumnIndex(DbProvider.KEY_FIELD_NAME);
+		int obsTypeIndex = ih.getColumnIndex(DbProvider.KEY_DATA_TYPE);
+		int obsEncDateIndex = ih.getColumnIndex(DbProvider.KEY_ENCOUNTER_DATE);
 
 		int progress = 0;
+		int icount = 0;
+		int j = 0;
 		try {
-			int icount = zdis.readInt();
-			Log.e(TAG, "insertObservations icount: " + icount);
+			icount = zdis.readInt();
+			Log.i(TAG, "insertObservations icount: " + icount);
 			for (int i = 1; i < icount + 1; i++) {
+
+				if (j == 0) {
+					db.beginTransaction();
+				}
 
 				ih.prepareForInsert();
 				ih.bind(ptIdIndex, zdis.readInt());
@@ -491,21 +477,34 @@ public class DownloadDataTask extends SyncDataTask {
 				ih.bind(obsTypeIndex, dataType);
 				ih.bind(obsEncDateIndex, parseDate(zdis.readUTF()));
 				ih.execute();
+				j++;
 
 				long c = Math.round(((float) i / (float) icount) * 20.0);
 				int current = (int) c;
 				if (current != progress) {
-					Log.e(TAG, "i=" + i + " current=" + current + " progress=" + progress + " icount=" + icount);
+					Log.i(TAG, "i=" + i + " current=" + current + " progress=" + progress + " icount=" + icount);
 					progress = current;
 					showProgress("Processing Data", 1);
 				}
 
+				if (j > 50) {
+					Log.e(TAG, "setting transaction successful");
+					j = 0;
+					db.setTransactionSuccessful();
+					db.endTransaction();
+				}
+
 			}
-			db.setTransactionSuccessful();
+			if (j > 0)
+				db.setTransactionSuccessful();
 		} finally {
 			ih.close();
-			db.endTransaction();
+			if (j > 0)
+				db.endTransaction();
 		}
+
+		long end = System.currentTimeMillis();
+		Log.i("Test", String.format("InsertHelper, Speed: %d ms, Records per second: %.2f", (int) (end - start), 1000 * (double) icount / (double) (end - start)));
 
 	}
 
@@ -526,6 +525,7 @@ public class DownloadDataTask extends SyncDataTask {
 		synchronized (this) {
 			if (mStateListener != null) {
 				if (mUploadComplete && mDownloadComplete) {
+					dropHttpClient();
 					mStateListener.syncComplete(result, sSyncResult);
 				} else
 					mStateListener.downloadComplete(result);

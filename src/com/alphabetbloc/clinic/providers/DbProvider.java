@@ -840,7 +840,7 @@ public class DbProvider extends ContentProvider {
 		return c;
 	}
 
-	public static long fetchMostRecentDownload() {
+	public long fetchMostRecentDownload() {
 		Cursor c = null;
 		long datetime = 0;
 		c = sDb.query(DOWNLOAD_LOG_TABLE, new String[] { "MAX(" + DOWNLOAD_TIME + ") AS " + DOWNLOAD_TIME }, null, null, null, null, null);

@@ -41,6 +41,7 @@ import org.xmlpull.v1.XmlPullParserException;
  *         phone while connected the more updates occur on battery connection,
  *         the fewer occur when not connected (saving battery later)
  */
+//TODO!  DELETE if the SyncAdapter works!
 public class RefreshDataReceiver extends BroadcastReceiver {
 	private static final String WAKEFUL_META_DATA = "com.commonsware.cwac.wakeful";
 

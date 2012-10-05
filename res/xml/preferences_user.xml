@@ -1,0 +1,37 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <PreferenceCategory android:title="@string/pref_user_settings" >
+        <Preference
+            android:key="acccount_user_details"
+            android:summary="@string/account_change_username_password"
+            android:title="@string/account_change_details" >
+            <intent
+                android:targetClass="com.alphabetbloc.clinic.ui.admin.AccountSetupActivity"
+                android:targetPackage="@string/app_package_name" />
+        </Preference>
+
+        <EditTextPreference
+            android:id="@+id/program"
+            android:defaultValue="@string/default_program"
+            android:dialogTitle="@string/pref_change_program"
+            android:inputType="phone"
+            android:key="@string/key_program"
+            android:title="@string/pref_program" />
+        <EditTextPreference
+            android:id="@+id/saved_search"
+            android:defaultValue="@string/default_saved_search"
+            android:dialogTitle="@string/pref_change_saved_search"
+            android:inputType="phone"
+            android:key="@string/key_saved_search"
+            android:title="@string/pref_saved_search" />
+
+        <CheckBoxPreference
+            android:id="@+id/use_saved_searches"
+            android:defaultValue="@string/default_use_saved_searches"
+            android:key="@string/key_use_saved_searches"
+            android:summaryOff="@string/pref_saved_search_off"
+            android:summaryOn="@string/pref_saved_search_on"
+            android:title="@string/pref_use_saved_search" />
+    </PreferenceCategory>
+
+</PreferenceScreen>

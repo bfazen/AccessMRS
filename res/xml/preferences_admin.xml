@@ -1,6 +1,15 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
 
     <PreferenceCategory android:title="@string/pref_user_settings" >
+        <Preference
+            android:key="acccount_user_details"
+            android:summary="@string/account_change_username_password"
+            android:title="@string/account_change_details" >
+            <intent
+                android:targetClass="com.alphabetbloc.clinic.ui.admin.AccountSetupActivity"
+                android:targetPackage="@string/app_package_name" />
+        </Preference>
+
         <EditTextPreference
             android:id="@+id/program"
             android:defaultValue="@string/default_program"
@@ -15,12 +24,13 @@
             android:inputType="phone"
             android:key="@string/key_saved_search"
             android:title="@string/pref_saved_search" />
+
         <CheckBoxPreference
             android:id="@+id/use_saved_searches"
             android:defaultValue="@string/default_use_saved_searches"
             android:key="@string/key_use_saved_searches"
-            android:summaryOff="@string/pref_saved_search_hint"
-            android:summaryOn="@string/pref_saved_search_hint"
+            android:summaryOff="@string/pref_saved_search_off"
+            android:summaryOn="@string/pref_saved_search_on"
             android:title="@string/pref_use_saved_search" />
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/pref_manage_device_pref" >
@@ -28,30 +38,39 @@
             android:id="@+id/show_settings_menu"
             android:defaultValue="@string/default_show_settings_menu"
             android:key="@string/key_show_settings_menu"
-            android:summaryOff="@string/pref_show_menu_hint"
-            android:summaryOn="@string/pref_show_menu_hint"
+            android:summaryOff="@string/pref_show_menu_off"
+            android:summaryOn="@string/pref_show_menu_on"
             android:title="@string/pref_show_settings_menu" />
         <CheckBoxPreference
             android:id="@+id/enable_activity_logging"
             android:defaultValue="@string/default_enable_activity_logging"
             android:key="@string/key_enable_activity_log"
-            android:summaryOff="@string/pref_activity_logging_hint"
-            android:summaryOn="@string/pref_activity_logging_hint"
+            android:summaryOff="@string/pref_activity_logging_off"
+            android:summaryOn="@string/pref_activity_logging_on"
             android:title="@string/pref_enable_activity_logging" />
+
         <EditTextPreference
             android:id="@+id/min_refresh_time"
             android:defaultValue="@string/default_min_refresh_seconds"
             android:dialogTitle="@string/pref_min_refresh_seconds"
             android:inputType="phone"
             android:key="@string/key_min_refresh_seconds"
-            android:title="@string/pref_min_refresh_seconds" />
+            android:title="@string/pref_min_refresh" />
         <EditTextPreference
             android:id="@+id/max_refresh_time"
             android:defaultValue="@string/default_max_refresh_seconds"
             android:dialogTitle="@string/pref_max_refresh_seconds"
             android:inputType="phone"
             android:key="@string/key_max_refresh_seconds"
-            android:title="@string/pref_max_refresh_seconds" />
+            android:title="@string/pref_max_refresh" />
+
+        <Preference
+            android:summary="@string/pref_wipe_data_desc"
+            android:title="@string/pref_wipe_all_data" >
+            <intent
+                android:targetClass="com.alphabetbloc.clinic.ui.admin.WipeDataActivity"
+                android:targetPackage="@string/app_package_name" />
+        </Preference>
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/ssl_server_settings" >
         <EditTextPreference
@@ -60,13 +79,15 @@
             android:dialogTitle="@string/pref_change_server"
             android:key="@string/key_server"
             android:title="@string/pref_server" />
+
         <CheckBoxPreference
             android:id="@+id/use_client_auth"
             android:defaultValue="@string/default_use_client_auth"
             android:key="@string/key_client_auth"
-            android:summaryOff="@string/ssl_client_auth_hint"
-            android:summaryOn="@string/ssl_client_auth_hint"
+            android:summaryOff="@string/ssl_client_auth_off"
+            android:summaryOn="@string/ssl_client_auth_on"
             android:title="@string/ssl_use_client_auth" />
+
         <Preference
             android:summary="@string/ssl_client_auth_desc"
             android:title="@string/ssl_client_auth" >

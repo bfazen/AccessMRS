@@ -12,28 +12,28 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerVertical="true"
+        android:paddingBottom="4dip"
         android:paddingLeft="10dip"
-         android:paddingBottom="4dip"
         android:text="@string/click_to_refresh"
         android:textColor="@color/white_color"
         android:textSize="18sp"
         android:textStyle="bold" />
 
     <ImageView
-         android:contentDescription="@string/icon_refresh_data"
         android:id="@+id/refresh_image"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentRight="true"
         android:layout_centerVertical="true"
+        android:contentDescription="@string/icon_refresh_data"
         android:paddingLeft="3dip"
         android:paddingRight="4dip"
         android:src="@drawable/ic_refresh_white" />
 
-        <View
-            android:layout_width="fill_parent"
-            android:layout_height="1dp"
-            android:layout_below="@+id/refresh_image"
-            android:background="@color/medium_gray" />
+    <View
+        android:layout_width="fill_parent"
+        android:layout_height="1dp"
+        android:layout_below="@+id/refresh_image"
+        android:background="@color/medium_gray" />
 
 </RelativeLayout>

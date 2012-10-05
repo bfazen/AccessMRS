@@ -1,3 +1,3 @@
 <WakefulIntentService
-  listener="com.commonsware.cwac.wakeful.DeleteDecryptedDataListener"
+  listener="om.alphabetbloc.clinic.listeners.DeleteDecryptedDataListener"
 />

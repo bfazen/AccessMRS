@@ -1,14 +1,12 @@
 package com.alphabetbloc.clinic.utilities;
 
-import java.math.BigInteger;
-
 import javax.crypto.spec.SecretKeySpec;
-
-import com.alphabetbloc.clinic.ui.admin.ClinicLauncherActivity;
 
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.util.Log;
+
+import com.alphabetbloc.clinic.ui.admin.ClinicLauncherActivity;
 
 /**
  * Wrapper function for the generic Crypto class, allows for easy access to
@@ -69,7 +67,6 @@ public class EncryptionUtil {
 			return null;
 		}
 		SecretKeySpec key = new SecretKeySpec(keyBytes, "AES");
-		Log.d(TAG, String.format("\t%s: %s", keyName, new BigInteger(keyBytes).toString()));
 		return key;
 	}
 

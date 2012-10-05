@@ -32,6 +32,7 @@ import com.alphabetbloc.clinic.utilities.App;
  * @author Louis Fazen (louis.fazen@gmail.com)
  *
  */
+//TODO!  DELETE if the SyncAdapter works!
 public class RefreshDataListener implements WakefulIntentService.AlarmListener {
 
 	public void scheduleAlarms(AlarmManager mgr, PendingIntent pi, Context ctxt) {

@@ -4,27 +4,21 @@ import java.io.File;
 
 import javax.crypto.spec.SecretKeySpec;
 
-import com.alphabetbloc.clinic.R;
-import com.alphabetbloc.clinic.providers.DbProvider;
-import com.alphabetbloc.clinic.ui.user.DashboardActivity;
-import com.alphabetbloc.clinic.utilities.App;
-import com.alphabetbloc.clinic.utilities.EncryptionUtil;
-import com.alphabetbloc.clinic.utilities.KeyStoreUtil;
-
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.provider.Settings;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -32,16 +26,25 @@ import android.view.View;
 import android.view.Window;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.alphabetbloc.clinic.R;
+import com.alphabetbloc.clinic.providers.DbProvider;
+import com.alphabetbloc.clinic.ui.user.DashboardActivity;
+import com.alphabetbloc.clinic.utilities.App;
+import com.alphabetbloc.clinic.utilities.EncryptionUtil;
+import com.alphabetbloc.clinic.utilities.KeyStoreUtil;
+
 /**
  * 
  * @author Louis Fazen (louis.fazen@gmail.com)
- *
+ * 
  */
 public class ClinicLauncherActivity extends Activity {
 
 	public static final String TAG = ClinicLauncherActivity.class.getSimpleName();
 	public static final String SQLCIPHER_KEY_NAME = "sqlCipherDbKey";
 	public static final String OLD_UNLOCK_ACTION = "android.credentials.UNLOCK";
+	public static final String UNLOCK_ACTION = "com.android.credentials.UNLOCK";
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -53,49 +56,83 @@ public class ClinicLauncherActivity extends Activity {
 	@Override
 	protected void onResume() {
 		super.onResume();
-		Log.e(TAG, "resuming ClinicLauncher!");
-		if (isClinicSetup()) {
-			if (isCollectSetup())
-				startActivity(new Intent(this, DashboardActivity.class));
+		refreshView();
+	}
+
+	private void refreshView() {
+		if (!isCollectInstalled())
+			finish();
+
+		else if (!isClinicSetup())
+			setupClinic();
+
+		else if (!isCollectSetup())
+			setupCollect();
+
+		else {
+			// if we made it here, we are all setup!
+			startActivity(new Intent(this, DashboardActivity.class));
 			finish();
 		}
 	}
 
+	// Step 1: check for collect -> fail
+	private boolean isCollectInstalled() {
+
+		try {
+			getPackageManager().getPackageInfo("org.odk.collect.android", PackageManager.GET_META_DATA);
+		} catch (NameNotFoundException e) {
+			showCustomToast("Collect Must Be Installed To Use This Software!");
+			return false;
+		}
+
+		return true;
+	}
+
+	// Step 2: check clinic -> create the setup intent
 	private boolean isClinicSetup() {
 		boolean setupComplete = true;
 
-		// if db open, then it must be setup
-		if (getDatabasePath(DbProvider.DATABASE_NAME).exists() && DbProvider.isOpen())
-			return setupComplete;
+		// Shortcut: if db open & have an account, we are setup
+		AccountManager accountManager = AccountManager.get(App.getApp());
+		Account[] accounts = accountManager.getAccountsByType(App.getApp().getString(R.string.app_account_type));
+		if (getDatabasePath(DbProvider.DATABASE_NAME).exists() && accounts.length > 0) {
+			// make sure Db is open
+			DbProvider.openDb();
+			if (DbProvider.isOpen())
+				return setupComplete;
+		}
 
+		return !setupComplete;
+	}
+
+	// Step 2: check clinic -> create the setup intent
+	private void setupClinic() {
 		// Step 1: check keystore is unlocked -> unlock or setup if necessary
 		KeyStoreUtil ks = KeyStoreUtil.getInstance();
 		if (ks.state() != KeyStoreUtil.State.UNLOCKED) {
-			startActivity(new Intent(OLD_UNLOCK_ACTION));
-			return !setupComplete;
+			try {
+				if (Build.VERSION.SDK_INT < 10) {
+					startActivity(new Intent(OLD_UNLOCK_ACTION));
+				} else {
+					startActivity(new Intent(UNLOCK_ACTION));
+				}
+			} catch (ActivityNotFoundException e) {
+				Log.e(TAG, "No UNLOCK activity: " + e.getMessage(), e);
+				Toast.makeText(this, "No keystore unlock activity found.", Toast.LENGTH_SHORT).show();
+			}
 		}
-
-		// Step 2: check first use -> launch initial setup if first run
+		// Step 2: check previous use -> launch initial setup if first run
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
 		boolean firstRun = settings.getBoolean(getString(R.string.key_first_run), true);
 		if (firstRun) {
+			Log.e(TAG, "it is considered the first run now!");
 			Intent i = new Intent(this, InitialSetupActivity.class);
 			i.putExtra(InitialSetupActivity.SETUP_INTENT, InitialSetupActivity.FIRST_RUN);
 			startActivity(i);
-			return !setupComplete;
 		}
 
-		// Step 3: Check for sync account -> setup new account if none
-		AccountManager accountManager = AccountManager.get(App.getApp());
-		Account[] accounts = accountManager.getAccountsByType(App.getApp().getString(R.string.app_account_type));
-		if (accounts.length <= 0) {
-			Intent i = new Intent(Settings.ACTION_ADD_ACCOUNT);
-			i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
-			startActivity(i);
-			return !setupComplete;
-		}
-
-		// check Db exists, it has a key and pwd -> reset clinic if missing
+		// Step 3: check Db exists, has a key and pwd -> reset clinic if missing
 		File db = App.getApp().getDatabasePath(DbProvider.DATABASE_NAME);
 		String pwd = settings.getString(SQLCIPHER_KEY_NAME, "");
 		SecretKeySpec key = EncryptionUtil.getKey(SQLCIPHER_KEY_NAME);
@@ -104,36 +141,40 @@ public class ClinicLauncherActivity extends Activity {
 			Intent i = new Intent(this, InitialSetupActivity.class);
 			i.putExtra(InitialSetupActivity.SETUP_INTENT, InitialSetupActivity.RESET_CLINIC);
 			startActivity(i);
-			return !setupComplete;
 		}
 
-		return setupComplete;
+		// Step 4: Check for sync account -> setup new account if none
+		AccountManager accountManager = AccountManager.get(App.getApp());
+		Account[] accounts = accountManager.getAccountsByType(App.getApp().getString(R.string.app_account_type));
+		if (accounts.length <= 0) {
+			showCustomToast("You must setup an account to use clinic!");
+			Intent i = new Intent(this, AccountSetupActivity.class);
+			i.putExtra(AccountSetupActivity.LAUNCHED_FROM_ACCT_MGR, false);
+			startActivity(i);
+		} else {
+			Log.e(TAG, "there is an account numer=" + accounts.length + "username=" + accounts[0].name);
+		}
+
 	}
 
+	// Step 3: Open or create the collect db -> reset collect db if fail
 	private boolean isCollectSetup() {
-		boolean setupComplete = true;
 
-		// Step 1: check for collect -> fail
 		try {
-			getPackageManager().getPackageInfo("org.odk.collect.android", PackageManager.GET_META_DATA);
-		} catch (NameNotFoundException e) {
-			showCustomToast("Collect Must Be Installed To Use This Software!");
-			return !setupComplete;
-		}
-
-		// Step 2: Open or create the collect db -> reset collect db if fail
-		try {
-			Log.e(TAG, "testing collect");
 			App.getApp().getContentResolver().query(Uri.parse(InstanceColumns.CONTENT_URI + "/reset"), null, null, null, null);
 		} catch (Exception e) {
-			// Lost key! (clinic reinstalled?) CATASTROPHE... SO RESET COLLECT
-			Intent i = new Intent(this, InitialSetupActivity.class);
-			i.putExtra(InitialSetupActivity.SETUP_INTENT, InitialSetupActivity.RESET_COLLECT);
-			startActivity(i);
-			return !setupComplete;
+			Log.e(TAG, "collect db does not exist?!");
+			return false;
 		}
 
-		return setupComplete;
+		return true;
+	}
+
+	private void setupCollect() {
+		// Lost key! (clinic reinstalled?) CATASTROPHE... SO RESET COLLECT
+		Intent i = new Intent(this, InitialSetupActivity.class);
+		i.putExtra(InitialSetupActivity.SETUP_INTENT, InitialSetupActivity.RESET_COLLECT);
+		startActivity(i);
 	}
 
 	private void showCustomToast(String message) {

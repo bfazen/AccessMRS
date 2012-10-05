@@ -37,6 +37,7 @@ public class WipeDataService extends WakefulIntentService {
 		super("AppService");
 	}
 
+	
 	@Override
 	protected void doWakefulWork(Intent intent) {
 		boolean allDeleted = true;

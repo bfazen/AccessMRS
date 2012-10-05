@@ -7,12 +7,12 @@
     android:paddingTop="20dp" >
 
     <ImageView
-        android:contentDescription="@string/icon_app"
         android:id="@+id/icon"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="16dp"
+        android:contentDescription="@string/icon_app"
         android:padding="5dip"
         android:src="@drawable/openmrs_sync" />
 
@@ -33,9 +33,9 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/instruction"
         android:layout_centerHorizontal="true"
-        android:hint="@string/auth_server_username"
         android:layout_marginLeft="8dp"
-        android:layout_marginRight="10dp" >
+        android:layout_marginRight="10dp"
+        android:hint="@string/auth_server_username" >
 
         <requestFocus />
     </EditText>
@@ -47,21 +47,54 @@
         android:layout_below="@+id/edittext_username"
         android:layout_centerHorizontal="true"
         android:layout_marginLeft="8dp"
-        android:hint="@string/auth_server_password"
         android:layout_marginRight="10dp"
+        android:hint="@string/auth_server_password"
         android:inputType="textPassword" >
     </EditText>
 
-    <Button
-        android:id="@+id/submit_button"
-        android:layout_width="wrap_content"
+    <RelativeLayout
+        android:id="@+id/submit_button_row"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_below="@+id/edittext_password"
-        android:layout_centerHorizontal="true"
         android:layout_marginTop="10dp"
-        android:padding="20dp"
-        android:textSize="20dp"
-        android:text="@string/submit" />
+        android:orientation="horizontal"
+        android:paddingBottom="2dip"
+        android:paddingLeft="3dip"
+        android:paddingRight="3dip"
+        android:paddingTop="2dip" >
+
+        <Button
+            android:id="@+id/offline_setup_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toLeftOf="@+id/center_image"
+            android:minWidth="200dp"
+            android:padding="10dip"
+            android:text="@string/auth_dont_verify"
+            android:textSize="18sp"
+            android:visibility="gone" />
+
+        <ImageView
+            android:id="@+id/center_image"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            android:contentDescription="@string/icon"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/submit_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_toRightOf="@+id/center_image"
+            android:minWidth="200dp"
+            android:padding="10dip"
+            android:text="@string/submit"
+            android:textSize="18sp" />
+    </RelativeLayout>
 
     <ProgressBar
         android:id="@+id/progress_wheel"

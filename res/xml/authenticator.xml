@@ -3,4 +3,4 @@
     android:icon="@drawable/smallicon"
     android:smallIcon="@drawable/smallicon"
     android:label="@string/app_name"
-    android:accountPreferences="@xml/account_preferences"/>
+    android:accountPreferences="@xml/preferences_account"/>

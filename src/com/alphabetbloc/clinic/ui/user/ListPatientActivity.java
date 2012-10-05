@@ -2,34 +2,19 @@ package com.alphabetbloc.clinic.ui.user;
 
 import java.util.ArrayList;
 
-import android.accounts.Account;
-import android.accounts.AccountManager;
-import android.app.Dialog;
-import android.app.ListActivity;
-import android.app.ProgressDialog;
-import android.content.BroadcastReceiver;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.content.SyncStatusObserver;
 import android.database.Cursor;
 import android.os.Bundle;
-import android.support.v4.content.LocalBroadcastManager;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.GestureDetector;
 import android.view.GestureDetector.SimpleOnGestureListener;
-import android.view.Gravity;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
-import android.view.Window;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -38,35 +23,25 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.alphabetbloc.clinic.R;
 import com.alphabetbloc.clinic.adapters.PatientAdapter;
 import com.alphabetbloc.clinic.data.Patient;
 import com.alphabetbloc.clinic.providers.DbProvider;
-import com.alphabetbloc.clinic.services.RefreshDataService;
-import com.alphabetbloc.clinic.ui.admin.PreferencesActivity;
-import com.alphabetbloc.clinic.utilities.App;
-import com.alphabetbloc.clinic.utilities.FileUtils;
 
 /**
  * 
- * @author Louis Fazen (louis.fazen@gmail.com) (All Methods except where noted otherwise)
+ * @author Louis Fazen (louis.fazen@gmail.com) (All Methods except where noted
+ *         otherwise)
  * 
- * @Author Yaw Anokwa, Carl Hartung (Respectively, I think... Wrote the
- *         findPatients and ShowCustomToast methods for ODK Clinic and Collect)
+ * @Author Yaw Anokwa (the getPatients() method)
  */
-public class ListPatientActivity extends ListActivity implements SyncStatusObserver {
+public class ListPatientActivity extends BaseListActivity implements SyncStatusObserver {
 
-	// Menu ID's
-	private static final int MENU_PREFERENCES = Menu.FIRST;
+	// Menu ID's	
 	public static final int DOWNLOAD_PATIENT = 1;
 	public static final int BARCODE_CAPTURE = 2;
 	public static final int FILL_BLANK_FORM = 3;
-	private static final int SWIPE_MIN_DISTANCE = 120;
-	private static final int SWIPE_MAX_OFF_PATH = 250;
-	private static final int SWIPE_THRESHOLD_VELOCITY = 200;
-	public static final int PROGRESS_DIALOG = 1;
 
 	public static int mListType;
 	private EditText mSearchText;
@@ -82,27 +57,16 @@ public class ListPatientActivity extends ListActivity implements SyncStatusObser
 	private Button mCancelClientButton;
 	protected GestureDetector mClientDetector;
 	protected OnTouchListener mClientListener;
-	protected GestureDetector mSwipeDetector;
-	protected OnTouchListener mSwipeListener;
 	private ListView mClientListView;
 	private int mIndex = 0;
 	private int mTop = 0;
-	private static Object mSyncObserverHandle;
-	private static ProgressDialog mProgressDialog;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		mContext = this;
-
-		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.find_patient);
 		setTitle(getString(R.string.app_name) + " > " + getString(R.string.find_patient));
-
-		if (!FileUtils.storageReady()) {
-			showCustomToast(getString(R.string.error, getString(R.string.storage_error)));
-			finish();
-		}
 		// get intents
 		mListType = getIntent().getIntExtra(DashboardActivity.LIST_TYPE, 1);
 		if (mListType == DashboardActivity.LIST_SIMILAR_CLIENTS) {
@@ -186,13 +150,20 @@ public class ListPatientActivity extends ListActivity implements SyncStatusObser
 			}
 		};
 
-		mSwipeDetector = new GestureDetector(new onHeadingClick());
-		mSwipeListener = new OnTouchListener() {
-			public boolean onTouch(View v, MotionEvent event) {
-				return mSwipeDetector.onTouchEvent(event);
-			}
-		};
 	}
+	
+	@Override
+	protected void onResume() {
+		super.onResume();
+		mSearchText.setText(mSearchText.getText().toString());
+		// NB: get immediate view position
+		if (mClientListView != null)
+			mClientListView.setSelectionFromTop(mIndex, mTop);
+
+		// then refresh the view
+		findPatients();
+	}
+	
 
 	// TODO!: consider changing this whole thing to a viewpager... may be much
 	// simpler, and also add animation
@@ -220,7 +191,7 @@ public class ListPatientActivity extends ListActivity implements SyncStatusObser
 				Patient p = (Patient) mPatientAdapter.getItem(pos);
 				String patientIdStr = p.getPatientId().toString();
 				Intent ip = new Intent(getApplicationContext(), ViewPatientActivity.class);
-				ip.putExtra(ViewDataActivity.KEY_PATIENT_ID, patientIdStr);
+				ip.putExtra(BasePatientActivity.KEY_PATIENT_ID, patientIdStr);
 				startActivity(ip);
 			}
 			return false;
@@ -233,57 +204,11 @@ public class ListPatientActivity extends ListActivity implements SyncStatusObser
 
 	}
 
-	class onHeadingClick extends SimpleOnGestureListener {
-
-		@Override
-		public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-			try {
-				if (Math.abs(e1.getY() - e2.getY()) > SWIPE_MAX_OFF_PATH)
-					return false;
-				if (e2.getX() - e1.getX() > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
-					finish();
-				}
-			} catch (Exception e) {
-				// nothing
-			}
-			return false;
-		}
-
-		@Override
-		public boolean onSingleTapUp(MotionEvent e) {
-			return false;
-		}
-
-		@Override
-		public boolean onDown(MotionEvent e) {
-			return false;
-		}
-
-	}
-
-	private void savePosition() {
+	@Override
+	protected void savePosition() {
 		mIndex = mClientListView.getFirstVisiblePosition();
 		View v = mClientListView.getChildAt(0);
 		mTop = (v == null) ? 0 : v.getTop();
-	}
-
-	@Override
-	protected void onResume() {
-		super.onResume();
-		mSearchText.setText(mSearchText.getText().toString());
-		IntentFilter filter = new IntentFilter(RefreshDataService.REFRESH_BROADCAST);
-		LocalBroadcastManager.getInstance(this).registerReceiver(onNotice, filter);
-		mSyncObserverHandle = ContentResolver.addStatusChangeListener(ContentResolver.SYNC_OBSERVER_TYPE_ACTIVE, this);
-		if (mProgressDialog != null && !mProgressDialog.isShowing()) {
-			mProgressDialog.show();
-		}
-
-		// NB: get immediate view position
-		if (mClientListView != null)
-			mClientListView.setSelectionFromTop(mIndex, mTop);
-
-		// then refresh the view
-		findPatients();
 	}
 
 	// VIEW:
@@ -439,130 +364,11 @@ public class ListPatientActivity extends ListActivity implements SyncStatusObser
 		}
 	}
 
-	// BUTTONS
-
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		super.onCreateOptionsMenu(menu);
-
-		SharedPreferences settings = getSharedPreferences("ChwSettings", MODE_PRIVATE);
-		if (settings.getBoolean("IsMenuEnabled", true) == false) {
-			return false;
-		} else {
-			menu.add(0, MENU_PREFERENCES, 0, getString(R.string.pref_settings)).setIcon(android.R.drawable.ic_menu_preferences);
-			return true;
-		}
-	}
-
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		switch (item.getItemId()) {
-		case MENU_PREFERENCES:
-			savePosition();
-			Intent ip = new Intent(getApplicationContext(), PreferencesActivity.class);
-			startActivity(ip);
-			return true;
-		default:
-			return super.onOptionsItemSelected(item);
-		}
-	}
-
-	private BroadcastReceiver onNotice = new BroadcastReceiver() {
-		public void onReceive(Context ctxt, Intent i) {
-			savePosition();
-			Intent intent = new Intent(mContext, RefreshDataActivity.class);
-			intent.putExtra(RefreshDataActivity.DIALOG, RefreshDataActivity.ASK_TO_DOWNLOAD);
-			startActivity(intent);
-
-		}
-	};
-
-	@Override
-	public void onStatusChanged(int which) {
-
-		runOnUiThread(new Runnable() {
-			@Override
-			public void run() {
-				checkSyncActivity();
-			}
-		});
-
-	}
-
-	public boolean checkSyncActivity() {
-		boolean syncActive = false;
-		AccountManager accountManager = AccountManager.get(App.getApp());
-		Account[] accounts = accountManager.getAccountsByType(App.getApp().getString(R.string.app_account_type));
-
-		if (accounts.length <= 0)
-			return false;
-
-		syncActive = ContentResolver.isSyncActive(accounts[0], getString(R.string.app_provider_authority));
-
-		if (syncActive) {
-
-			showDialog(PROGRESS_DIALOG);
-
-		} else {
-
-			if (mProgressDialog != null) {
-				mProgressDialog.dismiss();
-			}
-		}
-
-		return syncActive;
-	}
-
-	@Override
-	protected Dialog onCreateDialog(int id) {
-		if (mProgressDialog != null && mProgressDialog.isShowing()) {
-			mProgressDialog.dismiss();
-		}
-
-		mProgressDialog = new ProgressDialog(this);
-		mProgressDialog.setIcon(android.R.drawable.ic_dialog_info);
-		mProgressDialog.setTitle(getString(R.string.sync_in_progress_title));
-		mProgressDialog.setMessage(getString(R.string.sync_in_progress));
-		mProgressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-		mProgressDialog.setIndeterminate(true);
-		mProgressDialog.setCancelable(false);
-		return mProgressDialog;
-	}
-
-	// LIFECYCLE
-	@Override
-	protected void onPause() {
-		super.onPause();
-		ContentResolver.removeStatusChangeListener(mSyncObserverHandle);
-		LocalBroadcastManager.getInstance(this).unregisterReceiver(onNotice);
-	}
-
-	@Override
-	protected void onSaveInstanceState(Bundle outState) {
-		super.onSaveInstanceState(outState);
-	}
-
 	@Override
 	protected void onDestroy() {
-
 		super.onDestroy();
 		mSearchText.removeTextChangedListener(mFilterTextWatcher);
 
-	}
-
-	private void showCustomToast(String message) {
-		LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-		View view = inflater.inflate(R.layout.toast_view, null);
-
-		// set the text in the view
-		TextView tv = (TextView) view.findViewById(R.id.message);
-		tv.setText(message);
-
-		Toast t = new Toast(this);
-		t.setView(view);
-		t.setDuration(Toast.LENGTH_SHORT);
-		t.setGravity(Gravity.CENTER, 0, 0);
-		t.show();
 	}
 
 }

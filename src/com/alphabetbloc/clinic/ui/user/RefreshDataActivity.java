@@ -88,6 +88,7 @@ public class RefreshDataActivity extends Activity implements SyncDataListener {
 		}
 
 		if (mProgressDialog != null && !mProgressDialog.isShowing()) {
+			
 			mProgressDialog.show();
 		}
 
@@ -101,6 +102,14 @@ public class RefreshDataActivity extends Activity implements SyncDataListener {
 		mSyncTask.execute(new SyncResult());
 	}
 
+	//Alternative is to move everything over to syncprovider (but how to keep updated on the UI thread?) 
+	// Bundle bundle = new Bundle();
+	// bundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
+	// bundle.putBoolean(ContentResolver.SYNC_EXTRAS_FORCE, true);
+	// bundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
+	// ContentResolver.requestSync(null,
+	// getString(R.string.app_provider_authority), bundle);
+	
 	@Override
 	public void sslSetupComplete(String result, SyncResult syncResult) {
 		mUploadTask = new UploadDataTask();
@@ -193,7 +202,7 @@ public class RefreshDataActivity extends Activity implements SyncDataListener {
 		DialogInterface.OnClickListener loadingButtonListener = new DialogInterface.OnClickListener() {
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
-				dialog.dismiss();
+				
 				if (mSyncTask != null) {
 					mSyncTask.setSyncListener(null);
 					mSyncTask.cancel(true);
@@ -209,7 +218,9 @@ public class RefreshDataActivity extends Activity implements SyncDataListener {
 					mUploadTask.cancel(true);
 					mUploadTask = null;
 				}
+				dialog.dismiss();
 				stopRefreshDataActivity(true);
+				
 			}
 		};
 
@@ -218,7 +229,7 @@ public class RefreshDataActivity extends Activity implements SyncDataListener {
 		pD.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
 		pD.setIndeterminate(false);
 		pD.setCancelable(false);
-		pD.setButton(getString(R.string.cancel), loadingButtonListener);
+//		pD.setButton(getString(R.string.cancel), loadingButtonListener);
 		return pD;
 	}
 

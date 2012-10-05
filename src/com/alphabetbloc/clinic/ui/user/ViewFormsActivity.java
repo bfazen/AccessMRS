@@ -32,7 +32,7 @@ import android.preference.PreferenceManager;
  * 
  */
 
-public class ViewFormsActivity extends ViewDataActivity {
+public class ViewFormsActivity extends BasePatientActivity {
 
 	public static final String EDIT_FORM = "edit_form";
 	public static final int FILL_FORM = 3;
@@ -140,9 +140,9 @@ public class ViewFormsActivity extends ViewDataActivity {
 	 * @param priority
 	 */
 	protected void startActivityLog(String patientId, String formId, String formtype, boolean priority) {
-		SharedPreferences chwsettings = getSharedPreferences("ChwSettings", MODE_PRIVATE);
-		if (chwsettings.getBoolean("IsLoggingEnabled", true)) {
-
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+		boolean logActivity = prefs.getBoolean(getString(R.string.key_enable_activity_log), true);
+		if (logActivity) {
 			SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
 			String providerId = settings.getString(getString(R.string.key_provider), "0");
 			mActivityLog = new ActivityLog();
@@ -161,8 +161,9 @@ public class ViewFormsActivity extends ViewDataActivity {
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
 		super.onActivityResult(requestCode, resultCode, intent);
-		SharedPreferences settings = getSharedPreferences("ChwSettings", MODE_PRIVATE);
-		if (settings.getBoolean("IsLoggingEnabled", true)) {
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+		boolean logActivity = prefs.getBoolean(getString(R.string.key_enable_activity_log), true);
+		if (logActivity) {
 			mActivityLog.setActivityStopTime();
 			new ActivityLogTask(mActivityLog).execute();
 		}

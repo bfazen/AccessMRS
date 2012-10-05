@@ -31,6 +31,8 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.GestureDetector.OnGestureListener;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -50,19 +52,20 @@ import com.alphabetbloc.clinic.data.Patient;
 import com.alphabetbloc.clinic.providers.DbProvider;
 import com.alphabetbloc.clinic.services.RefreshDataService;
 import com.alphabetbloc.clinic.tasks.ActivityLogTask;
+import com.alphabetbloc.clinic.ui.admin.ClinicLauncherActivity;
 import com.alphabetbloc.clinic.utilities.App;
 import com.alphabetbloc.clinic.utilities.XformUtils;
+
 /**
  * 
  * @author Louis Fazen (louis.fazen@gmail.com)
- *
+ * 
  */
-public class CreatePatientActivity extends Activity implements OnGestureListener, SyncStatusObserver {
+public class CreatePatientActivity extends BaseActivity implements OnGestureListener {
 	public static final Integer PERMANENT_NEW_CLIENT = 1;
 	public static final Integer TEMPORARY_NEW_CLIENT = 2;
-	public static final String TAG = CreatePatientActivity.class.getSimpleName();
-	public static final int PROGRESS_DIALOG = 1;
-	
+	private static final String TAG = CreatePatientActivity.class.getSimpleName();
+
 	private Context mContext;
 	private String mFirstName;
 	private String mMiddleName;
@@ -86,9 +89,7 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 	private static final int VERIFY_SIMILAR_CLIENTS = 6;
 	private static String mProviderId;
 	private static Patient mPatient;
-	private static ProgressDialog mProgressDialog;
 	private GestureDetector mGestureDetector;
-	private static Object mSyncObserverHandle;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -166,90 +167,6 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 
 	}
 
-	// LIFECYCLE
-	@Override
-	protected void onResume() {
-		super.onResume();
-		IntentFilter filter = new IntentFilter(RefreshDataService.REFRESH_BROADCAST);
-		LocalBroadcastManager.getInstance(this).registerReceiver(onNotice, filter);
-		mSyncObserverHandle = ContentResolver.addStatusChangeListener(ContentResolver.SYNC_OBSERVER_TYPE_ACTIVE, this);
-		if (mProgressDialog != null && !mProgressDialog.isShowing()) {
-			mProgressDialog.show();
-		}
-	}
-	
-	private BroadcastReceiver onNotice = new BroadcastReceiver() {
-		public void onReceive(Context ctxt, Intent i) {
-
-			Intent intent = new Intent(mContext, RefreshDataActivity.class);
-			intent.putExtra(RefreshDataActivity.DIALOG, RefreshDataActivity.ASK_TO_DOWNLOAD);
-			startActivity(intent);
-
-		}
-	};
-
-	@Override
-	protected void onPause() {
-		super.onPause();
-		ContentResolver.removeStatusChangeListener(mSyncObserverHandle);
-		LocalBroadcastManager.getInstance(this).unregisterReceiver(onNotice);
-	}
-
-	
-	
-	@Override
-	public void onStatusChanged(int which) {
-
-		runOnUiThread(new Runnable() {
-			@Override
-			public void run() {
-				checkSyncActivity();
-			}
-		});
-
-	}
-
-	public boolean checkSyncActivity() {
-		boolean syncActive = false;
-		AccountManager accountManager = AccountManager.get(App.getApp());
-		Account[] accounts = accountManager.getAccountsByType(App.getApp().getString(R.string.app_account_type));
-
-		if (accounts.length <= 0)
-			return false;
-
-		syncActive = ContentResolver.isSyncActive(accounts[0], getString(R.string.app_provider_authority));
-
-		if (syncActive) {
-
-			showDialog(PROGRESS_DIALOG);
-
-		} else {
-
-			if (mProgressDialog != null) {
-				mProgressDialog.dismiss();
-			}
-		}
-
-		return syncActive;
-	}
-
-	@Override
-	protected Dialog onCreateDialog(int id) {
-		if (mProgressDialog != null && mProgressDialog.isShowing()) {
-			mProgressDialog.dismiss();
-		}
-
-		mProgressDialog = new ProgressDialog(this);
-		mProgressDialog.setIcon(android.R.drawable.ic_dialog_info);
-		mProgressDialog.setTitle(getString(R.string.sync_in_progress_title));
-		mProgressDialog.setMessage(getString(R.string.sync_in_progress));
-		mProgressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-		mProgressDialog.setIndeterminate(true);
-		mProgressDialog.setCancelable(false);
-		
-		return mProgressDialog;
-	}
-	
 	private boolean similarClientCheck() {
 		// Verify the client against the db
 		boolean similarFound = false;
@@ -303,9 +220,9 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 				addFormToCollect();
 
 			} else if (requestCode == REGISTRATION && intent != null) {
-				SharedPreferences settings = getSharedPreferences("ChwSettings", MODE_PRIVATE);
-				if (settings.getBoolean("IsLoggingEnabled", true)) {
-					mActivityLog.setActivityStopTime();
+				SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
+				boolean logActivity = prefs.getBoolean(getString(R.string.key_enable_activity_log), true);
+				if (logActivity) {
 					new ActivityLogTask(mActivityLog).execute();
 				}
 
@@ -353,7 +270,7 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 
 		// load the newly created patient into ViewPatientActivity
 		Intent ip = new Intent(getApplicationContext(), ViewPatientActivity.class);
-		ip.putExtra(ViewDataActivity.KEY_PATIENT_ID, mPatient.getPatientId().toString());
+		ip.putExtra(BasePatientActivity.KEY_PATIENT_ID, mPatient.getPatientId().toString());
 		startActivity(ip);
 
 		// and quit
@@ -467,6 +384,16 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 		DbProvider.openDb().createPatient(mPatient);
 	}
 
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		return false;
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		return false;
+	}
+
 	private void addFormToCollect() {
 		if (mPatient == null)
 			Log.e(TAG, "Mpatient is null!?");
@@ -482,16 +409,13 @@ public class CreatePatientActivity extends Activity implements OnGestureListener
 			Toast.makeText(CreatePatientActivity.this, "Sorry, there was a problem saving this form.", Toast.LENGTH_SHORT).show();
 		}
 
-		SharedPreferences settings = getSharedPreferences("ChwSettings", MODE_PRIVATE);
-		if (settings.getBoolean("IsLoggingEnabled", true)) {
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
+		boolean logActivity = prefs.getBoolean(getString(R.string.key_enable_activity_log), true);
+		if (logActivity)
 			startActivityLog("-1", "Patient Registration");
-		}
 
 	}
 
-	
-	
-	
 	// TODO! delete this type of swipe action...
 	@Override
 	public boolean onTouchEvent(MotionEvent me) {

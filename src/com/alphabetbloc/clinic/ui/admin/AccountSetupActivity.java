@@ -25,6 +25,7 @@ import android.view.View.OnClickListener;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -32,7 +33,7 @@ import android.widget.Toast;
 /**
  * 
  * @author Louis Fazen (louis.fazen@gmail.com)
- *
+ * 
  */
 public class AccountSetupActivity extends Activity implements SyncDataListener {
 
@@ -65,6 +66,8 @@ public class AccountSetupActivity extends Activity implements SyncDataListener {
 	private boolean mImportFromConfig;
 	private String mNewUser;
 	private String mNewPwd;
+	private Button mOfflineSetupButton;
+	private ImageView mCenterImage;
 
 	@Override
 	protected void onCreate(Bundle icicle) {
@@ -80,6 +83,16 @@ public class AccountSetupActivity extends Activity implements SyncDataListener {
 		mSubmitButton.setOnClickListener(mSubmitListener);
 		mUserText = (EditText) findViewById(R.id.edittext_username);
 		mPwdText = (EditText) findViewById(R.id.edittext_password);
+		mCenterImage = (ImageView) findViewById(R.id.center_image);
+		mOfflineSetupButton = (Button) findViewById(R.id.offline_setup_button);
+		mOfflineSetupButton.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				addAccount(mNewUser, mNewPwd);
+				finish();
+			}
+		});
 	}
 
 	@Override
@@ -87,14 +100,12 @@ public class AccountSetupActivity extends Activity implements SyncDataListener {
 		super.onResume();
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 		boolean firstRun = prefs.getBoolean(getString(R.string.key_first_run), true);
-		mCurrentUser = WebUtils.getServerUsername();
-		mCurrentPwd = WebUtils.getServerPassword();
 
 		if (mImportFromConfig)
 			importFromConfigFile();
 		else if (firstRun)
 			createView(REQUEST_CREDENTIAL_SETUP);
-		else if (mCurrentUser != null && mCurrentPwd != null)
+		else if (WebUtils.getServerUsername() != null)
 			createView(REQUEST_CREDENTIAL_CHANGE);
 		else
 			createView(REQUEST_CREDENTIAL_SETUP);
@@ -113,37 +124,50 @@ public class AccountSetupActivity extends Activity implements SyncDataListener {
 		// changing credentials
 		case REQUEST_CREDENTIAL_CHANGE:
 			mStep = VERIFY_ENTRY;
+			mCurrentUser = WebUtils.getServerUsername();
+			mCurrentPwd = WebUtils.getServerPassword();
 			mUserText.setText(mCurrentUser);
 			mInstructionText.setText(R.string.auth_server_verify_account);
+			mOfflineSetupButton.setVisibility(View.GONE);
+			mCenterImage.setVisibility(View.GONE);
 			break;
 
 		// setting up new credentials
 		case REQUEST_CREDENTIAL_SETUP:
 			mStep = ASK_NEW_ENTRY;
 			mInstructionText.setText(R.string.auth_server_account_setup);
+			mOfflineSetupButton.setVisibility(View.GONE);
+			mCenterImage.setVisibility(View.GONE);
 			break;
 
 		case CREDENTIAL_ENTRY_ERROR:
 			mStep = ASK_NEW_ENTRY;
 			((ProgressBar) findViewById(R.id.progress_wheel)).setVisibility(View.GONE);
 			mSubmitButton.setVisibility(View.VISIBLE);
-			mSubmitButton.setText(R.string.submit);
+			mOfflineSetupButton.setVisibility(View.VISIBLE);
+			mOfflineSetupButton.setText(R.string.auth_dont_verify);
+			mSubmitButton.setText(R.string.auth_try_again);
 			mUserText.setVisibility(View.VISIBLE);
 			mPwdText.setVisibility(View.VISIBLE);
+			mCenterImage.setVisibility(View.INVISIBLE);
 			mInstructionText.setText(getString(R.string.auth_server_error_login));
 			break;
 
 		case LOADING:
 			((ProgressBar) findViewById(R.id.progress_wheel)).setVisibility(View.VISIBLE);
+			mCenterImage.setVisibility(View.GONE);
 			mSubmitButton.setVisibility(View.GONE);
 			mUserText.setVisibility(View.GONE);
 			mPwdText.setVisibility(View.GONE);
+			mOfflineSetupButton.setVisibility(View.GONE);
 			mInstructionText.setText(getString(R.string.auth_verifying_server_account));
 			break;
 
 		case FINISHED:
 			mStep = FINISHED;
 			mSubmitButton.setVisibility(View.VISIBLE);
+			mCenterImage.setVisibility(View.GONE);
+			mOfflineSetupButton.setVisibility(View.GONE);
 			mSubmitButton.setText(getString(R.string.finish));
 			((ProgressBar) findViewById(R.id.progress_wheel)).setVisibility(View.GONE);
 			mInstructionText.setText(getString(R.string.auth_server_setup_complete));
@@ -181,6 +205,7 @@ public class AccountSetupActivity extends Activity implements SyncDataListener {
 					showCustomToast(mUserText.getText().toString() + "is not a valid Username.  Please enter an id with only letters and numbers.");
 				break;
 			case FINISHED:
+				setResult(RESULT_OK);
 				finish();
 				break;
 			case ENTRY_ERROR:
@@ -207,9 +232,10 @@ public class AccountSetupActivity extends Activity implements SyncDataListener {
 
 		AccountManager am = AccountManager.get(this);
 
-		//if old account exists, delete and replace with new account
+		// if old account exists, delete and replace with new account
 		Account[] accounts = am.getAccountsByType(getString(R.string.app_account_type));
-		for(Account a : accounts){
+		Log.e(TAG, "about to remove old accounts number=" + accounts.length + " and add new account with u=" + username + " p=" + password);
+		for (Account a : accounts) {
 			am.removeAccount(a, null, null);
 		}
 
@@ -219,27 +245,48 @@ public class AccountSetupActivity extends Activity implements SyncDataListener {
 		// TODO! is this necessary... does Android ever delete credentials?
 		// saving it here just in case?
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(App.getApp());
-		prefs.edit().putString(getString(R.string.key_username), encPwd).commit();
+		prefs.edit().putString(getString(R.string.key_username), username).commit();
 		prefs.edit().putString(getString(R.string.key_password), encPwd).commit();
 
 		boolean accountCreated = am.addAccountExplicitly(account, encPwd, null);
+		if (accountCreated) {
+			Log.e(TAG, "account was created");
 
-		Bundle extras = getIntent().getExtras();
-		if (extras != null && accountCreated) {
+			Log.e(TAG, "extras != null");
 
-			ContentResolver.setIsSyncable(account, getString(R.string.app_provider_authority), 1);
-			ContentResolver.setSyncAutomatically(account, getString(R.string.app_provider_authority), true);
+			String authority = getString(R.string.app_provider_authority);
+			// Bundle params = new Bundle();
+			// params.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, false);
+			// params.putBoolean(ContentResolver.SYNC_EXTRAS_DO_NOT_RETRY,
+			// false);
+			// // params.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, false);
+			// params.putBoolean(ContentResolver.SYNC_EXTRAS_FORCE, true);
+
+			// Will set up sync (if global settings background data & auto-sync
+			// are true)
+			ContentResolver.setIsSyncable(account, authority, 1);
+			ContentResolver.setSyncAutomatically(account, authority, true);
+
+			String interval = prefs.getString(getString(R.string.key_max_refresh_seconds), getString(R.string.default_max_refresh_seconds));
+			ContentResolver.addPeriodicSync(account, authority, new Bundle(), Integer.valueOf(interval));
+
+			// params.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
+			// params.putBoolean(ContentResolver.SYNC_EXTRAS_FORCE, true);
+			// ContentResolver.requestSync(account, authority, params);
 			// TODO! do i always need to do this or just if launched from
 			// AcctMgr?
 			// Pass the new account back to the account mgr
-			boolean launchedFromAccountMgr = getIntent().getBooleanExtra(LAUNCHED_FROM_ACCT_MGR, true);
-			if (launchedFromAccountMgr) {
+			Bundle extras = getIntent().getExtras();
+			boolean launchedFromAccountMgr = extras.getBoolean(LAUNCHED_FROM_ACCT_MGR);
+			if (extras != null && launchedFromAccountMgr) {
+				Log.e(TAG, "launched from the account manager...");
 				AccountAuthenticatorResponse response = extras.getParcelable(AccountManager.KEY_ACCOUNT_AUTHENTICATOR_RESPONSE);
 				Bundle result = new Bundle();
 				result.putString(AccountManager.KEY_ACCOUNT_NAME, username);
 				result.putString(AccountManager.KEY_ACCOUNT_TYPE, getString(R.string.app_account_type));
 				response.onResult(result);
 			} else {
+				Log.e(TAG, "not launched from the acocunt manager");
 				Log.e(TAG, "about to set the result to OK and finish");
 				setResult(RESULT_OK);
 			}
@@ -276,14 +323,12 @@ public class AccountSetupActivity extends Activity implements SyncDataListener {
 
 	@Override
 	public void syncComplete(String result, SyncResult syncResult) {
-
+		Log.e(TAG, "syncComplete...! but result=" + result);
 		if (Boolean.valueOf(result)) {
 			addAccount(mNewUser, mNewPwd);
 			createView(FINISHED);
 
 		} else {
-			mNewUser = null;
-			mNewPwd = null;
 			createView(CREDENTIAL_ENTRY_ERROR);
 		}
 	}

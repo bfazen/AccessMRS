@@ -44,31 +44,62 @@
     <string name="account_admin_section_title">Account Settings</string>
     <string name="account_admin_settings">Administrator Settings</string>
     <string name="account_admin_settings_summary">Server Setup, SSL, User Interface, etc.</string>
+    <string name="account_change_username_password">Change Username or Password</string>
+    <string name="account_change_details">Edit Account Details</string>
 
     <!-- Manage Device Prefs -->
     <string name="pref_user_settings">User Settings</string>
     <string name="pref_settings">Settings</string>
+    <string name="pref_admin_settings">Manage</string>
     <string name="pref_manage_device_pref">Device Management</string>
     <string name="pref_enable_activity_logging">Log User Activity</string>
-    <string name="pref_activity_logging_hint">Log forms loaded for each client</string>
+    <string name="pref_activity_logging_on">Log forms loaded for each client</string>
+    <string name="pref_activity_logging_off">Do not log user activity</string>
     <string name="pref_show_settings_menu">Show Settings Menu</string>
-    <string name="pref_show_menu_hint">Allow access to this menu</string>
+    <string name="pref_show_menu_on">Allow user access to this device administrator settings menu</string>
+    <string name="pref_show_menu_off">Hide this device administrator menu from users</string>
     <string name="pref_change_server">Change URL</string>
-    <string name="pref_use_saved_search">Use Saved Searches</string>
-    <string name="pref_saved_search_hint">Use Saved Searches instead of Cohorts</string>
+    <string name="pref_use_saved_search">Use Dynamic Cohorts</string>
+    <string name="pref_saved_search_on">Use Dynamic Cohorts with OpenMRS Saved Searches</string>
+    <string name="pref_saved_search_off">Use Static Cohorts</string>
     <string name="pref_server">Server</string>
     <string name="pref_saved_search">Cohort or Search ID</string>
     <string name="pref_change_saved_search">Change Cohort or Search ID</string>
     <string name="pref_program">Program</string>
     <string name="pref_change_program">Change Program</string>
-    <string name="pref_min_refresh_seconds">Don\'t Refresh Data Before (Seconds)</string>
-    <string name="pref_max_refresh_seconds">Refresh Data After (Seconds)</string>
+    <string name="pref_min_refresh_seconds">Don\'t sync if data was updated in last (seconds)</string>
+    <string name="pref_max_refresh_seconds">Sync with server if data is older than (seconds)</string>
+    <string name="pref_min_refresh">Don\'t Sync Before</string>
+    <string name="pref_max_refresh">Sync Data After</string>
+    <string name="pref_program_prefix">Current Program ID:  </string>
+    <string name="pref_savedsearch_prefix">Current Cohort ID:  </string>
+    <string name="pref_not_an_int">This entry must be an integer. Please try again.</string>
+    <string name="pref_min_requirement">The value must be greater than the \'don\'t refresh before\ setting.</string>
+    <string name="pref_max_requirement">This value must be less than the \'sync after\' setting.</string>
+    <string name="pref_wipe_all_data">Reset Databases</string>
+    <string name="pref_wipe_data_desc">Wipe all existing data from phone and reset to default settings</string>
+
+    <!-- PreferenceActivity -> WipeDataActivity Alerts -->
+    <string name="alert_title_first_warning">WARNING !!!</string>
+    <string name="alert_odk_body_first_warning">This will ERASE ALL patient data ever collected on this device. \n \n Are you sure?</string>
+    <string name="alert_wipe_body_first_warning">This will ERASE ALL DATA on this device!! \n \n ALL patient data, all contacts, and all calendars will be erased, but data on the SD Card will remain. The device will then reset to factory settings and guide user to set up new password and provider ID.  \n \n Are you sure you want to do this? \n \n</string>
+    <string name="alert_ok_button">ERASE ALL DATA</string>
+    <string name="alert_first_cancel_button">Not sure, Keep Data</string>
+    <string name="alert_title_second_warning">WARNING ! WARNING ! WARNING ! WARNING !</string>
+    <string name="alert_odk_body_second_warning">Once erased, you CAN NEVER retreive this data! \n \n Are you absolutely sure you want to erase all patient data?</string>
+    <string name="alert_wipe_body_second_warning">Once erased, you CAN NEVER retreive this data! \n \n Are you absolutely sure you want to reset device?</string>
+    <string name="alert_second_cancel_button">Not Sure, Keep Data For Now</string>
+    <string name="nothing_erased">Nothing has been erased, and no changes have been made to the device.</string>
+    <string name="wiping_data">! Erasing Data Now !</string>
+    <string name="wiping_data_successful">All data has been erased and settings have been set to defaults.</string>
+    <string name="wiping_data_error">Sorry, there was an error wiping the data. Please try again.</string>
 
     <!-- SSL Preferences and SSL Activity -->
     <string name="ssl_server_settings">Server Settings</string>
     <string name="ssl_test_ssl">Test SSL Connections</string>
-    <string name="ssl_use_client_auth">Use Client Authentication</string>
-    <string name="ssl_client_auth_hint"></string>
+    <string name="ssl_use_client_auth">Client Authentication</string>
+    <string name="ssl_client_auth_on">Use Client Authentication</string>
+    <string name="ssl_client_auth_off">Do not use Client Authentication</string>
     <string name="ssl_client_auth">Client Authentication</string>
     <string name="ssl_client_auth_desc">Manage Authentication Keys</string>
     <string name="ssl_manage_certs">Manage Certificates</string>
@@ -118,6 +149,8 @@
     <string name="auth_server_verify_error">Password is incorrect. Please try again.</string>
     <string name="auth_verifying_server_account">Verifying account with OpenMRS server. Please wait.</string>
     <string name="auth_server_setup_complete">Congratulations, you have now setup an account with OpenMRS.</string>
+    <string name="auth_dont_verify">Don\'t Verify</string>
+    <string name="auth_try_again">Try Again</string>
 
     <!-- Accessibility Services: Content Description -->
     <string name="icon">Small Icon</string>

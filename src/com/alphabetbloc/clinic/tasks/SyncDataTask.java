@@ -185,6 +185,14 @@ public class SyncDataTask extends AsyncTask<SyncResult, String, String> {
 
 		return httpClient;
 	}
+	
+	protected void dropHttpClient(){
+//		Log.e(TAG, "upload and download are complete, so dropping httpClient, trustore and keystore reference.");
+//		httpClient = null;
+//		keyStore = null;
+//		trustStore = null;
+//		System.gc();
+	}
 
 	private SSLContext createSslContext() throws GeneralSecurityException {
 		Log.e(TAG, "create SSL Context Called");
@@ -329,7 +337,8 @@ public class SyncDataTask extends AsyncTask<SyncResult, String, String> {
 			SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(App.getApp());
 			mSavedSearch = settings.getBoolean(App.getApp().getString(R.string.key_use_saved_searches), false);
 			mCohort = Integer.valueOf(settings.getString(App.getApp().getString(R.string.key_saved_search), "0"));
-			mProgram = Integer.valueOf(settings.getString(App.getApp().getString(R.string.key_program), "0"));
+//			mProgram = Integer.valueOf(settings.getString(App.getApp().getString(R.string.key_program), "0"));
+			mProgram = 1;
 		}
 	}
 

@@ -39,7 +39,7 @@ import com.alphabetbloc.clinic.utilities.App;
  * @author Louis Fazen (louis.fazen@gmail.com)
  * 
  */
-public class ViewPatientActivity extends ViewDataActivity {
+public class ViewPatientActivity extends BasePatientActivity {
 
 	private static Patient mPatient;
 	private static ArrayList<Observation> mObservations = new ArrayList<Observation>();

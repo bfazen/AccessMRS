@@ -7,7 +7,6 @@ import java.io.IOException;
 
 import javax.crypto.SecretKey;
 
-import com.alphabetbloc.clinic.R;
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
 import android.app.Activity;
@@ -32,6 +31,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.alphabetbloc.clinic.R;
 import com.alphabetbloc.clinic.providers.DbProvider;
 import com.alphabetbloc.clinic.services.WakefulIntentService;
 import com.alphabetbloc.clinic.services.WipeDataService;
@@ -40,10 +40,11 @@ import com.alphabetbloc.clinic.utilities.Crypto;
 import com.alphabetbloc.clinic.utilities.EncryptionUtil;
 import com.alphabetbloc.clinic.utilities.FileUtils;
 import com.alphabetbloc.clinic.utilities.KeyStoreUtil;
+
 /**
  * 
  * @author Louis Fazen (louis.fazen@gmail.com)
- *
+ * 
  */
 public class InitialSetupActivity extends Activity {
 
@@ -53,7 +54,7 @@ public class InitialSetupActivity extends Activity {
 	private static final String CONFIG_FILE = "config.txt";
 	private static final String HIDDEN_CONFIG_FILE = ".config.txt";
 
-	//intents
+	// intents
 	public static final String SETUP_INTENT = "setup_intent";
 	public static final int FIRST_RUN = 0;
 	public static final int RESET_COLLECT = 1;
@@ -72,7 +73,7 @@ public class InitialSetupActivity extends Activity {
 	protected static final int REQUEST_DB_SETUP = 2;
 	protected static final int REQUEST_DB_REKEY = 3;
 
-	//Buttons
+	// Buttons
 	private static final int VERIFY_ENTRY = 1;
 	private static final int ASK_NEW_ENTRY = 2;
 	private static final int CONFIRM_ENTRY = 3;
@@ -91,13 +92,14 @@ public class InitialSetupActivity extends Activity {
 		mContext = this;
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		mSetupType = getIntent().getIntExtra(SETUP_INTENT, 0);
+		Log.e(TAG, "mSetupType=" + mSetupType);
 	}
 
 	@Override
 	protected void onResume() {
 		super.onResume();
 		IntentFilter filter = new IntentFilter(WipeDataService.WIPE_DATA_COMPLETE);
-		registerReceiver(onNotice, filter);		
+		registerReceiver(onNotice, filter);
 		refreshView();
 	}
 
@@ -106,6 +108,10 @@ public class InitialSetupActivity extends Activity {
 		switch (mSetupType) {
 
 		case FIRST_RUN:
+			if (!FileUtils.isDataWiped()) {
+				mSetupType = RESET_CLINIC;
+				refreshView();
+			}
 			FileUtils.setupDefaultSslStore(FileUtils.MY_KEYSTORE);
 			FileUtils.setupDefaultSslStore(FileUtils.MY_TRUSTSTORE);
 			createView(REQUEST_DB_SETUP);
@@ -333,14 +339,14 @@ public class InitialSetupActivity extends Activity {
 	// STEP 3: Encrypt the Collect Db
 	private void encryptCollectDb() {
 		boolean isCollectSetup = true;
-		
+
 		try {
 			// Simply opening the db should force it to start a new encrypted db
 			App.getApp().getContentResolver().query(Uri.parse(InstanceColumns.CONTENT_URI + "/reset"), null, null, null, null);
 			isCollectSetup = true;
-			
+
 		} catch (Exception e) {
-			
+
 			e.printStackTrace();
 			isCollectSetup = false;
 		}
@@ -357,18 +363,19 @@ public class InitialSetupActivity extends Activity {
 	// STEP 4: Setup Preferences & Android Account
 	private void setupPreferences() {
 		// Setup Default Prefs
-		PreferenceManager.setDefaultValues(this, R.xml.admin_preferences, false);
+		PreferenceManager.setDefaultValues(this, R.xml.preferences_admin, false);
 
 		// Overwrite default prefs from config file or account setup activity
 		Intent i = new Intent(mContext, AccountSetupActivity.class);
 		i.putExtra(AccountSetupActivity.LAUNCHED_FROM_ACCT_MGR, false);
-		
+
 		if (importConfigFile())
 			i.putExtra(AccountSetupActivity.USE_CONFIG_FILE, true);
 		else
 			i.putExtra(AccountSetupActivity.USE_CONFIG_FILE, false);
-		
-		//launch AccountSetupActivity to import prefs into the account
+
+		// launch AccountSetupActivity to import prefs into the account or
+		// request setup
 		startActivityForResult(i, ACCOUNT_SETUP);
 	}
 
@@ -416,7 +423,7 @@ public class InitialSetupActivity extends Activity {
 		return success;
 	}
 
-	//STEP 5: Save state (via First Run) and Finish
+	// STEP 5: Save state (via First Run) and Finish
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		if (requestCode == ACCOUNT_SETUP && resultCode == RESULT_OK) {
