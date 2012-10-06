@@ -22,11 +22,10 @@ import com.alphabetbloc.clinic.utilities.WebUtils;
  * @author Louis Fazen (louis.fazen@gmail.com)
  *
  */
-public class TestSslConnectionActivity extends Activity implements SyncDataListener {
+public class SSLTestActivity extends Activity implements SyncDataListener {
 
 	// private static final String TAG =
 	// TestSslConnectionActivity.class.getSimpleName();
-	protected String mStorePassword;
 	private TextView resultText;
 	private EditText serverText;
 	private EditText userText;

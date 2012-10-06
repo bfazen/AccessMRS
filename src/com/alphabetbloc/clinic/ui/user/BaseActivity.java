@@ -42,11 +42,11 @@ public class BaseActivity extends Activity implements SyncStatusObserver {
 	private static final int MENU_USER_PREFERENCES = Menu.FIRST + 1;
 	private static final int MENU_ADMIN_PREFERENCES = Menu.FIRST + 2;
 	
-	public static final int PROGRESS_DIALOG = 1;
+	private static final int PROGRESS_DIALOG = 1;
 	private static final String TAG = BaseActivity.class.getSimpleName();
 
-	protected static ProgressDialog mProgressDialog;
-	protected static Object mSyncObserverHandle;
+	private static ProgressDialog mSyncActiveDialog;
+	private static Object mSyncObserverHandle;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -90,8 +90,8 @@ public class BaseActivity extends Activity implements SyncStatusObserver {
 			Log.e(TAG, "sync is not active");
 			
 			//we have just completed a sync
-			if (mProgressDialog != null) {
-				mProgressDialog.dismiss();
+			if (mSyncActiveDialog != null) {
+				mSyncActiveDialog.dismiss();
 			}
 			
 			Intent relaunch = new Intent(this, ClinicLauncherActivity.class);
@@ -106,18 +106,18 @@ public class BaseActivity extends Activity implements SyncStatusObserver {
 
 	@Override
 	protected Dialog onCreateDialog(int id) {
-		if (mProgressDialog != null && mProgressDialog.isShowing()) {
-			mProgressDialog.dismiss();
+		if (mSyncActiveDialog != null && mSyncActiveDialog.isShowing()) {
+			mSyncActiveDialog.dismiss();
 		}
 
-		mProgressDialog = new ProgressDialog(this);
-		mProgressDialog.setIcon(android.R.drawable.ic_dialog_info);
-		mProgressDialog.setTitle(getString(R.string.sync_in_progress_title));
-		mProgressDialog.setMessage(getString(R.string.sync_in_progress));
-		mProgressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-		mProgressDialog.setIndeterminate(true);
-		mProgressDialog.setCancelable(false);
-		return mProgressDialog;
+		mSyncActiveDialog = new ProgressDialog(this);
+		mSyncActiveDialog.setIcon(android.R.drawable.ic_dialog_info);
+		mSyncActiveDialog.setTitle(getString(R.string.sync_in_progress_title));
+		mSyncActiveDialog.setMessage(getString(R.string.sync_in_progress));
+		mSyncActiveDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+		mSyncActiveDialog.setIndeterminate(true);
+		mSyncActiveDialog.setCancelable(false);
+		return mSyncActiveDialog;
 	}
 
 	@Override
@@ -167,8 +167,8 @@ public class BaseActivity extends Activity implements SyncStatusObserver {
 		IntentFilter filter = new IntentFilter(RefreshDataService.REFRESH_BROADCAST);
 		LocalBroadcastManager.getInstance(this).registerReceiver(onNotice, filter);
 		mSyncObserverHandle = ContentResolver.addStatusChangeListener(ContentResolver.SYNC_OBSERVER_TYPE_ACTIVE, this);
-		if (mProgressDialog != null && !mProgressDialog.isShowing()) {
-			mProgressDialog.show();
+		if (mSyncActiveDialog != null && !mSyncActiveDialog.isShowing()) {
+			mSyncActiveDialog.show();
 		}
 	}
 

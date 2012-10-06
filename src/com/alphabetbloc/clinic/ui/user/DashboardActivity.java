@@ -43,7 +43,6 @@ public class DashboardActivity extends BaseActivity {
 	public static final int LIST_COMPLETE = 4;
 	public static final int LIST_SIMILAR_CLIENTS = 5;
 	public static final String FIRST_RUN = "first_run";
-	public static final int PROGRESS_DIALOG = 1;
 
 	private int patients = 0;
 	private int priorityToDoForms = 0;

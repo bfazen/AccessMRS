@@ -57,11 +57,13 @@ public class ViewAllForms extends ViewFormsActivity {
 	private FormAdapter priorityAdapter = null;
 	private FormAdapter nonPriorityAdapter = null;
 	private FormAdapter allFormsAdapter = null;
-	protected GestureDetector mFormSummaryDetector;
-	protected OnTouchListener mFormSummaryListener;
+	private GestureDetector mFormSummaryDetector;
+	private OnTouchListener mFormSummaryListener;
 	private ListView mAllFormLV;
-	protected GestureDetector mFormDetector;
-	protected OnTouchListener mFormListener;
+	private GestureDetector mFormDetector;
+	private OnTouchListener mFormListener;
+	private OnTouchListener mSwipeListener;
+	private GestureDetector mSwipeDetector;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -96,6 +98,13 @@ public class ViewAllForms extends ViewFormsActivity {
 			}
 		};
 
+		mSwipeDetector = new GestureDetector(new myGestureListener());
+		mSwipeListener = new OnTouchListener() {
+			@Override
+			public boolean onTouch(View v, MotionEvent event) {
+				return mSwipeDetector.onTouchEvent(event);
+			}
+		};
 	}
 
 	private void getDownloadedForms() {

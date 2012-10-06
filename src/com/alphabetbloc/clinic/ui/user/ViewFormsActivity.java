@@ -38,7 +38,7 @@ public class ViewFormsActivity extends BasePatientActivity {
 	public static final int FILL_FORM = 3;
 	public static final int VIEW_FORM_ONLY = 4;
 	public static final int FILL_PRIORITY_FORM = 5;
-	protected ActivityLog mActivityLog;
+	private ActivityLog mActivityLog;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {

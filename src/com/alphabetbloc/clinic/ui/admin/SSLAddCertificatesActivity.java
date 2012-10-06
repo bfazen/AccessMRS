@@ -41,10 +41,10 @@ import android.widget.Toast;
  *         https://github.com/nelenkov/custom-cert-https)
  */
 
-public class AddCertificatesActivity extends ManageSSLActivity {
+public class SSLAddCertificatesActivity extends SSLBaseActivity {
 	// Common to Key/Trust Store
 	private Context mContext;
-	private String TAG = AddCertificatesActivity.class.getSimpleName();
+	private String TAG = SSLAddCertificatesActivity.class.getSimpleName();
 
 	@Override
 	protected void onResume() {
@@ -351,12 +351,12 @@ public class AddCertificatesActivity extends ManageSSLActivity {
 
 			if (result != null) {
 				if (result < 1) {
-					Toast.makeText(AddCertificatesActivity.this, String.format(getAlertMessage(), mStoreString, mStoreString), Toast.LENGTH_LONG).show();
+					Toast.makeText(SSLAddCertificatesActivity.this, String.format(getAlertMessage(), mStoreString, mStoreString), Toast.LENGTH_LONG).show();
 				} else {
-					Toast.makeText(AddCertificatesActivity.this, String.format(getSuccessMessage(), result, mStoreString, mStoreString), Toast.LENGTH_LONG).show();
+					Toast.makeText(SSLAddCertificatesActivity.this, String.format(getSuccessMessage(), result, mStoreString, mStoreString), Toast.LENGTH_LONG).show();
 				}
 			} else {
-				Toast.makeText(AddCertificatesActivity.this, String.format(getString(R.string.ssl_error_message), mStoreString) + error.getMessage(), Toast.LENGTH_LONG).show();
+				Toast.makeText(SSLAddCertificatesActivity.this, String.format(getString(R.string.ssl_error_message), mStoreString) + error.getMessage(), Toast.LENGTH_LONG).show();
 			}
 
 		}

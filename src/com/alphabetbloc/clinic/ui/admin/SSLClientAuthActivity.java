@@ -27,7 +27,7 @@ import com.alphabetbloc.clinic.utilities.FileUtils;
  *         https://github.com/nelenkov/custom-cert-https)
  */
 
-public class ClientAuthenticationActivity extends ManageSSLActivity {
+public class SSLClientAuthActivity extends SSLBaseActivity {
 	private Context mContext;
 //	private static final String TAG = ClientAuthenticationActivity.class.getSimpleName();
 

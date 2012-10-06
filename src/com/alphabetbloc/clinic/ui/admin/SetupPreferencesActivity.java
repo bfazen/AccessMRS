@@ -46,10 +46,10 @@ import com.alphabetbloc.clinic.utilities.KeyStoreUtil;
  * @author Louis Fazen (louis.fazen@gmail.com)
  * 
  */
-public class InitialSetupActivity extends Activity {
+public class SetupPreferencesActivity extends Activity {
 
 	private Context mContext;
-	public static final String TAG = InitialSetupActivity.class.getSimpleName();
+	public static final String TAG = SetupPreferencesActivity.class.getSimpleName();
 	public static final String SQLCIPHER_KEY_NAME = "sqlCipherDbKey";
 	private static final String CONFIG_FILE = "config.txt";
 	private static final String HIDDEN_CONFIG_FILE = ".config.txt";
@@ -321,7 +321,7 @@ public class InitialSetupActivity extends Activity {
 			@Override
 			protected void onPostExecute(Boolean success) {
 				if (success) {
-					InitialSetupActivity.this.encryptCollectDb();
+					SetupPreferencesActivity.this.encryptCollectDb();
 				} else {
 					if (error != null)
 						Log.e(TAG, "Error adding new SQLCipher key to the Keystore!" + error.getMessage());
@@ -366,13 +366,13 @@ public class InitialSetupActivity extends Activity {
 		PreferenceManager.setDefaultValues(this, R.xml.preferences_admin, false);
 
 		// Overwrite default prefs from config file or account setup activity
-		Intent i = new Intent(mContext, AccountSetupActivity.class);
-		i.putExtra(AccountSetupActivity.LAUNCHED_FROM_ACCT_MGR, false);
+		Intent i = new Intent(mContext, SetupAccountActivity.class);
+		i.putExtra(SetupAccountActivity.LAUNCHED_FROM_ACCT_MGR, false);
 
 		if (importConfigFile())
-			i.putExtra(AccountSetupActivity.USE_CONFIG_FILE, true);
+			i.putExtra(SetupAccountActivity.USE_CONFIG_FILE, true);
 		else
-			i.putExtra(AccountSetupActivity.USE_CONFIG_FILE, false);
+			i.putExtra(SetupAccountActivity.USE_CONFIG_FILE, false);
 
 		// launch AccountSetupActivity to import prefs into the account or
 		// request setup

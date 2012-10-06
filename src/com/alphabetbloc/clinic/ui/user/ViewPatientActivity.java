@@ -48,6 +48,8 @@ public class ViewPatientActivity extends BasePatientActivity {
 	private Resources res;
 	private OnTouchListener mFormListener;
 	private OnTouchListener mFormHistoryListener;
+	private OnTouchListener mSwipeListener;
+	private GestureDetector mSwipeDetector;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -76,6 +78,14 @@ public class ViewPatientActivity extends BasePatientActivity {
 		mFormHistoryListener = new OnTouchListener() {
 			public boolean onTouch(View v, MotionEvent event) {
 				return mFormHistoryDetector.onTouchEvent(event);
+			}
+		};
+		
+		mSwipeDetector = new GestureDetector(new myGestureListener());
+		mSwipeListener = new OnTouchListener() {
+			@Override
+			public boolean onTouch(View v, MotionEvent event) {
+				return mSwipeDetector.onTouchEvent(event);
 			}
 		};
 

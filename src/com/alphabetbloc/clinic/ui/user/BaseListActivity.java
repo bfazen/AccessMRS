@@ -15,7 +15,6 @@ import android.content.SyncStatusObserver;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
-import android.view.GestureDetector;
 import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -23,7 +22,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.View.OnTouchListener;
 import android.view.Window;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -40,23 +38,26 @@ import com.alphabetbloc.clinic.utilities.FileUtils;
  * @author Louis Fazen (louis.fazen@gmail.com) (All Methods except where noted
  *         otherwise)
  * 
- * @author Carl Hartung (I think... Wrote the ShowCustomToast methods for Collect)
+ * @author Carl Hartung (I think... Wrote the ShowCustomToast methods for
+ *         Collect)
  */
 public class BaseListActivity extends ListActivity implements SyncStatusObserver {
 
-	// Menu ID's
-	protected static final int MENU_REFRESH = Menu.FIRST;
-	protected static final int MENU_USER_PREFERENCES = Menu.FIRST + 1;
-	protected static final int MENU_ADMIN_PREFERENCES = Menu.FIRST + 2;
-
+	// Swiping Parameters
 	protected static final int SWIPE_MIN_DISTANCE = 120;
 	protected static final int SWIPE_MAX_OFF_PATH = 250;
 	protected static final int SWIPE_THRESHOLD_VELOCITY = 200;
-	public static final int PROGRESS_DIALOG = 1;
-	protected OnTouchListener mSwipeListener;
-	protected GestureDetector mSwipeDetector;
-	protected static Object mSyncObserverHandle;
-	protected static ProgressDialog mProgressDialog;
+
+	// Menu ID's
+	private static final int MENU_REFRESH = Menu.FIRST;
+	private static final int MENU_USER_PREFERENCES = Menu.FIRST + 1;
+	private static final int MENU_ADMIN_PREFERENCES = Menu.FIRST + 2;
+
+	//Dialog
+	private static final int PROGRESS_DIALOG = 1;
+
+	private static Object mSyncObserverHandle;
+	private static ProgressDialog mSyncActiveDialog;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -67,23 +68,16 @@ public class BaseListActivity extends ListActivity implements SyncStatusObserver
 			finish();
 		}
 
-		mSwipeDetector = new GestureDetector(new myGestureListener());
-		mSwipeListener = new OnTouchListener() {
-			public boolean onTouch(View v, MotionEvent event) {
-				return mSwipeDetector.onTouchEvent(event);
-			}
-		};
-		
 	}
-	
+
 	@Override
 	protected void onResume() {
 		super.onResume();
 		IntentFilter filter = new IntentFilter(RefreshDataService.REFRESH_BROADCAST);
 		LocalBroadcastManager.getInstance(this).registerReceiver(onNotice, filter);
 		mSyncObserverHandle = ContentResolver.addStatusChangeListener(ContentResolver.SYNC_OBSERVER_TYPE_ACTIVE, this);
-		if (mProgressDialog != null && !mProgressDialog.isShowing()) {
-			mProgressDialog.show();
+		if (mSyncActiveDialog != null && !mSyncActiveDialog.isShowing()) {
+			mSyncActiveDialog.show();
 		}
 
 	}
@@ -123,7 +117,7 @@ public class BaseListActivity extends ListActivity implements SyncStatusObserver
 		ContentResolver.removeStatusChangeListener(mSyncObserverHandle);
 		LocalBroadcastManager.getInstance(this).unregisterReceiver(onNotice);
 	}
-	
+
 	protected BroadcastReceiver onNotice = new BroadcastReceiver() {
 		public void onReceive(Context ctxt, Intent i) {
 			savePosition();
@@ -168,10 +162,10 @@ public class BaseListActivity extends ListActivity implements SyncStatusObserver
 		} else {
 
 			// we have just completed a sync
-			if (mProgressDialog != null) {
-				mProgressDialog.dismiss();
+			if (mSyncActiveDialog != null) {
+				mSyncActiveDialog.dismiss();
 			}
-			
+
 			Intent relaunch = new Intent(this, ClinicLauncherActivity.class);
 			relaunch.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 			relaunch.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -184,18 +178,18 @@ public class BaseListActivity extends ListActivity implements SyncStatusObserver
 
 	@Override
 	protected Dialog onCreateDialog(int id) {
-		if (mProgressDialog != null && mProgressDialog.isShowing()) {
-			mProgressDialog.dismiss();
+		if (mSyncActiveDialog != null && mSyncActiveDialog.isShowing()) {
+			mSyncActiveDialog.dismiss();
 		}
 
-		mProgressDialog = new ProgressDialog(this);
-		mProgressDialog.setIcon(android.R.drawable.ic_dialog_info);
-		mProgressDialog.setTitle(getString(R.string.sync_in_progress_title));
-		mProgressDialog.setMessage(getString(R.string.sync_in_progress));
-		mProgressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-		mProgressDialog.setIndeterminate(true);
-		mProgressDialog.setCancelable(false);
-		return mProgressDialog;
+		mSyncActiveDialog = new ProgressDialog(this);
+		mSyncActiveDialog.setIcon(android.R.drawable.ic_dialog_info);
+		mSyncActiveDialog.setTitle(getString(R.string.sync_in_progress_title));
+		mSyncActiveDialog.setMessage(getString(R.string.sync_in_progress));
+		mSyncActiveDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+		mSyncActiveDialog.setIndeterminate(true);
+		mSyncActiveDialog.setCancelable(false);
+		return mSyncActiveDialog;
 	}
 
 	protected void showCustomToast(String message) {

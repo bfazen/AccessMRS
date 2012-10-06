@@ -116,15 +116,15 @@
 
         <!-- Admin Activities -->
         <activity
-            android:name=".ui.admin.AccountSetupActivity"
+            android:name=".ui.admin.SetupAccountActivity"
             android:label="@string/app_name"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".ui.admin.AddCertificatesActivity"
+            android:name=".ui.admin.SSLAddCertificatesActivity"
             android:label="@string/app_name"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".ui.admin.ClientAuthenticationActivity"
+            android:name=".ui.admin.SSLClientAuthActivity"
             android:label="@string/app_name"
             android:screenOrientation="portrait" />
         <activity
@@ -138,7 +138,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".ui.admin.InitialSetupActivity"
+            android:name=".ui.admin.SetupPreferencesActivity"
             android:label="@string/app_name"
             android:screenOrientation="portrait" />
         <activity
@@ -149,7 +149,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".ui.admin.TestSslConnectionActivity"
+            android:name=".ui.admin.SSLTestActivity"
             android:label="@string/app_name"
             android:screenOrientation="portrait" >
             <intent-filter>

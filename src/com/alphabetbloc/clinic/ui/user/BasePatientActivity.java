@@ -4,10 +4,13 @@ import android.content.Context;
 import android.content.SyncStatusObserver;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.View.OnTouchListener;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -29,7 +32,21 @@ public class BasePatientActivity extends BaseListActivity implements SyncStatusO
 	// intent extras
 	public static final String KEY_PATIENT_ID = "PATIENT_ID";
 	public static final String KEY_OBSERVATION_FIELD_NAME = "KEY_OBSERVATION_FIELD_NAME";
-
+	private OnTouchListener mSwipeListener;
+	private GestureDetector mSwipeDetector;
+	
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		mSwipeDetector = new GestureDetector(new myGestureListener());
+		mSwipeListener = new OnTouchListener() {
+			@Override
+			public boolean onTouch(View v, MotionEvent event) {
+				return mSwipeDetector.onTouchEvent(event);
+			}
+		};
+	}
+	
 	protected void createPatientHeader(Integer patientId) {
 
 		Patient focusPt = getPatient(patientId);
@@ -141,10 +158,6 @@ public class BasePatientActivity extends BaseListActivity implements SyncStatusO
 	}
 
 	// LIFECYCLE
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-	}
 
 	@Override
 	protected void onPause() {

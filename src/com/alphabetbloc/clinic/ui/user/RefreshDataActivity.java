@@ -39,7 +39,7 @@ public class RefreshDataActivity extends Activity implements SyncDataListener {
 	public final static String DIALOG = "showdialog";
 	private static final String TAG = RefreshDataActivity.class.getSimpleName();
 	// private Context mContext;
-	private ProgressDialog mProgressDialog;
+	private ProgressDialog mSyncDialog;
 	private AlertDialog mAlertDialog;
 	private DownloadDataTask mDownloadTask;
 	private UploadDataTask mUploadTask;
@@ -87,9 +87,9 @@ public class RefreshDataActivity extends Activity implements SyncDataListener {
 			mDownloadTask.setSyncListener(this);
 		}
 
-		if (mProgressDialog != null && !mProgressDialog.isShowing()) {
+		if (mSyncDialog != null && !mSyncDialog.isShowing()) {
 			
-			mProgressDialog.show();
+			mSyncDialog.show();
 		}
 
 	}
@@ -138,8 +138,8 @@ public class RefreshDataActivity extends Activity implements SyncDataListener {
 
 	@Override
 	public void syncComplete(String result, SyncResult syncResult) {
-		if (mProgressDialog != null) {
-			mProgressDialog.dismiss();
+		if (mSyncDialog != null) {
+			mSyncDialog.dismiss();
 		}
 		stopRefreshDataActivity(true);
 	}
@@ -147,8 +147,8 @@ public class RefreshDataActivity extends Activity implements SyncDataListener {
 	// DIALOG SECTION
 	@Override
 	protected Dialog onCreateDialog(int id) {
-		if (mProgressDialog != null && mProgressDialog.isShowing()) {
-			mProgressDialog.dismiss();
+		if (mSyncDialog != null && mSyncDialog.isShowing()) {
+			mSyncDialog.dismiss();
 		}
 		if (mAlertDialog != null && mAlertDialog.isShowing()) {
 			mAlertDialog.dismiss();
@@ -162,8 +162,8 @@ public class RefreshDataActivity extends Activity implements SyncDataListener {
 			return mAlertDialog;
 			// 2. or pressed update manually
 		case DIRECT_TO_DOWNLOAD:
-			mProgressDialog = createDownloadDialog();
-			return mProgressDialog;
+			mSyncDialog = createDownloadDialog();
+			return mSyncDialog;
 		default:
 			mAlertDialog = createAskDialog();
 			return mAlertDialog;
@@ -235,10 +235,10 @@ public class RefreshDataActivity extends Activity implements SyncDataListener {
 
 	@Override
 	public void progressUpdate(String message, int progress, int max) {
-		if (mProgressDialog != null) {
-			mProgressDialog.setMax(max);
-			mProgressDialog.setProgress(progress);
-			mProgressDialog.setTitle(getString(R.string.downloading, message));
+		if (mSyncDialog != null) {
+			mSyncDialog.setMax(max);
+			mSyncDialog.setProgress(progress);
+			mSyncDialog.setTitle(getString(R.string.downloading, message));
 		}
 	}
 
@@ -275,8 +275,8 @@ public class RefreshDataActivity extends Activity implements SyncDataListener {
 	protected void onDestroy() {
 		Log.e("louis.fazen", "RefreshDataActivity.onDestroy is called");
 
-		if (mProgressDialog != null && mProgressDialog.isShowing()) {
-			mProgressDialog.dismiss();
+		if (mSyncDialog != null && mSyncDialog.isShowing()) {
+			mSyncDialog.dismiss();
 		}
 		if (mAlertDialog != null && mAlertDialog.isShowing()) {
 			mAlertDialog.dismiss();
@@ -301,8 +301,8 @@ public class RefreshDataActivity extends Activity implements SyncDataListener {
 	protected void onPause() {
 		super.onPause();
 
-		if (mProgressDialog != null && mProgressDialog.isShowing()) {
-			mProgressDialog.dismiss();
+		if (mSyncDialog != null && mSyncDialog.isShowing()) {
+			mSyncDialog.dismiss();
 		}
 
 		if (mAlertDialog != null && mAlertDialog.isShowing()) {

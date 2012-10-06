@@ -27,7 +27,7 @@ import com.alphabetbloc.clinic.utilities.EncryptionUtil;
  *
  */
 
-public abstract class ManageSSLActivity extends ListActivity {
+public abstract class SSLBaseActivity extends ListActivity {
 //	private static final String TAG = ManageSSLActivity.class.getSimpleName();
 	// Common to Key/Trust Store
 	protected File mLocalStoreFile;

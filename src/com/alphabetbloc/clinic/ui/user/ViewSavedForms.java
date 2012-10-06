@@ -34,8 +34,8 @@ public class ViewSavedForms extends ViewFormsActivity {
 	private static Integer mPatientId;
 	private ListView mListView;
 	private MergeAdapter mMergeAdapter;
-	protected GestureDetector mFormDetector;
-	protected OnTouchListener mFormListener;
+	private GestureDetector mFormDetector;
+	private OnTouchListener mFormListener;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {

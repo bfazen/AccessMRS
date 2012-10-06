@@ -72,14 +72,14 @@ public class WipeDataActivity extends Activity {
 		AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
 		builder.setTitle(R.string.alert_title_first_warning);
 		builder.setMessage(R.string.alert_odk_body_first_warning);
-		builder.setIcon(R.drawable.priority);
+		builder.setIcon(R.drawable.ic_exclamation);
 
 		builder.setPositiveButton(R.string.alert_ok_button, new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int which) {
 				AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
 				builder.setTitle(R.string.alert_title_second_warning);
 				builder.setMessage(R.string.alert_odk_body_second_warning);
-				builder.setIcon(R.drawable.priority);
+				builder.setIcon(R.drawable.ic_exclamation);
 				builder.setPositiveButton(R.string.alert_ok_button, new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
 

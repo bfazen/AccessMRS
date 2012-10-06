@@ -15,7 +15,7 @@
  ******************************************************************************/
 package com.alphabetbloc.clinic.services;
 
-import com.alphabetbloc.clinic.ui.admin.AccountSetupActivity;
+import com.alphabetbloc.clinic.ui.admin.SetupAccountActivity;
 
 import android.accounts.AbstractAccountAuthenticator;
 import android.accounts.Account;
@@ -76,10 +76,10 @@ public class AccountAuthenticatorService extends Service {
 		public Bundle addAccount(AccountAuthenticatorResponse response, String accountType, String authTokenType, String[] requiredFeatures, Bundle options)
 				throws NetworkErrorException {
 			Bundle result = new Bundle();
-			Intent i = new Intent(mContext, AccountSetupActivity.class);
+			Intent i = new Intent(mContext, SetupAccountActivity.class);
 			i.setAction("com.alphabetbloc.clinic.sync.LOGIN");
 			i.putExtra(AccountManager.KEY_ACCOUNT_AUTHENTICATOR_RESPONSE, response);
-			i.putExtra(AccountSetupActivity.LAUNCHED_FROM_ACCT_MGR, true);
+			i.putExtra(SetupAccountActivity.LAUNCHED_FROM_ACCT_MGR, true);
 			result.putParcelable(AccountManager.KEY_INTENT, i);
 			return result;
 		}

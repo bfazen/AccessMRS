@@ -28,6 +28,7 @@ import com.alphabetbloc.clinic.R;
 import com.alphabetbloc.clinic.adapters.PatientAdapter;
 import com.alphabetbloc.clinic.data.Patient;
 import com.alphabetbloc.clinic.providers.DbProvider;
+import com.alphabetbloc.clinic.ui.user.BaseListActivity.myGestureListener;
 
 /**
  * 
@@ -55,11 +56,13 @@ public class ListPatientActivity extends BaseListActivity implements SyncStatusO
 	private ImageButton mAddClientButton;
 	private Button mSimilarClientButton;
 	private Button mCancelClientButton;
-	protected GestureDetector mClientDetector;
-	protected OnTouchListener mClientListener;
+	private GestureDetector mClientDetector;
+	private OnTouchListener mClientListener;
 	private ListView mClientListView;
 	private int mIndex = 0;
 	private int mTop = 0;
+	private OnTouchListener mSwipeListener;
+	private GestureDetector mSwipeDetector;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -150,6 +153,13 @@ public class ListPatientActivity extends BaseListActivity implements SyncStatusO
 			}
 		};
 
+		mSwipeDetector = new GestureDetector(new myGestureListener());
+		mSwipeListener = new OnTouchListener() {
+			@Override
+			public boolean onTouch(View v, MotionEvent event) {
+				return mSwipeDetector.onTouchEvent(event);
+			}
+		};
 	}
 	
 	@Override

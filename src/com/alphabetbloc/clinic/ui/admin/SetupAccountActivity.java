@@ -35,10 +35,10 @@ import android.widget.Toast;
  * @author Louis Fazen (louis.fazen@gmail.com)
  * 
  */
-public class AccountSetupActivity extends Activity implements SyncDataListener {
+public class SetupAccountActivity extends Activity implements SyncDataListener {
 
 	// setAccountAuthenticatorResult(android.os.Bundle);
-	private static final String TAG = AccountSetupActivity.class.getSimpleName();
+	private static final String TAG = SetupAccountActivity.class.getSimpleName();
 
 	// Intents
 	public static final String USE_CONFIG_FILE = "use_config_file_defaults";

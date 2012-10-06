@@ -47,15 +47,15 @@ public class ViewCompletedForms extends ViewFormsActivity implements DecryptionL
 	public static final String EDIT_FORM = "edit_form";
 	public static final int VIEW_FORM_ONLY = 4;
 	private static final String TAG = ViewCompletedForms.class.getSimpleName();
-	private ProgressDialog mProgressDialog;
+	private ProgressDialog mDecryptDialog;
 	private static Integer mPatientId;
 	private Context mContext;
 	private Form mClickedForm;
 	private DecryptionTask mDecryptionTask;
 	private ListView mListView;
 	private MergeAdapter mMergeAdapter;
-	protected GestureDetector mFormDetector;
-	protected OnTouchListener mFormListener;
+	private GestureDetector mFormDetector;
+	private OnTouchListener mFormListener;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -84,9 +84,9 @@ public class ViewCompletedForms extends ViewFormsActivity implements DecryptionL
 		createPatientHeader(mPatientId);
 		refreshView();
 
-		if (mProgressDialog != null && !mProgressDialog.isShowing()) {
-			Log.e(TAG, "mProgressDialog is SHOWING FROM ON RESUME!");
-			mProgressDialog.show();
+		if (mDecryptDialog != null && !mDecryptDialog.isShowing()) {
+			Log.e(TAG, "mDecryptDialog is SHOWING FROM ON RESUME!");
+			mDecryptDialog.show();
 		}
 
 		if (mDecryptionTask != null)
@@ -139,8 +139,8 @@ public class ViewCompletedForms extends ViewFormsActivity implements DecryptionL
 			
 			//save the form until completion of the asynctask, show dialog
 			mClickedForm = f;
-			mProgressDialog = createDecryptDialog();
-			mProgressDialog.show();
+			mDecryptDialog = createDecryptDialog();
+			mDecryptDialog.show();
 
 			mDecryptionTask = new DecryptionTask();
 			mDecryptionTask.setDecryptionListener(ViewCompletedForms.this);
@@ -194,10 +194,10 @@ public class ViewCompletedForms extends ViewFormsActivity implements DecryptionL
 
 	@Override
 	public void decryptComplete(Boolean allFilesDecrypted) {
-		if (mProgressDialog != null) {
-			mProgressDialog.cancel();
-			mProgressDialog = null;
-			Log.e(TAG, "mProgressDialog is CANCELLED!");
+		if (mDecryptDialog != null) {
+			mDecryptDialog.cancel();
+			mDecryptDialog = null;
+			Log.e(TAG, "mDecryptDialog is CANCELLED!");
 		}
 		if (mDecryptionTask != null) {
 			mDecryptionTask.setDecryptionListener(null);
@@ -240,8 +240,8 @@ public class ViewCompletedForms extends ViewFormsActivity implements DecryptionL
 	protected void onPause() {
 		super.onPause();
 
-		if (mProgressDialog != null && mProgressDialog.isShowing()) {
-			mProgressDialog.dismiss();
+		if (mDecryptDialog != null && mDecryptDialog.isShowing()) {
+			mDecryptDialog.dismiss();
 		}
 	}
 
