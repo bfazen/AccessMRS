@@ -164,6 +164,7 @@ public class BaseListActivity extends ListActivity implements SyncStatusObserver
 			// we have just completed a sync
 			if (mSyncActiveDialog != null) {
 				mSyncActiveDialog.dismiss();
+				mSyncActiveDialog = null;
 			}
 
 			Intent relaunch = new Intent(this, ClinicLauncherActivity.class);

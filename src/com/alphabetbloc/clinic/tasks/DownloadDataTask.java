@@ -9,7 +9,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.security.KeyStore;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -42,7 +41,7 @@ import com.alphabetbloc.clinic.utilities.XformUtils;
  */
 public class DownloadDataTask extends SyncDataTask {
 
-	private final String TAG = DownloadDataTask.class.getSimpleName();
+	private static final String TAG = DownloadDataTask.class.getSimpleName();
 	private DbProvider mDbHelper;
 
 	@Override
@@ -365,7 +364,6 @@ public class DownloadDataTask extends SyncDataTask {
 				int current = (int) c;
 
 				if (current != progress) {
-					Log.i(TAG, "i=" + i + " current=" + current + " progress=" + progress + " icount=" + icount);
 					progress = current;
 					showProgress("Processing Forms", 1);
 				}
@@ -377,7 +375,7 @@ public class DownloadDataTask extends SyncDataTask {
 		}
 
 		long end = System.currentTimeMillis();
-		Log.i("Test", String.format("InsertHelper, Speed: %d ms, Records per second: %.2f", (int) (end - start), 1000 * (double) icount / (double) (end - start)));
+		Log.i("END InsertPtsForms", String.format("InsertPtsForms Speed: %d ms, Records per second: %.2f", (int) (end - start), 1000 * (double) icount / (double) (end - start)));
 
 	}
 
@@ -417,7 +415,6 @@ public class DownloadDataTask extends SyncDataTask {
 				long c = Math.round(((float) i / (float) icount) * 10.0);
 				int current = (int) c;
 				if (current != progress) {
-					Log.e(TAG, "i=" + i + " current=" + current + " progress=" + progress + " icount=" + icount);
 					progress = current;
 					showProgress("Processing Clients", 1);
 				}
@@ -430,7 +427,7 @@ public class DownloadDataTask extends SyncDataTask {
 		}
 
 		long end = System.currentTimeMillis();
-		Log.i("Test", String.format("InsertHelper, Speed: %d ms, Records per second: %.2f", (int) (end - start), 1000 * (double) icount / (double) (end - start)));
+		Log.i("END InsertPts", String.format("InsertPts Speed: %d ms, Records per second: %.2f", (int) (end - start), 1000 * (double) icount / (double) (end - start)));
 
 	}
 
@@ -449,17 +446,15 @@ public class DownloadDataTask extends SyncDataTask {
 		int obsTypeIndex = ih.getColumnIndex(DbProvider.KEY_DATA_TYPE);
 		int obsEncDateIndex = ih.getColumnIndex(DbProvider.KEY_ENCOUNTER_DATE);
 
+		db.beginTransaction();
+		int current = 0;
 		int progress = 0;
 		int icount = 0;
-		int j = 0;
 		try {
 			icount = zdis.readInt();
 			Log.i(TAG, "insertObservations icount: " + icount);
-			for (int i = 1; i < icount + 1; i++) {
 
-				if (j == 0) {
-					db.beginTransaction();
-				}
+			for (int i = 1; i < icount + 1; i++) {
 
 				ih.prepareForInsert();
 				ih.bind(ptIdIndex, zdis.readInt());
@@ -474,44 +469,40 @@ public class DownloadDataTask extends SyncDataTask {
 				} else if (dataType == DbProvider.TYPE_DATE) {
 					ih.bind(obsDateIndex, parseDate(zdis.readUTF()));
 				}
+				
 				ih.bind(obsTypeIndex, dataType);
 				ih.bind(obsEncDateIndex, parseDate(zdis.readUTF()));
 				ih.execute();
-				j++;
 
-				long c = Math.round(((float) i / (float) icount) * 20.0);
-				int current = (int) c;
-				if (current != progress) {
-					Log.i(TAG, "i=" + i + " current=" + current + " progress=" + progress + " icount=" + icount);
-					progress = current;
+
+				
+//				current = (int) Math.round(((float) i / (float) icount) * 20.0);
+				if (((int) Math.round(((float) i / (float) icount) * 20.0)) != progress) {
+//					Log.i(TAG, "i=" + i + " current=" + current + " progress=" + progress + " icount=" + icount);
+					progress = (int) Math.round(((float) i / (float) icount) * 20.0);
 					showProgress("Processing Data", 1);
 				}
 
-				if (j > 50) {
-					Log.e(TAG, "setting transaction successful");
-					j = 0;
-					db.setTransactionSuccessful();
-					db.endTransaction();
-				}
-
+			
 			}
-			if (j > 0)
+
 				db.setTransactionSuccessful();
 		} finally {
 			ih.close();
-			if (j > 0)
+
 				db.endTransaction();
 		}
 
 		long end = System.currentTimeMillis();
-		Log.i("Test", String.format("InsertHelper, Speed: %d ms, Records per second: %.2f", (int) (end - start), 1000 * (double) icount / (double) (end - start)));
+		Log.i("END InsertObs", String.format("InsertObs Speed: %d ms, Records per second: %.2f", (int) (end - start), 1000 * (double) icount / (double) (end - start)));
 
 	}
 
-	private static String parseDate(String s) {
-		String date = s.split("T")[0];
-		SimpleDateFormat outputFormat = new SimpleDateFormat("MMM dd, yyyy");
-		SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd");
+	String date = null;
+	SimpleDateFormat outputFormat = new SimpleDateFormat("MMM dd, yyyy");
+	SimpleDateFormat inputFormat =  new SimpleDateFormat("yyyy-MM-dd");
+	private String parseDate(String s) {
+		date = s.split("T")[0];
 		try {
 			return outputFormat.format(inputFormat.parse(date));
 		} catch (ParseException e) {

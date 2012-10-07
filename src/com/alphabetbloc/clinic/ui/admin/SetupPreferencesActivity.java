@@ -15,6 +15,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -302,7 +303,7 @@ public class SetupPreferencesActivity extends Activity {
 						File db = App.getApp().getDatabasePath(DbProvider.DATABASE_NAME);
 						if (db.exists())
 							db.delete();
-						App.getDb();
+						DbProvider.createDb();
 
 						// encrypt a new Collect instances Db
 
@@ -342,7 +343,9 @@ public class SetupPreferencesActivity extends Activity {
 
 		try {
 			// Simply opening the db should force it to start a new encrypted db
-			App.getApp().getContentResolver().query(Uri.parse(InstanceColumns.CONTENT_URI + "/reset"), null, null, null, null);
+			Cursor c = App.getApp().getContentResolver().query(Uri.parse(InstanceColumns.CONTENT_URI + "/reset"), null, null, null, null);
+			if(c != null)
+				c.close();
 			isCollectSetup = true;
 
 		} catch (Exception e) {

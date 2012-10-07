@@ -4,9 +4,11 @@ import net.sqlcipher.database.SQLiteDatabase;
 import android.app.Application;
 
 import com.alphabetbloc.clinic.providers.DbProvider;
+
 /**
  * 
- * @author Louis Fazen (louis.fazen@gmail.com) (All methods except where otherwise noted)
+ * @author Louis Fazen (louis.fazen@gmail.com) (All methods except where
+ *         otherwise noted)
  * @author Yaw Anokwa (getApp() taken from ODK Clinic)
  */
 public class App extends Application {
@@ -23,27 +25,27 @@ public class App extends Application {
 	public static App getApp() {
 		return mSingleton;
 	}
-	
+
 	private static void initializeDb() {
 		SQLiteDatabase.loadLibs(mSingleton);
 		mSqlCipherDbHelper = new DbProvider.DatabaseHelper(mSingleton);
 	}
-	
+
 	public static void resetDb() {
 		mSqlCipherDbHelper = null;
 	}
 
-	public static SQLiteDatabase getDb() {
+	public static SQLiteDatabase getDb(String password) {
 		if (mSqlCipherDbHelper == null)
-			initializeDb();	
-		String password = EncryptionUtil.getPassword();
+			initializeDb();
+
 		return mSqlCipherDbHelper.getWritableDatabase(password);
 	}
-	
+
 	/*
 	 * NB: Never close the DB! just ensure always using one DbHelper... its own
-	 * class with db creation, lazy loading, which DbAdapter (DA) would call
-	 * and return helper. See: (Mark Murphy) Commonsware and Kevin Galligan
+	 * class with db creation, lazy loading, which DbAdapter (DA) would call and
+	 * return helper. See: (Mark Murphy) Commonsware and Kevin Galligan
 	 * (TouchLabs)
 	 * (stackoverflow.com/questions/7211941/never-close-android-sqlite
 	 * -connection)

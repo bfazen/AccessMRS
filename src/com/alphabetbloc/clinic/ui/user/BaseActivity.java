@@ -3,6 +3,8 @@ package com.alphabetbloc.clinic.ui.user;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.app.Activity;
+import android.app.ActivityManager;
+import android.app.ActivityManager.RunningServiceInfo;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
@@ -41,7 +43,7 @@ public class BaseActivity extends Activity implements SyncStatusObserver {
 	private static final int MENU_REFRESH = Menu.FIRST;
 	private static final int MENU_USER_PREFERENCES = Menu.FIRST + 1;
 	private static final int MENU_ADMIN_PREFERENCES = Menu.FIRST + 2;
-	
+
 	private static final int PROGRESS_DIALOG = 1;
 	private static final String TAG = BaseActivity.class.getSimpleName();
 
@@ -58,7 +60,25 @@ public class BaseActivity extends Activity implements SyncStatusObserver {
 		}
 	}
 
-
+	
+	private boolean isSyncServiceActive() {
+		
+		
+		
+		String name = RefreshDataService.class.getName();
+		Log.e(TAG, "name=" + name);
+	    ActivityManager am = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+	    for (RunningServiceInfo service : am.getRunningServices(Integer.MAX_VALUE)) {
+	        if (RefreshDataService.class.getName().equals(service.service.getClassName())) {
+	        	Log.e(TAG, "according to AM it is active! " + name);
+	        	return true;
+	        }
+	    }
+	    Log.e(TAG, "according to AM it is NOT active!" + name);
+	    return false;
+	}
+	
+	
 	@Override
 	public void onStatusChanged(int which) {
 
@@ -72,42 +92,50 @@ public class BaseActivity extends Activity implements SyncStatusObserver {
 	}
 
 	public boolean checkSyncActivity() {
-		boolean syncActive = false;
-		AccountManager accountManager = AccountManager.get(App.getApp());
-		Account[] accounts = accountManager.getAccountsByType(App.getApp().getString(R.string.app_account_type));
 
-		if (accounts.length <= 0)
-			return false;
-
-		syncActive = ContentResolver.isSyncActive(accounts[0], getString(R.string.app_provider_authority));
-
-		if (syncActive) {
-			//we are starting a sync
+		if (isSyncActive()) {
+			// we are starting a sync
 			showDialog(PROGRESS_DIALOG);
 			Log.e(TAG, "sync is active");
+			return true;
 		} else {
 
 			Log.e(TAG, "sync is not active");
-			
-			//we have just completed a sync
+
+			// we have just completed a sync
 			if (mSyncActiveDialog != null) {
 				mSyncActiveDialog.dismiss();
+				mSyncActiveDialog = null;
 			}
-			
+
 			Intent relaunch = new Intent(this, ClinicLauncherActivity.class);
 			relaunch.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 			relaunch.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 			startActivity(relaunch);
 			finish();
+			return true;
 		}
 
-		return syncActive;
+	}
+
+	private boolean isSyncActive() {
+		AccountManager accountManager = AccountManager.get(App.getApp());
+		Account[] accounts = accountManager.getAccountsByType(App.getApp().getString(R.string.app_account_type));
+
+		Log.e(TAG, "is SyncActive for accounts length=" + accounts.length);
+		if (accounts.length <= 0)
+			return false;
+		
+		Log.e(TAG, "is SyncActive for accounts[0].name=" + accounts[0].name);
+		
+		return ContentResolver.isSyncActive(accounts[0], getString(R.string.app_provider_authority));
 	}
 
 	@Override
 	protected Dialog onCreateDialog(int id) {
 		if (mSyncActiveDialog != null && mSyncActiveDialog.isShowing()) {
 			mSyncActiveDialog.dismiss();
+			mSyncActiveDialog = null;
 		}
 
 		mSyncActiveDialog = new ProgressDialog(this);
@@ -153,13 +181,13 @@ public class BaseActivity extends Activity implements SyncStatusObserver {
 			return super.onOptionsItemSelected(item);
 		}
 	}
-	
+
 	private void refreshData() {
 		Intent id = new Intent(getBaseContext(), RefreshDataActivity.class);
 		id.putExtra(RefreshDataActivity.DIALOG, RefreshDataActivity.DIRECT_TO_DOWNLOAD);
 		startActivity(id);
 	}
-	
+
 	// LIFECYCLE
 	@Override
 	protected void onResume() {
@@ -167,13 +195,28 @@ public class BaseActivity extends Activity implements SyncStatusObserver {
 		IntentFilter filter = new IntentFilter(RefreshDataService.REFRESH_BROADCAST);
 		LocalBroadcastManager.getInstance(this).registerReceiver(onNotice, filter);
 		mSyncObserverHandle = ContentResolver.addStatusChangeListener(ContentResolver.SYNC_OBSERVER_TYPE_ACTIVE, this);
-		if (mSyncActiveDialog != null && !mSyncActiveDialog.isShowing()) {
-			mSyncActiveDialog.show();
-		}
+
+		Log.e(TAG, "Checking is sync active?");
+		if (isSyncServiceActive()) {
+			Log.e(TAG, "Sync is active!");
+			if (mSyncActiveDialog != null && !mSyncActiveDialog.isShowing())
+				mSyncActiveDialog.show();
+			else
+				showDialog(PROGRESS_DIALOG);
+
+			Log.e(TAG, "Should now be showing a dialog!");
+		} else
+			Log.e(TAG, "Sync is NOT active!");
+
 	}
 
 	private BroadcastReceiver onNotice = new BroadcastReceiver() {
 		public void onReceive(Context ctxt, Intent i) {
+
+			if (mSyncActiveDialog != null && mSyncActiveDialog.isShowing()) {
+				mSyncActiveDialog.dismiss();
+				mSyncActiveDialog = null;
+			}
 
 			Intent intent = new Intent(getBaseContext(), RefreshDataActivity.class);
 			intent.putExtra(RefreshDataActivity.DIALOG, RefreshDataActivity.ASK_TO_DOWNLOAD);
@@ -188,7 +231,7 @@ public class BaseActivity extends Activity implements SyncStatusObserver {
 		ContentResolver.removeStatusChangeListener(mSyncObserverHandle);
 		LocalBroadcastManager.getInstance(this).unregisterReceiver(onNotice);
 	}
-	
+
 	protected void showCustomToast(String message) {
 		LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 		View view = inflater.inflate(R.layout.toast_view, null);

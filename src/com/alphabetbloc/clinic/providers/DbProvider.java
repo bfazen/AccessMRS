@@ -27,6 +27,7 @@ import com.alphabetbloc.clinic.data.Observation;
 import com.alphabetbloc.clinic.data.Patient;
 import com.alphabetbloc.clinic.ui.user.DashboardActivity;
 import com.alphabetbloc.clinic.utilities.App;
+import com.alphabetbloc.clinic.utilities.EncryptionUtil;
 import com.alphabetbloc.clinic.utilities.FileUtils;
 
 /**
@@ -172,13 +173,20 @@ public class DbProvider extends ContentProvider {
 	}
 
 	public static void createDb() {
-		sDb = App.getDb();
+		String password = EncryptionUtil.getPassword();
+		if (password != null)
+			sDb = App.getDb(password);
+		else {
+			//we lost our db password! : ask user for it...
+			Log.e(TAG, "We lost the DB Password!");
+		}
+			
 	}
 
 	public static DbProvider openDb() {
 		if (!isOpen()) {
 			Log.w(TAG, "Database is not open! Opening Now!");
-			sDb = App.getDb();
+			createDb();
 		}
 
 		return getInstance();

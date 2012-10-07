@@ -196,6 +196,7 @@ public class RefreshDataService extends Service implements SyncDataListener {
 
 		// Collect: Never Sync
 		if (foregroundApp.processName.equals(collectPackage)) {
+			Log.e(TAG, "User is in collect entering data imp=" + foregroundApp.importance + " lru=" + foregroundApp.lru + " processName=" + foregroundApp.processName + " uid=" + foregroundApp.uid);
 			return enteringData;
 		}
 
@@ -208,18 +209,19 @@ public class RefreshDataService extends Service implements SyncDataListener {
 				String listPatientClass = ListPatientActivity.class.getSimpleName();
 				String refreshDataClass = RefreshDataActivity.class.getSimpleName();
 				if (foreGround.getClassName().equals(createPatientClass) || foreGround.getClassName().equals(refreshDataClass) || (foreGround.getClassName().equals(listPatientClass) && ListPatientActivity.mListType == DashboardActivity.LIST_SIMILAR_CLIENTS)) {
-
+					Log.e(TAG, "User is entering data in clinic");
 					// do nothing for these clinic activities
 					return enteringData;
 
 				} else {
+					Log.e(TAG, "User is in clinic, not entering data");
 					// request user to sync otherwise
 					sRequestUserToSync = true;
 				}
 			}
 
 		}
-
+		Log.e(TAG, "Returning entering data (should be false) = " + !enteringData);
 		return !enteringData;
 	}
 
@@ -232,6 +234,8 @@ public class RefreshDataService extends Service implements SyncDataListener {
 		Iterator<RunningAppProcessInfo> i = l.iterator();
 		while (i.hasNext()) {
 			info = i.next();
+			Log.e(TAG, "Process is	 imp=" + info.importance + " lru=" + info.lru + " processName=" + info.processName + " uid=" + info.uid);
+			
 			if (info.importance == RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
 				result = info;
 				break;
@@ -315,59 +319,5 @@ public class RefreshDataService extends Service implements SyncDataListener {
 
 		super.onDestroy();
 	}
-
-	// //// Not using the following:
-
-	// private boolean isStillActive(RunningAppProcessInfo process,
-	// ComponentName activity) {
-	// // activity can be null in cases, where one app starts another. for
-	// // example, astro
-	// // starting rock player when a move file was clicked. we dont have an
-	// // activity then,
-	// // but the package exits as soon as back is hit. so we can ignore the
-	// // activity
-	// // in this case
-	// if (process == null)
-	// return false;
-	//
-	// RunningAppProcessInfo currentFg = getForegroundApp();
-	// ComponentName currentActivity = getActivityForApp(currentFg);
-	//
-	// if (currentFg != null &&
-	// currentFg.processName.equals(process.processName) && (activity == null ||
-	// currentActivity.compareTo(activity) == 0))
-	// return true;
-	//
-	// Log.i("RefreshClientServive",
-	// "isStillActive returns false - CallerProcess: " + process.processName +
-	// " CurrentProcess: " + (currentFg == null ? "null" :
-	// currentFg.processName) + " CallerActivity:" + (activity == null ? "null"
-	// : activity.toString())
-	// + " CurrentActivity: " + (currentActivity == null ? "null" :
-	// currentActivity.toString()));
-	// return false;
-	// }
-	//
-	// private boolean isRunningService(String processname) {
-	// // if(processname==null || processname.isEmpty())
-	// if (processname == null || processname.length() < 1)
-	// return false;
-	//
-	// RunningServiceInfo service;
-	//
-	// if (mActivityManager == null)
-	// mActivityManager = (ActivityManager)
-	// getSystemService(Context.ACTIVITY_SERVICE);
-	// // mContext.getSystemService(Context.ACTIVITY_SERVICE);
-	// List<RunningServiceInfo> l = mActivityManager.getRunningServices(9999);
-	// Iterator<RunningServiceInfo> i = l.iterator();
-	// while (i.hasNext()) {
-	// service = i.next();
-	// if (service.process.equals(processname))
-	// return true;
-	// }
-	//
-	// return false;
-	// }
 
 }

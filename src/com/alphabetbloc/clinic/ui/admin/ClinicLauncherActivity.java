@@ -15,6 +15,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -97,7 +98,8 @@ public class ClinicLauncherActivity extends Activity {
 		// Shortcut: if db open & have an account, we are setup
 		AccountManager accountManager = AccountManager.get(App.getApp());
 		Account[] accounts = accountManager.getAccountsByType(App.getApp().getString(R.string.app_account_type));
-		if (getDatabasePath(DbProvider.DATABASE_NAME).exists() && accounts.length > 0) {
+		String password = EncryptionUtil.getPassword();
+		if (getDatabasePath(DbProvider.DATABASE_NAME).exists() && accounts.length > 0 && password != null) {
 			// make sure Db is open
 			DbProvider.openDb();
 			if (DbProvider.isOpen())
@@ -206,7 +208,9 @@ public class ClinicLauncherActivity extends Activity {
 	private boolean isCollectSetup() {
 
 		try {
-			App.getApp().getContentResolver().query(Uri.parse(InstanceColumns.CONTENT_URI + "/reset"), null, null, null, null);
+			Cursor c = App.getApp().getContentResolver().query(Uri.parse(InstanceColumns.CONTENT_URI + "/reset"), null, null, null, null);
+			if(c != null)
+				c.close();
 		} catch (Exception e) {
 			Log.e(TAG, "collect db does not exist?!");
 			return false;
