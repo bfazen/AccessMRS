@@ -218,7 +218,7 @@ public class BaseListActivity extends ListActivity implements SyncStatusObserver
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
 		boolean showMenu = prefs.getBoolean(getString(R.string.key_show_settings_menu), false);
 		if (showMenu)
-			menu.add(0, MENU_ADMIN_PREFERENCES, 0, getString(R.string.pref_settings)).setIcon(android.R.drawable.ic_menu_preferences);
+			menu.add(0, MENU_ADMIN_PREFERENCES, MENU_ADMIN_PREFERENCES, getString(R.string.pref_admin_settings)).setIcon(android.R.drawable.ic_lock_lock);
 
 		return true;
 

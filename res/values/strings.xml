@@ -23,6 +23,7 @@
     <string name="key_enable_activity_log">enable_activity_log</string>
     <string name="key_min_refresh_seconds">minimum_refresh_time</string>
     <string name="key_max_refresh_seconds">maximum_refresh_time</string>
+    <string name="key_show_form_prompt">show_form_prompt</string>
 
     <!-- Defaults -->
     <string name="default_server">https://41.57.100.29:8443/amrs</string>
@@ -32,6 +33,7 @@
     <string name="default_program">1</string>
     <string name="default_saved_search">1</string>
     <string name="default_use_saved_searches">true</string>
+    <string name="default_show_form_prompt">true</string>
     <string name="default_show_settings_menu">true</string>
     <string name="default_enable_activity_logging">true</string>
     <string name="default_use_client_auth">false</string>
@@ -78,6 +80,9 @@
     <string name="pref_max_requirement">This value must be less than the \'sync after\' setting.</string>
     <string name="pref_wipe_all_data">Reset Databases</string>
     <string name="pref_wipe_data_desc">Wipe all existing data from phone and reset to default settings</string>
+    <string name="pref_form_prompt">Form Confirmation</string>
+    <string name="pref_form_prompt_on">Ask for user confirmation before loading a new form.</string>
+    <string name="pref_form_prompt_off">Load new forms directly.</string>
 
     <!-- PreferenceActivity -> WipeDataActivity Alerts -->
     <string name="alert_title_first_warning">WARNING !!!</string>
@@ -265,5 +270,7 @@
     <string name="cancel">Cancel</string>
     <string name="find_patient">List Patients</string>
     <string name="view_patient_detail">View Observation</string>
+    <string name="fill_form">Fill Form</string>
+    <string name="fill_form_prompt_title">Fill out Form:</string>
 
 </resources>

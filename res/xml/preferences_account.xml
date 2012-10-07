@@ -7,7 +7,7 @@
         android:summary="@string/account_change_username_password"
         android:title="@string/account_change_details" >
         <intent
-            android:targetClass="com.alphabetbloc.clinic.ui.admin.AccountSetupActivity"
+            android:targetClass="com.alphabetbloc.clinic.ui.admin.SetupAccountActivity"
             android:targetPackage="@string/app_package_name" />
     </Preference>
     <Preference

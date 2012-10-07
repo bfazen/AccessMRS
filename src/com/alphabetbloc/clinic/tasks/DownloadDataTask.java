@@ -46,6 +46,7 @@ public class DownloadDataTask extends SyncDataTask {
 
 	@Override
 	protected String doInBackground(SyncResult... values) {
+		Thread.currentThread().setName(TAG);
 		sSyncResult = values[0];
 		Log.i(TAG, "DownloadDataTask Called");
 		mDbHelper = DbProvider.openDb();

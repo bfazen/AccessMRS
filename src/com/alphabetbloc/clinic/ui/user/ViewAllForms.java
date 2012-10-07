@@ -7,15 +7,20 @@ import org.odk.collect.android.provider.FormsProviderAPI.FormsColumns;
 import org.odk.collect.android.provider.InstanceProviderAPI;
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.ContentUris;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -34,18 +39,22 @@ import com.alphabetbloc.clinic.adapters.MergeAdapter;
 import com.alphabetbloc.clinic.data.Form;
 import com.alphabetbloc.clinic.data.Patient;
 import com.alphabetbloc.clinic.providers.DbProvider;
+import com.alphabetbloc.clinic.services.WakefulIntentService;
+import com.alphabetbloc.clinic.services.WipeDataService;
 import com.alphabetbloc.clinic.utilities.App;
 import com.alphabetbloc.clinic.utilities.FileUtils;
 import com.alphabetbloc.clinic.utilities.XformUtils;
 
 /**
- * @author Louis Fazen (louis.fazen@gmail.com) (All Methods except where noted otherwise)
- * @author Yaw Anokwa (getDownloadedForms() and LaunchFormEntry() were taken from
- *         ODK Clinic)
+ * @author Louis Fazen (louis.fazen@gmail.com) (All Methods except where noted
+ *         otherwise)
+ * @author Yaw Anokwa (getDownloadedForms() and LaunchFormEntry() were taken
+ *         from ODK Clinic)
  */
 
 public class ViewAllForms extends ViewFormsActivity {
 
+	// private static final int FORM_DIALOG = 1;
 	private ArrayList<Form> mTotalForms = new ArrayList<Form>();
 	private static Patient mPatient;
 	private Context mContext;
@@ -64,6 +73,7 @@ public class ViewAllForms extends ViewFormsActivity {
 	private OnTouchListener mFormListener;
 	private OnTouchListener mSwipeListener;
 	private GestureDetector mSwipeDetector;
+	private AlertDialog mFormDialog;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -143,6 +153,14 @@ public class ViewAllForms extends ViewFormsActivity {
 		mSelectedFormIds = getPriorityForms(mPatient.getPatientId());
 		createPatientHeader(mPatient.getPatientId());
 		refreshView();
+	}
+
+	@Override
+	protected void onPause() {
+		super.onPause();
+		if (mFormDialog != null && mFormDialog.isShowing()) {
+			mFormDialog.dismiss();
+		}
 	}
 
 	private void refreshView() {
@@ -357,7 +375,6 @@ public class ViewAllForms extends ViewFormsActivity {
 	}
 
 	protected void launchFormView(Form f, int position) {
-
 		ListAdapter selectedAdapter = adapter.getAdapter(position);
 
 		String type = null;
@@ -375,12 +392,56 @@ public class ViewAllForms extends ViewFormsActivity {
 			launchFormViewOnly(f.getPath(), f.getFormId().toString());
 			type = "Completed-Unsent";
 		} else {
-			launchFormEntry(f.getFormId().toString(), f.getName(), formType);
+			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+			boolean promptUser = prefs.getBoolean(getString(R.string.key_show_form_prompt), true);
+			if (promptUser)
+				mFormDialog = createAskDialog(f.getFormId().toString(), f.getName(), formType);
+			else
+				launchFormEntry(f.getFormId().toString(), f.getName(), formType);
+
 			type = "New Form";
 		}
 
 		startActivityLog(mPatient.getPatientId().toString(), f.getFormId().toString(), type, priority);
 
+	}
+
+	// @Override
+	// protected Dialog onCreateDialog(int id) {
+	// if (mFormDialog != null && mFormDialog.isShowing()) {
+	// mFormDialog.dismiss();
+	// }
+	//
+	// switch (id) {
+	// case FORM_DIALOG:
+	// default:
+	// mFormDialog = createAskDialog();
+	// return mFormDialog;
+	// }
+	// }
+
+	private AlertDialog createAskDialog(final String formId, final String formName, final int formType) {
+		AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
+		builder.setTitle(R.string.fill_form_prompt_title);
+		builder.setMessage(formName + "\n\n for \n\n" + mPatient.getGivenName() + " " + mPatient.getFamilyName());
+		builder.setIcon(android.R.drawable.ic_dialog_info);
+
+		builder.setPositiveButton(R.string.fill_form, new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int which) {
+
+				launchFormEntry(formId, formName, formType);
+
+			}
+		});
+
+		builder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				stopActivityLog();
+				dialog.dismiss();
+			}
+		});
+		return builder.create();
 	}
 
 	private void launchFormViewOnly(String uriString, String formId) {

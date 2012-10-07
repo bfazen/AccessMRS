@@ -3,7 +3,6 @@ package com.alphabetbloc.clinic.ui.admin;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
@@ -12,7 +11,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.Bundle;
-import android.preference.CheckBoxPreference;
 import android.preference.EditTextPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
@@ -76,7 +74,7 @@ public class PreferencesActivity extends PreferenceActivity implements OnSharedP
 	}
 
 	private void setPreferenceSummary(SharedPreferences prefs, String key) {
-		
+
 		Preference changedPref = findPreference(key);
 		if (changedPref instanceof EditTextPreference) {
 			String newValue = prefs.getString(key, ADMIN_PREFERENCES.get(key));
@@ -96,8 +94,11 @@ public class PreferencesActivity extends PreferenceActivity implements OnSharedP
 				// Saved Search
 			} else if (key.equalsIgnoreCase(getString(R.string.key_saved_search)) && isInteger(newValue)) {
 				changedPref.setSummary(getString(R.string.pref_savedsearch_prefix) + newValue);
-			}
 
+				// Server
+			} else if (key.equalsIgnoreCase(getString(R.string.key_server))) {
+				changedPref.setSummary(newValue);
+			}
 			// } else if (changedPref instanceof CheckBoxPreference) {
 			// boolean status = prefs.getBoolean(key,
 			// Boolean.valueOf(DEFAULT_PREFERENCES_VALUE.get(key)));
@@ -114,7 +115,7 @@ public class PreferencesActivity extends PreferenceActivity implements OnSharedP
 		Log.e(TAG, "compareKey=" + compareKey + "compareValue=" + ADMIN_PREFERENCES.get(compareKey));
 		String compareValueS = prefs.getString(compareKey, ADMIN_PREFERENCES.get(compareKey));
 		Integer compareValue = Integer.valueOf(compareValueS);
-		
+
 		if (newValue.equals(compareValue)) {
 			// nothing has changed, so do nothing
 		} else if (newValue < Integer.valueOf(compareValue)) {
@@ -143,7 +144,8 @@ public class PreferencesActivity extends PreferenceActivity implements OnSharedP
 			Account[] accounts = accountManager.getAccountsByType(getString(R.string.app_account_type));
 
 			if (accounts.length > 0) {
-//				ContentResolver.removePeriodicSync(accounts[0], getString(R.string.app_provider_authority), null);
+				// ContentResolver.removePeriodicSync(accounts[0],
+				// getString(R.string.app_provider_authority), null);
 				ContentResolver.addPeriodicSync(accounts[0], getString(R.string.app_provider_authority), new Bundle(), newValue);
 			}
 		} else {
@@ -235,6 +237,7 @@ public class PreferencesActivity extends PreferenceActivity implements OnSharedP
 		map.put(c.getString(R.string.key_enable_activity_log), c.getString(R.string.default_enable_activity_logging));
 		map.put(c.getString(R.string.key_show_settings_menu), c.getString(R.string.default_show_settings_menu));
 		map.put(c.getString(R.string.key_use_saved_searches), c.getString(R.string.default_use_saved_searches));
+		map.put(c.getString(R.string.key_show_form_prompt), c.getString(R.string.default_show_form_prompt));
 		return Collections.unmodifiableMap(map);
 	}
 
@@ -243,38 +246,12 @@ public class PreferencesActivity extends PreferenceActivity implements OnSharedP
 		Context c = App.getApp();
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(c);
 		map.put(c.getString(R.string.key_provider), prefs.getString(c.getString(R.string.key_provider), c.getString(R.string.default_provider)));
+		map.put(c.getString(R.string.key_program), prefs.getString(c.getString(R.string.key_program), c.getString(R.string.default_program)));
 		map.put(c.getString(R.string.key_saved_search), prefs.getString(c.getString(R.string.key_saved_search), c.getString(R.string.default_saved_search)));
 		map.put(c.getString(R.string.key_use_saved_searches), c.getString(R.string.default_use_saved_searches));
+		map.put(c.getString(R.string.key_show_form_prompt), c.getString(R.string.default_show_form_prompt));
 		return Collections.unmodifiableMap(map);
 	}
-
-	// private static Map<String, String> createUnCheckedStringsMap() {
-	// Map<String, String> map = new HashMap<String, String>();
-	// Context c = App.getApp();
-	// map.put(c.getString(R.string.key_client_auth),
-	// c.getString(R.string.default_use_client_auth));
-	// map.put(c.getString(R.string.key_enable_activity_log),
-	// c.getString(R.string.default_enable_activity_logging));
-	// map.put(c.getString(R.string.key_show_settings_menu),
-	// c.getString(R.string.default_show_settings_menu));
-	// map.put(c.getString(R.string.key_use_saved_searches),
-	// c.getString(R.string.default_use_saved_searches));
-	// return Collections.unmodifiableMap(map);
-	// }
-	//
-	// private static Map<String, String> createCheckedStringsMap() {
-	// Map<String, String> map = new HashMap<String, String>();
-	// Context c = App.getApp();
-	// map.put(c.getString(R.string.key_client_auth),
-	// c.getString(R.string.default_use_client_auth));
-	// map.put(c.getString(R.string.key_enable_activity_log),
-	// c.getString(R.string.default_enable_activity_logging));
-	// map.put(c.getString(R.string.key_show_settings_menu),
-	// c.getString(R.string.default_show_settings_menu));
-	// map.put(c.getString(R.string.key_use_saved_searches),
-	// c.getString(R.string.default_use_saved_searches));
-	// return Collections.unmodifiableMap(map);
-	// }
 
 	@Override
 	protected void onPause() {

@@ -161,6 +161,10 @@ public class ViewFormsActivity extends BasePatientActivity {
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
 		super.onActivityResult(requestCode, resultCode, intent);
+		stopActivityLog();
+	}
+	
+	protected void stopActivityLog(){
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 		boolean logActivity = prefs.getBoolean(getString(R.string.key_enable_activity_log), true);
 		if (logActivity) {
