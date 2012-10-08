@@ -57,7 +57,7 @@ import com.alphabetbloc.clinic.utilities.EncryptionUtil;
 import com.alphabetbloc.clinic.utilities.FileUtils;
 import com.alphabetbloc.clinic.utilities.MySSLSocketFactory;
 import com.alphabetbloc.clinic.utilities.MyTrustManager;
-import com.alphabetbloc.clinic.utilities.WebUtils;
+import com.alphabetbloc.clinic.utilities.NetworkUtils;
 
 /**
  * 
@@ -291,7 +291,7 @@ public class SyncDataTask extends AsyncTask<SyncResult, String, String> {
 
 		getServerCredentials();
 		// get prefs
-		String url = WebUtils.getPatientDownloadUrl();
+		String url = NetworkUtils.getPatientDownloadUrl();
 		Log.e(TAG, "Got the url! at=" + System.currentTimeMillis());
 		HttpPost request = new HttpPost(url);
 		Log.e(TAG, "hposted the url at=" + System.currentTimeMillis());
@@ -324,8 +324,8 @@ public class SyncDataTask extends AsyncTask<SyncResult, String, String> {
 	protected void getServerCredentials() {
 		
 		if (mUsername == null || mPassword == null) {
-			mUsername = WebUtils.getServerUsername();
-			mPassword = WebUtils.getServerPassword();
+			mUsername = NetworkUtils.getServerUsername();
+			mPassword = NetworkUtils.getServerPassword();
 		}
 		
 		if (mCohort == null || mProgram == null) {

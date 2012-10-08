@@ -49,6 +49,7 @@ import org.w3c.dom.NodeList;
 
 import com.alphabetbloc.clinic.data.Observation;
 import com.alphabetbloc.clinic.data.Patient;
+import com.alphabetbloc.clinic.providers.Db;
 import com.alphabetbloc.clinic.providers.DbProvider;
 import com.alphabetbloc.clinic.ui.user.CreatePatientActivity;
 
@@ -276,8 +277,8 @@ public class XformUtils {
 
 		if (c != null && c.getCount() >= 0) {
 
-			int formIdIndex = c.getColumnIndex(DbProvider.KEY_FORM_ID);
-			int nameIndex = c.getColumnIndex(DbProvider.KEY_NAME);
+			int formIdIndex = c.getColumnIndex(Db.KEY_FORM_ID);
+			int nameIndex = c.getColumnIndex(Db.KEY_NAME);
 
 			if (c.getCount() > 0) {
 				do {

@@ -35,7 +35,7 @@ public class AlarmIntentService extends WakefulIntentService {
 	@Override
 	protected void doWakefulWork(Intent intent) {
 		mContext = this;
-
+		Log.e(TAG, "alarmintent service is now running");
 		// Find the most recent download time
 		long recentDownload = DbProvider.openDb().fetchMostRecentDownload();
 		long timeSinceRefresh = System.currentTimeMillis() - recentDownload;

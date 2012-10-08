@@ -30,6 +30,7 @@ import com.alphabetbloc.clinic.adapters.MergeAdapter;
 import com.alphabetbloc.clinic.adapters.ObservationAdapter;
 import com.alphabetbloc.clinic.data.Observation;
 import com.alphabetbloc.clinic.data.Patient;
+import com.alphabetbloc.clinic.providers.Db;
 import com.alphabetbloc.clinic.providers.DbProvider;
 import com.alphabetbloc.clinic.services.RefreshDataService;
 import com.alphabetbloc.clinic.utilities.App;
@@ -169,10 +170,10 @@ public class ViewPatientActivity extends BasePatientActivity {
 
 		if (c != null && c.getCount() > 0) {
 
-			int priorityIndex = c.getColumnIndexOrThrow(DbProvider.KEY_PRIORITY_FORM_NUMBER);
-			int priorityFormIndex = c.getColumnIndexOrThrow(DbProvider.KEY_PRIORITY_FORM_NAMES);
-			int savedNumberIndex = c.getColumnIndexOrThrow(DbProvider.KEY_SAVED_FORM_NUMBER);
-			int savedFormIndex = c.getColumnIndexOrThrow(DbProvider.KEY_SAVED_FORM_NAMES);
+			int priorityIndex = c.getColumnIndexOrThrow(Db.KEY_PRIORITY_FORM_NUMBER);
+			int priorityFormIndex = c.getColumnIndexOrThrow(Db.KEY_PRIORITY_FORM_NAMES);
+			int savedNumberIndex = c.getColumnIndexOrThrow(Db.KEY_SAVED_FORM_NUMBER);
+			int savedFormIndex = c.getColumnIndexOrThrow(Db.KEY_SAVED_FORM_NAMES);
 
 			mPatient.setPriorityNumber(c.getInt(priorityIndex));
 			mPatient.setPriorityForms(c.getString(priorityFormIndex));

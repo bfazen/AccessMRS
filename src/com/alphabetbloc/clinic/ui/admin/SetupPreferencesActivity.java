@@ -33,6 +33,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.alphabetbloc.clinic.R;
+import com.alphabetbloc.clinic.providers.Db;
 import com.alphabetbloc.clinic.providers.DbProvider;
 import com.alphabetbloc.clinic.services.WakefulIntentService;
 import com.alphabetbloc.clinic.services.WipeDataService;
@@ -300,7 +301,7 @@ public class SetupPreferencesActivity extends Activity {
 
 					if (isFreshInstall) {
 						// encrypt a new Clinic Db
-						File db = App.getApp().getDatabasePath(DbProvider.DATABASE_NAME);
+						File db = App.getApp().getDatabasePath(Db.DATABASE_NAME);
 						if (db.exists())
 							db.delete();
 						DbProvider.createDb();

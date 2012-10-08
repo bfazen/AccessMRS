@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -75,6 +76,7 @@ public class DashboardActivity extends BaseActivity {
 
 	// REFRESH UI
 	private void refreshView() {
+		Log.e(TAG, "refreshView is called");
 		mLayout = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
 		// Refresh Data UI
@@ -94,6 +96,7 @@ public class DashboardActivity extends BaseActivity {
 	}
 
 	private void setRefreshDataUi() {
+		Log.e(TAG, "refreshData Ui is called");
 		// REFRESH TIME
 		long refreshDate = DbProvider.openDb().fetchMostRecentDownload();
 		Date date = new Date();
@@ -124,6 +127,7 @@ public class DashboardActivity extends BaseActivity {
 	}
 
 	private void setPriorityListUi(ViewGroup vg) {
+		Log.e(TAG, "setPriorityList is called");
 		// Suggested / Priority Forms
 		priorityToDoForms = DbProvider.openDb().countAllPriorityFormNumbers();
 		if (priorityToDoForms > 0) {
@@ -158,6 +162,7 @@ public class DashboardActivity extends BaseActivity {
 	}
 
 	private void setSavedListUi(ViewGroup vg) {
+		Log.e(TAG, "setSavedlist Ui is called");
 		// Incomplete/Saved Form Section
 		incompleteForms = DbProvider.openDb().countAllSavedFormNumbers();
 		if (incompleteForms > 0) {
@@ -191,6 +196,7 @@ public class DashboardActivity extends BaseActivity {
 	}
 
 	private void setCompletedListUi(ViewGroup vg) {
+		Log.e(TAG, "setCompletedListUi is called");
 		// Completed Form Section
 		completedForms = DbProvider.openDb().countAllCompletedUnsentForms();
 		if (completedForms > 0) {
@@ -224,6 +230,7 @@ public class DashboardActivity extends BaseActivity {
 	}
 
 	private void setAllClientsListUi(ViewGroup vg) {
+		Log.e(TAG, "setAllClientsListUi is called");
 		// All Clients Section
 		patients = DbProvider.openDb().countAllPatients();
 		if (patients > 0) {
@@ -282,6 +289,7 @@ public class DashboardActivity extends BaseActivity {
 	@Override
 	protected void onResume() {
 		super.onResume();
+		Log.e(TAG, "onResume is called");
 		refreshView();
 	}
 }

@@ -3,7 +3,6 @@ package com.alphabetbloc.clinic.services;
 import java.io.File;
 import java.util.List;
 
-import com.alphabetbloc.clinic.R;
 import org.odk.collect.android.provider.InstanceProviderAPI;
 
 import android.content.Context;
@@ -12,7 +11,8 @@ import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
-import com.alphabetbloc.clinic.providers.DbProvider;
+import com.alphabetbloc.clinic.R;
+import com.alphabetbloc.clinic.providers.Db;
 import com.alphabetbloc.clinic.ui.admin.ClinicLauncherActivity;
 import com.alphabetbloc.clinic.utilities.App;
 import com.alphabetbloc.clinic.utilities.FileUtils;
@@ -192,11 +192,11 @@ public class WipeDataService extends WakefulIntentService {
 		boolean success = false;
 		try {
 			// first try
-			success = this.deleteDatabase(DbProvider.DATABASE_NAME);
+			success = this.deleteDatabase(Db.DATABASE_NAME);
 
 			// second try
 			if (!success) {
-				File db = this.getDatabasePath(DbProvider.DATABASE_NAME);
+				File db = this.getDatabasePath(Db.DATABASE_NAME);
 				success = db.delete();
 			}
 		} catch (Exception e) {

@@ -5,7 +5,6 @@ import java.util.ArrayList;
 
 import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.FileBody;
-import com.alphabetbloc.clinic.R;
 import org.odk.collect.android.provider.InstanceProviderAPI;
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
@@ -14,12 +13,14 @@ import android.content.SyncResult;
 import android.database.Cursor;
 import android.util.Log;
 
+import com.alphabetbloc.clinic.R;
+import com.alphabetbloc.clinic.providers.Db;
 import com.alphabetbloc.clinic.providers.DbProvider;
 import com.alphabetbloc.clinic.services.EncryptionService;
 import com.alphabetbloc.clinic.services.WakefulIntentService;
 import com.alphabetbloc.clinic.utilities.App;
 import com.alphabetbloc.clinic.utilities.FileUtils;
-import com.alphabetbloc.clinic.utilities.WebUtils;
+import com.alphabetbloc.clinic.utilities.NetworkUtils;
 
 /**
  * 
@@ -85,11 +86,11 @@ public class UploadDataTask extends SyncDataTask {
 
 		ArrayList<String> selectedInstances = new ArrayList<String>();
 
-		Cursor c = DbProvider.openDb().fetchFormInstancesByStatus(DbProvider.STATUS_UNSUBMITTED);
+		Cursor c = DbProvider.openDb().fetchFormInstancesByStatus(Db.STATUS_UNSUBMITTED);
 		if (c != null) {
 			if (c.moveToFirst()) {
 				do {
-					String dbPath = c.getString(c.getColumnIndex(DbProvider.KEY_PATH));
+					String dbPath = c.getString(c.getColumnIndex(Db.KEY_PATH));
 					selectedInstances.add(dbPath);
 				} while (c.moveToNext());
 			}
@@ -110,7 +111,7 @@ public class UploadDataTask extends SyncDataTask {
 				if (entity == null)
 					continue;
 
-				if (postEntityToUrl(WebUtils.getFormUploadUrl(), entity)) {
+				if (postEntityToUrl(NetworkUtils.getFormUploadUrl(), entity)) {
 					uploadedInstances.add(instancePaths[i]);
 					Log.e(TAG, "everything okay! adding some instances...");
 				}
@@ -200,7 +201,7 @@ public class UploadDataTask extends SyncDataTask {
 	private void updateClinicDbPath(String path) {
 		Cursor c = DbProvider.openDb().fetchFormInstancesByPath(path);
 		if (c != null) {
-			DbProvider.openDb().updateFormInstance(path, DbProvider.STATUS_SUBMITTED);
+			DbProvider.openDb().updateFormInstance(path, Db.STATUS_SUBMITTED);
 			c.close();
 		}
 	}

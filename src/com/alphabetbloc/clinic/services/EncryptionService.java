@@ -77,7 +77,7 @@ public class EncryptionService extends WakefulIntentService {
 	@Override
 	protected void doWakefulWork(Intent intent) {
 		mContext = this;
-
+		Log.e(TAG, "encryptionservice is now running");
 		// get all recently submitted files
 		ArrayList<Map<String, Object>> submittedFiles = findSubmittedFiles();
 		if (submittedFiles.isEmpty())

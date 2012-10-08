@@ -15,7 +15,7 @@ import android.preference.PreferenceManager;
 
 import com.alphabetbloc.clinic.R;
 import com.alphabetbloc.clinic.utilities.App;
-import com.alphabetbloc.clinic.utilities.WebUtils;
+import com.alphabetbloc.clinic.utilities.NetworkUtils;
 
 /**
  * 
@@ -73,11 +73,11 @@ public class CheckConnectivityTask extends SyncDataTask {
 	@Override
 	protected void getServerCredentials() {
 		if (mServer == null)
-			mServer = WebUtils.getPatientDownloadUrl();
+			mServer = NetworkUtils.getPatientDownloadUrl();
 		if (mUsername == null)
-			mUsername = WebUtils.getServerUsername();
+			mUsername = NetworkUtils.getServerUsername();
 		if (mPassword == null)
-			mPassword = WebUtils.getServerPassword();
+			mPassword = NetworkUtils.getServerPassword();
 
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(App.getApp());
 		mSavedSearch = settings.getBoolean(App.getApp().getString(R.string.key_use_saved_searches), false);

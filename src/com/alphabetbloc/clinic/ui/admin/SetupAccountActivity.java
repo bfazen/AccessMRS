@@ -5,7 +5,7 @@ import com.alphabetbloc.clinic.listeners.SyncDataListener;
 import com.alphabetbloc.clinic.tasks.CheckConnectivityTask;
 import com.alphabetbloc.clinic.utilities.App;
 import com.alphabetbloc.clinic.utilities.EncryptionUtil;
-import com.alphabetbloc.clinic.utilities.WebUtils;
+import com.alphabetbloc.clinic.utilities.NetworkUtils;
 
 import android.accounts.Account;
 import android.accounts.AccountAuthenticatorResponse;
@@ -105,7 +105,7 @@ public class SetupAccountActivity extends Activity implements SyncDataListener {
 			importFromConfigFile();
 		else if (firstRun)
 			createView(REQUEST_CREDENTIAL_SETUP);
-		else if (WebUtils.getServerUsername() != null)
+		else if (NetworkUtils.getServerUsername() != null)
 			createView(REQUEST_CREDENTIAL_CHANGE);
 		else
 			createView(REQUEST_CREDENTIAL_SETUP);
@@ -124,8 +124,8 @@ public class SetupAccountActivity extends Activity implements SyncDataListener {
 		// changing credentials
 		case REQUEST_CREDENTIAL_CHANGE:
 			mStep = VERIFY_ENTRY;
-			mCurrentUser = WebUtils.getServerUsername();
-			mCurrentPwd = WebUtils.getServerPassword();
+			mCurrentUser = NetworkUtils.getServerUsername();
+			mCurrentPwd = NetworkUtils.getServerPassword();
 			mUserText.setText(mCurrentUser);
 			mInstructionText.setText(R.string.auth_server_verify_account);
 			mOfflineSetupButton.setVisibility(View.GONE);

@@ -27,8 +27,8 @@ import android.widget.TextView;
 import com.alphabetbloc.clinic.R;
 import com.alphabetbloc.clinic.adapters.PatientAdapter;
 import com.alphabetbloc.clinic.data.Patient;
+import com.alphabetbloc.clinic.providers.Db;
 import com.alphabetbloc.clinic.providers.DbProvider;
-import com.alphabetbloc.clinic.ui.user.BaseListActivity.myGestureListener;
 
 /**
  * 
@@ -256,17 +256,17 @@ public class ListPatientActivity extends BaseListActivity implements SyncStatusO
 
 		if (c != null && c.getCount() >= 0) {
 
-			int patientIdIndex = c.getColumnIndex(DbProvider.KEY_PATIENT_ID);
-			int identifierIndex = c.getColumnIndex(DbProvider.KEY_IDENTIFIER);
-			int givenNameIndex = c.getColumnIndex(DbProvider.KEY_GIVEN_NAME);
-			int familyNameIndex = c.getColumnIndex(DbProvider.KEY_FAMILY_NAME);
-			int middleNameIndex = c.getColumnIndex(DbProvider.KEY_MIDDLE_NAME);
-			int birthDateIndex = c.getColumnIndex(DbProvider.KEY_BIRTH_DATE);
-			int genderIndex = c.getColumnIndex(DbProvider.KEY_GENDER);
-			int priorityIndex = c.getColumnIndexOrThrow(DbProvider.KEY_PRIORITY_FORM_NUMBER);
-			int priorityFormIndex = c.getColumnIndexOrThrow(DbProvider.KEY_PRIORITY_FORM_NAMES);
-			int savedIndex = c.getColumnIndexOrThrow(DbProvider.KEY_SAVED_FORM_NUMBER);
-			int savedFormIndex = c.getColumnIndexOrThrow(DbProvider.KEY_SAVED_FORM_NAMES);
+			int patientIdIndex = c.getColumnIndex(Db.KEY_PATIENT_ID);
+			int identifierIndex = c.getColumnIndex(Db.KEY_IDENTIFIER);
+			int givenNameIndex = c.getColumnIndex(Db.KEY_GIVEN_NAME);
+			int familyNameIndex = c.getColumnIndex(Db.KEY_FAMILY_NAME);
+			int middleNameIndex = c.getColumnIndex(Db.KEY_MIDDLE_NAME);
+			int birthDateIndex = c.getColumnIndex(Db.KEY_BIRTH_DATE);
+			int genderIndex = c.getColumnIndex(Db.KEY_GENDER);
+			int priorityIndex = c.getColumnIndexOrThrow(Db.KEY_PRIORITY_FORM_NUMBER);
+			int priorityFormIndex = c.getColumnIndexOrThrow(Db.KEY_PRIORITY_FORM_NAMES);
+			int savedIndex = c.getColumnIndexOrThrow(Db.KEY_SAVED_FORM_NUMBER);
+			int savedFormIndex = c.getColumnIndexOrThrow(Db.KEY_SAVED_FORM_NAMES);
 
 			if (c.getCount() > 0) {
 

@@ -16,7 +16,7 @@ import com.alphabetbloc.clinic.R;
 import com.alphabetbloc.clinic.listeners.SyncDataListener;
 import com.alphabetbloc.clinic.tasks.CheckConnectivityTask;
 import com.alphabetbloc.clinic.utilities.App;
-import com.alphabetbloc.clinic.utilities.WebUtils;
+import com.alphabetbloc.clinic.utilities.NetworkUtils;
 /**
  * 
  * @author Louis Fazen (louis.fazen@gmail.com)
@@ -43,9 +43,9 @@ public class SSLTestActivity extends Activity implements SyncDataListener {
 		serverText = (EditText) findViewById(R.id.server_edittext);
 		serverText.setText(settings.getString(App.getApp().getString(R.string.key_server), App.getApp().getString(R.string.default_server)));
 		userText = (EditText) findViewById(R.id.username_edittext);
-		userText.setText(WebUtils.getServerUsername());
+		userText.setText(NetworkUtils.getServerUsername());
 		passwordText = (EditText) findViewById(R.id.password_edittext);
-		passwordText.setText(WebUtils.getServerPassword());
+		passwordText.setText(NetworkUtils.getServerPassword());
 		
 		mProgress = (ProgressBar) findViewById(R.id.progress_wheel);
 
@@ -62,7 +62,7 @@ public class SSLTestActivity extends Activity implements SyncDataListener {
 	private void testSslConnection() {
 		
 		mProgress.setVisibility(View.VISIBLE);
-		String server = serverText.getText().toString() + WebUtils.PATIENT_DOWNLOAD_URL;
+		String server = serverText.getText().toString() + NetworkUtils.PATIENT_DOWNLOAD_URL;
 		String username = userText.getText().toString();
 		String password = passwordText.getText().toString();
 

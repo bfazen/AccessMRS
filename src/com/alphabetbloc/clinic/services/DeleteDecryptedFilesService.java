@@ -40,6 +40,7 @@ public class DeleteDecryptedFilesService extends WakefulIntentService {
 
 	@Override
 	protected void doWakefulWork(Intent intent) {
+		Log.e(TAG, "delete decrypted files service is now running");
 		mContext = this;
 
 		// get all recently submitted files
@@ -137,6 +138,8 @@ public class DeleteDecryptedFilesService extends WakefulIntentService {
 		if (c != null) {
 			if (c.getCount() > 0)
 				anyDecryptedFile = true;
+			
+			c.close();
 		}
 
 		return anyDecryptedFile;

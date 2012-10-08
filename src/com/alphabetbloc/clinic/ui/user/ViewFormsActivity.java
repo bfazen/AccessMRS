@@ -5,18 +5,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 
-import com.alphabetbloc.clinic.R;
 import org.odk.collect.android.provider.InstanceProviderAPI;
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
-
-import com.alphabetbloc.clinic.adapters.FormAdapter;
-import com.alphabetbloc.clinic.adapters.MergeAdapter;
-import com.alphabetbloc.clinic.data.ActivityLog;
-import com.alphabetbloc.clinic.data.Form;
-import com.alphabetbloc.clinic.data.FormInstance;
-import com.alphabetbloc.clinic.providers.DbProvider;
-import com.alphabetbloc.clinic.tasks.ActivityLogTask;
-import com.alphabetbloc.clinic.utilities.App;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -24,6 +14,17 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+
+import com.alphabetbloc.clinic.R;
+import com.alphabetbloc.clinic.adapters.FormAdapter;
+import com.alphabetbloc.clinic.adapters.MergeAdapter;
+import com.alphabetbloc.clinic.data.ActivityLog;
+import com.alphabetbloc.clinic.data.Form;
+import com.alphabetbloc.clinic.data.FormInstance;
+import com.alphabetbloc.clinic.providers.Db;
+import com.alphabetbloc.clinic.providers.DbProvider;
+import com.alphabetbloc.clinic.tasks.ActivityLogTask;
+import com.alphabetbloc.clinic.utilities.App;
 
 /**
  * Displays ArrayList<Form> in a Time-Separated List with patient header
@@ -74,7 +75,7 @@ public class ViewFormsActivity extends BasePatientActivity {
 		Cursor c = DbProvider.openDb().fetchPriorityFormIdByPatientId(patientId);
 
 		if (c != null && c.getCount() > 0) {
-			int valueIntIndex = c.getColumnIndex(DbProvider.KEY_VALUE_INT);
+			int valueIntIndex = c.getColumnIndex(Db.KEY_VALUE_INT);
 			do {
 				selectedFormIds.add(c.getInt(valueIntIndex));
 			} while (c.moveToNext());
@@ -278,7 +279,7 @@ public class ViewFormsActivity extends BasePatientActivity {
 			fi.setPatientId(patientId);
 			fi.setFormId(Integer.parseInt(dbjrFormId));
 			fi.setPath(fileDbPath);
-			fi.setStatus(DbProvider.STATUS_UNSUBMITTED);
+			fi.setStatus(Db.STATUS_UNSUBMITTED);
 			Date date = new Date();
 			date.setTime(System.currentTimeMillis());
 			String dateString = "Completed: " + (new SimpleDateFormat("EEE, MMM dd, yyyy 'at' HH:mm").format(date));

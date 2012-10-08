@@ -27,11 +27,8 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.alphabetbloc.clinic.R;
-import com.alphabetbloc.clinic.providers.DbProvider;
-
-import org.odk.collect.android.provider.InstanceProviderAPI;
 import org.odk.collect.android.provider.FormsProviderAPI.FormsColumns;
+import org.odk.collect.android.provider.InstanceProviderAPI;
 
 import android.content.Context;
 import android.content.pm.PackageManager.NameNotFoundException;
@@ -39,6 +36,9 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteException;
 import android.os.Environment;
 import android.util.Log;
+
+import com.alphabetbloc.clinic.R;
+import com.alphabetbloc.clinic.providers.Db;
 
 /**
  * Static methods used for common file operations. LF Added common deletion
@@ -453,7 +453,7 @@ public class FileUtils {
 	
 	public static boolean isDataWiped() {
 
-		File clinicDb = App.getApp().getDatabasePath(DbProvider.DATABASE_NAME);
+		File clinicDb = App.getApp().getDatabasePath(Db.DATABASE_NAME);
 		if (clinicDb != null && clinicDb.exists()) {
 			Log.e(TAG, "clinic data was not wiped properly");
 			return false;

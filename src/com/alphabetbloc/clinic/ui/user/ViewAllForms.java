@@ -8,7 +8,6 @@ import org.odk.collect.android.provider.InstanceProviderAPI;
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
 import android.app.AlertDialog;
-import android.app.Dialog;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.ContentUris;
@@ -38,9 +37,8 @@ import com.alphabetbloc.clinic.adapters.FormAdapter;
 import com.alphabetbloc.clinic.adapters.MergeAdapter;
 import com.alphabetbloc.clinic.data.Form;
 import com.alphabetbloc.clinic.data.Patient;
+import com.alphabetbloc.clinic.providers.Db;
 import com.alphabetbloc.clinic.providers.DbProvider;
-import com.alphabetbloc.clinic.services.WakefulIntentService;
-import com.alphabetbloc.clinic.services.WipeDataService;
 import com.alphabetbloc.clinic.utilities.App;
 import com.alphabetbloc.clinic.utilities.FileUtils;
 import com.alphabetbloc.clinic.utilities.XformUtils;
@@ -124,9 +122,9 @@ public class ViewAllForms extends ViewFormsActivity {
 		if (c != null && c.getCount() >= 0) {
 
 			mTotalForms.clear();
-			int formIdIndex = c.getColumnIndex(DbProvider.KEY_FORM_ID);
-			int nameIndex = c.getColumnIndex(DbProvider.KEY_NAME);
-			int pathIndex = c.getColumnIndex(DbProvider.KEY_PATH);
+			int formIdIndex = c.getColumnIndex(Db.KEY_FORM_ID);
+			int nameIndex = c.getColumnIndex(Db.KEY_NAME);
+			int pathIndex = c.getColumnIndex(Db.KEY_PATH);
 
 			if (c.getCount() > 0) {
 				Form form;

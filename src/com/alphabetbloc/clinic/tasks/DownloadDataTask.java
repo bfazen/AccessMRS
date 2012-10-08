@@ -27,10 +27,11 @@ import android.content.SyncResult;
 import android.util.Log;
 
 import com.alphabetbloc.clinic.data.Form;
+import com.alphabetbloc.clinic.providers.Db;
 import com.alphabetbloc.clinic.providers.DbProvider;
 import com.alphabetbloc.clinic.utilities.App;
 import com.alphabetbloc.clinic.utilities.FileUtils;
-import com.alphabetbloc.clinic.utilities.WebUtils;
+import com.alphabetbloc.clinic.utilities.NetworkUtils;
 import com.alphabetbloc.clinic.utilities.XformUtils;
 
 /**
@@ -80,7 +81,7 @@ public class DownloadDataTask extends SyncDataTask {
 		ArrayList<Form> allServerForms = new ArrayList<Form>();
 		try {
 			showProgress("Updating Forms");
-			InputStream is = getUrlStream(WebUtils.getFormListDownloadUrl());
+			InputStream is = getUrlStream(NetworkUtils.getFormListDownloadUrl());
 			Document doc = null;
 			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 			DocumentBuilder db = dbf.newDocumentBuilder();
@@ -175,7 +176,7 @@ public class DownloadDataTask extends SyncDataTask {
 
 			try {
 				// download
-				StringBuilder url = (new StringBuilder(WebUtils.getFormDownloadUrl())).append("&formId=").append(formId);
+				StringBuilder url = (new StringBuilder(NetworkUtils.getFormDownloadUrl())).append("&formId=").append(formId);
 				Log.i(TAG, "Will try to download form " + formId + " url=" + url);
 				InputStream is = getUrlStream(url.toString());
 
@@ -325,16 +326,16 @@ public class DownloadDataTask extends SyncDataTask {
 
 		showProgress("Processing Forms");
 		SQLiteDatabase db = DbProvider.getDb();
-		InsertHelper ih = new InsertHelper(db, DbProvider.OBSERVATIONS_TABLE);
+		InsertHelper ih = new InsertHelper(db, Db.OBSERVATIONS_TABLE);
 
-		int ptIdIndex = ih.getColumnIndex(DbProvider.KEY_PATIENT_ID);
-		int obsTextIndex = ih.getColumnIndex(DbProvider.KEY_VALUE_TEXT);
-		int obsNumIndex = ih.getColumnIndex(DbProvider.KEY_VALUE_NUMERIC);
-		int obsDateIndex = ih.getColumnIndex(DbProvider.KEY_VALUE_DATE);
-		int obsIntIndex = ih.getColumnIndex(DbProvider.KEY_VALUE_INT);
-		int obsFieldIndex = ih.getColumnIndex(DbProvider.KEY_FIELD_NAME);
-		int obsTypeIndex = ih.getColumnIndex(DbProvider.KEY_DATA_TYPE);
-		int obsEncDateIndex = ih.getColumnIndex(DbProvider.KEY_ENCOUNTER_DATE);
+		int ptIdIndex = ih.getColumnIndex(Db.KEY_PATIENT_ID);
+		int obsTextIndex = ih.getColumnIndex(Db.KEY_VALUE_TEXT);
+		int obsNumIndex = ih.getColumnIndex(Db.KEY_VALUE_NUMERIC);
+		int obsDateIndex = ih.getColumnIndex(Db.KEY_VALUE_DATE);
+		int obsIntIndex = ih.getColumnIndex(Db.KEY_VALUE_INT);
+		int obsFieldIndex = ih.getColumnIndex(Db.KEY_FIELD_NAME);
+		int obsTypeIndex = ih.getColumnIndex(Db.KEY_DATA_TYPE);
+		int obsEncDateIndex = ih.getColumnIndex(Db.KEY_ENCOUNTER_DATE);
 
 		db.beginTransaction();
 		int progress = 0;
@@ -348,13 +349,13 @@ public class DownloadDataTask extends SyncDataTask {
 				ih.bind(ptIdIndex, zdis.readInt());
 				ih.bind(obsFieldIndex, zdis.readUTF());
 				byte dataType = zdis.readByte();
-				if (dataType == DbProvider.TYPE_STRING) {
+				if (dataType == Db.TYPE_STRING) {
 					ih.bind(obsTextIndex, zdis.readUTF());
-				} else if (dataType == DbProvider.TYPE_INT) {
+				} else if (dataType == Db.TYPE_INT) {
 					ih.bind(obsIntIndex, zdis.readInt());
-				} else if (dataType == DbProvider.TYPE_DOUBLE) {
+				} else if (dataType == Db.TYPE_DOUBLE) {
 					ih.bind(obsNumIndex, zdis.readDouble());
-				} else if (dataType == DbProvider.TYPE_DATE) {
+				} else if (dataType == Db.TYPE_DATE) {
 					ih.bind(obsDateIndex, parseDate(zdis.readUTF()));
 				}
 				ih.bind(obsTypeIndex, dataType);
@@ -385,14 +386,14 @@ public class DownloadDataTask extends SyncDataTask {
 		long start = System.currentTimeMillis();
 		SQLiteDatabase db = DbProvider.getDb();
 
-		InsertHelper ih = new InsertHelper(db, DbProvider.PATIENTS_TABLE);
-		int ptIdIndex = ih.getColumnIndex(DbProvider.KEY_PATIENT_ID);
-		int ptIdentifierIndex = ih.getColumnIndex(DbProvider.KEY_IDENTIFIER);
-		int ptGivenIndex = ih.getColumnIndex(DbProvider.KEY_GIVEN_NAME);
-		int ptFamilyIndex = ih.getColumnIndex(DbProvider.KEY_FAMILY_NAME);
-		int ptMiddleIndex = ih.getColumnIndex(DbProvider.KEY_MIDDLE_NAME);
-		int ptBirthIndex = ih.getColumnIndex(DbProvider.KEY_BIRTH_DATE);
-		int ptGenderIndex = ih.getColumnIndex(DbProvider.KEY_GENDER);
+		InsertHelper ih = new InsertHelper(db, Db.PATIENTS_TABLE);
+		int ptIdIndex = ih.getColumnIndex(Db.KEY_PATIENT_ID);
+		int ptIdentifierIndex = ih.getColumnIndex(Db.KEY_IDENTIFIER);
+		int ptGivenIndex = ih.getColumnIndex(Db.KEY_GIVEN_NAME);
+		int ptFamilyIndex = ih.getColumnIndex(Db.KEY_FAMILY_NAME);
+		int ptMiddleIndex = ih.getColumnIndex(Db.KEY_MIDDLE_NAME);
+		int ptBirthIndex = ih.getColumnIndex(Db.KEY_BIRTH_DATE);
+		int ptGenderIndex = ih.getColumnIndex(Db.KEY_GENDER);
 
 		db.beginTransaction();
 		int progress = 0;
@@ -437,15 +438,15 @@ public class DownloadDataTask extends SyncDataTask {
 
 		showProgress("Processing Data");
 		SQLiteDatabase db = DbProvider.getDb();
-		InsertHelper ih = new InsertHelper(db, DbProvider.OBSERVATIONS_TABLE);
-		int ptIdIndex = ih.getColumnIndex(DbProvider.KEY_PATIENT_ID);
-		int obsTextIndex = ih.getColumnIndex(DbProvider.KEY_VALUE_TEXT);
-		int obsNumIndex = ih.getColumnIndex(DbProvider.KEY_VALUE_NUMERIC);
-		int obsDateIndex = ih.getColumnIndex(DbProvider.KEY_VALUE_DATE);
-		int obsIntIndex = ih.getColumnIndex(DbProvider.KEY_VALUE_INT);
-		int obsFieldIndex = ih.getColumnIndex(DbProvider.KEY_FIELD_NAME);
-		int obsTypeIndex = ih.getColumnIndex(DbProvider.KEY_DATA_TYPE);
-		int obsEncDateIndex = ih.getColumnIndex(DbProvider.KEY_ENCOUNTER_DATE);
+		InsertHelper ih = new InsertHelper(db, Db.OBSERVATIONS_TABLE);
+		int ptIdIndex = ih.getColumnIndex(Db.KEY_PATIENT_ID);
+		int obsTextIndex = ih.getColumnIndex(Db.KEY_VALUE_TEXT);
+		int obsNumIndex = ih.getColumnIndex(Db.KEY_VALUE_NUMERIC);
+		int obsDateIndex = ih.getColumnIndex(Db.KEY_VALUE_DATE);
+		int obsIntIndex = ih.getColumnIndex(Db.KEY_VALUE_INT);
+		int obsFieldIndex = ih.getColumnIndex(Db.KEY_FIELD_NAME);
+		int obsTypeIndex = ih.getColumnIndex(Db.KEY_DATA_TYPE);
+		int obsEncDateIndex = ih.getColumnIndex(Db.KEY_ENCOUNTER_DATE);
 
 		db.beginTransaction();
 		int current = 0;
@@ -461,13 +462,13 @@ public class DownloadDataTask extends SyncDataTask {
 				ih.bind(ptIdIndex, zdis.readInt());
 				ih.bind(obsFieldIndex, zdis.readUTF());
 				byte dataType = zdis.readByte();
-				if (dataType == DbProvider.TYPE_STRING) {
+				if (dataType == Db.TYPE_STRING) {
 					ih.bind(obsTextIndex, zdis.readUTF());
-				} else if (dataType == DbProvider.TYPE_INT) {
+				} else if (dataType == Db.TYPE_INT) {
 					ih.bind(obsIntIndex, zdis.readInt());
-				} else if (dataType == DbProvider.TYPE_DOUBLE) {
+				} else if (dataType == Db.TYPE_DOUBLE) {
 					ih.bind(obsNumIndex, zdis.readDouble());
-				} else if (dataType == DbProvider.TYPE_DATE) {
+				} else if (dataType == Db.TYPE_DATE) {
 					ih.bind(obsDateIndex, parseDate(zdis.readUTF()));
 				}
 				

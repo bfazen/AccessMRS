@@ -38,14 +38,79 @@ import com.alphabetbloc.clinic.ui.user.ListPatientActivity;
 import com.alphabetbloc.clinic.ui.user.RefreshDataActivity;
 import com.alphabetbloc.clinic.utilities.App;
 
+
 /**
  * 
  * @author Louis Fazen (louis.fazen@gmail.com) This checks the user activity
  *         before refreshing the patient list as background service or
  *         foreground activity.
  */
-public class RefreshDataService extends Service implements SyncDataListener {
+public class RefreshDataService extends Service {
+	public static final String REFRESH_BROADCAST = "com.alphabetbloc.clinic.services.SignalStrengthService";
+	private static final String TAG = RefreshDataService.class.getSimpleName();
+    private static final Object sSyncAdapterLock = new Object();
 
+    private static SyncAdapterTest sSyncAdapter = null;
+
+    @Override
+    public void onCreate() {
+    	Thread.currentThread().setName(TAG);
+    	Log.i(TAG, "Creating the SyncAdapter with Service");
+        synchronized (sSyncAdapterLock) {
+        	Log.i(TAG, "Creating the SyncAdapter with Service");
+            if (sSyncAdapter == null) {
+            	Log.i(TAG, "sSyncAdapter was null, so we are creating it with RefreshDataService on Create");
+                sSyncAdapter = new SyncAdapterTest(getApplicationContext(), true);
+            }
+        }
+    }
+    
+    
+    
+
+    @Override
+	public int onStartCommand(Intent intent, int flags, int startId) {
+    	Log.i(TAG, "SyncAdapter onStartCommand is called");
+		return super.onStartCommand(intent, flags, startId);
+	}
+
+
+
+
+	@Override
+	public void onRebind(Intent intent) {
+		Log.i(TAG, "SyncAdapter onRebind is called");
+		super.onRebind(intent);
+	}
+
+
+
+
+	@Override
+	public void onStart(Intent intent, int startId) {
+		Log.i(TAG, "SyncAdapter onStart is called");
+		super.onStart(intent, startId);
+	}
+
+
+
+
+	@Override
+    public IBinder onBind(Intent intent) {
+    	Log.i(TAG, "Binding the SyncAdapter with Service");
+        return sSyncAdapter.getSyncAdapterBinder();
+    }
+    
+    @Override
+	public void onDestroy() {
+		Log.i(TAG, "Shutting down the Service");
+		super.onDestroy();
+	}
+    
+}
+	/*
+	 * public class RefreshDataService extends Service implements SyncDataListener {
+	 
 	private static final String TAG = RefreshDataService.class.getSimpleName();
 	private static NotificationManager mNM;
 	private static int NOTIFICATION = 1;
@@ -64,45 +129,62 @@ public class RefreshDataService extends Service implements SyncDataListener {
 
 		@Override
 		public void onPerformSync(Account account, Bundle extras, String authority, ContentProviderClient provider, SyncResult syncResult) {
-			// Can't send SyncResult asynchronously to syncManager!?
-			// so we manage sync by checking previous download time
 
-			// boolean isSyncActive = ContentResolver.isSyncActive(account,
-			// authority);
-			// if (isSyncActive){
-			// syncResult = SyncResult.ALREADY_IN_PROGRESS;
-			// Log.e(TAG, "Sync is already in progress!");
-			// return;
-			// }
+			try {
+				showNotification();
+				RefreshDataService.performSync(mSyncAdapterContext, account, extras, authority, provider, syncResult);
 
-			// establish threshold for syncing (i.e. do not sync continuously)
-			long recentDownload = DbProvider.openDb().fetchMostRecentDownload();
-			long timeSinceRefresh = System.currentTimeMillis() - recentDownload;
-			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(App.getApp());
-			String maxRefreshSeconds = prefs.getString(App.getApp().getString(R.string.key_max_refresh_seconds), App.getApp().getString(R.string.default_max_refresh_seconds));
-			long maxRefreshMs = 1000L * Long.valueOf(maxRefreshSeconds);
-			
-			Log.e("louis.fazen", "Minutes since last refresh: " + timeSinceRefresh / (1000 * 60));
-			if (timeSinceRefresh < maxRefreshMs) {
-
-				long timeToNextSync = maxRefreshMs - timeSinceRefresh;
-				syncResult.delayUntil = timeToNextSync;
-				Log.e(TAG, "Synced recently... lets delay the sync until ! timetosync=" + timeToNextSync);
-
-			} else {
-
-				try {
-					showNotification();
-					RefreshDataService.performSync(mSyncAdapterContext, account, extras, authority, provider, syncResult);
-
-				} catch (OperationCanceledException e) {
-					e.printStackTrace();
-					Intent i = new Intent(App.getApp(), RefreshDataService.class);
-					App.getApp().stopService(i);
-				}
+			} catch (OperationCanceledException e) {
+				e.printStackTrace();
+				Log.e(TAG, "An error occurred, and we are stopping the service");
+				Intent i = new Intent(App.getApp(), RefreshDataService.class);
+				App.getApp().stopService(i);
 			}
 
 		}
+
+		/*
+		 * @Override public void onPerformSync(Account account, Bundle extras,
+		 * String authority, ContentProviderClient provider, SyncResult
+		 * syncResult) { // Can't send SyncResult asynchronously to
+		 * syncManager!? // so we manage sync by checking previous download time
+		 * 
+		 * // boolean isSyncActive = ContentResolver.isSyncActive(account, //
+		 * authority); // if (isSyncActive){ // syncResult =
+		 * SyncResult.ALREADY_IN_PROGRESS; // Log.e(TAG,
+		 * "Sync is already in progress!"); // return; // }
+		 * 
+		 * // establish threshold for syncing (i.e. do not sync continuously)
+		 * long recentDownload = DbProvider.openDb().fetchMostRecentDownload();
+		 * long timeSinceRefresh = System.currentTimeMillis() - recentDownload;
+		 * SharedPreferences prefs =
+		 * PreferenceManager.getDefaultSharedPreferences(App.getApp()); String
+		 * maxRefreshSeconds =
+		 * prefs.getString(App.getApp().getString(R.string.key_max_refresh_seconds
+		 * ), App.getApp().getString(R.string.default_max_refresh_seconds));
+		 * long maxRefreshMs = 1000L * Long.valueOf(maxRefreshSeconds);
+		 * 
+		 * Log.e("louis.fazen", "Minutes since last refresh: " +
+		 * timeSinceRefresh / (1000 * 60)); if (timeSinceRefresh < maxRefreshMs)
+		 * {
+		 * 
+		 * long timeToNextSync = maxRefreshMs - timeSinceRefresh;
+		 * syncResult.delayUntil = timeToNextSync; Log.e(TAG,
+		 * "Synced recently... lets delay the sync until ! timetosync=" +
+		 * timeToNextSync);
+		 * 
+		 * } else {
+		 * 
+		 * try { showNotification();
+		 * RefreshDataService.performSync(mSyncAdapterContext, account, extras,
+		 * authority, provider, syncResult);
+		 * 
+		 * } catch (OperationCanceledException e) { e.printStackTrace(); Intent
+		 * i = new Intent(App.getApp(), RefreshDataService.class);
+		 * App.getApp().stopService(i); } }
+		 * 
+		 * }
+		 
 
 	}
 
@@ -119,6 +201,39 @@ public class RefreshDataService extends Service implements SyncDataListener {
 		return mSyncAdapter;
 
 	}
+	
+	
+	private static void performSync(Context context, Account account, Bundle extras, String authority, ContentProviderClient provider, final SyncResult syncResult) throws OperationCanceledException {
+
+		Log.e(TAG, "perform sync with authority=" + authority + " provider=" + provider + " account=" + account);
+		try {
+				Handler h = new Handler(Looper.getMainLooper());
+				h.post(new Runnable() {
+					public void run() {
+						try {
+							SyncDataTask syncTask = new SyncDataTask();
+							syncTask.setSyncListener(getInstance());
+							syncTask.execute(syncResult);
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+					}
+				});
+
+			
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			++syncResult.stats.numIoExceptions;
+			Log.e(TAG, "Error occurred from inside Service... we are stopping the service.  syncResult=" + syncResult);
+			Intent i = new Intent(App.getApp(), RefreshDataService.class);
+			App.getApp().stopService(i);
+			// user is actively entering data, so sync later
+			// TODO return false to sync manager
+		}
+
+	}
+	
 
 	private static void performSync(Context context, Account account, Bundle extras, String authority, ContentProviderClient provider, final SyncResult syncResult) throws OperationCanceledException {
 
@@ -235,7 +350,7 @@ public class RefreshDataService extends Service implements SyncDataListener {
 		while (i.hasNext()) {
 			info = i.next();
 			Log.e(TAG, "Process is	 imp=" + info.importance + " lru=" + info.lru + " processName=" + info.processName + " uid=" + info.uid);
-			
+
 			if (info.importance == RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
 				result = info;
 				break;
@@ -321,3 +436,4 @@ public class RefreshDataService extends Service implements SyncDataListener {
 	}
 
 }
+*/
