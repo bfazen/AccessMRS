@@ -198,13 +198,17 @@
     <string name="downloading">%s…</string>
     <string name="sync_in_progress_title">Please wait …</string>
     <string name="sync_in_progress">Currently refreshing data.  Please be patient.</string>
-    <string name="upload_all_successful">%s forms(s) uploaded successfully.</string>
-    <string name="upload_some_failed">Sorry, %s forms(s) failed to upload!</string>
+    <string name="upload_forms_successful">%s forms(s) uploaded successfully.</string>
+    <string name="upload_forms_failed">Sorry, %s forms(s) failed to upload!</string>
+    <string name="download_forms_successful">%s forms(s) downloaded successfully.</string>
+    <string name="download_forms_failed">Sorry, %s new forms(s) failed to download!</string>
     <string name="uploading_patients">Uploading Forms…</string>
     <string name="refresh_clients_title">Refresh Client List</string>
     <string name="refresh_clients_text">Your client list is out of date. Please refresh data now.</string>
     <string name="refresh">Refresh</string>
     <string name="click_to_refresh">Click to Refresh Client Data</string>
+    <string name="sync_error">Sync Error</string>
+    <string name="no_connection">Unable to establish connection with the server. Please make sure you have data service available and try again.</string>
 
     <!-- Dashboard Activity And Patient List Actvity -->
     <string name="provider_lists_section">Current Client Lists:</string>

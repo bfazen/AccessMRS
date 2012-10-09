@@ -55,12 +55,36 @@ the License.
             android:background="@color/medium_gray" />
     </RelativeLayout>
 
-    <TextView
-        android:id="@+id/message"
-        android:layout_width="wrap_content"
+    <RelativeLayout
+        android:id="@+id/message_section"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/title_section"
-        android:textColor="@drawable/white"
-        android:textSize="16sp" />
+        android:layout_below="@+id/title_section" >
+
+        <ProgressBar
+            android:id="@+id/progress_bar"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:visibility="gone" />
+
+        <ProgressBar
+            android:id="@+id/progress_wheel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/progress_bar"
+            android:layout_centerVertical="true"
+            android:layout_marginRight="8dp" />
+
+        <TextView
+            android:id="@+id/message"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/progress_bar"
+            android:layout_toRightOf="@+id/progress_wheel"
+            android:textColor="@drawable/white"
+            android:textSize="16sp" />
+    </RelativeLayout>
 
 </RelativeLayout>
