@@ -74,9 +74,9 @@ public class UploadDataTask extends SyncDataTask {
 
 			// return a toast message
 			if (uploaded.size() == instancesToUpload.length)
-				uploadResult = App.getApp().getString(R.string.upload_all_successful, uploaded.size());
+				uploadResult = App.getApp().getString(R.string.upload_forms_successful, uploaded.size());
 			else
-				uploadResult = App.getApp().getString(R.string.upload_some_failed, (instancesToUpload.length - uploaded.size()) + " of " + instancesToUpload.length);
+				uploadResult = App.getApp().getString(R.string.upload_forms_failed, (instancesToUpload.length - uploaded.size()) + " of " + instancesToUpload.length);
 		}
 
 		return uploadResult;

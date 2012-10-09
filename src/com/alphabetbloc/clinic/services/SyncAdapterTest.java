@@ -20,23 +20,21 @@ import android.content.Context;
 import android.content.SyncResult;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.Gravity;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import com.alphabetbloc.clinic.R;
 import com.alphabetbloc.clinic.data.Form;
-import com.alphabetbloc.clinic.providers.DbProvider;
 import com.alphabetbloc.clinic.utilities.App;
 import com.alphabetbloc.clinic.utilities.FileUtils;
 import com.alphabetbloc.clinic.utilities.NetworkUtils;
-import com.alphabetbloc.clinic.utilities.XformUtils;
+import com.alphabetbloc.clinic.utilities.UiUtils;
 
 public class SyncAdapterTest extends AbstractThreadedSyncAdapter {
 
 	private static final String TAG = SyncAdapterTest.class.getSimpleName();
+	private static final int UPLOAD_FORMS = 1;
+	private static final int DOWNLOAD_FORMS = 2;
+	private static final int SYNC_COMPLETE = 3;
+	private String mFinalResult;
 
 	public SyncAdapterTest(Context context, boolean autoInitialize) {
 		super(context, autoInitialize);
@@ -44,7 +42,7 @@ public class SyncAdapterTest extends AbstractThreadedSyncAdapter {
 
 	@Override
 	public void onPerformSync(Account account, Bundle extras, String authority, ContentProviderClient provider, SyncResult syncResult) {
-		Log.e(TAG, "SyncDataTask Called");
+		Log.i(TAG, "Sync Started");
 		Thread.currentThread().setName(TAG);
 
 		HttpClient client = NetworkUtils.getHttpClient();
@@ -53,20 +51,24 @@ public class SyncAdapterTest extends AbstractThreadedSyncAdapter {
 			// upload forms
 			String[] toUpload = SyncManager.getInstancesToUpload();
 			String[] uploaded = uploadInstances(client, toUpload, syncResult);
-			SyncManager.updateFormDb(uploaded);
-			toastUploadResult(uploaded.length, toUpload.length);
+			String dbError = SyncManager.updateUploadedForms(uploaded, syncResult);
+			toastResult(UPLOAD_FORMS, uploaded.length, toUpload.length, (int) syncResult.stats.numIoExceptions, dbError);
 
 			// download new forms
-			ArrayList<Form> newForms = findNewFormsOnServer(client, syncResult);
-			downloadNewForms(client, newForms, syncResult);
+			Form[] newForms = findNewFormsOnServer(client, syncResult);
+			Form[] downloadedForms = downloadNewForms(client, newForms, syncResult);
+			dbError = SyncManager.updateDownloadedForms(downloadedForms, syncResult);
+			toastResult(DOWNLOAD_FORMS, downloadedForms.length, newForms.length, (int) syncResult.stats.numIoExceptions, dbError);
 
 			// download new obs
 			File temp = downloadObsStream(client, syncResult);
-			SyncManager.readObsFile(temp);
+			dbError = SyncManager.readObsFile(temp, syncResult);
+			toastResult(SYNC_COMPLETE, -1, -1, (int) syncResult.stats.numIoExceptions, dbError);
 
-		} else
-			Log.e(TAG, "why is the client null?!");
-
+		} else {
+			++syncResult.stats.numIoExceptions;
+			UiUtils.toastAlert(App.getApp().getString(R.string.sync_error), App.getApp().getString(R.string.no_connection));
+		}
 	}
 
 	public static String[] uploadInstances(HttpClient client, String[] instancePaths, SyncResult syncResult) {
@@ -102,7 +104,7 @@ public class SyncAdapterTest extends AbstractThreadedSyncAdapter {
 	 * 
 	 * @return a list of the new forms on the server
 	 */
-	private static ArrayList<Form> findNewFormsOnServer(HttpClient client, SyncResult syncResult) {
+	private static Form[] findNewFormsOnServer(HttpClient client, SyncResult syncResult) {
 
 		// find all forms from server
 		ArrayList<Form> allServerForms = new ArrayList<Form>();
@@ -115,6 +117,7 @@ public class SyncAdapterTest extends AbstractThreadedSyncAdapter {
 		} catch (Exception e) {
 			e.printStackTrace();
 			++syncResult.stats.numIoExceptions;
+			UiUtils.toastAlert(App.getApp().getString(R.string.sync_error), App.getApp().getString(R.string.no_connection));
 		}
 
 		// compare to existing forms
@@ -127,7 +130,7 @@ public class SyncAdapterTest extends AbstractThreadedSyncAdapter {
 		}
 
 		// return new forms
-		return newForms;
+		return newForms.toArray(new Form[newForms.size()]);
 	}
 
 	/**
@@ -137,16 +140,17 @@ public class SyncAdapterTest extends AbstractThreadedSyncAdapter {
 	 *            forms to download
 	 * @return error message or null if successful
 	 */
-	private static String downloadNewForms(HttpClient client, ArrayList<Form> serverForms, SyncResult syncResult) {
+	private static Form[] downloadNewForms(HttpClient client, Form[] newForms, SyncResult syncResult) {
 		Log.i(TAG, "DownloadNewForms Called");
 		// showProgress("Downloading Forms");
-
+		ArrayList<Form> downloadedForms = new ArrayList<Form>();
 		FileUtils.createFolder(FileUtils.getExternalFormsPath());
 
-		int totalForms = serverForms.size();
+		int totalForms = newForms.length;
+
 		for (int i = 0; i < totalForms; i++) {
 
-			String formId = serverForms.get(i).getFormId() + "";
+			String formId = newForms[i].getFormId() + "";
 
 			try {
 				// download
@@ -166,21 +170,18 @@ public class SyncAdapterTest extends AbstractThreadedSyncAdapter {
 				os.close();
 				is.close();
 
-				// update clinic
-				DbProvider.openDb().updateFormPath(Integer.valueOf(formId), path);
-
-				// update collect
-				if (!XformUtils.insertSingleForm(path))
-					return "ODK Collect not initialized.";
+				newForms[i].setFormId(Integer.valueOf(formId));
+				newForms[i].setPath(path);
+				downloadedForms.add(newForms[i]);
 
 			} catch (Exception e) {
 				++syncResult.stats.numIoExceptions;
 				e.printStackTrace();
-				return e.toString();
 			}
 
 		}
-		return null;
+
+		return downloadedForms.toArray(new Form[downloadedForms.size()]);
 
 	}
 
@@ -227,41 +228,59 @@ public class SyncAdapterTest extends AbstractThreadedSyncAdapter {
 		return tempFile;
 	}
 
-	private void toastUploadResult(int success, int total) {
+	public void toastResult(int syncType, int success, int total, int totalErrors, String dbError) {
 
-		String uploadResult = "No Completed Forms to Upload";
-		boolean error = true;
-		
-		if (total > 0) {
-			if (success == total){
-				uploadResult = App.getApp().getString(R.string.upload_all_successful, success);
-				error = false;
-			}else
-				uploadResult = App.getApp().getString(R.string.upload_some_failed, (total - success) + " of " + total);
+		String currentToast = createToastString(syncType, success, total);
+		if (currentToast != null) {
+
+			StringBuilder result = new StringBuilder();
+			result.append(currentToast);
+			if (totalErrors > 0)
+				result.append(" (Total Errors= ").append(totalErrors).append(")");
+			if (dbError != null)
+				result.append(" : Db Errors= ").append(dbError);
+
+			UiUtils.toastSyncMessage(result.toString(), (totalErrors == 0) ? false : true);
 		}
+	}
+	
+	private String createToastString(int syncType, int success, int total){
 		
-		showSyncToast(uploadResult, error);
+		//Get the strings
+		String toastString = null;
+		String defaultString = null;
+		int successString = 0;
+		int failString = 0;
 
+		
+		switch (syncType) {
+		case UPLOAD_FORMS:
+			defaultString = "No Forms to Upload";
+			successString = R.string.upload_forms_successful;
+			failString = R.string.upload_forms_failed;
+			break;
+		case DOWNLOAD_FORMS:
+			defaultString = "No New Forms on Server";
+			successString = R.string.download_forms_successful;
+			failString = R.string.download_forms_failed;
+			break;
+		case SYNC_COMPLETE:
+		default:
+			toastString = mFinalResult;
+			break;
+		}
+
+		// Aggregate Success Strings Until complete
+		if (total == 0)
+			mFinalResult = mFinalResult + defaultString;
+		else if (total > 0 && success == total)
+			mFinalResult = mFinalResult + App.getApp().getString(successString, success);
+		//Toast error strings 
+		else if (total > 0 && success != total)
+			toastString = App.getApp().getString(failString, (total - success) + " of " + total);
+		
+		
+		return toastString;
 	}
 	
-	private void showSyncToast(String message, boolean error) {
-
-		LayoutInflater inflater = (LayoutInflater) App.getApp().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-		View view = inflater.inflate(R.layout.toast_view, null);
-
-		TextView tv = (TextView) view.findViewById(R.id.message);
-		tv.setText(message);
-
-		Toast t = new Toast(App.getApp());
-		t.setView(view);
-		t.setDuration(Toast.LENGTH_LONG);
-		t.setGravity(Gravity.BOTTOM, 0, -20);
-		t.show();
-
-	}
-	
-	
-	
-	
-
 }

@@ -59,7 +59,7 @@ public class Db {
 	public static final String STATUS_UNSUBMITTED = "pending-sync";
 	public static final String STATUS_SUBMITTED = "submitted";
 
-	// events table
+	// event columns
 	public static final String PROVIDER_ID = "provider";
 	public static final String PATIENT_ID = "patient";
 	public static final String FORM_PRIORITY_BOOLEAN = "form_priority";
@@ -72,33 +72,85 @@ public class Db {
 	// download table
 	public static final String DOWNLOAD_TIME = "download_time";
 
+	//sync table
+	public static final String TABLE_NAME = "table";
+	public static final String SYNC_STATUS = "status";
+	public static final String SYNC_RESULT = "sync_result";
+	
 	// tables
 	public static final String PATIENTS_TABLE = "patients";
 	public static final String OBSERVATIONS_TABLE = "observations";
 	public static final String FORMS_TABLE = "forms";
 	public static final String FORMINSTANCES_TABLE = "instances";
 	public static final String DOWNLOAD_LOG_TABLE = "download_log";
+	public static final String SYNC_TABLE = "sync";
 
 	// database
 	public static final String DATABASE_NAME = "clinic.sqlite3";
 	public static final int DATABASE_VERSION = 8;
 
 	// table create statements
-	public static final String CREATE_PATIENTS_TABLE = "create table " + PATIENTS_TABLE + " (_id integer primary key autoincrement, " + KEY_PATIENT_ID + " integer not null, " + KEY_IDENTIFIER + " text, " + KEY_GIVEN_NAME + " text, " + KEY_FAMILY_NAME + " text, "
-			+ KEY_MIDDLE_NAME + " text, " + KEY_BIRTH_DATE + " text, " + KEY_GENDER + " text, " + KEY_CLIENT_CREATED + " integer, " + KEY_UUID + " text, " + KEY_PRIORITY_FORM_NUMBER + " integer, " + KEY_PRIORITY_FORM_NAMES + " text, " + KEY_SAVED_FORM_NUMBER + " integer, "
-			+ KEY_SAVED_FORM_NAMES + " text);";
+	public static final String CREATE_PATIENTS_TABLE = "create table " + 
+			PATIENTS_TABLE + " (_id integer primary key autoincrement, " + 
+			KEY_PATIENT_ID + " integer not null, " + 
+			KEY_IDENTIFIER + " text, " + 
+			KEY_GIVEN_NAME + " text, " + 
+			KEY_FAMILY_NAME + " text, "	+ 
+			KEY_MIDDLE_NAME + " text, " + 
+			KEY_BIRTH_DATE + " text, " + 
+			KEY_GENDER + " text, " + 
+			KEY_CLIENT_CREATED + " integer, " + 
+			KEY_UUID + " text, " + 
+			KEY_PRIORITY_FORM_NUMBER + " integer, " + 
+			KEY_PRIORITY_FORM_NAMES + " text, " + 
+			KEY_SAVED_FORM_NUMBER + " integer, " + 
+			KEY_SAVED_FORM_NAMES + " text);";
 
-	public static final String CREATE_OBSERVATIONS_TABLE = "create table " + OBSERVATIONS_TABLE + " (_id integer primary key autoincrement, " + KEY_PATIENT_ID + " integer not null, " + KEY_DATA_TYPE + " integer not null, " + KEY_VALUE_TEXT + " text, " + KEY_VALUE_NUMERIC
-			+ " double, " + KEY_VALUE_DATE + " text, " + KEY_VALUE_INT + " integer, " + KEY_FIELD_NAME + " text not null, " + KEY_ENCOUNTER_DATE + " text not null);";
+	public static final String CREATE_OBSERVATIONS_TABLE = "create table " + 
+			OBSERVATIONS_TABLE + " (_id integer primary key autoincrement, " + 
+			KEY_PATIENT_ID + " integer not null, " + 
+			KEY_DATA_TYPE + " integer not null, " + 
+			KEY_VALUE_TEXT + " text, " + 
+			KEY_VALUE_NUMERIC + " double, " + 
+			KEY_VALUE_DATE + " text, " + 
+			KEY_VALUE_INT + " integer, " + 
+			KEY_FIELD_NAME + " text not null, " + 
+			KEY_ENCOUNTER_DATE + " text not null);";
 
-	public static final String CREATE_FORMS_TABLE = "create table " + FORMS_TABLE + " (_id integer primary key autoincrement, " + KEY_FORM_ID + " integer not null, " + KEY_NAME + " text, " + KEY_PATH + " text);";
+	public static final String CREATE_FORMS_TABLE = "create table " + 
+			FORMS_TABLE + " (_id integer primary key autoincrement, " + 
+			KEY_FORM_ID + " integer not null, " + 
+			KEY_NAME + " text, " + 
+			KEY_PATH + " text);";
 
-	public static final String CREATE_FORMINSTANCES_TABLE = "create table " + FORMINSTANCES_TABLE + " (_id integer primary key autoincrement, " + KEY_PATIENT_ID + " integer not null, " + KEY_FORM_ID + " integer not null, " + KEY_FORMINSTANCE_DISPLAY + " text, "
-			+ KEY_FORMINSTANCE_SUBTEXT + " text, " + KEY_FORMINSTANCE_STATUS + " text, " + KEY_PATH + " text);";
+	public static final String CREATE_FORMINSTANCES_TABLE = "create table " + 
+			FORMINSTANCES_TABLE + " (_id integer primary key autoincrement, " + 
+			KEY_PATIENT_ID + " integer not null, " + 
+			KEY_FORM_ID + " integer not null, " + 
+			KEY_FORMINSTANCE_DISPLAY + " text, " + 
+			KEY_FORMINSTANCE_SUBTEXT + " text, " + 
+			KEY_FORMINSTANCE_STATUS + " text, " + 
+			KEY_PATH + " text);";
 
-	public static final String CREATE_FORM_LOG_TABLE = "create table " + FORM_LOG_TABLE + " (_id integer primary key autoincrement, " + PATIENT_ID + " text, " + PROVIDER_ID + " text, " + FORM_NAME + " text, " + FORM_START_TIME + " integer, " + FORM_STOP_TIME + " integer, "
-			+ FORM_LAUNCH_TYPE + " text, " + FORM_PRIORITY_BOOLEAN + " text);";
+	public static final String CREATE_FORM_LOG_TABLE = "create table " + 
+			FORM_LOG_TABLE + " (_id integer primary key autoincrement, " + 
+			PATIENT_ID + " text, " + 
+			PROVIDER_ID + " text, " + 
+			FORM_NAME + " text, " + 
+			FORM_START_TIME + " integer, " + 
+			FORM_STOP_TIME + " integer, " + 
+			FORM_LAUNCH_TYPE + " text, " + 
+			FORM_PRIORITY_BOOLEAN + " text);";
 
-	public static final String CREATE_DOWNLOAD_LOG_TABLE = "create table " + DOWNLOAD_LOG_TABLE + " (_id integer primary key autoincrement, " + DOWNLOAD_TIME + " integer);";
-
+	public static final String CREATE_DOWNLOAD_LOG_TABLE = "create table " + 
+			DOWNLOAD_LOG_TABLE + " (_id integer primary key autoincrement, " + 
+			DOWNLOAD_TIME + " integer);";
+	
+	public static final String CREATE_SYNC_TABLE = "create table " + 
+			SYNC_TABLE + " (_id integer primary key autoincrement, " + 
+			TABLE_NAME + " text, " + 
+			DOWNLOAD_TIME + " integer, " +
+			SYNC_STATUS + " integer, " + 
+			SYNC_RESULT + " integer);";
+	
 }

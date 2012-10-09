@@ -36,7 +36,7 @@ import com.alphabetbloc.clinic.utilities.FileUtils;
  * @author Yaw Anokwa (I think the only one... but could be Sam Mbugua?)
  */
 public class DbProvider extends ContentProvider {
-	
+
 	private final static String TAG = DbProvider.class.getSimpleName();
 	private static DbProvider instance;
 	private static SQLiteDatabase sDb;
@@ -57,6 +57,7 @@ public class DbProvider extends ContentProvider {
 			db.execSQL(Db.CREATE_FORMINSTANCES_TABLE);
 			db.execSQL(Db.CREATE_FORM_LOG_TABLE);
 			db.execSQL(Db.CREATE_DOWNLOAD_LOG_TABLE);
+			db.execSQL(Db.CREATE_SYNC_TABLE);
 		}
 
 		@Override
@@ -68,6 +69,7 @@ public class DbProvider extends ContentProvider {
 			db.execSQL("DROP TABLE IF EXISTS " + Db.FORMINSTANCES_TABLE);
 			db.execSQL("DROP TABLE IF EXISTS " + Db.FORM_LOG_TABLE);
 			db.execSQL("DROP TABLE IF EXISTS " + Db.DOWNLOAD_LOG_TABLE);
+			db.execSQL("DROP TABLE IF EXISTS " + Db.SYNC_TABLE);
 			onCreate(db);
 		}
 	}
@@ -294,33 +296,34 @@ public class DbProvider extends ContentProvider {
 	 * 
 	 * @return number of affected rows
 	 */
-
-	public boolean deleteAllPatients() {
-		return sDb.delete(Db.PATIENTS_TABLE, Db.KEY_CLIENT_CREATED + " IS NULL OR " + Db.KEY_CLIENT_CREATED + "=?", new String[] { "2" }) > 0;
+	@Override
+	public String getType(Uri uri) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
-	public boolean deleteAllObservations() {
-		return sDb.delete(Db.OBSERVATIONS_TABLE, null, null) > 0;
+	@Override
+	public Uri insert(Uri uri, ContentValues values) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
-	public boolean deleteAllForms() {
-		return sDb.delete(Db.FORMS_TABLE, null, null) > 0;
+	@Override
+	public boolean onCreate() {
+		// From Collect (this gets called before the app is created, so we do
+		// nothing)
+		// Collect has it set to true though?
+		return false;
 	}
-
-	public boolean deleteAllFormInstances() {
-		return sDb.delete(Db.FORMINSTANCES_TABLE, null, null) > 0;
+	
+	@Override
+	public int delete(Uri uri, String selection, String[] selectionArgs) {
+		// TODO Auto-generated method stub
+		return 0;
 	}
-
-	public boolean deleteFormInstance(Integer patientId, Integer formId) {
-		return sDb.delete(Db.FORMINSTANCES_TABLE, Db.KEY_PATIENT_ID + "=" + patientId + " AND " + Db.KEY_FORM_ID + "=" + formId, null) > 0;
-	}
-
-	public boolean deleteFormInstance(long id) {
-		return sDb.delete(Db.FORMINSTANCES_TABLE, Db.KEY_ID + "=" + id, null) > 0;
-	}
-
-	public boolean deleteFormInstance(String path) {
-		return sDb.delete(Db.FORMINSTANCES_TABLE, Db.KEY_PATH + "=" + path, null) > 0;
+	
+	public boolean delete(String table, String selection, String[] selectionArgs) {
+		return sDb.delete(table, selection, selectionArgs) > 0;
 	}
 
 	// /////// FETCH SECTION ////////////////////////////
@@ -358,51 +361,14 @@ public class DbProvider extends ContentProvider {
 
 		if (name != null) {
 			// search using name
-			// remove all wildcard characters
-
-			name = name.replaceAll("\\*", "");
-			name = name.replaceAll("%", "");
-			name = name.replaceAll("_", "");
-
-			name = name.replaceAll("  ", " ");
-			name = name.replace(", ", " ");
-			String[] names = name.split(" ");
-
-			StringBuilder expr = new StringBuilder();
-
-			expr.append("(");
-			for (int i = 0; i < names.length; i++) {
-				String n = names[i];
-				if (n != null && n.length() > 0) {
-					if (listtype == DashboardActivity.LIST_SIMILAR_CLIENTS) {
-						if (i == 0) {
-
-							expr.append(Db.KEY_GIVEN_NAME + " LIKE '" + n + "%'");
-						} else if (i == 1) {
-
-							expr.append(" AND ");
-							expr.append(Db.KEY_FAMILY_NAME + " LIKE '" + n + "%'");
-						}
-					} else {
-						expr.append(Db.KEY_GIVEN_NAME + " LIKE '" + n + "%'");
-						expr.append(" OR ");
-						expr.append(Db.KEY_FAMILY_NAME + " LIKE '" + n + "%'");
-						expr.append(" OR ");
-						expr.append(Db.KEY_MIDDLE_NAME + " LIKE '" + n + "%'");
-						if (i < names.length - 1)
-							expr.append(" OR ");
-					}
-				}
-			}
-			expr.append(")");
+			String nameSelection = createNameSelection(name, listtype);
 
 			if (listtype == DashboardActivity.LIST_COMPLETE) {
-				c = sDb.query(true, Db.PATIENTS_TABLE + ", " + Db.FORMINSTANCES_TABLE, new String[] { Db.PATIENTS_TABLE + "." + Db.KEY_ID, Db.PATIENTS_TABLE + "." + Db.KEY_PATIENT_ID, Db.KEY_IDENTIFIER, Db.KEY_GIVEN_NAME, Db.KEY_FAMILY_NAME, Db.KEY_MIDDLE_NAME, Db.KEY_BIRTH_DATE, Db.KEY_GENDER,
-						Db.KEY_PRIORITY_FORM_NAMES, Db.KEY_PRIORITY_FORM_NUMBER, Db.KEY_SAVED_FORM_NUMBER, Db.KEY_SAVED_FORM_NAMES, Db.KEY_FORMINSTANCE_SUBTEXT, Db.KEY_CLIENT_CREATED, Db.KEY_UUID }, "(" + expr.toString() + ")" + listSelection, null, Db.PATIENTS_TABLE + "." + Db.KEY_PATIENT_ID, null,
-						listOrder, null);
+				c = sDb.query(true, Db.PATIENTS_TABLE + ", " + Db.FORMINSTANCES_TABLE, new String[] { Db.PATIENTS_TABLE + "." + Db.KEY_ID, Db.PATIENTS_TABLE + "." + Db.KEY_PATIENT_ID, Db.KEY_IDENTIFIER, Db.KEY_GIVEN_NAME, Db.KEY_FAMILY_NAME, Db.KEY_MIDDLE_NAME,
+						Db.KEY_BIRTH_DATE, Db.KEY_GENDER, Db.KEY_PRIORITY_FORM_NAMES, Db.KEY_PRIORITY_FORM_NUMBER, Db.KEY_SAVED_FORM_NUMBER, Db.KEY_SAVED_FORM_NAMES, Db.KEY_FORMINSTANCE_SUBTEXT, Db.KEY_CLIENT_CREATED, Db.KEY_UUID }, nameSelection + listSelection, null,
+						Db.PATIENTS_TABLE + "." + Db.KEY_PATIENT_ID, null, listOrder, null);
 			} else {
-				c = sDb.query(true, Db.PATIENTS_TABLE, new String[] { Db.KEY_ID, Db.KEY_PATIENT_ID, Db.KEY_IDENTIFIER, Db.KEY_GIVEN_NAME, Db.KEY_FAMILY_NAME, Db.KEY_MIDDLE_NAME, Db.KEY_BIRTH_DATE, Db.KEY_GENDER, Db.KEY_PRIORITY_FORM_NAMES, Db.KEY_PRIORITY_FORM_NUMBER, Db.KEY_SAVED_FORM_NUMBER,
-						Db.KEY_SAVED_FORM_NAMES, Db.KEY_CLIENT_CREATED, Db.KEY_UUID }, expr.toString() + listSelection, null, null, null, listOrder, null);
+				c = sDb.query(true, Db.PATIENTS_TABLE, null, nameSelection + listSelection, null, null, null, listOrder, null);
 			}
 		} else if (identifier != null) {
 			// search using identifier
@@ -413,11 +379,11 @@ public class DbProvider extends ContentProvider {
 			identifier = identifier.replaceAll("_", "^_");
 
 			if (listtype == DashboardActivity.LIST_COMPLETE) {
-				c = sDb.query(true, Db.PATIENTS_TABLE + ", " + Db.FORMINSTANCES_TABLE, new String[] { Db.KEY_ID, Db.KEY_PATIENT_ID, Db.KEY_IDENTIFIER, Db.KEY_GIVEN_NAME, Db.KEY_FAMILY_NAME, Db.KEY_MIDDLE_NAME, Db.KEY_BIRTH_DATE, Db.KEY_GENDER, Db.KEY_PRIORITY_FORM_NAMES, Db.KEY_PRIORITY_FORM_NUMBER,
-						Db.KEY_SAVED_FORM_NUMBER, Db.KEY_SAVED_FORM_NAMES, Db.KEY_FORMINSTANCE_SUBTEXT, Db.KEY_CLIENT_CREATED, Db.KEY_UUID }, Db.KEY_IDENTIFIER + " LIKE '" + identifier + "%' ESCAPE '^'" + listSelection, null, null, null, listOrder, null);
+				c = sDb.query(true, Db.PATIENTS_TABLE + ", " + Db.FORMINSTANCES_TABLE, new String[] { Db.KEY_ID, Db.KEY_PATIENT_ID, Db.KEY_IDENTIFIER, Db.KEY_GIVEN_NAME, Db.KEY_FAMILY_NAME, Db.KEY_MIDDLE_NAME, Db.KEY_BIRTH_DATE, Db.KEY_GENDER, Db.KEY_PRIORITY_FORM_NAMES,
+						Db.KEY_PRIORITY_FORM_NUMBER, Db.KEY_SAVED_FORM_NUMBER, Db.KEY_SAVED_FORM_NAMES, Db.KEY_FORMINSTANCE_SUBTEXT, Db.KEY_CLIENT_CREATED, Db.KEY_UUID }, Db.KEY_IDENTIFIER + " LIKE '" + identifier + "%' ESCAPE '^'" + listSelection, null, null, null, listOrder,
+						null);
 			} else {
-				c = sDb.query(true, Db.PATIENTS_TABLE, new String[] { Db.KEY_ID, Db.KEY_PATIENT_ID, Db.KEY_IDENTIFIER, Db.KEY_GIVEN_NAME, Db.KEY_FAMILY_NAME, Db.KEY_MIDDLE_NAME, Db.KEY_BIRTH_DATE, Db.KEY_GENDER, Db.KEY_PRIORITY_FORM_NAMES, Db.KEY_PRIORITY_FORM_NUMBER, Db.KEY_SAVED_FORM_NUMBER,
-						Db.KEY_SAVED_FORM_NAMES, Db.KEY_CLIENT_CREATED, Db.KEY_UUID }, Db.KEY_IDENTIFIER + " LIKE '" + identifier + "%' ESCAPE '^'" + listSelection, null, Db.PATIENTS_TABLE + "." + Db.KEY_PATIENT_ID, null, listOrder, null);
+				c = sDb.query(true, Db.PATIENTS_TABLE, null, Db.KEY_IDENTIFIER + " LIKE '" + identifier + "%' ESCAPE '^'" + listSelection, null, Db.PATIENTS_TABLE + "." + Db.KEY_PATIENT_ID, null, listOrder, null);
 			}
 
 		}
@@ -428,13 +394,54 @@ public class DbProvider extends ContentProvider {
 		return c;
 	}
 
+	private String createNameSelection(String name, int listtype) {
+
+		// remove all wildcard characters
+		name = name.replaceAll("\\*", "");
+		name = name.replaceAll("%", "");
+		name = name.replaceAll("_", "");
+
+		name = name.replaceAll("  ", " ");
+		name = name.replace(", ", " ");
+		String[] names = name.split(" ");
+
+		StringBuilder expr = new StringBuilder();
+
+		expr.append("(");
+		for (int i = 0; i < names.length; i++) {
+			String n = names[i];
+			if (n != null && n.length() > 0) {
+				if (listtype == DashboardActivity.LIST_SIMILAR_CLIENTS) {
+					if (i == 0) {
+
+						expr.append(Db.KEY_GIVEN_NAME + " LIKE '" + n + "%'");
+					} else if (i == 1) {
+
+						expr.append(" AND ");
+						expr.append(Db.KEY_FAMILY_NAME + " LIKE '" + n + "%'");
+					}
+				} else {
+					expr.append(Db.KEY_GIVEN_NAME + " LIKE '" + n + "%'");
+					expr.append(" OR ");
+					expr.append(Db.KEY_FAMILY_NAME + " LIKE '" + n + "%'");
+					expr.append(" OR ");
+					expr.append(Db.KEY_MIDDLE_NAME + " LIKE '" + n + "%'");
+					if (i < names.length - 1)
+						expr.append(" OR ");
+				}
+			}
+		}
+		expr.append(")");
+
+		return expr.toString();
+	}
+
 	public Cursor fetchPatient(Integer patientId) throws SQLException {
 		Cursor c = null;
 		String listSelection = Db.KEY_PATIENT_ID + "=" + patientId;
 		String listOrder = Db.KEY_FAMILY_NAME + " COLLATE NOCASE ASC";
 
-		c = sDb.query(true, Db.PATIENTS_TABLE, new String[] { Db.KEY_ID, Db.KEY_PATIENT_ID, Db.KEY_IDENTIFIER, Db.KEY_GIVEN_NAME, Db.KEY_FAMILY_NAME, Db.KEY_MIDDLE_NAME, Db.KEY_BIRTH_DATE, Db.KEY_GENDER, Db.KEY_PRIORITY_FORM_NAMES, Db.KEY_PRIORITY_FORM_NUMBER, Db.KEY_SAVED_FORM_NUMBER, Db.KEY_SAVED_FORM_NAMES,
-				Db.KEY_CLIENT_CREATED, Db.KEY_UUID }, listSelection, null, null, null, listOrder, null);
+		c = sDb.query(true, Db.PATIENTS_TABLE, null, listSelection, null, null, null, listOrder, null);
 
 		if (c != null) {
 			c.moveToFirst();
@@ -444,8 +451,7 @@ public class DbProvider extends ContentProvider {
 
 	public Cursor fetchPatient(String uuidString) throws SQLException {
 		Cursor c = null;
-		c = sDb.query(true, Db.PATIENTS_TABLE, new String[] { Db.KEY_ID, Db.KEY_PATIENT_ID, Db.KEY_IDENTIFIER, Db.KEY_GIVEN_NAME, Db.KEY_FAMILY_NAME, Db.KEY_MIDDLE_NAME, Db.KEY_BIRTH_DATE, Db.KEY_GENDER, Db.KEY_PRIORITY_FORM_NAMES, Db.KEY_PRIORITY_FORM_NUMBER, Db.KEY_SAVED_FORM_NUMBER, Db.KEY_SAVED_FORM_NAMES,
-				Db.KEY_CLIENT_CREATED, Db.KEY_UUID }, Db.KEY_UUID + "=" + uuidString, null, null, null, Db.KEY_PRIORITY_FORM_NUMBER + " DESC, " + Db.KEY_FAMILY_NAME + " COLLATE NOCASE ASC", null);
+		c = sDb.query(true, Db.PATIENTS_TABLE, null, Db.KEY_UUID + "=" + uuidString, null, null, null, Db.KEY_PRIORITY_FORM_NUMBER + " DESC, " + Db.KEY_FAMILY_NAME + " COLLATE NOCASE ASC", null);
 
 		if (c != null) {
 			c.moveToFirst();
@@ -482,11 +488,10 @@ public class DbProvider extends ContentProvider {
 		Log.e("louis.fazen", "ClinicAdapter listorder=" + listOrder);
 
 		if (listtype == DashboardActivity.LIST_COMPLETE) {
-			c = sDb.query(true, Db.PATIENTS_TABLE + ", " + Db.FORMINSTANCES_TABLE, new String[] { Db.PATIENTS_TABLE + "." + Db.KEY_ID, Db.PATIENTS_TABLE + "." + Db.KEY_PATIENT_ID, Db.KEY_IDENTIFIER, Db.KEY_GIVEN_NAME, Db.KEY_FAMILY_NAME, Db.KEY_MIDDLE_NAME, Db.KEY_BIRTH_DATE, Db.KEY_GENDER,
-					Db.KEY_PRIORITY_FORM_NAMES, Db.KEY_PRIORITY_FORM_NUMBER, Db.KEY_SAVED_FORM_NUMBER, Db.KEY_SAVED_FORM_NAMES, Db.KEY_FORMINSTANCE_SUBTEXT, Db.KEY_CLIENT_CREATED, Db.KEY_UUID }, listSelection, null, groupBy, null, listOrder, null);
+			c = sDb.query(true, Db.PATIENTS_TABLE + ", " + Db.FORMINSTANCES_TABLE, new String[] { Db.PATIENTS_TABLE + "." + Db.KEY_ID, Db.PATIENTS_TABLE + "." + Db.KEY_PATIENT_ID, Db.KEY_IDENTIFIER, Db.KEY_GIVEN_NAME, Db.KEY_FAMILY_NAME, Db.KEY_MIDDLE_NAME, Db.KEY_BIRTH_DATE,
+					Db.KEY_GENDER, Db.KEY_PRIORITY_FORM_NAMES, Db.KEY_PRIORITY_FORM_NUMBER, Db.KEY_SAVED_FORM_NUMBER, Db.KEY_SAVED_FORM_NAMES, Db.KEY_FORMINSTANCE_SUBTEXT, Db.KEY_CLIENT_CREATED, Db.KEY_UUID }, listSelection, null, groupBy, null, listOrder, null);
 		} else {
-			c = sDb.query(true, Db.PATIENTS_TABLE, new String[] { Db.KEY_ID, Db.KEY_PATIENT_ID, Db.KEY_IDENTIFIER, Db.KEY_GIVEN_NAME, Db.KEY_FAMILY_NAME, Db.KEY_MIDDLE_NAME, Db.KEY_BIRTH_DATE, Db.KEY_GENDER, Db.KEY_PRIORITY_FORM_NAMES, Db.KEY_PRIORITY_FORM_NUMBER, Db.KEY_SAVED_FORM_NUMBER, Db.KEY_SAVED_FORM_NAMES,
-					Db.KEY_CLIENT_CREATED, Db.KEY_UUID }, listSelection, null, null, null, listOrder, null);
+			c = sDb.query(true, Db.PATIENTS_TABLE, null, listSelection, null, null, null, listOrder, null);
 		}
 		if (c != null) {
 			c.moveToFirst();
@@ -497,16 +502,6 @@ public class DbProvider extends ContentProvider {
 	public Cursor fetchAllForms() throws SQLException {
 		Cursor c = null;
 		c = sDb.query(true, Db.FORMS_TABLE, new String[] { Db.KEY_ID, Db.KEY_FORM_ID, Db.KEY_NAME, Db.KEY_PATH }, null, null, null, null, null, null);
-
-		if (c != null) {
-			c.moveToFirst();
-		}
-		return c;
-	}
-
-	public Cursor fetchAllObservations() throws SQLException {
-		Cursor c = null;
-		c = sDb.query(true, Db.OBSERVATIONS_TABLE, new String[] { Db.KEY_ID, Db.KEY_PATIENT_ID }, null, null, null, null, null, null);
 
 		if (c != null) {
 			c.moveToFirst();
@@ -609,8 +604,8 @@ public class DbProvider extends ContentProvider {
 
 	public Cursor fetchPatientFormInstancesByStatus(Integer patientId, Integer formId, String status) throws SQLException {
 		Cursor c = null;
-		c = sDb.query(true, Db.FORMINSTANCES_TABLE, new String[] { Db.KEY_ID, Db.KEY_FORMINSTANCE_STATUS, Db.KEY_PATH, Db.KEY_FORMINSTANCE_DISPLAY }, Db.KEY_PATIENT_ID + "=" + patientId + " AND " + Db.KEY_FORM_ID + "=" + formId + " AND " + Db.KEY_FORMINSTANCE_STATUS + "='" + status + "'", null, null,
-				null, null, null);
+		c = sDb.query(true, Db.FORMINSTANCES_TABLE, new String[] { Db.KEY_ID, Db.KEY_FORMINSTANCE_STATUS, Db.KEY_PATH, Db.KEY_FORMINSTANCE_DISPLAY }, Db.KEY_PATIENT_ID + "=" + patientId + " AND " + Db.KEY_FORM_ID + "=" + formId + " AND " + Db.KEY_FORMINSTANCE_STATUS + "='"
+				+ status + "'", null, null, null, null, null);
 
 		if (c != null) {
 			c.moveToFirst();
@@ -636,8 +631,8 @@ public class DbProvider extends ContentProvider {
 				// tables
 				Db.FORMS_TABLE + ", " + Db.FORMINSTANCES_TABLE,
 				// columns
-				new String[] { Db.FORMINSTANCES_TABLE + "." + Db.KEY_ID + ", " + Db.FORMINSTANCES_TABLE + "." + Db.KEY_FORM_ID + ", " + Db.FORMINSTANCES_TABLE + "." + Db.KEY_FORMINSTANCE_DISPLAY + ", " + Db.FORMINSTANCES_TABLE + "." + Db.KEY_PATH + ", " + Db.FORMS_TABLE + "." + Db.KEY_FORM_NAME + ", "
-						+ Db.FORMINSTANCES_TABLE + "." + Db.KEY_FORMINSTANCE_SUBTEXT },
+				new String[] { Db.FORMINSTANCES_TABLE + "." + Db.KEY_ID + ", " + Db.FORMINSTANCES_TABLE + "." + Db.KEY_FORM_ID + ", " + Db.FORMINSTANCES_TABLE + "." + Db.KEY_FORMINSTANCE_DISPLAY + ", " + Db.FORMINSTANCES_TABLE + "." + Db.KEY_PATH + ", " + Db.FORMS_TABLE + "."
+						+ Db.KEY_FORM_NAME + ", " + Db.FORMINSTANCES_TABLE + "." + Db.KEY_FORMINSTANCE_SUBTEXT },
 				// where
 				Db.FORMINSTANCES_TABLE + "." + Db.KEY_PATIENT_ID + "=" + patientId + " AND " + Db.FORMS_TABLE + "." + Db.KEY_FORM_ID + "=" + Db.FORMINSTANCES_TABLE + "." + Db.KEY_FORM_ID,
 				// group by, having
@@ -651,8 +646,6 @@ public class DbProvider extends ContentProvider {
 
 		Cursor c = null;
 		c = sDb.rawQuery(query, null);
-		// .query(true, Db.FORMINSTANCES_TABLE, new String[] { Db.KEY_ID },
-		// Db.KEY_PATIENT_ID + "=" + patientId, null, null, null, null, null);
 
 		if (c != null) {
 			c.moveToFirst();
@@ -728,7 +721,9 @@ public class DbProvider extends ContentProvider {
 	public Cursor fetchPatientObservations(Integer patientId) throws SQLException {
 		Cursor c = null;
 		// TODO removing an extra Db.KEY_VALUE_TEXT doesn't screw things up?
-		c = sDb.query(Db.OBSERVATIONS_TABLE, new String[] { Db.KEY_VALUE_TEXT, Db.KEY_DATA_TYPE, Db.KEY_VALUE_NUMERIC, Db.KEY_VALUE_DATE, Db.KEY_VALUE_INT, Db.KEY_FIELD_NAME, Db.KEY_ENCOUNTER_DATE }, Db.KEY_PATIENT_ID + "=" + patientId, null, null, null, Db.KEY_FIELD_NAME + "," + Db.KEY_ENCOUNTER_DATE + " desc");
+		c = sDb.query(Db.OBSERVATIONS_TABLE, null, Db.KEY_PATIENT_ID + "=" + patientId, null, null, null, 
+				Db.KEY_FIELD_NAME + ","
+				+ Db.KEY_ENCOUNTER_DATE + " desc");
 
 		if (c != null)
 			c.moveToFirst();
@@ -739,8 +734,8 @@ public class DbProvider extends ContentProvider {
 	public Cursor fetchPatientObservation(Integer patientId, String fieldName) throws SQLException {
 		Cursor c = null;
 
-		c = sDb.query(Db.OBSERVATIONS_TABLE, new String[] { Db.KEY_VALUE_TEXT, Db.KEY_DATA_TYPE, Db.KEY_VALUE_NUMERIC, Db.KEY_VALUE_DATE, Db.KEY_VALUE_INT, Db.KEY_ENCOUNTER_DATE }, Db.KEY_PATIENT_ID + "=" + patientId + " AND " + Db.KEY_FIELD_NAME + "='" + fieldName + "'", null, null, null,
-				Db.KEY_ENCOUNTER_DATE + " desc");
+		c = sDb.query(Db.OBSERVATIONS_TABLE, new String[] { Db.KEY_VALUE_TEXT, Db.KEY_DATA_TYPE, Db.KEY_VALUE_NUMERIC, Db.KEY_VALUE_DATE, Db.KEY_VALUE_INT, Db.KEY_ENCOUNTER_DATE }, Db.KEY_PATIENT_ID + "=" + patientId + " AND " + Db.KEY_FIELD_NAME + "='" + fieldName + "'", null,
+				null, null, Db.KEY_ENCOUNTER_DATE + " desc");
 
 		if (c != null)
 			c.moveToFirst();
@@ -765,6 +760,79 @@ public class DbProvider extends ContentProvider {
 		return datetime;
 	}
 
+	// /////////////////// COUNTING SECTION ////////////////////
+		public int countAllPriorityFormNumbers() throws SQLException {
+			int count = 0;
+			Cursor c = null;
+
+			// counting total patients with a priority form:
+			c = sDb.query(Db.PATIENTS_TABLE, new String[] { "count(*) AS " + Db.KEY_PRIORITY_FORM_NUMBER }, Db.KEY_PRIORITY_FORM_NUMBER + " IS NOT NULL", null, null, null, null);
+
+			if (c != null) {
+				if (c.moveToFirst()) {
+					count = c.getInt(c.getColumnIndex(Db.KEY_PRIORITY_FORM_NUMBER));
+				}
+				c.close();
+			}
+			return count;
+		}
+
+		public int countAllSavedFormNumbers() throws SQLException {
+			int count = 0;
+			Cursor c = null;
+
+			// Count Total Patients with Saved Forms:
+			c = sDb.query(Db.PATIENTS_TABLE, new String[] { "count(*) AS " + Db.KEY_SAVED_FORM_NUMBER }, Db.KEY_SAVED_FORM_NUMBER + " IS NOT NULL", null, null, null, null);
+
+			if (c != null) {
+				if (c.moveToFirst()) {
+					count = c.getInt(c.getColumnIndex(Db.KEY_SAVED_FORM_NUMBER));
+				}
+				c.close();
+			}
+
+			return count;
+		}
+
+		// Count all patients with completed forms (i.e. group by patient id)
+		public int countAllCompletedUnsentForms() throws SQLException {
+			int count = 0;
+
+			Cursor c = null;
+			c = sDb.query("(SELECT DISTINCT " + Db.KEY_PATIENT_ID + " FROM " + Db.FORMINSTANCES_TABLE + ")", new String[] { "count(" + Db.KEY_PATIENT_ID + ") AS " + Db.KEY_PATIENT_ID }, null, null, null, null, null);
+
+			if (c != null) {
+				if (c.moveToFirst()) {
+					count = c.getInt(c.getColumnIndex(Db.KEY_PATIENT_ID));
+				}
+				c.close();
+			}
+
+			return count;
+
+		}
+
+		public int countAllPatients() throws SQLException {
+			long count = 0;
+			count = DatabaseUtils.queryNumEntries(sDb, Db.PATIENTS_TABLE);
+			int intcount = safeLongToInt(count);
+			return intcount;
+		}
+
+		public int countAllForms() throws SQLException {
+			long count = 0;
+			count = DatabaseUtils.queryNumEntries(sDb, Db.FORMS_TABLE);
+			int intcount = safeLongToInt(count);
+			return intcount;
+		}
+
+		private static int safeLongToInt(long l) {
+			if (l < Integer.MIN_VALUE || l > Integer.MAX_VALUE) {
+				throw new IllegalArgumentException(l + "is outside the bounds of int");
+			}
+			return (int) l;
+		}
+	
 	// PRIORITY FORMS SECTION //////////////////////////////////
 	public void updatePriorityFormList() throws SQLException {
 		Cursor c = null;
@@ -795,7 +863,7 @@ public class DbProvider extends ContentProvider {
 			}
 			c.close();
 		}
-		
+
 	}
 
 	public void updatePriorityFormNumbers() throws SQLException {
@@ -816,13 +884,11 @@ public class DbProvider extends ContentProvider {
 			}
 			c.close();
 		}
-		
+
 	}
 
 	public void updatePriorityFormsByPatientId(String updatePatientId, String formId) throws SQLException {
-		// int deleted = sDb.delete(Db.OBSERVATIONS_TABLE, Db.KEY_PATIENT_ID +
-		// "=? AND " + Db.KEY_FIELD_NAME + "=? AND " + Db.KEY_VALUE_INT + "=?", new
-		// String[] { updatePatientId, Db.KEY_FIELD_FORM_VALUE, formId });
+
 		int deleted = sDb.delete(Db.OBSERVATIONS_TABLE, Db.KEY_PATIENT_ID + "=" + updatePatientId + " AND " + Db.KEY_FIELD_NAME + "=" + Db.KEY_FIELD_FORM_VALUE + " AND " + Db.KEY_VALUE_INT + "=" + formId, null);
 		if (deleted > 0) {
 
@@ -861,7 +927,8 @@ public class DbProvider extends ContentProvider {
 					// two columns (one of which is a group_concat()
 					new String[] { Db.OBSERVATIONS_TABLE + "." + Db.KEY_PATIENT_ID + ", group_concat(" + Db.FORMS_TABLE + "." + Db.KEY_FORM_NAME + ",\", \") AS " + Db.KEY_PRIORITY_FORM_NAMES },
 					// where
-					Db.OBSERVATIONS_TABLE + "." + Db.KEY_FIELD_NAME + "=" + Db.KEY_FIELD_FORM_VALUE + " AND " + Db.FORMS_TABLE + "." + Db.KEY_FORM_ID + "=" + Db.OBSERVATIONS_TABLE + "." + Db.KEY_VALUE_INT + " AND " + Db.OBSERVATIONS_TABLE + "." + Db.KEY_PATIENT_ID + "=" + updatePatientId,
+					Db.OBSERVATIONS_TABLE + "." + Db.KEY_FIELD_NAME + "=" + Db.KEY_FIELD_FORM_VALUE + " AND " + Db.FORMS_TABLE + "." + Db.KEY_FORM_ID + "=" + Db.OBSERVATIONS_TABLE + "." + Db.KEY_VALUE_INT + " AND " + Db.OBSERVATIONS_TABLE + "." + Db.KEY_PATIENT_ID + "="
+							+ updatePatientId,
 					// group by
 					Db.OBSERVATIONS_TABLE + "." + Db.KEY_PATIENT_ID, null, null, null);
 
@@ -891,11 +958,6 @@ public class DbProvider extends ContentProvider {
 
 	// SAVED FORMS SECTION ///////////////////////////////////
 	public void updateSavedFormsList() throws SQLException {
-		// SELECT observations.patient_id as patientid, group_concat(forms.name,
-		// \", \") as name FROM observations INNER JOIN forms
-		// WHERE (field_name = \"odkconnector.property.form\" AND value_int =
-		// form_id) GROUP BY patient_id;
-
 		Cursor c = null;
 		String selection = InstanceColumns.STATUS + "=? and " + InstanceColumns.PATIENT_ID + " IS NOT NULL";
 		String selectionArgs[] = { InstanceProviderAPI.STATUS_INCOMPLETE };
@@ -936,7 +998,7 @@ public class DbProvider extends ContentProvider {
 			}
 
 			c.close();
-			
+
 		}
 
 	}
@@ -969,7 +1031,7 @@ public class DbProvider extends ContentProvider {
 
 			c.close();
 		}
-		
+
 	}
 
 	// saved forms are kept in the collect database...
@@ -999,78 +1061,7 @@ public class DbProvider extends ContentProvider {
 
 	}
 
-	// /////////////////// COUNTING SECTION ////////////////////
-	public int countAllPriorityFormNumbers() throws SQLException {
-		int count = 0;
-		Cursor c = null;
-
-		// counting total patients with a priority form:
-		c = sDb.query(Db.PATIENTS_TABLE, new String[] { "count(*) AS " + Db.KEY_PRIORITY_FORM_NUMBER }, Db.KEY_PRIORITY_FORM_NUMBER + " IS NOT NULL", null, null, null, null);
-
-		if (c != null) {
-			if (c.moveToFirst()) {
-				count = c.getInt(c.getColumnIndex(Db.KEY_PRIORITY_FORM_NUMBER));
-			}
-			c.close();
-		}
-		return count;
-	}
-
-	public int countAllSavedFormNumbers() throws SQLException {
-		int count = 0;
-		Cursor c = null;
-
-		// Count Total Patients with Saved Forms:
-		c = sDb.query(Db.PATIENTS_TABLE, new String[] { "count(*) AS " + Db.KEY_SAVED_FORM_NUMBER }, Db.KEY_SAVED_FORM_NUMBER + " IS NOT NULL", null, null, null, null);
-
-		if (c != null) {
-			if (c.moveToFirst()) {
-				count = c.getInt(c.getColumnIndex(Db.KEY_SAVED_FORM_NUMBER));
-			}
-			c.close();
-		}
-
-		return count;
-	}
-
-	// Count all patients with completed forms (i.e. group by patient id)
-	public int countAllCompletedUnsentForms() throws SQLException {
-		int count = 0;
-
-		Cursor c = null;
-		c = sDb.query("(SELECT DISTINCT " + Db.KEY_PATIENT_ID + " FROM " + Db.FORMINSTANCES_TABLE + ")", new String[] { "count(" + Db.KEY_PATIENT_ID + ") AS " + Db.KEY_PATIENT_ID }, null, null, null, null, null);
-
-		if (c != null) {
-			if (c.moveToFirst()) {
-				count = c.getInt(c.getColumnIndex(Db.KEY_PATIENT_ID));
-			}
-			c.close();
-		}
-
-		return count;
-
-	}
-
-	public int countAllPatients() throws SQLException {
-		long count = 0;
-		count = DatabaseUtils.queryNumEntries(sDb, Db.PATIENTS_TABLE);
-		int intcount = safeLongToInt(count);
-		return intcount;
-	}
-
-	public int countAllForms() throws SQLException {
-		long count = 0;
-		count = DatabaseUtils.queryNumEntries(sDb, Db.FORMS_TABLE);
-		int intcount = safeLongToInt(count);
-		return intcount;
-	}
-
-	public static int safeLongToInt(long l) {
-		if (l < Integer.MIN_VALUE || l > Integer.MAX_VALUE) {
-			throw new IllegalArgumentException(l + "is outside the bounds of int");
-		}
-		return (int) l;
-	}
+	
 
 	// ///////// UPDATE TABLES SECTION ////////////////////////
 	public boolean updateFormInstance(String path, String status) {
@@ -1081,34 +1072,6 @@ public class DbProvider extends ContentProvider {
 		return sDb.update(Db.FORMINSTANCES_TABLE, cv, Db.KEY_PATH + "='" + path + "'", null) > 0;
 	}
 
-	public boolean updateInstancePath(Integer id, String newPath) {
-
-		ContentValues cv = new ContentValues();
-		cv.put(Db.KEY_PATH, newPath);
-
-		return sDb.update(Db.FORMINSTANCES_TABLE, cv, Db.KEY_ID + "=?", new String[] { String.valueOf(id) }) > 0;
-	}
-
-	/**
-	 * Update patient in the database.
-	 * 
-	 * @param patient
-	 *            Patient object containing patient info
-	 * @return number of affected rows
-	 */
-	public boolean updatePatient(Patient patient) {
-
-		ContentValues cv = new ContentValues();
-		cv.put(Db.KEY_PATIENT_ID, patient.getPatientId());
-		cv.put(Db.KEY_IDENTIFIER, patient.getIdentifier());
-		cv.put(Db.KEY_GIVEN_NAME, patient.getGivenName());
-		cv.put(Db.KEY_FAMILY_NAME, patient.getFamilyName());
-		cv.put(Db.KEY_MIDDLE_NAME, patient.getMiddleName());
-		cv.put(Db.KEY_BIRTH_DATE, patient.getBirthdate());
-		cv.put(Db.KEY_GENDER, patient.getGender());
-
-		return sDb.update(Db.PATIENTS_TABLE, cv, Db.KEY_PATIENT_ID + "='" + patient.getPatientId() + "'", null) > 0;
-	}
 
 	public boolean updateFormPath(Integer formId, String path) {
 		ContentValues cv = new ContentValues();
@@ -1128,7 +1091,7 @@ public class DbProvider extends ContentProvider {
 				String instancePath = c.getString(c.getColumnIndex(Db.KEY_PATH));
 				File f = new File(instancePath);
 				if (!f.exists()) {
-					if (deleteFormInstance(c.getInt(c.getColumnIndex(Db.KEY_ID)))) {
+					if (delete(Db.FORMINSTANCES_TABLE, Db.KEY_ID + "=?" + c.getInt(c.getColumnIndex(Db.KEY_ID)), null)) {
 						Log.i("ClinicAdapter", "Deleted orphan instance from db");
 						if (FileUtils.deleteFile(instancePath.substring(0, instancePath.lastIndexOf(File.separator))))
 							Log.i("ClinicAdapter", "Deleted orphan instance from filesystem");
@@ -1143,31 +1106,9 @@ public class DbProvider extends ContentProvider {
 	}
 
 	// ///////
-	@Override
-	public int delete(Uri uri, String selection, String[] selectionArgs) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
 
-	@Override
-	public String getType(Uri uri) {
-		// TODO Auto-generated method stub
-		return null;
-	}
 
-	@Override
-	public Uri insert(Uri uri, ContentValues values) {
-		// TODO Auto-generated method stub
-		return null;
-	}
 
-	@Override
-	public boolean onCreate() {
-		// From Collect (this gets called before the app is created, so we do
-		// nothing)
-		// Collect has it set to true though?
-		return false;
-	}
 
 	@Override
 	public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {

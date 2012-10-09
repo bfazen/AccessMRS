@@ -237,7 +237,7 @@ public class XformUtils {
 
 			if (mCursor == null) {
 				System.out.println("Something bad happened");
-				DbProvider.openDb().deleteAllForms();
+				DbProvider.openDb().delete(Db.FORMS_TABLE, null, null);
 				return false;
 			}
 
