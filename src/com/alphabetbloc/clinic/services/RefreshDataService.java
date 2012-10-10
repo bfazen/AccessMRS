@@ -1,42 +1,9 @@
 package com.alphabetbloc.clinic.services;
 
-import java.util.Iterator;
-import java.util.List;
-
-import android.accounts.Account;
-import android.accounts.OperationCanceledException;
-import android.app.ActivityManager;
-import android.app.ActivityManager.RunningAppProcessInfo;
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.app.Service;
-import android.content.AbstractThreadedSyncAdapter;
-import android.content.ComponentName;
-import android.content.ContentProviderClient;
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.SyncResult;
-import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
-import android.os.Looper;
-import android.preference.PreferenceManager;
-import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
-
-import com.alphabetbloc.clinic.R;
-import com.alphabetbloc.clinic.listeners.SyncDataListener;
-import com.alphabetbloc.clinic.providers.DbProvider;
-import com.alphabetbloc.clinic.tasks.DownloadDataTask;
-import com.alphabetbloc.clinic.tasks.SyncDataTask;
-import com.alphabetbloc.clinic.tasks.UploadDataTask;
-import com.alphabetbloc.clinic.ui.user.CreatePatientActivity;
-import com.alphabetbloc.clinic.ui.user.DashboardActivity;
-import com.alphabetbloc.clinic.ui.user.ListPatientActivity;
-import com.alphabetbloc.clinic.ui.user.RefreshDataActivity;
-import com.alphabetbloc.clinic.utilities.App;
 
 
 /**
@@ -50,7 +17,7 @@ public class RefreshDataService extends Service {
 	private static final String TAG = RefreshDataService.class.getSimpleName();
     private static final Object sSyncAdapterLock = new Object();
 
-    private static SyncAdapterTest sSyncAdapter = null;
+    private static SyncAdapter sSyncAdapter = null;
 
     @Override
     public void onCreate() {
@@ -60,7 +27,7 @@ public class RefreshDataService extends Service {
         	Log.i(TAG, "Creating the SyncAdapter with Service");
             if (sSyncAdapter == null) {
             	Log.i(TAG, "sSyncAdapter was null, so we are creating it with RefreshDataService on Create");
-                sSyncAdapter = new SyncAdapterTest(getApplicationContext(), true);
+                sSyncAdapter = new SyncAdapter(getApplicationContext(), true);
             }
         }
     }
