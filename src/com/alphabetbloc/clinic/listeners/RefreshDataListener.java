@@ -23,16 +23,17 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.alphabetbloc.clinic.R;
-import com.alphabetbloc.clinic.providers.DbProvider;
+import com.alphabetbloc.clinic.providers.Db;
 import com.alphabetbloc.clinic.services.AlarmIntentService;
 import com.alphabetbloc.clinic.services.WakefulIntentService;
 import com.alphabetbloc.clinic.utilities.App;
+
 /**
  * 
  * @author Louis Fazen (louis.fazen@gmail.com)
- *
+ * 
  */
-//TODO!  DELETE if the SyncAdapter works!
+// TODO! DELETE if the SyncAdapter works!
 public class RefreshDataListener implements WakefulIntentService.AlarmListener {
 
 	public void scheduleAlarms(AlarmManager mgr, PendingIntent pi, Context ctxt) {
@@ -57,23 +58,23 @@ public class RefreshDataListener implements WakefulIntentService.AlarmListener {
 
 		// Find the most recent download time, determine the best interval for
 		// the alarms...
-		long recentDownload = DbProvider.openDb().fetchMostRecentDownload();
+		long recentDownload = Db.open().fetchMostRecentDownload();
 		long timeSinceRefresh = System.currentTimeMillis() - recentDownload;
 		Log.e("louis.fazen", "Minutes since last refresh: " + timeSinceRefresh / (1000 * 60));
 
 		long days = 1000 * 60 * 60 * 24;
-		//establishes threshold for Setting Alarm Frequency
-		
+		// establishes threshold for Setting Alarm Frequency
+
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(App.getApp());
 		String maxRefreshSeconds = prefs.getString(App.getApp().getString(R.string.key_max_refresh_seconds), App.getApp().getString(R.string.default_max_refresh_seconds));
 		long maxRefreshMs = 1000L * Long.valueOf(maxRefreshSeconds);
-		
+
 		if (timeSinceRefresh < maxRefreshMs) {
-			mgr.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + (5*days), (5*days), pi);
+			mgr.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + (5 * days), (5 * days), pi);
 		} else {
-			mgr.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + (5*days), (5*days), pi);
+			mgr.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + (5 * days), (5 * days), pi);
 		}
-		
+
 	}
 
 	public void sendWakefulWork(Context ctxt) {

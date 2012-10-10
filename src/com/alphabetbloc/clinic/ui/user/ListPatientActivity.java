@@ -27,8 +27,8 @@ import android.widget.TextView;
 import com.alphabetbloc.clinic.R;
 import com.alphabetbloc.clinic.adapters.PatientAdapter;
 import com.alphabetbloc.clinic.data.Patient;
+import com.alphabetbloc.clinic.providers.DataModel;
 import com.alphabetbloc.clinic.providers.Db;
-import com.alphabetbloc.clinic.providers.DbProvider;
 
 /**
  * 
@@ -244,29 +244,27 @@ public class ListPatientActivity extends BaseListActivity implements SyncStatusO
 
 	private void getPatients(String searchString, String patientId) {
 
-		DbProvider ca = DbProvider.openDb();
-
 		Cursor c = null;
 		if (mSearchPatientStr != null || mSearchPatientId != null) {
 
-			c = ca.fetchPatients(searchString, patientId, mListType);
+			c = Db.open().fetchPatients(searchString, patientId, mListType);
 		} else {
-			c = ca.fetchAllPatients(mListType);
+			c = Db.open().fetchAllPatients(mListType);
 		}
 
 		if (c != null && c.getCount() >= 0) {
 
-			int patientIdIndex = c.getColumnIndex(Db.KEY_PATIENT_ID);
-			int identifierIndex = c.getColumnIndex(Db.KEY_IDENTIFIER);
-			int givenNameIndex = c.getColumnIndex(Db.KEY_GIVEN_NAME);
-			int familyNameIndex = c.getColumnIndex(Db.KEY_FAMILY_NAME);
-			int middleNameIndex = c.getColumnIndex(Db.KEY_MIDDLE_NAME);
-			int birthDateIndex = c.getColumnIndex(Db.KEY_BIRTH_DATE);
-			int genderIndex = c.getColumnIndex(Db.KEY_GENDER);
-			int priorityIndex = c.getColumnIndexOrThrow(Db.KEY_PRIORITY_FORM_NUMBER);
-			int priorityFormIndex = c.getColumnIndexOrThrow(Db.KEY_PRIORITY_FORM_NAMES);
-			int savedIndex = c.getColumnIndexOrThrow(Db.KEY_SAVED_FORM_NUMBER);
-			int savedFormIndex = c.getColumnIndexOrThrow(Db.KEY_SAVED_FORM_NAMES);
+			int patientIdIndex = c.getColumnIndex(DataModel.KEY_PATIENT_ID);
+			int identifierIndex = c.getColumnIndex(DataModel.KEY_IDENTIFIER);
+			int givenNameIndex = c.getColumnIndex(DataModel.KEY_GIVEN_NAME);
+			int familyNameIndex = c.getColumnIndex(DataModel.KEY_FAMILY_NAME);
+			int middleNameIndex = c.getColumnIndex(DataModel.KEY_MIDDLE_NAME);
+			int birthDateIndex = c.getColumnIndex(DataModel.KEY_BIRTH_DATE);
+			int genderIndex = c.getColumnIndex(DataModel.KEY_GENDER);
+			int priorityIndex = c.getColumnIndexOrThrow(DataModel.KEY_PRIORITY_FORM_NUMBER);
+			int priorityFormIndex = c.getColumnIndexOrThrow(DataModel.KEY_PRIORITY_FORM_NAMES);
+			int savedIndex = c.getColumnIndexOrThrow(DataModel.KEY_SAVED_FORM_NUMBER);
+			int savedFormIndex = c.getColumnIndexOrThrow(DataModel.KEY_SAVED_FORM_NAMES);
 
 			if (c.getCount() > 0) {
 

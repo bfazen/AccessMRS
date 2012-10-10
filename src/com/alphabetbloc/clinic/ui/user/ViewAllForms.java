@@ -37,8 +37,8 @@ import com.alphabetbloc.clinic.adapters.FormAdapter;
 import com.alphabetbloc.clinic.adapters.MergeAdapter;
 import com.alphabetbloc.clinic.data.Form;
 import com.alphabetbloc.clinic.data.Patient;
+import com.alphabetbloc.clinic.providers.DataModel;
 import com.alphabetbloc.clinic.providers.Db;
-import com.alphabetbloc.clinic.providers.DbProvider;
 import com.alphabetbloc.clinic.utilities.App;
 import com.alphabetbloc.clinic.utilities.FileUtils;
 import com.alphabetbloc.clinic.utilities.XformUtils;
@@ -117,14 +117,14 @@ public class ViewAllForms extends ViewFormsActivity {
 
 	private void getDownloadedForms() {
 
-		Cursor c = DbProvider.openDb().fetchAllForms();
+		Cursor c = Db.open().fetchAllForms();
 
 		if (c != null && c.getCount() >= 0) {
 
 			mTotalForms.clear();
-			int formIdIndex = c.getColumnIndex(Db.KEY_FORM_ID);
-			int nameIndex = c.getColumnIndex(Db.KEY_NAME);
-			int pathIndex = c.getColumnIndex(Db.KEY_PATH);
+			int formIdIndex = c.getColumnIndex(DataModel.KEY_FORM_ID);
+			int nameIndex = c.getColumnIndex(DataModel.KEY_NAME);
+			int pathIndex = c.getColumnIndex(DataModel.KEY_PATH);
 
 			if (c.getCount() > 0) {
 				Form form;

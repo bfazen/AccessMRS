@@ -9,20 +9,19 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.alphabetbloc.clinic.R;
-import com.alphabetbloc.clinic.providers.DbProvider;
-
+import com.alphabetbloc.clinic.providers.Db;
 
 /**
- *  IntentService is called by Alarm Listener at periodic intervals.
- *         Decides whether or not to start ongoing service to monitor
- *         SignalStrength and download clients. After decision, this
- *         IntentService finishes. Holds wakelock.
- *         
+ * IntentService is called by Alarm Listener at periodic intervals. Decides
+ * whether or not to start ongoing service to monitor SignalStrength and
+ * download clients. After decision, this IntentService finishes. Holds
+ * wakelock.
+ * 
  * @author Louis.Fazen@gmail.com
- *
+ * 
  */
 
-//TODO!: is this class necessary?
+// TODO!: is this class necessary?
 public class AlarmIntentService extends WakefulIntentService {
 
 	private Context mContext;
@@ -37,7 +36,7 @@ public class AlarmIntentService extends WakefulIntentService {
 		mContext = this;
 		Log.e(TAG, "alarmintent service is now running");
 		// Find the most recent download time
-		long recentDownload = DbProvider.openDb().fetchMostRecentDownload();
+		long recentDownload = Db.open().fetchMostRecentDownload();
 		long timeSinceRefresh = System.currentTimeMillis() - recentDownload;
 		Log.e(TAG, "Minutes since last refresh: " + timeSinceRefresh / (1000 * 60));
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
@@ -56,7 +55,8 @@ public class AlarmIntentService extends WakefulIntentService {
 		// 1. alarm just after refresh (manually or via power_connected)
 		// 2. power_connected just after refresh (manually or via alarm)
 
-		//TODO!: totalhack to wait for SignalStrengthService to acquire a wakelock
+		// TODO!: totalhack to wait for SignalStrengthService to acquire a
+		// wakelock
 		SystemClock.sleep(1000);
 	}
 

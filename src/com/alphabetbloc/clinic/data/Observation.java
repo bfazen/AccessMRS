@@ -1,6 +1,6 @@
 package com.alphabetbloc.clinic.data;
 
-import com.alphabetbloc.clinic.providers.Db;
+import com.alphabetbloc.clinic.providers.DataModel;
 
 /**
  * 
@@ -20,11 +20,11 @@ public class Observation {
 
 	public String toString() {
 		switch (dataType) {
-			case Db.TYPE_INT :
+			case DataModel.TYPE_INT :
 				return valueInt.toString();
-			case Db.TYPE_DOUBLE:
+			case DataModel.TYPE_DOUBLE:
 				return valueNumeric.toString();
-			case Db.TYPE_DATE :
+			case DataModel.TYPE_DATE :
 				return valueDate.toString();
 			default :
 				return valueText;

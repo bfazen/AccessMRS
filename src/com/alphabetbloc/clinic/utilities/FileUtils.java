@@ -38,7 +38,7 @@ import android.os.Environment;
 import android.util.Log;
 
 import com.alphabetbloc.clinic.R;
-import com.alphabetbloc.clinic.providers.Db;
+import com.alphabetbloc.clinic.providers.DataModel;
 
 /**
  * Static methods used for common file operations. LF Added common deletion
@@ -453,7 +453,7 @@ public class FileUtils {
 	
 	public static boolean isDataWiped() {
 
-		File clinicDb = App.getApp().getDatabasePath(Db.DATABASE_NAME);
+		File clinicDb = App.getApp().getDatabasePath(DataModel.DATABASE_NAME);
 		if (clinicDb != null && clinicDb.exists()) {
 			Log.e(TAG, "clinic data was not wiped properly");
 			return false;

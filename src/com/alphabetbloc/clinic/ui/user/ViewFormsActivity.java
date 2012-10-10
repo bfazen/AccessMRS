@@ -21,8 +21,8 @@ import com.alphabetbloc.clinic.adapters.MergeAdapter;
 import com.alphabetbloc.clinic.data.ActivityLog;
 import com.alphabetbloc.clinic.data.Form;
 import com.alphabetbloc.clinic.data.FormInstance;
+import com.alphabetbloc.clinic.providers.DataModel;
 import com.alphabetbloc.clinic.providers.Db;
-import com.alphabetbloc.clinic.providers.DbProvider;
 import com.alphabetbloc.clinic.tasks.ActivityLogTask;
 import com.alphabetbloc.clinic.utilities.App;
 
@@ -72,10 +72,10 @@ public class ViewFormsActivity extends BasePatientActivity {
 	protected ArrayList<Integer> getPriorityForms(Integer patientId) {
 		ArrayList<Integer> selectedFormIds = new ArrayList<Integer>();
 
-		Cursor c = DbProvider.openDb().fetchPriorityFormIdByPatientId(patientId);
+		Cursor c = Db.open().fetchPriorityFormIdByPatientId(patientId);
 
 		if (c != null && c.getCount() > 0) {
-			int valueIntIndex = c.getColumnIndex(Db.KEY_VALUE_INT);
+			int valueIntIndex = c.getColumnIndex(DataModel.KEY_VALUE_INT);
 			do {
 				selectedFormIds.add(c.getInt(valueIntIndex));
 			} while (c.moveToNext());
@@ -266,10 +266,10 @@ public class ViewFormsActivity extends BasePatientActivity {
 		// Allows for faster PatientList Queries using ONLY patient table
 		// otherwise, for patient list, need: patients, instances, and obs
 		// tables
-		DbProvider ca = DbProvider.openDb();
+
 		if (patientId > 0) {
-			ca.updateSavedFormNumbersByPatientId(patientId.toString());
-			ca.updateSavedFormsListByPatientId(patientId.toString());
+			Db.open().updateSavedFormNumbersByPatientId(patientId.toString());
+			Db.open().updateSavedFormsListByPatientId(patientId.toString());
 		}
 
 		// 3. Add to Clinic Db if complete, even without ID
@@ -279,15 +279,15 @@ public class ViewFormsActivity extends BasePatientActivity {
 			fi.setPatientId(patientId);
 			fi.setFormId(Integer.parseInt(dbjrFormId));
 			fi.setPath(fileDbPath);
-			fi.setStatus(Db.STATUS_UNSUBMITTED);
+			fi.setStatus(DataModel.STATUS_UNSUBMITTED);
 			Date date = new Date();
 			date.setTime(System.currentTimeMillis());
 			String dateString = "Completed: " + (new SimpleDateFormat("EEE, MMM dd, yyyy 'at' HH:mm").format(date));
 			fi.setCompletionSubtext(dateString);
-			ca.createFormInstance(fi, displayName);
+			Db.open().createFormInstance(fi, displayName);
 
 			if (requestCode == FILL_PRIORITY_FORM) {
-				ca.updatePriorityFormsByPatientId(patientId.toString(), dbjrFormId);
+				Db.open().updatePriorityFormsByPatientId(patientId.toString(), dbjrFormId);
 			}
 		}
 

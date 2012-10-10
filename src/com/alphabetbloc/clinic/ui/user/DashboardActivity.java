@@ -19,7 +19,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.alphabetbloc.clinic.R;
-import com.alphabetbloc.clinic.providers.DbProvider;
+import com.alphabetbloc.clinic.providers.Db;
 import com.alphabetbloc.clinic.utilities.App;
 import com.alphabetbloc.clinic.utilities.EncryptionUtil;
 
@@ -98,7 +98,7 @@ public class DashboardActivity extends BaseActivity {
 	private void setRefreshDataUi() {
 		Log.e(TAG, "refreshData Ui is called");
 		// REFRESH TIME
-		long refreshDate = DbProvider.openDb().fetchMostRecentDownload();
+		long refreshDate = Db.open().fetchMostRecentDownload();
 		Date date = new Date();
 		date.setTime(refreshDate);
 		String refreshDateString = new SimpleDateFormat("MMM dd, 'at' HH:mm").format(date) + " ";
@@ -129,7 +129,7 @@ public class DashboardActivity extends BaseActivity {
 	private void setPriorityListUi(ViewGroup vg) {
 		Log.e(TAG, "setPriorityList is called");
 		// Suggested / Priority Forms
-		priorityToDoForms = DbProvider.openDb().countAllPriorityFormNumbers();
+		priorityToDoForms = Db.open().countAllPriorityFormNumbers();
 		if (priorityToDoForms > 0) {
 			View priorityButton = mLayout.inflate(R.layout.dashboard_patients, null);
 			priorityButton.setClickable(true);
@@ -164,7 +164,7 @@ public class DashboardActivity extends BaseActivity {
 	private void setSavedListUi(ViewGroup vg) {
 		Log.e(TAG, "setSavedlist Ui is called");
 		// Incomplete/Saved Form Section
-		incompleteForms = DbProvider.openDb().countAllSavedFormNumbers();
+		incompleteForms = Db.open().countAllSavedFormNumbers();
 		if (incompleteForms > 0) {
 			View incompleteButton = mLayout.inflate(R.layout.dashboard_patients, null);
 			incompleteButton.setClickable(true);
@@ -198,7 +198,7 @@ public class DashboardActivity extends BaseActivity {
 	private void setCompletedListUi(ViewGroup vg) {
 		Log.e(TAG, "setCompletedListUi is called");
 		// Completed Form Section
-		completedForms = DbProvider.openDb().countAllCompletedUnsentForms();
+		completedForms = Db.open().countAllCompletedUnsentForms();
 		if (completedForms > 0) {
 			View completedButton = mLayout.inflate(R.layout.dashboard_patients, null);
 			completedButton.setClickable(true);
@@ -232,7 +232,7 @@ public class DashboardActivity extends BaseActivity {
 	private void setAllClientsListUi(ViewGroup vg) {
 		Log.e(TAG, "setAllClientsListUi is called");
 		// All Clients Section
-		patients = DbProvider.openDb().countAllPatients();
+		patients = Db.open().countAllPatients();
 		if (patients > 0) {
 			View patientsButton = mLayout.inflate(R.layout.dashboard_patients, null);
 			patientsButton.setClickable(true);
@@ -282,8 +282,6 @@ public class DashboardActivity extends BaseActivity {
 		id.putExtra(RefreshDataActivity.DIALOG, RefreshDataActivity.DIRECT_TO_DOWNLOAD);
 		startActivity(id);
 	}
-
-
 
 	// LIFECYCLE
 	@Override

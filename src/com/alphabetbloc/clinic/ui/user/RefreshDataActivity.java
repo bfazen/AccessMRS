@@ -7,8 +7,6 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SyncResult;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Gravity;
@@ -18,11 +16,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.alphabetbloc.clinic.R;
-import com.alphabetbloc.clinic.listeners.SyncDataListener;
 import com.alphabetbloc.clinic.services.RefreshDataService;
-import com.alphabetbloc.clinic.tasks.DownloadDataTask;
-import com.alphabetbloc.clinic.tasks.SyncDataTask;
-import com.alphabetbloc.clinic.tasks.UploadDataTask;
 import com.alphabetbloc.clinic.utilities.FileUtils;
 
 /**
@@ -32,7 +26,9 @@ import com.alphabetbloc.clinic.utilities.FileUtils;
  * @author Yaw Anokwa, Carl Hartung (specifically, ShowCustomToast Method was derived from ODK Clinic/Collect not sure
  *         of authorship?)
  */
-public class RefreshDataActivity extends Activity implements SyncDataListener {
+
+//TODO! Delete this class!!!1
+public class RefreshDataActivity extends Activity  {
 
 	public final static int ASK_TO_DOWNLOAD = 1;
 	public final static int DIRECT_TO_DOWNLOAD = 2;
@@ -41,9 +37,6 @@ public class RefreshDataActivity extends Activity implements SyncDataListener {
 	// private Context mContext;
 	private ProgressDialog mSyncDialog;
 	private AlertDialog mAlertDialog;
-	private DownloadDataTask mDownloadTask;
-	private UploadDataTask mUploadTask;
-	private SyncDataTask mSyncTask;
 	private int showProgress;
 
 	@Override
@@ -58,18 +51,14 @@ public class RefreshDataActivity extends Activity implements SyncDataListener {
 			finish();
 		}
 
-		mSyncTask = (SyncDataTask) getLastNonConfigurationInstance();
-		mUploadTask = (UploadDataTask) getLastNonConfigurationInstance();
-		mDownloadTask = (DownloadDataTask) getLastNonConfigurationInstance();
-
 		showProgress = getIntent().getIntExtra(DIALOG, ASK_TO_DOWNLOAD);
 
 		// get the task if we've changed orientations.
-		if (mSyncTask == null && mUploadTask == null && mDownloadTask == null) {
+
 			showDialog(showProgress);
-			if (showProgress == DIRECT_TO_DOWNLOAD)
-				syncData();
-		}
+
+				
+
 
 	}
 
@@ -77,71 +66,11 @@ public class RefreshDataActivity extends Activity implements SyncDataListener {
 	protected void onResume() {
 		super.onResume();
 
-		if (mSyncTask != null) {
-			mSyncTask.setSyncListener(this);
-		}
-		if (mUploadTask != null) {
-			mUploadTask.setSyncListener(this);
-		}
-		if (mDownloadTask != null) {
-			mDownloadTask.setSyncListener(this);
-		}
-
 		if (mSyncDialog != null && !mSyncDialog.isShowing()) {
 			
 			mSyncDialog.show();
 		}
 
-	}
-
-	private void syncData() {
-		if (mSyncTask != null)
-			return;
-		mSyncTask = new SyncDataTask();
-		mSyncTask.setSyncListener(this);
-		mSyncTask.execute(new SyncResult());
-	}
-
-	//Alternative is to move everything over to syncprovider (but how to keep updated on the UI thread?) 
-	// Bundle bundle = new Bundle();
-	// bundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
-	// bundle.putBoolean(ContentResolver.SYNC_EXTRAS_FORCE, true);
-	// bundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
-	// ContentResolver.requestSync(null,
-	// getString(R.string.app_provider_authority), bundle);
-	
-	@Override
-	public void sslSetupComplete(String result, SyncResult syncResult) {
-		mUploadTask = new UploadDataTask();
-		mUploadTask.setSyncListener(this);
-		mUploadTask.execute(syncResult);
-		mDownloadTask = new DownloadDataTask();
-		mDownloadTask.setSyncListener(this);
-		mDownloadTask.execute(syncResult);
-	}
-
-	@Override
-	public void uploadComplete(String result) {
-		Log.e(TAG, "Upload Complete");
-		if (result != null)
-			showCustomToast(result);
-		mUploadTask = null;
-	}
-
-	@Override
-	public void downloadComplete(String result) {
-		Log.e(TAG, "Download Complete");
-		if (result != null)
-			showCustomToast(getString(R.string.error, result));
-		mDownloadTask = null;
-	}
-
-	@Override
-	public void syncComplete(String result, SyncResult syncResult) {
-		if (mSyncDialog != null) {
-			mSyncDialog.dismiss();
-		}
-		stopRefreshDataActivity(true);
 	}
 
 	// DIALOG SECTION
@@ -178,7 +107,7 @@ public class RefreshDataActivity extends Activity implements SyncDataListener {
 				case DialogInterface.BUTTON_POSITIVE:
 					dialog.dismiss();
 					showDialog(DIRECT_TO_DOWNLOAD);
-					syncData();
+					//
 					break;
 
 				case DialogInterface.BUTTON_NEGATIVE:
@@ -203,21 +132,7 @@ public class RefreshDataActivity extends Activity implements SyncDataListener {
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
 				
-				if (mSyncTask != null) {
-					mSyncTask.setSyncListener(null);
-					mSyncTask.cancel(true);
-					mSyncTask = null;
-				}
-				if (mDownloadTask != null) {
-					mDownloadTask.setSyncListener(null);
-					mDownloadTask.cancel(true);
-					mDownloadTask = null;
-				}
-				if (mUploadTask != null) {
-					mUploadTask.setSyncListener(null);
-					mUploadTask.cancel(true);
-					mUploadTask = null;
-				}
+			
 				dialog.dismiss();
 				stopRefreshDataActivity(true);
 				
@@ -231,26 +146,6 @@ public class RefreshDataActivity extends Activity implements SyncDataListener {
 		pD.setCancelable(false);
 //		pD.setButton(getString(R.string.cancel), loadingButtonListener);
 		return pD;
-	}
-
-	@Override
-	public void progressUpdate(String message, int progress, int max) {
-		if (mSyncDialog != null) {
-			mSyncDialog.setMax(max);
-			mSyncDialog.setProgress(progress);
-			mSyncDialog.setTitle(getString(R.string.downloading, message));
-		}
-	}
-
-	@Override
-	public Object onRetainNonConfigurationInstance() {
-		if (mSyncTask != null && mSyncTask.getStatus() != AsyncTask.Status.FINISHED)
-			return mSyncTask;
-		if (mUploadTask != null && mUploadTask.getStatus() != AsyncTask.Status.FINISHED)
-			return mUploadTask;
-		if (mDownloadTask != null && mDownloadTask.getStatus() != AsyncTask.Status.FINISHED)
-			return mDownloadTask;
-		return null;
 	}
 
 	private void stopRefreshDataActivity(boolean reloadDashboard) {
@@ -282,18 +177,6 @@ public class RefreshDataActivity extends Activity implements SyncDataListener {
 			mAlertDialog.dismiss();
 		}
 
-		if (mSyncTask != null) {
-			mSyncTask.cancel(true);
-			mSyncTask = null;
-		}
-		if (mUploadTask != null) {
-			mUploadTask.cancel(true);
-			mUploadTask = null;
-		}
-		if (mDownloadTask != null) {
-			mDownloadTask.cancel(true);
-			mDownloadTask = null;
-		}
 		super.onDestroy();
 	}
 

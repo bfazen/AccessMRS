@@ -28,7 +28,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.alphabetbloc.clinic.R;
-import com.alphabetbloc.clinic.providers.Db;
+import com.alphabetbloc.clinic.providers.DataModel;
 import com.alphabetbloc.clinic.providers.DbProvider;
 import com.alphabetbloc.clinic.ui.user.DashboardActivity;
 import com.alphabetbloc.clinic.utilities.App;
@@ -99,7 +99,7 @@ public class ClinicLauncherActivity extends Activity {
 		AccountManager accountManager = AccountManager.get(App.getApp());
 		Account[] accounts = accountManager.getAccountsByType(App.getApp().getString(R.string.app_account_type));
 		String password = EncryptionUtil.getPassword();
-		if (getDatabasePath(Db.DATABASE_NAME).exists() && accounts.length > 0 && password != null) {
+		if (getDatabasePath(DataModel.DATABASE_NAME).exists() && accounts.length > 0 && password != null) {
 			// make sure Db is open
 			DbProvider.openDb();
 			if (DbProvider.isOpen())
@@ -170,7 +170,7 @@ public class ClinicLauncherActivity extends Activity {
 	private boolean setupDatabases() {
 		// Step 3: check Db exists, has a key and pwd -> reset clinic if missing
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
-		File db = App.getApp().getDatabasePath(Db.DATABASE_NAME);
+		File db = App.getApp().getDatabasePath(DataModel.DATABASE_NAME);
 		String pwd = settings.getString(SQLCIPHER_KEY_NAME, "");
 		SecretKeySpec key = EncryptionUtil.getKey(SQLCIPHER_KEY_NAME);
 

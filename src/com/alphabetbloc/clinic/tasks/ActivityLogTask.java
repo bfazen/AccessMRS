@@ -1,11 +1,11 @@
 package com.alphabetbloc.clinic.tasks;
 
 
-import com.alphabetbloc.clinic.data.ActivityLog;
-import com.alphabetbloc.clinic.providers.DbProvider;
-
 import android.os.AsyncTask;
 import android.util.Log;
+
+import com.alphabetbloc.clinic.data.ActivityLog;
+import com.alphabetbloc.clinic.providers.Db;
 
 /**
  * 
@@ -29,7 +29,7 @@ public class ActivityLogTask extends AsyncTask<Void, Void, Void> {
 		
 		if (ACTIVITY_LOGGING) {
 			try {
-				DbProvider.openDb().createActivityLog(newActivity);
+				Db.open().createActivityLog(newActivity);
 			}
 
 			catch (Exception e) {

@@ -30,8 +30,8 @@ import com.alphabetbloc.clinic.adapters.MergeAdapter;
 import com.alphabetbloc.clinic.adapters.ObservationAdapter;
 import com.alphabetbloc.clinic.data.Observation;
 import com.alphabetbloc.clinic.data.Patient;
+import com.alphabetbloc.clinic.providers.DataModel;
 import com.alphabetbloc.clinic.providers.Db;
-import com.alphabetbloc.clinic.providers.DbProvider;
 import com.alphabetbloc.clinic.services.RefreshDataService;
 import com.alphabetbloc.clinic.utilities.App;
 
@@ -155,7 +155,7 @@ public class ViewPatientActivity extends BasePatientActivity {
 	private boolean checkForForms() {
 		boolean checkForms = false;
 
-		Cursor c = DbProvider.openDb().fetchAllForms();
+		Cursor c = Db.open().fetchAllForms();
 		if (c != null && c.getCount() >= 0) {
 			checkForms = true;
 		}
@@ -166,14 +166,14 @@ public class ViewPatientActivity extends BasePatientActivity {
 
 	private void getPatientForms(Integer patientId) {
 
-		Cursor c = DbProvider.openDb().fetchPatient(patientId);
+		Cursor c = Db.open().fetchPatient(patientId);
 
 		if (c != null && c.getCount() > 0) {
 
-			int priorityIndex = c.getColumnIndexOrThrow(Db.KEY_PRIORITY_FORM_NUMBER);
-			int priorityFormIndex = c.getColumnIndexOrThrow(Db.KEY_PRIORITY_FORM_NAMES);
-			int savedNumberIndex = c.getColumnIndexOrThrow(Db.KEY_SAVED_FORM_NUMBER);
-			int savedFormIndex = c.getColumnIndexOrThrow(Db.KEY_SAVED_FORM_NAMES);
+			int priorityIndex = c.getColumnIndexOrThrow(DataModel.KEY_PRIORITY_FORM_NUMBER);
+			int priorityFormIndex = c.getColumnIndexOrThrow(DataModel.KEY_PRIORITY_FORM_NAMES);
+			int savedNumberIndex = c.getColumnIndexOrThrow(DataModel.KEY_SAVED_FORM_NUMBER);
+			int savedFormIndex = c.getColumnIndexOrThrow(DataModel.KEY_SAVED_FORM_NAMES);
 
 			mPatient.setPriorityNumber(c.getInt(priorityIndex));
 			mPatient.setPriorityForms(c.getString(priorityFormIndex));
@@ -201,7 +201,7 @@ public class ViewPatientActivity extends BasePatientActivity {
 	}
 
 	private void getAllObservations(Integer patientId) {
-		mObservations = DbProvider.openDb().fetchPatientObservationList(patientId);
+		mObservations = Db.open().fetchPatientObservationList(patientId);
 	}
 
 	/*

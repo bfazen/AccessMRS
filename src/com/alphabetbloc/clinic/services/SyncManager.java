@@ -26,8 +26,9 @@ import android.database.Cursor;
 import android.util.Log;
 
 import com.alphabetbloc.clinic.data.Form;
-import com.alphabetbloc.clinic.providers.Db;
+import com.alphabetbloc.clinic.providers.DataModel;
 import com.alphabetbloc.clinic.providers.DbProvider;
+import com.alphabetbloc.clinic.providers.Db;
 import com.alphabetbloc.clinic.utilities.App;
 import com.alphabetbloc.clinic.utilities.FileUtils;
 import com.alphabetbloc.clinic.utilities.UiUtils;
@@ -45,11 +46,11 @@ public class SyncManager {
 
 		ArrayList<String> selectedInstances = new ArrayList<String>();
 
-		Cursor c = DbProvider.openDb().fetchFormInstancesByStatus(Db.STATUS_UNSUBMITTED);
+		Cursor c = Db.open().fetchFormInstancesByStatus(DataModel.STATUS_UNSUBMITTED);
 		if (c != null) {
 			if (c.moveToFirst()) {
 				do {
-					String dbPath = c.getString(c.getColumnIndex(Db.KEY_PATH));
+					String dbPath = c.getString(c.getColumnIndex(DataModel.KEY_PATH));
 					selectedInstances.add(dbPath);
 				} while (c.moveToNext());
 			}
@@ -91,12 +92,12 @@ public class SyncManager {
 	public static String updateClinicInstances(String path, SyncResult syncResult) {
 
 		try {
-			Cursor c = DbProvider.openDb().fetchFormInstancesByPath(path);
+			Cursor c = Db.open().fetchFormInstancesByPath(path);
 			if (c != null) {
 				// TODO! Make sure we are deleting the submitted instances from
 				// Db
 				// after encryption!
-				DbProvider.openDb().updateFormInstance(path, Db.STATUS_SUBMITTED);
+				Db.open().updateFormInstance(path, DataModel.STATUS_SUBMITTED);
 				c.close();
 			}
 		} catch (Exception e) {
@@ -156,7 +157,7 @@ public class SyncManager {
 
 		// clean existing
 		DbProvider dbHelper = DbProvider.openDb();
-		dbHelper.delete(Db.FORMS_TABLE, null, null);
+		dbHelper.delete(DataModel.FORMS_TABLE, null, null);
 
 		// make new form list
 		NodeList formElements = doc.getElementsByTagName("xform");
@@ -171,7 +172,7 @@ public class SyncManager {
 			f = new Form();
 			f.setName(formName);
 			f.setFormId(Integer.valueOf(formId));
-			dbHelper.createForm(f);
+			Db.open().createForm(f);
 			allForms.add(f);
 		}
 
@@ -186,7 +187,7 @@ public class SyncManager {
 			for (int i = 0; i < downloaded.length; i++) {
 				try {
 					// update clinic
-					DbProvider.openDb().updateFormPath(downloaded[i].getFormId(), downloaded[i].getPath());
+					Db.open().updateFormPath(downloaded[i].getFormId(), downloaded[i].getPath());
 
 					// update collect
 					if (!XformUtils.insertSingleForm(downloaded[i].getPath()))
@@ -216,9 +217,9 @@ public class SyncManager {
 			if (dis != null) {
 				DbProvider dbHelper = DbProvider.openDb();
 				// open db and clean entries
-				dbHelper.delete(Db.PATIENTS_TABLE, Db.KEY_CLIENT_CREATED + " IS NULL OR " + Db.KEY_CLIENT_CREATED + "=?", new String[] { "2" });
-				dbHelper.delete(Db.OBSERVATIONS_TABLE, null, null);
-				dbHelper.delete(Db.FORMINSTANCES_TABLE, null, null);
+				dbHelper.delete(DataModel.PATIENTS_TABLE, DataModel.KEY_CLIENT_CREATED + " IS NULL OR " + DataModel.KEY_CLIENT_CREATED + "=?", new String[] { "2" });
+				dbHelper.delete(DataModel.OBSERVATIONS_TABLE, null, null);
+				dbHelper.delete(DataModel.FORMINSTANCES_TABLE, null, null);
 
 				insertPatients(dis);
 				insertObservations(dis);
@@ -240,31 +241,30 @@ public class SyncManager {
 
 	public static void updateClinicObs() {
 		// sync db
-		DbProvider dbHelper = DbProvider.openDb();
 
-		dbHelper.updatePriorityFormNumbers();
-		dbHelper.updatePriorityFormList();
-		dbHelper.updateSavedFormNumbers();
-		dbHelper.updateSavedFormsList();
+		Db.open().updatePriorityFormNumbers();
+		Db.open().updatePriorityFormList();
+		Db.open().updateSavedFormNumbers();
+		Db.open().updateSavedFormsList();
 
 		// log the event
-		dbHelper.createDownloadLog();
+		Db.open().createDownloadLog();
 	}
 
 	private static void insertPatientForms(final DataInputStream zdis) throws Exception {
 		long start = System.currentTimeMillis();
 
 		SQLiteDatabase db = DbProvider.getDb();
-		InsertHelper ih = new InsertHelper(db, Db.OBSERVATIONS_TABLE);
+		InsertHelper ih = new InsertHelper(db, DataModel.OBSERVATIONS_TABLE);
 
-		int ptIdIndex = ih.getColumnIndex(Db.KEY_PATIENT_ID);
-		int obsTextIndex = ih.getColumnIndex(Db.KEY_VALUE_TEXT);
-		int obsNumIndex = ih.getColumnIndex(Db.KEY_VALUE_NUMERIC);
-		int obsDateIndex = ih.getColumnIndex(Db.KEY_VALUE_DATE);
-		int obsIntIndex = ih.getColumnIndex(Db.KEY_VALUE_INT);
-		int obsFieldIndex = ih.getColumnIndex(Db.KEY_FIELD_NAME);
-		int obsTypeIndex = ih.getColumnIndex(Db.KEY_DATA_TYPE);
-		int obsEncDateIndex = ih.getColumnIndex(Db.KEY_ENCOUNTER_DATE);
+		int ptIdIndex = ih.getColumnIndex(DataModel.KEY_PATIENT_ID);
+		int obsTextIndex = ih.getColumnIndex(DataModel.KEY_VALUE_TEXT);
+		int obsNumIndex = ih.getColumnIndex(DataModel.KEY_VALUE_NUMERIC);
+		int obsDateIndex = ih.getColumnIndex(DataModel.KEY_VALUE_DATE);
+		int obsIntIndex = ih.getColumnIndex(DataModel.KEY_VALUE_INT);
+		int obsFieldIndex = ih.getColumnIndex(DataModel.KEY_FIELD_NAME);
+		int obsTypeIndex = ih.getColumnIndex(DataModel.KEY_DATA_TYPE);
+		int obsEncDateIndex = ih.getColumnIndex(DataModel.KEY_ENCOUNTER_DATE);
 
 		db.beginTransaction();
 		int icount = 0;
@@ -277,13 +277,13 @@ public class SyncManager {
 				ih.bind(ptIdIndex, zdis.readInt());
 				ih.bind(obsFieldIndex, zdis.readUTF());
 				byte dataType = zdis.readByte();
-				if (dataType == Db.TYPE_STRING) {
+				if (dataType == DataModel.TYPE_STRING) {
 					ih.bind(obsTextIndex, zdis.readUTF());
-				} else if (dataType == Db.TYPE_INT) {
+				} else if (dataType == DataModel.TYPE_INT) {
 					ih.bind(obsIntIndex, zdis.readInt());
-				} else if (dataType == Db.TYPE_DOUBLE) {
+				} else if (dataType == DataModel.TYPE_DOUBLE) {
 					ih.bind(obsNumIndex, zdis.readDouble());
-				} else if (dataType == Db.TYPE_DATE) {
+				} else if (dataType == DataModel.TYPE_DATE) {
 					ih.bind(obsDateIndex, parseDate(zdis.readUTF()));
 				}
 				ih.bind(obsTypeIndex, dataType);
@@ -307,14 +307,14 @@ public class SyncManager {
 		long start = System.currentTimeMillis();
 		SQLiteDatabase db = DbProvider.getDb();
 
-		InsertHelper ih = new InsertHelper(db, Db.PATIENTS_TABLE);
-		int ptIdIndex = ih.getColumnIndex(Db.KEY_PATIENT_ID);
-		int ptIdentifierIndex = ih.getColumnIndex(Db.KEY_IDENTIFIER);
-		int ptGivenIndex = ih.getColumnIndex(Db.KEY_GIVEN_NAME);
-		int ptFamilyIndex = ih.getColumnIndex(Db.KEY_FAMILY_NAME);
-		int ptMiddleIndex = ih.getColumnIndex(Db.KEY_MIDDLE_NAME);
-		int ptBirthIndex = ih.getColumnIndex(Db.KEY_BIRTH_DATE);
-		int ptGenderIndex = ih.getColumnIndex(Db.KEY_GENDER);
+		InsertHelper ih = new InsertHelper(db, DataModel.PATIENTS_TABLE);
+		int ptIdIndex = ih.getColumnIndex(DataModel.KEY_PATIENT_ID);
+		int ptIdentifierIndex = ih.getColumnIndex(DataModel.KEY_IDENTIFIER);
+		int ptGivenIndex = ih.getColumnIndex(DataModel.KEY_GIVEN_NAME);
+		int ptFamilyIndex = ih.getColumnIndex(DataModel.KEY_FAMILY_NAME);
+		int ptMiddleIndex = ih.getColumnIndex(DataModel.KEY_MIDDLE_NAME);
+		int ptBirthIndex = ih.getColumnIndex(DataModel.KEY_BIRTH_DATE);
+		int ptGenderIndex = ih.getColumnIndex(DataModel.KEY_GENDER);
 
 		db.beginTransaction();
 		int icount = 0;
@@ -350,15 +350,15 @@ public class SyncManager {
 		long start = System.currentTimeMillis();
 
 		SQLiteDatabase db = DbProvider.getDb();
-		InsertHelper ih = new InsertHelper(db, Db.OBSERVATIONS_TABLE);
-		int ptIdIndex = ih.getColumnIndex(Db.KEY_PATIENT_ID);
-		int obsTextIndex = ih.getColumnIndex(Db.KEY_VALUE_TEXT);
-		int obsNumIndex = ih.getColumnIndex(Db.KEY_VALUE_NUMERIC);
-		int obsDateIndex = ih.getColumnIndex(Db.KEY_VALUE_DATE);
-		int obsIntIndex = ih.getColumnIndex(Db.KEY_VALUE_INT);
-		int obsFieldIndex = ih.getColumnIndex(Db.KEY_FIELD_NAME);
-		int obsTypeIndex = ih.getColumnIndex(Db.KEY_DATA_TYPE);
-		int obsEncDateIndex = ih.getColumnIndex(Db.KEY_ENCOUNTER_DATE);
+		InsertHelper ih = new InsertHelper(db, DataModel.OBSERVATIONS_TABLE);
+		int ptIdIndex = ih.getColumnIndex(DataModel.KEY_PATIENT_ID);
+		int obsTextIndex = ih.getColumnIndex(DataModel.KEY_VALUE_TEXT);
+		int obsNumIndex = ih.getColumnIndex(DataModel.KEY_VALUE_NUMERIC);
+		int obsDateIndex = ih.getColumnIndex(DataModel.KEY_VALUE_DATE);
+		int obsIntIndex = ih.getColumnIndex(DataModel.KEY_VALUE_INT);
+		int obsFieldIndex = ih.getColumnIndex(DataModel.KEY_FIELD_NAME);
+		int obsTypeIndex = ih.getColumnIndex(DataModel.KEY_DATA_TYPE);
+		int obsEncDateIndex = ih.getColumnIndex(DataModel.KEY_ENCOUNTER_DATE);
 
 		db.beginTransaction();
 		int icount = 0;
@@ -372,13 +372,13 @@ public class SyncManager {
 				ih.bind(ptIdIndex, zdis.readInt());
 				ih.bind(obsFieldIndex, zdis.readUTF());
 				byte dataType = zdis.readByte();
-				if (dataType == Db.TYPE_STRING) {
+				if (dataType == DataModel.TYPE_STRING) {
 					ih.bind(obsTextIndex, zdis.readUTF());
-				} else if (dataType == Db.TYPE_INT) {
+				} else if (dataType == DataModel.TYPE_INT) {
 					ih.bind(obsIntIndex, zdis.readInt());
-				} else if (dataType == Db.TYPE_DOUBLE) {
+				} else if (dataType == DataModel.TYPE_DOUBLE) {
 					ih.bind(obsNumIndex, zdis.readDouble());
-				} else if (dataType == Db.TYPE_DATE) {
+				} else if (dataType == DataModel.TYPE_DATE) {
 					ih.bind(obsDateIndex, parseDate(zdis.readUTF()));
 				}
 

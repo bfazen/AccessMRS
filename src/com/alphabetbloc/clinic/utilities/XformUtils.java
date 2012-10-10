@@ -38,7 +38,6 @@ import net.sqlcipher.database.SQLiteException;
 import org.kxml2.io.KXmlParser;
 import org.kxml2.io.KXmlSerializer;
 import org.kxml2.kdom.Element;
-import com.alphabetbloc.clinic.R;
 import org.odk.collect.android.provider.FormsProviderAPI.FormsColumns;
 import org.odk.collect.android.provider.InstanceProviderAPI;
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
@@ -47,12 +46,6 @@ import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.NodeList;
 
-import com.alphabetbloc.clinic.data.Observation;
-import com.alphabetbloc.clinic.data.Patient;
-import com.alphabetbloc.clinic.providers.Db;
-import com.alphabetbloc.clinic.providers.DbProvider;
-import com.alphabetbloc.clinic.ui.user.CreatePatientActivity;
-
 import android.content.ContentValues;
 import android.content.SharedPreferences;
 import android.content.res.AssetManager;
@@ -60,6 +53,14 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.util.Log;
+
+import com.alphabetbloc.clinic.R;
+import com.alphabetbloc.clinic.data.Observation;
+import com.alphabetbloc.clinic.data.Patient;
+import com.alphabetbloc.clinic.providers.DataModel;
+import com.alphabetbloc.clinic.providers.DbProvider;
+import com.alphabetbloc.clinic.providers.Db;
+import com.alphabetbloc.clinic.ui.user.CreatePatientActivity;
 
 /**
  * 
@@ -237,7 +238,7 @@ public class XformUtils {
 
 			if (mCursor == null) {
 				System.out.println("Something bad happened");
-				DbProvider.openDb().delete(Db.FORMS_TABLE, null, null);
+				DbProvider.openDb().delete(DataModel.FORMS_TABLE, null, null);
 				return false;
 			}
 
@@ -273,12 +274,12 @@ public class XformUtils {
 	// TODO! change this to retrive the one form you want!
 	private static String getNameFromId(Integer id) {
 		String formName = null;
-		Cursor c = DbProvider.openDb().fetchAllForms();
+		Cursor c = Db.open().fetchAllForms();
 
 		if (c != null && c.getCount() >= 0) {
 
-			int formIdIndex = c.getColumnIndex(Db.KEY_FORM_ID);
-			int nameIndex = c.getColumnIndex(Db.KEY_NAME);
+			int formIdIndex = c.getColumnIndex(DataModel.KEY_FORM_ID);
+			int nameIndex = c.getColumnIndex(DataModel.KEY_NAME);
 
 			if (c.getCount() > 0) {
 				do {
@@ -529,7 +530,7 @@ public class XformUtils {
 
 		if (patientId > 0) {
 
-			ArrayList<Observation> mObservations = DbProvider.openDb().fetchPatientObservationList(patientId);
+			ArrayList<Observation> mObservations = Db.open().fetchPatientObservationList(patientId);
 
 			for (int i = 0; i < mObservations.size(); i++) {
 				Observation o = mObservations.get(i);

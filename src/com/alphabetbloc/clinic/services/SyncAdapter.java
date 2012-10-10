@@ -1,160 +1,286 @@
 package com.alphabetbloc.clinic.services;
 
+import java.io.BufferedOutputStream;
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.List;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
 
-import org.apache.http.ParseException;
-import org.apache.http.auth.AuthenticationException;
-import org.json.JSONException;
-
-import com.alphabetbloc.clinic.listeners.SyncDataListener;
-import com.alphabetbloc.clinic.tasks.DownloadDataTask;
-import com.alphabetbloc.clinic.tasks.SyncDataTask;
-import com.alphabetbloc.clinic.tasks.UploadDataTask;
-import com.alphabetbloc.clinic.utilities.App;
+import org.apache.http.client.HttpClient;
+import org.apache.http.entity.mime.MultipartEntity;
 
 import android.accounts.Account;
-import android.accounts.AccountManager;
-import android.accounts.AuthenticatorException;
-import android.accounts.OperationCanceledException;
 import android.content.AbstractThreadedSyncAdapter;
 import android.content.ContentProviderClient;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SyncResult;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
-import android.text.TextUtils;
 import android.util.Log;
 
+import com.alphabetbloc.clinic.R;
+import com.alphabetbloc.clinic.data.Form;
+import com.alphabetbloc.clinic.utilities.App;
+import com.alphabetbloc.clinic.utilities.FileUtils;
+import com.alphabetbloc.clinic.utilities.NetworkUtils;
+import com.alphabetbloc.clinic.utilities.UiUtils;
 
-public class SyncAdapter extends AbstractThreadedSyncAdapter implements SyncDataListener{
+public class SyncAdapter extends AbstractThreadedSyncAdapter {
 
-    private static final String TAG = "SyncAdapter";
-    private static final String SYNC_MARKER_KEY = "com.example.android.samplesync.marker";
-    private static final boolean NOTIFY_AUTH_FAILURE = true;
+	private static final String TAG = SyncAdapter.class.getSimpleName();
+	private static final int UPLOAD_FORMS = 1;
+	private static final int DOWNLOAD_FORMS = 2;
+	private static final int SYNC_COMPLETE = 3;
+	private String mFinalResult;
 
-    private final AccountManager mAccountManager;
-
-    private final Context mContext;
-
-    public SyncAdapter(Context context, boolean autoInitialize) {
-        super(context, autoInitialize);
-        mContext = context;
-        mAccountManager = AccountManager.get(context);
-    }
-
-    @Override
-    public void onPerformSync(Account account, Bundle extras, String authority, ContentProviderClient provider, final SyncResult syncResult) {
-
-        try {
-            
-        	
-        		Log.e(TAG, "perform sync with authority=" + authority + " provider=" + provider + " account=" + account);
-        		try {
-        				Handler h = new Handler(Looper.getMainLooper());
-        				h.post(new Runnable() {
-        					public void run() {
-        						try {
-        							SyncDataTask syncTask = new SyncDataTask();
-        							syncTask.setSyncListener(SyncAdapter.this);
-        							syncTask.execute(syncResult);
-        						} catch (Exception e) {
-        							e.printStackTrace();
-        						}
-        					}
-        				});
-
-        			
-
-        		} catch (Exception e) {
-        			// TODO: handle exception
-        			++syncResult.stats.numIoExceptions;
-        			Log.e(TAG, "Error occurred from inside Service... we are stopping the service.  syncResult=" + syncResult);
-        			Intent i = new Intent(App.getApp(), RefreshDataService.class);
-        			App.getApp().stopService(i);
-        			// user is actively entering data, so sync later
-        			// TODO return false to sync manager
-        		}
-
-        	
-        		Log.e(TAG, "No Errors occurred, but we are at the end of the onPerformSync with syncResult=" + syncResult);
-        } catch (final ParseException e) {
-            Log.e(TAG, "ParseException", e);
-            syncResult.stats.numParseExceptions++;
-        }
-        
-        Log.e(TAG, "Last line of onPerformSync with syncResult=" + syncResult);
-        
-    }
-
-    /**
-     * This helper function fetches the last known high-water-mark
-     * we received from the server - or 0 if we've never synced.
-     * @param account the account we're syncing
-     * @return the change high-water-mark
-     */
-    private long getServerSyncMarker(Account account) {
-        String markerString = mAccountManager.getUserData(account, SYNC_MARKER_KEY);
-        if (!TextUtils.isEmpty(markerString)) {
-            return Long.parseLong(markerString);
-        }
-        return 0;
-    }
-
-    /**
-     * Save off the high-water-mark we receive back from the server.
-     * @param account The account we're syncing
-     * @param marker The high-water-mark we want to save.
-     */
-    private void setServerSyncMarker(Account account, long marker) {
-        mAccountManager.setUserData(account, SYNC_MARKER_KEY, Long.toString(marker));
-    }
+	public SyncAdapter(Context context, boolean autoInitialize) {
+		super(context, autoInitialize);
+	}
 
 	@Override
-	public void sslSetupComplete(String result, SyncResult syncResult) {
-		Log.e(TAG, "sslSetupComplete is called with result=" + result + " and syncResult=" + syncResult);
+	public void onPerformSync(Account account, Bundle extras, String authority, ContentProviderClient provider, SyncResult syncResult) {
+		Log.i(TAG, "Sync Started");
+		Thread.currentThread().setName(TAG);
 
-		if (Boolean.valueOf(result)) {
-			Log.e(TAG, "successfully setup connection, about to create a new upload task:");
-			UploadDataTask uploadTask = new UploadDataTask();
-			uploadTask.setSyncListener(this);
-			uploadTask.execute(syncResult);
+		HttpClient client = NetworkUtils.getHttpClient();
+		if (client != null) {
 
-			DownloadDataTask downloadTask = new DownloadDataTask();
-			downloadTask.setSyncListener(this);
-			downloadTask.execute(syncResult);
+			// upload forms
+			String[] toUpload = SyncManager.getInstancesToUpload();
+			String[] uploaded = uploadInstances(client, toUpload, syncResult);
+			String dbError = SyncManager.updateUploadedForms(uploaded, syncResult);
+			toastResult(UPLOAD_FORMS, uploaded.length, toUpload.length, (int) syncResult.stats.numIoExceptions, dbError);
+
+			// download new forms
+			Form[] newForms = findNewFormsOnServer(client, syncResult);
+			Form[] downloadedForms = downloadNewForms(client, newForms, syncResult);
+			dbError = SyncManager.updateDownloadedForms(downloadedForms, syncResult);
+			toastResult(DOWNLOAD_FORMS, downloadedForms.length, newForms.length, (int) syncResult.stats.numIoExceptions, dbError);
+
+			// download new obs
+			File temp = downloadObsStream(client, syncResult);
+			dbError = SyncManager.readObsFile(temp, syncResult);
+			toastResult(SYNC_COMPLETE, -1, -1, (int) syncResult.stats.numIoExceptions, dbError);
+
 		} else {
-
-			Log.e(TAG, "sslSetup Failed!  Finishing Service... with syncResult=" + syncResult);
-//			stopSelf();
+			++syncResult.stats.numIoExceptions;
+			UiUtils.toastAlert(App.getApp().getString(R.string.sync_error), App.getApp().getString(R.string.no_connection));
 		}
-		
 	}
 
-	@Override
-	public void uploadComplete(String result) {
-		// TODO Auto-generated method stub
-		
+	public static String[] uploadInstances(HttpClient client, String[] instancePaths, SyncResult syncResult) {
+
+		ArrayList<String> uploadedInstances = new ArrayList<String>();
+
+		for (int i = 0; i < instancePaths.length; i++) {
+			try {
+
+				String instancePath = FileUtils.getDecryptedFilePath(instancePaths[i]);
+				MultipartEntity entity = NetworkUtils.createMultipartEntity(instancePath);
+				if (entity == null)
+					continue;
+
+				if (NetworkUtils.postEntity(client, NetworkUtils.getFormUploadUrl(), entity)) {
+					uploadedInstances.add(instancePaths[i]);
+					Log.e(TAG, "everything okay! adding some instances...");
+				}
+
+			} catch (Exception e) {
+				Log.e(TAG, "Exception on uploading instance =" + instancePaths[i]);
+				e.printStackTrace();
+				++syncResult.stats.numIoExceptions;
+			}
+
+		}
+
+		return uploadedInstances.toArray(new String[uploadedInstances.size()]);
 	}
 
-	@Override
-	public void downloadComplete(String result) {
-		// TODO Auto-generated method stub
-		
+	/**
+	 * Compares the current form list on the server with the forms on disk
+	 * 
+	 * @return a list of the new forms on the server
+	 */
+	private static Form[] findNewFormsOnServer(HttpClient client, SyncResult syncResult) {
+
+		// find all forms from server
+		ArrayList<Form> allServerForms = new ArrayList<Form>();
+		try {
+			// showProgress("Updating Forms");
+			InputStream is = NetworkUtils.getStream(client, NetworkUtils.getFormListDownloadUrl());
+			allServerForms = SyncManager.readFormListStream(is);
+			is.close();
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			++syncResult.stats.numIoExceptions;
+			UiUtils.toastAlert(App.getApp().getString(R.string.sync_error), App.getApp().getString(R.string.no_connection));
+		}
+
+		// compare to existing forms
+		ArrayList<Form> newForms = new ArrayList<Form>();
+		for (int i = 0; i < allServerForms.size(); i++) {
+			Form f = allServerForms.get(i);
+			String formId = f.getFormId() + "";
+			if (!FileUtils.doesXformExist(formId))
+				newForms.add(f);
+		}
+
+		// return new forms
+		return newForms.toArray(new Form[newForms.size()]);
 	}
 
-	@Override
-	public void syncComplete(String result, SyncResult syncResult) {
-		// TODO Auto-generated method stub
-		Log.e(TAG, "RefreshDataService Calling stopself! after syncComplete! with syncResult=" + syncResult);
+	/**
+	 * Downloads forms from OpenMRS
+	 * 
+	 * @param serverForms
+	 *            forms to download
+	 * @return error message or null if successful
+	 */
+	private static Form[] downloadNewForms(HttpClient client, Form[] newForms, SyncResult syncResult) {
+		Log.i(TAG, "DownloadNewForms Called");
+		// showProgress("Downloading Forms");
+		ArrayList<Form> downloadedForms = new ArrayList<Form>();
+		FileUtils.createFolder(FileUtils.getExternalFormsPath());
+
+		int totalForms = newForms.length;
+
+		for (int i = 0; i < totalForms; i++) {
+
+			String formId = newForms[i].getFormId() + "";
+
+			try {
+				// download
+				StringBuilder url = (new StringBuilder(NetworkUtils.getFormDownloadUrl())).append("&formId=").append(formId);
+				Log.i(TAG, "Will try to download form " + formId + " url=" + url);
+				InputStream is = NetworkUtils.getStream(client, url.toString());
+
+				File f = new File(FileUtils.getExternalFormsPath(), formId + FileUtils.XML_EXT);
+				String path = f.getAbsolutePath();
+				OutputStream os = new FileOutputStream(f);
+				byte buf[] = new byte[1024];
+				int len;
+				while ((len = is.read(buf)) > 0) {
+					os.write(buf, 0, len);
+				}
+				os.flush();
+				os.close();
+				is.close();
+
+				newForms[i].setFormId(Integer.valueOf(formId));
+				newForms[i].setPath(path);
+				downloadedForms.add(newForms[i]);
+
+			} catch (Exception e) {
+				++syncResult.stats.numIoExceptions;
+				e.printStackTrace();
+			}
+
+		}
+
+		return downloadedForms.toArray(new Form[downloadedForms.size()]);
+
 	}
 
-	@Override
-	public void progressUpdate(String message, int progress, int max) {
-		// TODO Auto-generated method stub
-		
+	/**
+	 * Downloads a stream of Patient Table and Obs Table from OpenMRS, stores it
+	 * to temp file
+	 * 
+	 * @param httpclient
+	 * 
+	 * @return the temporary file
+	 */
+	private static File downloadObsStream(HttpClient client, SyncResult syncResult) {
+
+		File tempFile = null;
+		try {
+			// showProgress("Downloading Clients");
+			tempFile = File.createTempFile(".omrs", "-stream", App.getApp().getFilesDir());
+			BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(tempFile));
+			DataInputStream dis = NetworkUtils.getOdkStream(client, NetworkUtils.getPatientDownloadUrl());
+
+			if (dis != null) {
+
+				byte[] buffer = new byte[4096];
+				int count = 0;
+				while ((count = dis.read(buffer)) > 0) {
+					bos.write(buffer, 0, count);
+				}
+
+				bos.close();
+				dis.close();
+			}
+
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			++syncResult.stats.numIoExceptions;
+		} catch (IOException e) {
+			e.printStackTrace();
+			++syncResult.stats.numIoExceptions;
+		} catch (Exception e) {
+			e.printStackTrace();
+			++syncResult.stats.numIoExceptions;
+		}
+
+		return tempFile;
 	}
+
+	public void toastResult(int syncType, int success, int total, int totalErrors, String dbError) {
+
+		String currentToast = createToastString(syncType, success, total);
+		if (currentToast != null) {
+
+			StringBuilder result = new StringBuilder();
+			result.append(currentToast);
+			if (totalErrors > 0)
+				result.append(" (Total Errors= ").append(totalErrors).append(")");
+			if (dbError != null)
+				result.append(" : Db Errors= ").append(dbError);
+
+			UiUtils.toastSyncMessage(result.toString(), (totalErrors == 0) ? false : true);
+		}
+	}
+	
+	private String createToastString(int syncType, int success, int total){
+		
+		//Get the strings
+		String toastString = null;
+		String defaultString = null;
+		int successString = 0;
+		int failString = 0;
+
+		
+		switch (syncType) {
+		case UPLOAD_FORMS:
+			defaultString = "No Forms to Upload";
+			successString = R.string.upload_forms_successful;
+			failString = R.string.upload_forms_failed;
+			break;
+		case DOWNLOAD_FORMS:
+			defaultString = "No New Forms on Server";
+			successString = R.string.download_forms_successful;
+			failString = R.string.download_forms_failed;
+			break;
+		case SYNC_COMPLETE:
+		default:
+			toastString = mFinalResult;
+			break;
+		}
+
+		// Aggregate Success Strings Until complete
+		if (total == 0)
+			mFinalResult = mFinalResult + defaultString;
+		else if (total > 0 && success == total)
+			mFinalResult = mFinalResult + App.getApp().getString(successString, success);
+		//Toast error strings 
+		else if (total > 0 && success != total)
+			toastString = App.getApp().getString(failString, (total - success) + " of " + total);
+		
+		
+		return toastString;
+	}
+	
 }

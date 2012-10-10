@@ -39,8 +39,8 @@ import com.alphabetbloc.clinic.R;
 import com.alphabetbloc.clinic.data.ActivityLog;
 import com.alphabetbloc.clinic.data.FormInstance;
 import com.alphabetbloc.clinic.data.Patient;
+import com.alphabetbloc.clinic.providers.DataModel;
 import com.alphabetbloc.clinic.providers.Db;
-import com.alphabetbloc.clinic.providers.DbProvider;
 import com.alphabetbloc.clinic.tasks.ActivityLogTask;
 import com.alphabetbloc.clinic.utilities.App;
 import com.alphabetbloc.clinic.utilities.XformUtils;
@@ -161,13 +161,13 @@ public class CreatePatientActivity extends BaseActivity implements OnGestureList
 		boolean similarFound = false;
 
 		Cursor c = null;
-		c = DbProvider.openDb().fetchPatients(mFirstName + " " + mLastName, null, DashboardActivity.LIST_SIMILAR_CLIENTS);
+		c = Db.open().fetchPatients(mFirstName + " " + mLastName, null, DashboardActivity.LIST_SIMILAR_CLIENTS);
 		if (c != null && c.getCount() > 0) {
 			similarFound = true;
 		}
 
 		if (!similarFound && mPatientID != null && mPatientID.length() > 3) {
-			c = DbProvider.openDb().fetchPatients(null, mPatientID, DashboardActivity.LIST_SIMILAR_CLIENTS);
+			c = Db.open().fetchPatients(null, mPatientID, DashboardActivity.LIST_SIMILAR_CLIENTS);
 			if (c != null && c.getCount() > 0) {
 				similarFound = true;
 			}
@@ -238,13 +238,13 @@ public class CreatePatientActivity extends BaseActivity implements OnGestureList
 					fi.setPatientId(mPatient.getPatientId());
 					fi.setFormId(Integer.parseInt(dbjrFormId));
 					fi.setPath(fileDbPath);
-					fi.setStatus(Db.STATUS_UNSUBMITTED);
+					fi.setStatus(DataModel.STATUS_UNSUBMITTED);
 					Date date = new Date();
 					date.setTime(System.currentTimeMillis());
 					String dateString = "Completed: " + (new SimpleDateFormat("EEE, MMM dd, yyyy 'at' HH:mm").format(date));
 					fi.setCompletionSubtext(dateString);
 
-					DbProvider.openDb().createFormInstance(fi, displayName);
+					Db.open().createFormInstance(fi, displayName);
 				}
 
 				loadNewClientView();
@@ -345,7 +345,7 @@ public class CreatePatientActivity extends BaseActivity implements OnGestureList
 	private void addClientToDb() {
 		mPatient = new Patient();
 
-		int minPatientId = DbProvider.openDb().findLastClientCreatedId();
+		int minPatientId = Db.open().findLastClientCreatedId();
 		if (minPatientId < 0)
 			mPatient.setPatientId(Integer.valueOf(minPatientId - 1));
 		else
@@ -370,7 +370,7 @@ public class CreatePatientActivity extends BaseActivity implements OnGestureList
 		String randomUUID = uuid.toString();
 		mPatient.setUuid(randomUUID);
 
-		DbProvider.openDb().createPatient(mPatient);
+		Db.open().createPatient(mPatient);
 	}
 
 	@Override

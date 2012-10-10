@@ -11,7 +11,7 @@ import android.widget.TextView;
 
 import com.alphabetbloc.clinic.R;
 import com.alphabetbloc.clinic.data.Observation;
-import com.alphabetbloc.clinic.providers.Db;
+import com.alphabetbloc.clinic.providers.DataModel;
 
 //TODO!  This is a remnant from ODK Clinic and needs to be changed significantly to work...
 // TODO! Add the ability to click into obs when there are many observations of the same type..
@@ -58,13 +58,13 @@ public class ObservationAdapter extends ArrayAdapter<Observation> {
 			textView = (TextView) v.findViewById(R.id.value_text);
 			if (textView != null) {
 				switch (obs.getDataType()) {
-				case Db.TYPE_INT:
+				case DataModel.TYPE_INT:
 					textView.setText(obs.getValueInt().toString());
 					break;
-				case Db.TYPE_DOUBLE:
+				case DataModel.TYPE_DOUBLE:
 					textView.setText(obs.getValueNumeric().toString());
 					break;
-				case Db.TYPE_DATE:
+				case DataModel.TYPE_DATE:
 					textView.setText(obs.getValueDate());
 					break;
 				default:
