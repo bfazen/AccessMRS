@@ -48,6 +48,8 @@
     <string name="account_admin_settings_summary">Server Setup, SSL, User Interface, etc.</string>
     <string name="account_change_username_password">Change Username or Password</string>
     <string name="account_change_details">Edit Account Details</string>
+    <string name="account_setup_complete">Setup Complete</string>
+    <string name="account_password_reminder">Please Remember Your Password: \n\n  %s</string>
 
     <!-- Manage Device Prefs -->
     <string name="pref_user_settings">User Settings</string>
@@ -83,6 +85,7 @@
     <string name="pref_form_prompt">Form Confirmation</string>
     <string name="pref_form_prompt_on">Ask for user confirmation before loading a new form.</string>
     <string name="pref_form_prompt_off">Load new forms directly.</string>
+    <string name="pref_not_allowed">Value not allowed</string>
 
     <!-- PreferenceActivity -> WipeDataActivity Alerts -->
     <string name="alert_title_first_warning">WARNING !!!</string>
@@ -96,6 +99,8 @@
     <string name="alert_second_cancel_button">Not Sure, Keep Data For Now</string>
     <string name="nothing_erased">Nothing has been erased, and no changes have been made to the device.</string>
     <string name="wiping_data">! Erasing Data Now !</string>
+    <string name="wiping_data_error_title">Database Error</string>
+    <string name="wiping_data_successful_title">Database Reset</string>
     <string name="wiping_data_successful">All data has been erased and settings have been set to defaults.</string>
     <string name="wiping_data_error">Sorry, there was an error wiping the data. Please try again.</string>
 
@@ -137,6 +142,15 @@
     <string name="sql_change_sqlcipher_pwd">Please enter a new password for your database.</string>
     <string name="sql_confirm_sqlcipher_pwd">Please Re-enter Your Password.</string>
     <string name="sql_error_lost_db_key">ERROR! The key to the Database has been lost! Current Database is useless. Deleting and Reinstalling.</string>
+    <string name="collect_not_installed">Collect Must Be Installed To Use This Software!</string>
+    <string name="sql_error_lost_db_key_title">SYSTEM ERROR</string>
+    <string name="sql_error_empty_password">Could not verify password. Please Click To Enter Password.</string>
+    <string name="sql_error_verify_pwd">Password is incorrect. Please try again.</string>
+    <string name="sql_error_new_pwd">Passwords must include a mix of numbers, upper and lower case letters and be at least six characters long.</string>
+    <string name="sql_error_confirm_pwd">Passwords do not match. Please enter a new password.</string>
+    <string name="sql_error_title">Database Error</string>
+    <string name="installation_error">Installation Error</string>
+
     <!--
 	<string name="sql_do_rekey">Encrypting database with the new passphrase... Please be patient...</string>
     <string name="sql_reset_new_pwd">Enter a strong passphrase to secure your data. It must contain at least one uppercase, one lowercase and one number, and be longer than six characters.</string>
@@ -156,6 +170,10 @@
     <string name="auth_server_setup_complete">Congratulations, you have now setup an account with OpenMRS.</string>
     <string name="auth_dont_verify">Don\'t Verify</string>
     <string name="auth_try_again">Try Again</string>
+    <string name="auth_no_account">You must have an OpenMRS account setup to use Clinic.</string>
+    <string name="auth_error_title">Authentication Error</string>
+    <string name="auth_invalid_username">%s is not a valid Username.  Please enter an id with only letters and numbers.</string>
+    <string name="auth_empty_entry">Please Click on White Box to Enter Username and Password.</string>
 
     <!-- Accessibility Services: Content Description -->
     <string name="icon">Small Icon</string>
@@ -194,14 +212,35 @@
     <string name="similar_client_section">Similar Client Found. Only create a new client if they are not listed below:</string>
 
     <!-- Refreshing Data -->
+    <string name="refresh_title">Refreshing Data</string>
     <string name="download_patients">Refresh Data</string>
     <string name="downloading">%s…</string>
-    <string name="sync_in_progress_title">Please wait …</string>
+    <string name="sync_in_progress_title">Refreshing Data …</string>
     <string name="sync_in_progress">Currently refreshing data.  Please be patient.</string>
-    <string name="upload_forms_successful">%s forms(s) uploaded successfully.</string>
-    <string name="upload_forms_failed">Sorry, %s forms(s) failed to upload!</string>
-    <string name="download_forms_successful">%s forms(s) downloaded successfully.</string>
-    <string name="download_forms_failed">Sorry, %s new forms(s) failed to download!</string>
+    <string name="sync_upload_forms_not_needed">No Forms to Upload</string>
+    <string name="sync_upload_forms_failed">Could not upload forms. Please check connection.</string>
+
+    <plurals name="sync_upload_forms_successful">
+        <item quantity="one">%s form uploaded successfully.</item>
+        <item quantity="other">%s forms uploaded successfully.</item>
+    </plurals>
+    <plurals name="sync_upload_forms_partial">
+        <item quantity="one">Sorry, %s form failed to upload.</item>
+        <item quantity="other">Sorry, %s forms failed to upload.</item>
+    </plurals>
+
+    <string name="sync_download_forms_failed">Could not download forms. Please check connection.</string>
+    <string name="sync_download_forms_not_needed">No New Forms To Download</string>
+
+    <plurals name="sync_download_forms_successful">
+        <item quantity="one">%s new form downloaded successfully.</item>
+        <item quantity="other">%s new forms downloaded successfully.</item>
+    </plurals>
+    <plurals name="sync_download_forms_partial">
+        <item quantity="one">Sorry, %s form failed to download.</item>
+        <item quantity="other">Sorry, %s forms failed to download.</item>
+    </plurals>
+
     <string name="uploading_patients">Uploading Forms…</string>
     <string name="refresh_clients_title">Refresh Client List</string>
     <string name="refresh_clients_text">Your client list is out of date. Please refresh data now.</string>
@@ -209,6 +248,11 @@
     <string name="click_to_refresh">Click to Refresh Client Data</string>
     <string name="sync_error">Sync Error</string>
     <string name="no_connection">Unable to establish connection with the server. Please make sure you have data service available and try again.</string>
+    <string name="sync_uploading_forms">Uploading Forms …</string>
+    <string name="sync_downloading_forms">Downloading Forms …</string>
+    <string name="sync_downloading_data">Downloading Data …</string>
+    <string name="sync_updating_data">Updating Phone Data …</string>
+    <string name="sync_connecting">Connecting …</string>
 
     <!-- Dashboard Activity And Patient List Actvity -->
     <string name="provider_lists_section">Current Client Lists:</string>
@@ -259,12 +303,21 @@
     <!-- Error Strings -->
     <string name="unlocking_db">Unlocking databases.</string>
     <string name="error">Error: %s</string>
+
+    <plurals name="errors">
+        <item quantity="one">%d Error</item>
+        <item quantity="other">%d Errors</item>
+    </plurals>
+
     <string name="no_forms">No forms found.</string>
     <string name="no_patients">No patients found.</string>
     <string name="no_patient">No patient found.</string>
+    <string name="no_account_setup">Please setup an account to sync data.</string>
     <string name="no_upload_patients">No forms to upload!</string>
     <string name="odk_collect_error">Error: ODK Collect not installed.</string>
-    <string name="storage_error">SD card not ready.</string>
+    <string name="error_storage">SD card is not available.  Please check the card or disconnect from USB.</string>
+    <string name="error_storage_title">Storage Error</string>
+    <string name="error_db">Database Error</string>
 
     <!-- Misc Resources -->
     <string name="female">Female</string>

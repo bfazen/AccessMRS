@@ -70,7 +70,7 @@ public class NetworkUtils {
 	public static final String FORMLIST_DOWNLOAD_URL = "/moduleServlet/xformshelper/xfhFormList?type=odk_clinic&program=";
 	public static final String FORM_DOWNLOAD_URL = "/moduleServlet/xformshelper/xfhFormDownload?type=odk_clinic";
 
-	private static final int CONNECTION_TIMEOUT = 60000;
+	private static final int CONNECTION_TIMEOUT = 30000;
 	private static final int MAX_CONN_PER_ROUTE = 20;
 	private static final int MAX_CONNECTIONS = 20;
 
@@ -152,18 +152,23 @@ public class NetworkUtils {
 			client = createHttpClient(socketFactory);
 
 		} catch (GeneralSecurityException e) {
-			// TODO Auto-generated catch block
+			Log.e(TAG, "Could not load the trust manager");
 			e.printStackTrace();
-			Log.e(TAG, "we caught an exception in adding a new httpclient");
+		} catch (IOException e) {
+			Log.e(TAG, "Could not load the trust manager. Ensure credential storage is available");
+			e.printStackTrace();
 		}
 
 		return client;
 	}
 
-	public static SSLContext createSslContext() throws GeneralSecurityException {
+	public static SSLContext createSslContext() throws GeneralSecurityException, IOException {
 
 		// TrustStore
 		KeyStore trustStore = FileUtils.loadSslStore(FileUtils.MY_TRUSTSTORE);
+		if (trustStore == null)
+			throw new IOException("Access denied. Ensure credential storage is available.");
+
 		MyTrustManager myTrustManager = new MyTrustManager(trustStore);
 		TrustManager[] tms = new TrustManager[] { myTrustManager };
 
@@ -173,6 +178,9 @@ public class NetworkUtils {
 		boolean useClientAuth = prefs.getBoolean(App.getApp().getString(R.string.key_client_auth), false);
 		if (useClientAuth) {
 			KeyStore keyStore = FileUtils.loadSslStore(FileUtils.MY_KEYSTORE);
+			if (keyStore == null)
+				throw new IOException("Access denied. Ensure credential storage is available.");
+
 			KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
 			kmf.init(keyStore, EncryptionUtil.getPassword().toCharArray());
 			kms = kmf.getKeyManagers();
@@ -256,9 +264,8 @@ public class NetworkUtils {
 		return entity;
 	}
 
-	public static boolean postEntity(HttpClient client, String url, MultipartEntity entity) {
+	public static void postEntity(HttpClient client, String url, MultipartEntity entity) throws IOException{
 
-		try {
 			HttpPost httppost = new HttpPost(url);
 			httppost.setEntity(entity);
 			HttpResponse response = client.execute(httppost);
@@ -266,17 +273,8 @@ public class NetworkUtils {
 			// verify response is okay
 			int responseCode = response.getStatusLine().getStatusCode();
 			Log.d(TAG, "httppost response=" + responseCode);
-			if (responseCode == HttpURLConnection.HTTP_OK) {
-				return true;
-			} else {
-				return false;
-			}
-
-		} catch (Exception e) {
-			Log.e(TAG, "httpClient DID NOT execute httpost! caught an exception!");
-			e.printStackTrace();
-			return false;
-		}
+			if (responseCode != HttpURLConnection.HTTP_OK) 
+				throw new IOException("httpClient DID NOT execute httpost! caught an exception!");
 	}
 
 	public static InputStream getStream(HttpClient client, String url) {
@@ -315,12 +313,12 @@ public class NetworkUtils {
 		HttpPost request = new HttpPost(url);
 		request.setEntity(new OdkAuthEntity());
 		HttpResponse response = client.execute(request);
-		int responseCode = response.getStatusLine().getStatusCode();
+		response.getStatusLine().getStatusCode();
 		HttpEntity responseEntity = response.getEntity();
-		long size = responseEntity.getContentLength();
+		responseEntity.getContentLength();
 
 		DataInputStream zdis = new DataInputStream(new GZIPInputStream(responseEntity.getContent()));
-		Log.e(TAG, "got the inputstream at=" + System.currentTimeMillis());
+
 		int status = zdis.readInt();
 		if (status == HttpURLConnection.HTTP_UNAUTHORIZED) {
 			zdis.close();

@@ -1,10 +1,10 @@
 package com.alphabetbloc.clinic.ui.user;
 
-import android.accounts.Account;
-import android.accounts.AccountManager;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 import android.app.Activity;
-import android.app.ActivityManager;
-import android.app.ActivityManager.RunningServiceInfo;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
@@ -18,20 +18,15 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
-import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import com.alphabetbloc.clinic.R;
 import com.alphabetbloc.clinic.services.RefreshDataService;
-import com.alphabetbloc.clinic.ui.admin.ClinicLauncherActivity;
+import com.alphabetbloc.clinic.services.SyncManager;
 import com.alphabetbloc.clinic.ui.admin.PreferencesActivity;
-import com.alphabetbloc.clinic.utilities.App;
 import com.alphabetbloc.clinic.utilities.FileUtils;
+import com.alphabetbloc.clinic.utilities.UiUtils;
 
 /**
  * 
@@ -49,101 +44,59 @@ public class BaseActivity extends Activity implements SyncStatusObserver {
 
 	private static ProgressDialog mSyncActiveDialog;
 	private static Object mSyncObserverHandle;
+	private Context mToastCtx;
+	private ScheduledExecutorService mExecutor = Executors.newScheduledThreadPool(5);
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		if (!FileUtils.storageReady()) {
-			showCustomToast(getString(R.string.error, getString(R.string.storage_error)));
+			UiUtils.toastAlert(this, getString(R.string.error_storage_title), getString(R.string.error_storage));
 			setResult(RESULT_CANCELED);
 			finish();
 		}
+		mToastCtx = this;
 	}
 
-	
-	private boolean isSyncServiceActive() {
-		
-		
-		
-		String name = RefreshDataService.class.getName();
-		Log.e(TAG, "name=" + name);
-	    ActivityManager am = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
-	    for (RunningServiceInfo service : am.getRunningServices(Integer.MAX_VALUE)) {
-	        if (RefreshDataService.class.getName().equals(service.service.getClassName())) {
-	        	Log.e(TAG, "according to AM it is active! " + name);
-	        	return true;
-	        }
-	    }
-	    Log.e(TAG, "according to AM it is NOT active!" + name);
-	    return false;
-	}
-	
-	
 	@Override
 	public void onStatusChanged(int which) {
-
+		Log.e(TAG, "SyncStatusObserver Status has Changed");
 		runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
-				checkSyncActivity();
+				if (!RefreshDataService.isSyncActive) {
+					// Sync is not yet active, so we must be starting a sync
+					Log.e(TAG, "SyncStatusChanged: starting a Sync");
+					updateSyncProgress();
+					// showDialog(PROGRESS_DIALOG);
+
+				} else {
+					// we are just completing a sync (whether success or not)
+					Log.e(TAG, "SyncStatusChanged: completing sync");
+					// dismiss dialog
+					if (mSyncActiveDialog != null) {
+						mSyncActiveDialog.dismiss();
+					}
+
+					// refreshView
+					// Intent relaunch = new Intent(App.getApp(),
+					// ClinicLauncherActivity.class);
+					// relaunch.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+					// relaunch.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+					// startActivity(relaunch);
+				}
 			}
 		});
 
 	}
 
-	public boolean checkSyncActivity() {
-
-		if (isSyncActive()) {
-			// we are starting a sync
-			showDialog(PROGRESS_DIALOG);
-			Log.e(TAG, "sync is active");
-			return true;
-		} else {
-
-			Log.e(TAG, "sync is not active");
-
-			// we have just completed a sync
-			if (mSyncActiveDialog != null) {
-				mSyncActiveDialog.dismiss();
-				mSyncActiveDialog = null;
-			}
-
-			Intent relaunch = new Intent(this, ClinicLauncherActivity.class);
-			relaunch.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-			relaunch.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-			startActivity(relaunch);
-			finish();
-			return true;
-		}
-
-	}
-
-	private boolean isSyncActive() {
-		AccountManager accountManager = AccountManager.get(App.getApp());
-		Account[] accounts = accountManager.getAccountsByType(App.getApp().getString(R.string.app_account_type));
-
-		Log.e(TAG, "is SyncActive for accounts length=" + accounts.length);
-		if (accounts.length <= 0)
-			return false;
-		
-		Log.e(TAG, "is SyncActive for accounts[0].name=" + accounts[0].name);
-		
-		return ContentResolver.isSyncActive(accounts[0], getString(R.string.app_provider_authority));
-	}
-
 	@Override
 	protected Dialog onCreateDialog(int id) {
-		if (mSyncActiveDialog != null && mSyncActiveDialog.isShowing()) {
-			mSyncActiveDialog.dismiss();
-			mSyncActiveDialog = null;
-		}
-
 		mSyncActiveDialog = new ProgressDialog(this);
 		mSyncActiveDialog.setIcon(android.R.drawable.ic_dialog_info);
 		mSyncActiveDialog.setTitle(getString(R.string.sync_in_progress_title));
 		mSyncActiveDialog.setMessage(getString(R.string.sync_in_progress));
-		mSyncActiveDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-		mSyncActiveDialog.setIndeterminate(true);
+		mSyncActiveDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
 		mSyncActiveDialog.setCancelable(false);
 		return mSyncActiveDialog;
 	}
@@ -175,52 +128,88 @@ public class BaseActivity extends Activity implements SyncStatusObserver {
 			startActivity(admin);
 			return true;
 		case MENU_REFRESH:
-			refreshData();
+			SyncManager.syncData();
 			return true;
 		default:
 			return super.onOptionsItemSelected(item);
 		}
 	}
 
-	private void refreshData() {
-		Intent id = new Intent(getBaseContext(), RefreshDataActivity.class);
-		id.putExtra(RefreshDataActivity.DIALOG, RefreshDataActivity.DIRECT_TO_DOWNLOAD);
-		startActivity(id);
-	}
-
 	// LIFECYCLE
 	@Override
 	protected void onResume() {
 		super.onResume();
-		IntentFilter filter = new IntentFilter(RefreshDataService.REFRESH_BROADCAST);
+		IntentFilter filter = new IntentFilter(SyncManager.TOAST_SYNC_MESSAGE);
 		LocalBroadcastManager.getInstance(this).registerReceiver(onNotice, filter);
 		mSyncObserverHandle = ContentResolver.addStatusChangeListener(ContentResolver.SYNC_OBSERVER_TYPE_ACTIVE, this);
 
-		Log.e(TAG, "Checking is sync active?");
-		if (isSyncServiceActive()) {
-			Log.e(TAG, "Sync is active!");
+		if (RefreshDataService.isSyncActive) {
+
+			Log.i(TAG, "onResume and Sync is active!");
 			if (mSyncActiveDialog != null && !mSyncActiveDialog.isShowing())
 				mSyncActiveDialog.show();
-			else
+			else if (mSyncActiveDialog == null)
 				showDialog(PROGRESS_DIALOG);
 
-			Log.e(TAG, "Should now be showing a dialog!");
 		} else
-			Log.e(TAG, "Sync is NOT active!");
+			Log.i(TAG, "onResume and Sync is NOT active!");
 
 	}
+
+
+	private void updateSyncProgress() {
+		Log.i(TAG, "Updating Progress! with mSyncActiveDialog=" + mSyncActiveDialog);
+		SyncManager.sSyncComplete = false;
+		if (mSyncActiveDialog != null)
+			mSyncActiveDialog.setProgress(0);
+		showDialog(PROGRESS_DIALOG);
+		
+		mExecutor.schedule(new Runnable() {
+			public void run() {
+
+				if (!SyncManager.sSyncComplete) {
+					mExecutor.schedule(this, 800, TimeUnit.MILLISECONDS);
+					BaseActivity.this.runOnUiThread(new Runnable() {
+
+						@Override
+						public void run() {
+							// Log.i(TAG, "Updating Progress: Title=" +
+							// SyncManager.sSyncTitle + " Step=" +
+							// SyncManager.sSyncStep + " Progress=" +
+							// SyncManager.sLoopProgress + " Count=" +
+							// SyncManager.sLoopCount);
+							int loop = (SyncManager.sLoopProgress == SyncManager.sLoopCount) ? 0 : ((int) Math.round(((float) SyncManager.sLoopProgress / (float) SyncManager.sLoopCount) * 20F));
+							mSyncActiveDialog.setProgress((SyncManager.sSyncStep * 10) + loop);
+							mSyncActiveDialog.setMessage(SyncManager.sSyncTitle);
+						}
+					});
+
+				}
+			}
+		}, 0, TimeUnit.MILLISECONDS);
+		
+		
+	}
+
 
 	private BroadcastReceiver onNotice = new BroadcastReceiver() {
 		public void onReceive(Context ctxt, Intent i) {
 
-			if (mSyncActiveDialog != null && mSyncActiveDialog.isShowing()) {
-				mSyncActiveDialog.dismiss();
-				mSyncActiveDialog = null;
-			}
+			boolean error = i.getBooleanExtra(SyncManager.TOAST_ERROR, false);
+			String toast = i.getStringExtra(SyncManager.TOAST_MESSAGE);
 
-			Intent intent = new Intent(getBaseContext(), RefreshDataActivity.class);
-			intent.putExtra(RefreshDataActivity.DIALOG, RefreshDataActivity.ASK_TO_DOWNLOAD);
-			startActivity(intent);
+			UiUtils.toastSyncMessage(mToastCtx, toast, error);
+
+			// if (mSyncActiveDialog != null && mSyncActiveDialog.isShowing()) {
+			// mSyncActiveDialog.dismiss();
+			// mSyncActiveDialog = null;
+			// }
+			//
+			// Intent intent = new Intent(getBaseContext(),
+			// RefreshDataActivity.class);
+			// intent.putExtra(RefreshDataActivity.DIALOG,
+			// RefreshDataActivity.ASK_TO_DOWNLOAD);
+			// startActivity(intent);
 
 		}
 	};
@@ -228,22 +217,55 @@ public class BaseActivity extends Activity implements SyncStatusObserver {
 	@Override
 	protected void onPause() {
 		super.onPause();
+		if (mSyncActiveDialog != null) {
+			mSyncActiveDialog.dismiss();
+		}
 		ContentResolver.removeStatusChangeListener(mSyncObserverHandle);
 		LocalBroadcastManager.getInstance(this).unregisterReceiver(onNotice);
 	}
+	
+//	private void updateSyncProgressOriginal() {
+//		SyncManager.sSyncComplete = false;
+//		if (mSyncActiveDialog != null)
+//			mSyncActiveDialog.setProgress(0);
+//		showDialog(PROGRESS_DIALOG);
+//		mExecutor.schedule(new ProgressRunnable(), 0, TimeUnit.MILLISECONDS);
+//		Log.i(TAG, "Updating Progress! with mSyncActiveDialog=" + mSyncActiveDialog);
+//	}
+//	class ProgressRunnable implements Runnable {
+//		public void run() {
+//
+//			if (!SyncManager.sSyncComplete) {
+//				mExecutor.schedule(this, 800, TimeUnit.MILLISECONDS);
+//				BaseActivity.this.runOnUiThread(new Runnable() {
+//
+//					@Override
+//					public void run() {
+//						// Log.i(TAG, "Updating Progress: Title=" +
+//						// SyncManager.sSyncTitle + " Step=" +
+//						// SyncManager.sSyncStep + " Progress=" +
+//						// SyncManager.sLoopProgress + " Count=" +
+//						// SyncManager.sLoopCount);
+//						int loop = (SyncManager.sLoopProgress == SyncManager.sLoopCount) ? 0 : ((int) Math.round(((float) SyncManager.sLoopProgress / (float) SyncManager.sLoopCount) * 20F));
+//						mSyncActiveDialog.setProgress((SyncManager.sSyncStep * 10) + loop);
+//						mSyncActiveDialog.setMessage(SyncManager.sSyncTitle);
+//					}
+//				});
+//
+//			}
+//		}
+//	}
+//
+//	private void updateProgress() {
+//		Log.i(TAG, "Updating Progress: Title=" + SyncManager.sSyncTitle + " Step=" + SyncManager.sSyncStep + " Progress=" + SyncManager.sLoopProgress + " Count=" + SyncManager.sLoopCount);
+//		int loop = (SyncManager.sLoopProgress == SyncManager.sLoopCount) ? 0 : ((int) Math.round(((float) SyncManager.sLoopProgress / (float) SyncManager.sLoopCount) * 20F));
+//		Log.i(TAG, "Updating Progress: Add value=" + loop);
+//		mSyncActiveDialog.setProgress((SyncManager.sSyncStep * 10) + loop);
+//		mSyncActiveDialog.setMessage(SyncManager.sSyncTitle);
+//		// mSyncActiveDialog.setTitle(SyncManager.sSyncTitle);
+//
+//		Log.e(TAG, "just updated the Title to=" + SyncManager.sSyncTitle);
+//	}
 
-	protected void showCustomToast(String message) {
-		LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-		View view = inflater.inflate(R.layout.toast_view, null);
 
-		// set the text in the view
-		TextView tv = (TextView) view.findViewById(R.id.message);
-		tv.setText(message);
-
-		Toast t = new Toast(this);
-		t.setView(view);
-		t.setDuration(Toast.LENGTH_LONG);
-		t.setGravity(Gravity.CENTER, 0, 0);
-		t.show();
-	}
 }

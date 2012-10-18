@@ -39,7 +39,7 @@ import com.alphabetbloc.clinic.providers.Db;
  */
 public class ListPatientActivity extends BaseListActivity implements SyncStatusObserver {
 
-	// Menu ID's	
+	// Menu ID's
 	public static final int DOWNLOAD_PATIENT = 1;
 	public static final int BARCODE_CAPTURE = 2;
 	public static final int FILL_BLANK_FORM = 3;
@@ -161,7 +161,7 @@ public class ListPatientActivity extends BaseListActivity implements SyncStatusO
 			}
 		};
 	}
-	
+
 	@Override
 	protected void onResume() {
 		super.onResume();
@@ -173,7 +173,6 @@ public class ListPatientActivity extends BaseListActivity implements SyncStatusO
 		// then refresh the view
 		findPatients();
 	}
-	
 
 	// TODO!: consider changing this whole thing to a viewpager... may be much
 	// simpler, and also add animation
@@ -247,63 +246,61 @@ public class ListPatientActivity extends BaseListActivity implements SyncStatusO
 		Cursor c = null;
 		if (mSearchPatientStr != null || mSearchPatientId != null) {
 
-			c = Db.open().fetchPatients(searchString, patientId, mListType);
+			c = Db.open().searchPatients(searchString, patientId, mListType);
 		} else {
 			c = Db.open().fetchAllPatients(mListType);
 		}
 
-		if (c != null && c.getCount() >= 0) {
+		if (c != null) {
+			if (c.moveToFirst()) {
+				int patientIdIndex = c.getColumnIndex(DataModel.KEY_PATIENT_ID);
+				int identifierIndex = c.getColumnIndex(DataModel.KEY_IDENTIFIER);
+				int givenNameIndex = c.getColumnIndex(DataModel.KEY_GIVEN_NAME);
+				int familyNameIndex = c.getColumnIndex(DataModel.KEY_FAMILY_NAME);
+				int middleNameIndex = c.getColumnIndex(DataModel.KEY_MIDDLE_NAME);
+				int birthDateIndex = c.getColumnIndex(DataModel.KEY_BIRTH_DATE);
+				int genderIndex = c.getColumnIndex(DataModel.KEY_GENDER);
+				int priorityIndex = c.getColumnIndexOrThrow(DataModel.KEY_PRIORITY_FORM_NUMBER);
+				int priorityFormIndex = c.getColumnIndexOrThrow(DataModel.KEY_PRIORITY_FORM_NAMES);
+				int savedIndex = c.getColumnIndexOrThrow(DataModel.KEY_SAVED_FORM_NUMBER);
+				int savedFormIndex = c.getColumnIndexOrThrow(DataModel.KEY_SAVED_FORM_NAMES);
 
-			int patientIdIndex = c.getColumnIndex(DataModel.KEY_PATIENT_ID);
-			int identifierIndex = c.getColumnIndex(DataModel.KEY_IDENTIFIER);
-			int givenNameIndex = c.getColumnIndex(DataModel.KEY_GIVEN_NAME);
-			int familyNameIndex = c.getColumnIndex(DataModel.KEY_FAMILY_NAME);
-			int middleNameIndex = c.getColumnIndex(DataModel.KEY_MIDDLE_NAME);
-			int birthDateIndex = c.getColumnIndex(DataModel.KEY_BIRTH_DATE);
-			int genderIndex = c.getColumnIndex(DataModel.KEY_GENDER);
-			int priorityIndex = c.getColumnIndexOrThrow(DataModel.KEY_PRIORITY_FORM_NUMBER);
-			int priorityFormIndex = c.getColumnIndexOrThrow(DataModel.KEY_PRIORITY_FORM_NAMES);
-			int savedIndex = c.getColumnIndexOrThrow(DataModel.KEY_SAVED_FORM_NUMBER);
-			int savedFormIndex = c.getColumnIndexOrThrow(DataModel.KEY_SAVED_FORM_NAMES);
+				if (c.getCount() > 0) {
 
-			if (c.getCount() > 0) {
+					Patient p;
+					do {
+						p = new Patient();
+						p.setPatientId(c.getInt(patientIdIndex));
+						p.setIdentifier(c.getString(identifierIndex));
+						p.setGivenName(c.getString(givenNameIndex));
+						p.setFamilyName(c.getString(familyNameIndex));
+						p.setMiddleName(c.getString(middleNameIndex));
+						p.setBirthDate(c.getString(birthDateIndex));
+						p.setGender(c.getString(genderIndex));
+						p.setPriorityNumber(c.getInt(priorityIndex));
+						p.setPriorityForms(c.getString(priorityFormIndex));
+						p.setSavedNumber(c.getInt(savedIndex));
+						p.setSavedForms(c.getString(savedFormIndex));
+						p.setUuid(c.getString(savedFormIndex));
 
-				Patient p;
-				do {
-					p = new Patient();
-					p.setPatientId(c.getInt(patientIdIndex));
-					p.setIdentifier(c.getString(identifierIndex));
-					p.setGivenName(c.getString(givenNameIndex));
-					p.setFamilyName(c.getString(familyNameIndex));
-					p.setMiddleName(c.getString(middleNameIndex));
-					p.setBirthDate(c.getString(birthDateIndex));
-					p.setGender(c.getString(genderIndex));
-					p.setPriorityNumber(c.getInt(priorityIndex));
-					p.setPriorityForms(c.getString(priorityFormIndex));
-					p.setSavedNumber(c.getInt(savedIndex));
-					p.setSavedForms(c.getString(savedFormIndex));
-					p.setUuid(c.getString(savedFormIndex));
+						if (c.getInt(priorityIndex) > 0) {
+							p.setPriority(true);
+						} else {
+							p.setPriority(false);
+						}
 
-					if (c.getInt(priorityIndex) > 0) {
-						p.setPriority(true);
-					} else {
-						p.setPriority(false);
-					}
+						if (c.getInt(savedIndex) > 0) {
+							p.setSaved(true);
+						} else {
+							p.setSaved(false);
+						}
 
-					if (c.getInt(savedIndex) > 0) {
-						p.setSaved(true);
-					} else {
-						p.setSaved(false);
-					}
+						mPatients.add(p);
 
-					mPatients.add(p);
-
-				} while (c.moveToNext());
+					} while (c.moveToNext());
+				}
 			}
 
-		}
-
-		if (c != null) {
 			c.close();
 		}
 	}

@@ -50,7 +50,7 @@ public class ViewFormsActivity extends BasePatientActivity {
 	protected void onResume() {
 		super.onResume();
 	}
-	
+
 	protected ArrayList<Form> getCompletedForms(String patientId) {
 		String selection = "(" + InstanceColumns.STATUS + "=? or " + InstanceColumns.STATUS + "=? or " + InstanceColumns.STATUS + "=? ) and " + InstanceColumns.PATIENT_ID + "=?";
 		String selectionArgs[] = { InstanceProviderAPI.STATUS_ENCRYPTED, InstanceProviderAPI.STATUS_COMPLETE, InstanceProviderAPI.STATUS_SUBMITTED, patientId };
@@ -74,14 +74,13 @@ public class ViewFormsActivity extends BasePatientActivity {
 
 		Cursor c = Db.open().fetchPriorityFormIdByPatientId(patientId);
 
-		if (c != null && c.getCount() > 0) {
-			int valueIntIndex = c.getColumnIndex(DataModel.KEY_VALUE_INT);
-			do {
-				selectedFormIds.add(c.getInt(valueIntIndex));
-			} while (c.moveToNext());
-		}
-
 		if (c != null) {
+			if (c.moveToFirst()) {
+				int valueIntIndex = c.getColumnIndex(DataModel.KEY_VALUE_INT);
+				do {
+					selectedFormIds.add(c.getInt(valueIntIndex));
+				} while (c.moveToNext());
+			}
 			c.close();
 		}
 
@@ -95,40 +94,37 @@ public class ViewFormsActivity extends BasePatientActivity {
 		ArrayList<Form> selectedForms = new ArrayList<Form>();
 
 		if (c != null) {
-			c.moveToFirst();
-		}
+			if (c.moveToFirst()) {
+				int formPathIndex = c.getColumnIndex(InstanceColumns.INSTANCE_FILE_PATH);
+				int formIdIndex = c.getColumnIndex(InstanceColumns.JR_FORM_ID);
+				int displayNameIndex = c.getColumnIndex(InstanceColumns.DISPLAY_NAME);
+				int formNameIndex = c.getColumnIndex(InstanceColumns.FORM_NAME);
+				int displaySubtextIndex = c.getColumnIndex(InstanceColumns.DISPLAY_SUBTEXT);
+				int idIndex = c.getColumnIndex(InstanceColumns._ID);
+				int dateIndex = c.getColumnIndex(InstanceColumns.LAST_STATUS_CHANGE_DATE);
 
-		if (c != null && c.getCount() >= 0) {
-			int formPathIndex = c.getColumnIndex(InstanceColumns.INSTANCE_FILE_PATH);
-			int formIdIndex = c.getColumnIndex(InstanceColumns.JR_FORM_ID);
-			int displayNameIndex = c.getColumnIndex(InstanceColumns.DISPLAY_NAME);
-			int formNameIndex = c.getColumnIndex(InstanceColumns.FORM_NAME);
-			int displaySubtextIndex = c.getColumnIndex(InstanceColumns.DISPLAY_SUBTEXT);
-			int idIndex = c.getColumnIndex(InstanceColumns._ID);
-			int dateIndex = c.getColumnIndex(InstanceColumns.LAST_STATUS_CHANGE_DATE);
+				if (c.getCount() > 0) {
+					Form form;
+					do {
+						if (!c.isNull(idIndex)) {
+							form = new Form();
+							form.setInstanceId(c.getInt(idIndex));
+							form.setFormId(c.getInt(formIdIndex));
+							form.setName(c.getString(formNameIndex));
+							form.setDisplayName(c.getString(displayNameIndex));
+							form.setPath(c.getString(formPathIndex));
+							form.setDisplaySubtext(c.getString(displaySubtextIndex));
+							form.setDate(c.getLong(dateIndex));
 
-			if (c.getCount() > 0) {
-				Form form;
-				do {
-					if (!c.isNull(idIndex)) {
-						form = new Form();
-						form.setInstanceId(c.getInt(idIndex));
-						form.setFormId(c.getInt(formIdIndex));
-						form.setName(c.getString(formNameIndex));
-						form.setDisplayName(c.getString(displayNameIndex));
-						form.setPath(c.getString(formPathIndex));
-						form.setDisplaySubtext(c.getString(displaySubtextIndex));
-						form.setDate(c.getLong(dateIndex));
-
-						selectedForms.add(form);
-					}
-				} while (c.moveToNext());
+							selectedForms.add(form);
+						}
+					} while (c.moveToNext());
+				}
 			}
-		}
 
-		if (c != null)
 			c.close();
-
+		}
+		
 		return selectedForms;
 	}
 
@@ -164,8 +160,8 @@ public class ViewFormsActivity extends BasePatientActivity {
 		super.onActivityResult(requestCode, resultCode, intent);
 		stopActivityLog();
 	}
-	
-	protected void stopActivityLog(){
+
+	protected void stopActivityLog() {
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 		boolean logActivity = prefs.getBoolean(getString(R.string.key_enable_activity_log), true);
 		if (logActivity) {

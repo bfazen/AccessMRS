@@ -205,6 +205,7 @@ public class DbProvider extends ContentProvider {
 	}
 
 	public boolean delete(String table, String selection, String[] selectionArgs) {
+		Log.e(TAG, "DB Delete FROM " + table + " WHERE " + selection + " = " + selectionArgs);
 		return sDb.delete(table, selection, selectionArgs) > 0;
 	}
 
@@ -216,43 +217,23 @@ public class DbProvider extends ContentProvider {
 	}
 
 	public Cursor queryDistinct(String table, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
-		Cursor c = null;
-		c = sDb.query(true, table, projection, selection, selectionArgs, null, null, sortOrder, null);
-		if (c != null)
-			c.moveToFirst();
-		return c;
+		return sDb.query(true, table, projection, selection, selectionArgs, null, null, sortOrder, null);
 	}
 
 	public Cursor query(String table, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
-		Cursor c = null;
-		c = sDb.query(table, projection, selection, selectionArgs, null, null, sortOrder, null);
-		if (c != null)
-			c.moveToFirst();
-		return c;
+		return sDb.query(table, projection, selection, selectionArgs, null, null, sortOrder, null);
 	}
 
 	public Cursor query(boolean distinct, String table, String[] projection, String selection, String[] selectionArgs, String groupBy, String having, String orderBy, String limit) {
-		Cursor c = null;
-		c = sDb.query(distinct, table, projection, selection, selectionArgs, groupBy, having, orderBy, limit);
-		if (c != null)
-			c.moveToFirst();
-		return c;
+		return sDb.query(distinct, table, projection, selection, selectionArgs, groupBy, having, orderBy, limit);
 	}
 
 	public Cursor query(String table, String[] projection, String selection, String[] selectionArgs, String groupBy, String having, String orderBy) {
-		Cursor c = null;
-		c = sDb.query(table, projection, selection, selectionArgs, groupBy, having, orderBy);
-		if (c != null)
-			c.moveToFirst();
-		return c;
+		return sDb.query(table, projection, selection, selectionArgs, groupBy, having, orderBy);
 	}
 	
 	public Cursor rawQuery(String sql, String[] args) {
-		Cursor c = null;
-		c = sDb.rawQuery(sql, args);
-		if (c != null)
-			c.moveToFirst();
-		return c;
+		return sDb.rawQuery(sql, args);
 	}
 
 	public int countRows(String table) {

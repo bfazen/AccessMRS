@@ -9,29 +9,22 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
-import android.view.Gravity;
-import android.view.LayoutInflater;
-import android.view.View;
 import android.view.Window;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import com.alphabetbloc.clinic.R;
 import com.alphabetbloc.clinic.services.WakefulIntentService;
 import com.alphabetbloc.clinic.services.WipeDataService;
 import com.alphabetbloc.clinic.utilities.FileUtils;
+import com.alphabetbloc.clinic.utilities.UiUtils;
 
 /**
  * 
  * @author Louis Fazen (louis.fazen@gmail.com) (All Methods except where noted
  *         otherwise)
- * 
- * @author Yaw Anokwa, Carl Hartung (specifically, ShowCustomToast Method was
- *         derived from ODK Clinic/Collect not sure of authorship?)
  */
 public class WipeDataActivity extends Activity {
 
-//	private static final String TAG = WipeDataActivity.class.getSimpleName();
+	// private static final String TAG = WipeDataActivity.class.getSimpleName();
 	private AlertDialog mAlertDialog;
 	private Context mContext;
 	private static final int WIPE_DATA = 1;
@@ -44,7 +37,7 @@ public class WipeDataActivity extends Activity {
 		setContentView(R.layout.wipe_data);
 
 		if (!FileUtils.storageReady()) {
-			showCustomToast(getString(R.string.error, R.string.storage_error));
+			UiUtils.toastAlert(this, getString(R.string.error_storage_title), getString(R.string.error_storage));
 			setResult(RESULT_CANCELED);
 			finish();
 		}
@@ -126,9 +119,9 @@ public class WipeDataActivity extends Activity {
 	protected BroadcastReceiver onNotice = new BroadcastReceiver() {
 		public void onReceive(Context ctxt, Intent i) {
 			if (FileUtils.isDataWiped())
-				showCustomToast(getString(R.string.wiping_data_successful));
+				UiUtils.toastInfo(mContext, getString(R.string.wiping_data_successful_title), getString(R.string.wiping_data_successful));
 			else
-				showCustomToast(getString(R.string.wiping_data_error));
+				UiUtils.toastAlert(mContext, getString(R.string.wiping_data_error_title), getString(R.string.wiping_data_error));
 
 			Intent relaunch = new Intent(mContext, ClinicLauncherActivity.class);
 			relaunch.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -137,21 +130,5 @@ public class WipeDataActivity extends Activity {
 			finish();
 		}
 	};
-
-	private void showCustomToast(String message) {
-
-		LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-		View view = inflater.inflate(R.layout.toast_view, null);
-
-		TextView tv = (TextView) view.findViewById(R.id.message);
-		tv.setText(message);
-
-		Toast t = new Toast(this);
-		t.setView(view);
-		t.setDuration(Toast.LENGTH_LONG);
-		t.setGravity(Gravity.BOTTOM, 0, -20);
-		t.show();
-
-	}
 
 }

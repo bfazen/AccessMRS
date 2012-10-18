@@ -23,21 +23,26 @@ import android.util.Log;
 
 import com.alphabetbloc.clinic.R;
 import com.alphabetbloc.clinic.data.Form;
-import com.alphabetbloc.clinic.utilities.App;
 import com.alphabetbloc.clinic.utilities.FileUtils;
 import com.alphabetbloc.clinic.utilities.NetworkUtils;
 import com.alphabetbloc.clinic.utilities.UiUtils;
 
+/**
+ * Class that coordinates all Sync interaction with the server. Manages the
+ * connectivity and passes streams off to SyncManager to handle.
+ * 
+ * @author Louis Fazen (louis.fazen@gmail.com)
+ * 
+ */
 public class SyncAdapter extends AbstractThreadedSyncAdapter {
 
 	private static final String TAG = SyncAdapter.class.getSimpleName();
-	private static final int UPLOAD_FORMS = 1;
-	private static final int DOWNLOAD_FORMS = 2;
-	private static final int SYNC_COMPLETE = 3;
-	private String mFinalResult;
+	private Context mContext;
+	private SyncManager mSyncManager;
 
 	public SyncAdapter(Context context, boolean autoInitialize) {
 		super(context, autoInitialize);
+		mContext = context;
 	}
 
 	@Override
@@ -45,48 +50,65 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 		Log.i(TAG, "Sync Started");
 		Thread.currentThread().setName(TAG);
 
+		// if(isSyncNeeded(syncResult)){ //Dont need this if the manual syncs
+		// are also using SyncAdapter?
+
+		mSyncManager = new SyncManager(mContext);
+
 		HttpClient client = NetworkUtils.getHttpClient();
 		if (client != null) {
 
 			// upload forms
-			String[] toUpload = SyncManager.getInstancesToUpload();
-			String[] uploaded = uploadInstances(client, toUpload, syncResult);
-			String dbError = SyncManager.updateUploadedForms(uploaded, syncResult);
-			toastResult(UPLOAD_FORMS, uploaded.length, toUpload.length, (int) syncResult.stats.numIoExceptions, dbError);
+			mSyncManager.addSyncStep(mContext.getString(R.string.sync_uploading_forms)); // 1
+			String[] instancesToUpload = mSyncManager.getInstancesToUpload();
+			String[] instancesUploaded = uploadInstances(client, instancesToUpload, syncResult);
+			mSyncManager.addSyncStep(mContext.getString(R.string.sync_uploading_forms)); // 2
+			String dbError = mSyncManager.updateUploadedForms(instancesUploaded, syncResult);
+			int uploadErrors = (int) syncResult.stats.numIoExceptions;
+			mSyncManager.toastSyncMessage(SyncManager.UPLOAD_FORMS, instancesUploaded.length, instancesToUpload.length, uploadErrors, dbError);
 
 			// download new forms
-			Form[] newForms = findNewFormsOnServer(client, syncResult);
-			Form[] downloadedForms = downloadNewForms(client, newForms, syncResult);
-			dbError = SyncManager.updateDownloadedForms(downloadedForms, syncResult);
-			toastResult(DOWNLOAD_FORMS, downloadedForms.length, newForms.length, (int) syncResult.stats.numIoExceptions, dbError);
+			mSyncManager.addSyncStep(mContext.getString(R.string.sync_downloading_forms)); // 3
+			Form[] formsToDownload = findNewFormsOnServer(client, syncResult);
+			// mSyncManager.addSyncStep(mContext.getString(R.string.sync_downloading_forms));
+			// // 4
+			Form[] formsDownloaded = downloadNewForms(client, formsToDownload, syncResult);
+			// mSyncManager.addSyncStep(mContext.getString(R.string.sync_downloading_forms));
+			// // 5
+			dbError = mSyncManager.updateDownloadedForms(formsDownloaded, syncResult);
+			Log.e(TAG, "Downloaded New Forms with result errors=" + syncResult.stats.numIoExceptions);
+			int downloadErrors = ((int) syncResult.stats.numIoExceptions) - uploadErrors;
+			mSyncManager.toastSyncMessage(SyncManager.DOWNLOAD_FORMS, formsDownloaded.length, formsToDownload.length, downloadErrors, dbError);
 
 			// download new obs
+			mSyncManager.addSyncStep(mContext.getString(R.string.sync_downloading_data)); // 6
 			File temp = downloadObsStream(client, syncResult);
-			dbError = SyncManager.readObsFile(temp, syncResult);
-			toastResult(SYNC_COMPLETE, -1, -1, (int) syncResult.stats.numIoExceptions, dbError);
+			mSyncManager.addSyncStep(mContext.getString(R.string.sync_updating_data)); // 7->10
+			dbError = mSyncManager.readObsFile(temp, syncResult);
+			Log.e(TAG, "Downloaded New Obs with result errors=" + syncResult.stats.numIoExceptions);
+			mSyncManager.toastSyncMessage(SyncManager.SYNC_COMPLETE, -1, -1, (int) syncResult.stats.numIoExceptions, dbError);
 
 		} else {
 			++syncResult.stats.numIoExceptions;
-			UiUtils.toastAlert(App.getApp().getString(R.string.sync_error), App.getApp().getString(R.string.no_connection));
+			UiUtils.toastAlert(mContext.getString(R.string.sync_error), mContext.getString(R.string.no_connection));
 		}
+
+		SyncManager.sSyncComplete = true;
 	}
 
-	public static String[] uploadInstances(HttpClient client, String[] instancePaths, SyncResult syncResult) {
+	public String[] uploadInstances(HttpClient client, String[] instancePaths, SyncResult syncResult) {
 
 		ArrayList<String> uploadedInstances = new ArrayList<String>();
-
 		for (int i = 0; i < instancePaths.length; i++) {
 			try {
-
 				String instancePath = FileUtils.getDecryptedFilePath(instancePaths[i]);
 				MultipartEntity entity = NetworkUtils.createMultipartEntity(instancePath);
 				if (entity == null)
 					continue;
 
-				if (NetworkUtils.postEntity(client, NetworkUtils.getFormUploadUrl(), entity)) {
-					uploadedInstances.add(instancePaths[i]);
-					Log.e(TAG, "everything okay! adding some instances...");
-				}
+				NetworkUtils.postEntity(client, NetworkUtils.getFormUploadUrl(), entity);
+				Log.e(TAG, "everything okay! added an instance...");
+				uploadedInstances.add(instancePaths[i]);		
 
 			} catch (Exception e) {
 				Log.e(TAG, "Exception on uploading instance =" + instancePaths[i]);
@@ -104,20 +126,19 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 	 * 
 	 * @return a list of the new forms on the server
 	 */
-	private static Form[] findNewFormsOnServer(HttpClient client, SyncResult syncResult) {
+	private Form[] findNewFormsOnServer(HttpClient client, SyncResult syncResult) {
 
 		// find all forms from server
 		ArrayList<Form> allServerForms = new ArrayList<Form>();
 		try {
 			// showProgress("Updating Forms");
 			InputStream is = NetworkUtils.getStream(client, NetworkUtils.getFormListDownloadUrl());
-			allServerForms = SyncManager.readFormListStream(is);
+			allServerForms = mSyncManager.readFormListStream(is);
 			is.close();
 
 		} catch (Exception e) {
 			e.printStackTrace();
 			++syncResult.stats.numIoExceptions;
-			UiUtils.toastAlert(App.getApp().getString(R.string.sync_error), App.getApp().getString(R.string.no_connection));
 		}
 
 		// compare to existing forms
@@ -140,7 +161,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 	 *            forms to download
 	 * @return error message or null if successful
 	 */
-	private static Form[] downloadNewForms(HttpClient client, Form[] newForms, SyncResult syncResult) {
+	private Form[] downloadNewForms(HttpClient client, Form[] newForms, SyncResult syncResult) {
 		Log.i(TAG, "DownloadNewForms Called");
 		// showProgress("Downloading Forms");
 		ArrayList<Form> downloadedForms = new ArrayList<Form>();
@@ -193,12 +214,12 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 	 * 
 	 * @return the temporary file
 	 */
-	private static File downloadObsStream(HttpClient client, SyncResult syncResult) {
+	private File downloadObsStream(HttpClient client, SyncResult syncResult) {
 
 		File tempFile = null;
 		try {
 			// showProgress("Downloading Clients");
-			tempFile = File.createTempFile(".omrs", "-stream", App.getApp().getFilesDir());
+			tempFile = File.createTempFile(".omrs", "-stream", mContext.getFilesDir());
 			BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(tempFile));
 			DataInputStream dis = NetworkUtils.getOdkStream(client, NetworkUtils.getPatientDownloadUrl());
 
@@ -228,59 +249,34 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 		return tempFile;
 	}
 
-	public void toastResult(int syncType, int success, int total, int totalErrors, String dbError) {
+	// TODO! Check... we dont need this method anymore, because sync is
+	// automated?!
+	// private boolean isSyncNeeded(SyncResult syncResult) {
+	//
+	// // establish threshold for syncing (i.e. do not sync continuously)
+	// long recentDownload = Db.open().fetchMostRecentDownload();
+	// long timeSinceRefresh = System.currentTimeMillis() - recentDownload;
+	// SharedPreferences prefs =
+	// PreferenceManager.getDefaultSharedPreferences(App.getApp());
+	// String maxRefreshSeconds =
+	// prefs.getString(App.getApp().getString(R.string.key_max_refresh_seconds),
+	// App.getApp().getString(R.string.default_max_refresh_seconds));
+	// long maxRefreshMs = 1000L * Long.valueOf(maxRefreshSeconds);
+	//
+	// Log.e(TAG, "Minutes since last refresh: " + timeSinceRefresh / (1000 *
+	// 60));
+	// if (timeSinceRefresh < maxRefreshMs) {
+	//
+	// long timeToNextSync = maxRefreshMs - timeSinceRefresh;
+	// syncResult.delayUntil = timeToNextSync;
+	// Log.e(TAG, "Synced recently... lets delay the sync until ! timetosync=" +
+	// timeToNextSync);
+	// return false;
+	//
+	// } else {
+	// return true;
+	// }
+	//
+	// }
 
-		String currentToast = createToastString(syncType, success, total);
-		if (currentToast != null) {
-
-			StringBuilder result = new StringBuilder();
-			result.append(currentToast);
-			if (totalErrors > 0)
-				result.append(" (Total Errors= ").append(totalErrors).append(")");
-			if (dbError != null)
-				result.append(" : Db Errors= ").append(dbError);
-
-			UiUtils.toastSyncMessage(result.toString(), (totalErrors == 0) ? false : true);
-		}
-	}
-	
-	private String createToastString(int syncType, int success, int total){
-		
-		//Get the strings
-		String toastString = null;
-		String defaultString = null;
-		int successString = 0;
-		int failString = 0;
-
-		
-		switch (syncType) {
-		case UPLOAD_FORMS:
-			defaultString = "No Forms to Upload";
-			successString = R.string.upload_forms_successful;
-			failString = R.string.upload_forms_failed;
-			break;
-		case DOWNLOAD_FORMS:
-			defaultString = "No New Forms on Server";
-			successString = R.string.download_forms_successful;
-			failString = R.string.download_forms_failed;
-			break;
-		case SYNC_COMPLETE:
-		default:
-			toastString = mFinalResult;
-			break;
-		}
-
-		// Aggregate Success Strings Until complete
-		if (total == 0)
-			mFinalResult = mFinalResult + defaultString;
-		else if (total > 0 && success == total)
-			mFinalResult = mFinalResult + App.getApp().getString(successString, success);
-		//Toast error strings 
-		else if (total > 0 && success != total)
-			toastString = App.getApp().getString(failString, (total - success) + " of " + total);
-		
-		
-		return toastString;
-	}
-	
 }

@@ -1,6 +1,7 @@
 package com.alphabetbloc.clinic.services;
 
 import java.io.DataInputStream;
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -20,29 +21,108 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
+import android.accounts.Account;
+import android.accounts.AccountManager;
+import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.Context;
+import android.content.Intent;
 import android.content.SyncResult;
 import android.database.Cursor;
+import android.os.Bundle;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
+import com.alphabetbloc.clinic.R;
 import com.alphabetbloc.clinic.data.Form;
 import com.alphabetbloc.clinic.providers.DataModel;
-import com.alphabetbloc.clinic.providers.DbProvider;
 import com.alphabetbloc.clinic.providers.Db;
+import com.alphabetbloc.clinic.providers.DbProvider;
 import com.alphabetbloc.clinic.utilities.App;
 import com.alphabetbloc.clinic.utilities.FileUtils;
 import com.alphabetbloc.clinic.utilities.UiUtils;
 import com.alphabetbloc.clinic.utilities.XformUtils;
 
+/**
+ * A Class to help with all Database interaction during a Sync.
+ * 
+ * @author Louis Fazen (louis.fazen@gmail.com)
+ * 
+ */
 public class SyncManager {
 
 	private static final String TAG = SyncManager.class.getSimpleName();
-	static String date = null;
-	private static final SimpleDateFormat OUTPUT_FORMAT = new SimpleDateFormat("MMM dd, yyyy");
-	private static final SimpleDateFormat INPUT_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
-	
+	public static final String TOAST_SYNC_MESSAGE = "com.alphabetbloc.clinic.utilities.toast_sync_message";
+	public static final String TOAST_MESSAGE = "toast_message";
+	public static final String TOAST_ERROR = "toast_error";
+	public static final int UPLOAD_FORMS = 1;
+	public static final int DOWNLOAD_FORMS = 2;
+	public static final int SYNC_COMPLETE = 3;
+
+	private String mSyncResultString;
+	private Context mContext;
+	public static int sSyncStep;
+	public static int sLoopCount;
+	public static int sLoopProgress;
+	public static String sSyncTitle;
+	public static boolean sSyncComplete = false;
+
+	// Android OS does not allow concurrent sync... so static progress int works
+	public SyncManager(Context context) {
+		mContext = context;
+		sSyncTitle = mContext.getString(R.string.sync_in_progress);
+		sSyncStep = 0;
+		sLoopProgress = 0;
+		sLoopCount = 0;
+		sSyncComplete = false;
+		Log.i(TAG, "New SyncManager with: Step=" + sSyncStep + " Progress=" + sLoopProgress + " Count=" + sLoopCount);
+	}
+
+	// REQUEST MANUAL SYNC
+	public static void syncData() {
+		Log.i(TAG, "SyncData is Requested");
+		AccountManager accountManager = AccountManager.get(App.getApp());
+		Account[] accounts = accountManager.getAccountsByType(App.getApp().getString(R.string.app_account_type));
+		if (accounts.length > 0) {
+
+			// TODO! Not sure if this is the best way to do it?
+			Bundle bundle = new Bundle();
+			bundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
+			bundle.putBoolean(ContentResolver.SYNC_EXTRAS_FORCE, true);
+			// bundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
+			// //this resets the scheduled sync
+			ContentResolver.requestSync(accounts[0], App.getApp().getString(R.string.app_provider_authority), bundle);
+		} else
+			UiUtils.toastAlert(App.getApp().getString(R.string.sync_error), App.getApp().getString(R.string.no_account_setup));
+	}
+
+	public void addSyncStep(String title) {
+
+		if (sLoopCount > 0) {
+			// If leaving loop, round up and reset counters
+			float syncStepAndLoop = (float) sSyncStep + ((float) sLoopProgress / (float) sLoopCount);
+			sSyncStep = (int) (syncStepAndLoop + 0.5);
+			sLoopProgress = 0;
+			sLoopCount = 0;
+		} else {
+			// or increment
+			sSyncStep++;
+		}
+
+		// if (sSyncStep == 0)
+		// sSyncStep++;
+		Log.i(TAG, "addSyncStep: Step=" + sSyncStep + " Progress=" + sLoopProgress + " Count=" + sLoopCount);
+		// int roundLoopUp = (int) (syncStepAndLoop + 0.5);
+		// if (roundLoopUp <= sSyncStep)
+		// roundLoopUp++;
+		// sSyncStep = roundLoopUp;
+		//
+
+		sSyncTitle = title;
+	}
+
 	// UPLOAD SECTION:
-	public static String[] getInstancesToUpload() {
+	public String[] getInstancesToUpload() {
 
 		ArrayList<String> selectedInstances = new ArrayList<String>();
 
@@ -60,46 +140,54 @@ public class SyncManager {
 		return selectedInstances.toArray(new String[selectedInstances.size()]);
 	}
 
-	public static String updateUploadedForms(String[] uploaded, SyncResult syncResult) {
-		
+	public String updateUploadedForms(String[] uploaded, SyncResult syncResult) {
+
 		StringBuilder error = new StringBuilder();
 		String e = null;
-		
+
+		sLoopProgress = 0;
 		if (uploaded.length > 0) {
+
+			String path;
+			sLoopCount = uploaded.length;
 			// update the databases with new status submitted
 			for (int i = 0; i < uploaded.length; i++) {
-				String path = uploaded[i];
-				
+
+				path = uploaded[i];
+				Log.e(TAG, "Updating the uploaded instance in db " + path);
 				// update clinic
-				e = SyncManager.updateClinicInstances(path, syncResult);
+				e = updateClinicInstances(path, syncResult);
 				if (e != null)
 					error.append(" Clinic Form ").append(i).append(": ").append(e);
-				
+
 				// update collect
-				e = SyncManager.updateCollectInstances(path, syncResult);
+				e = updateCollectInstances(path, syncResult);
 				if (e != null)
 					error.append(" Collect Form ").append(i).append(": ").append(e);
+
+				sLoopProgress++;
 			}
 
 			// Encrypt the uploaded data with wakelock to ensure it happens!
-			WakefulIntentService.sendWakefulWork(App.getApp(), EncryptionService.class);
+			WakefulIntentService.sendWakefulWork(mContext, EncryptionService.class);
 		}
 
 		return error.toString();
 
 	}
 
-	public static String updateClinicInstances(String path, SyncResult syncResult) {
+	public String updateClinicInstances(String path, SyncResult syncResult) {
 
 		try {
-			Cursor c = Db.open().fetchFormInstancesByPath(path);
-			if (c != null) {
-				// TODO! Make sure we are deleting the submitted instances from
-				// Db
-				// after encryption!
-				Db.open().updateFormInstance(path, DataModel.STATUS_SUBMITTED);
-				c.close();
-			}
+			// Cursor c = Db.open().fetchFormInstancesByPath(path);
+			// if (c != null) {
+
+			// TODO! Make sure we are deleting the submitted instances from
+			// Db
+			// after encryption!
+			Db.open().updateFormInstance(path, DataModel.STATUS_SUBMITTED);
+			// c.close();
+			// }
 		} catch (Exception e) {
 			e.printStackTrace();
 			++syncResult.stats.numIoExceptions;
@@ -109,14 +197,14 @@ public class SyncManager {
 		return null;
 	}
 
-	public static String updateCollectInstances(String path, SyncResult syncResult) {
+	public String updateCollectInstances(String path, SyncResult syncResult) {
 
 		try {
 			ContentValues insertValues = new ContentValues();
 			insertValues.put(InstanceColumns.STATUS, InstanceProviderAPI.STATUS_SUBMITTED);
 			String where = InstanceColumns.INSTANCE_FILE_PATH + "=?";
 			String whereArgs[] = { path };
-			int updatedrows = App.getApp().getContentResolver().update(InstanceColumns.CONTENT_URI, insertValues, where, whereArgs);
+			int updatedrows = mContext.getContentResolver().update(InstanceColumns.CONTENT_URI, insertValues, where, whereArgs);
 
 			if (updatedrows > 1) {
 				++syncResult.stats.numIoExceptions;
@@ -145,7 +233,7 @@ public class SyncManager {
 	 *            Document created from parsed input stream
 	 * @throws Exception
 	 */
-	public static ArrayList<Form> readFormListStream(InputStream is) throws Exception {
+	public ArrayList<Form> readFormListStream(InputStream is) throws Exception {
 
 		ArrayList<Form> allForms = new ArrayList<Form>();
 		Document doc = null;
@@ -161,29 +249,37 @@ public class SyncManager {
 
 		// make new form list
 		NodeList formElements = doc.getElementsByTagName("xform");
-		int count = formElements.getLength();
+		sLoopCount = formElements.getLength();
+		sLoopProgress = 0;
 		Form f;
-		for (int i = 0; i < count; i++) {
-			Element n = (Element) formElements.item(i);
+		Element n;
+		String formName;
+		String formId;
+		for (int i = 0; i < sLoopCount; i++) {
 
-			String formName = n.getElementsByTagName("name").item(0).getChildNodes().item(0).getNodeValue();
-			String formId = n.getElementsByTagName("id").item(0).getChildNodes().item(0).getNodeValue();
+			n = (Element) formElements.item(i);
+			formName = n.getElementsByTagName("name").item(0).getChildNodes().item(0).getNodeValue();
+			formId = n.getElementsByTagName("id").item(0).getChildNodes().item(0).getNodeValue();
 
 			f = new Form();
 			f.setName(formName);
 			f.setFormId(Integer.valueOf(formId));
 			Db.open().createForm(f);
 			allForms.add(f);
+
+			sLoopProgress++;
 		}
 
 		return allForms;
 	}
 
-	public static String updateDownloadedForms(Form[] downloaded, SyncResult syncResult) {
+	public String updateDownloadedForms(Form[] downloaded, SyncResult syncResult) {
 		StringBuilder error = new StringBuilder();
 		if (downloaded.length > 0) {
 
 			// update the databases with new status submitted
+			sLoopProgress = 0;
+			sLoopCount = downloaded.length;
 			for (int i = 0; i < downloaded.length; i++) {
 				try {
 					// update clinic
@@ -191,7 +287,10 @@ public class SyncManager {
 
 					// update collect
 					if (!XformUtils.insertSingleForm(downloaded[i].getPath()))
-						UiUtils.toastSyncMessage("ODK Collect not initialized.", true);
+						UiUtils.toastSyncMessage(null, "ODK Collect not initialized.", true);
+
+					sLoopProgress++;
+
 				} catch (Exception e) {
 					e.printStackTrace();
 					++syncResult.stats.numIoExceptions;
@@ -205,7 +304,7 @@ public class SyncManager {
 	}
 
 	// DOWNLOAD OBS SECTION
-	public static String readObsFile(File tempFile, SyncResult syncResult) {
+	public String readObsFile(File tempFile, SyncResult syncResult) {
 
 		if (tempFile == null)
 			return "error";
@@ -219,17 +318,24 @@ public class SyncManager {
 				// open db and clean entries
 				dbHelper.delete(DataModel.PATIENTS_TABLE, DataModel.KEY_CLIENT_CREATED + " IS NULL OR " + DataModel.KEY_CLIENT_CREATED + "=?", new String[] { "2" });
 				dbHelper.delete(DataModel.OBSERVATIONS_TABLE, null, null);
-				dbHelper.delete(DataModel.FORMINSTANCES_TABLE, null, null);
+//				dbHelper.delete(DataModel.FORMINSTANCES_TABLE, null, null);
 
 				insertPatients(dis);
+				addSyncStep(mContext.getString(R.string.sync_updating_data)); // 8
 				insertObservations(dis);
-				insertPatientForms(dis);
+				try {
+					addSyncStep(mContext.getString(R.string.sync_updating_data)); // 9
+					insertPatientForms(dis);
+				} catch (EOFException e) {
+					// do nothing for EOFExceptions in this case
+					Log.i(TAG, "No SmartForms available on server");
+				}
 
 				dis.close();
 			}
 			FileUtils.deleteFile(tempFile.getAbsolutePath());
 
-			SyncManager.updateClinicObs();
+			updateClinicObs();
 		} catch (Exception e) {
 			e.printStackTrace();
 			++syncResult.stats.numIoExceptions;
@@ -239,7 +345,7 @@ public class SyncManager {
 		return null;
 	}
 
-	public static void updateClinicObs() {
+	public void updateClinicObs() {
 		// sync db
 
 		Db.open().updatePriorityFormNumbers();
@@ -251,61 +357,13 @@ public class SyncManager {
 		Db.open().createDownloadLog();
 	}
 
-	private static void insertPatientForms(final DataInputStream zdis) throws Exception {
-		long start = System.currentTimeMillis();
-
-		SQLiteDatabase db = DbProvider.getDb();
-		InsertHelper ih = new InsertHelper(db, DataModel.OBSERVATIONS_TABLE);
-
-		int ptIdIndex = ih.getColumnIndex(DataModel.KEY_PATIENT_ID);
-		int obsTextIndex = ih.getColumnIndex(DataModel.KEY_VALUE_TEXT);
-		int obsNumIndex = ih.getColumnIndex(DataModel.KEY_VALUE_NUMERIC);
-		int obsDateIndex = ih.getColumnIndex(DataModel.KEY_VALUE_DATE);
-		int obsIntIndex = ih.getColumnIndex(DataModel.KEY_VALUE_INT);
-		int obsFieldIndex = ih.getColumnIndex(DataModel.KEY_FIELD_NAME);
-		int obsTypeIndex = ih.getColumnIndex(DataModel.KEY_DATA_TYPE);
-		int obsEncDateIndex = ih.getColumnIndex(DataModel.KEY_ENCOUNTER_DATE);
-
-		db.beginTransaction();
-		int icount = 0;
-		try {
-			icount = zdis.readInt();
-			Log.i(TAG, "insertPatientForms icount: " + icount);
-			for (int i = 1; i < icount + 1; i++) {
-
-				ih.prepareForInsert();
-				ih.bind(ptIdIndex, zdis.readInt());
-				ih.bind(obsFieldIndex, zdis.readUTF());
-				byte dataType = zdis.readByte();
-				if (dataType == DataModel.TYPE_STRING) {
-					ih.bind(obsTextIndex, zdis.readUTF());
-				} else if (dataType == DataModel.TYPE_INT) {
-					ih.bind(obsIntIndex, zdis.readInt());
-				} else if (dataType == DataModel.TYPE_DOUBLE) {
-					ih.bind(obsNumIndex, zdis.readDouble());
-				} else if (dataType == DataModel.TYPE_DATE) {
-					ih.bind(obsDateIndex, parseDate(zdis.readUTF()));
-				}
-				ih.bind(obsTypeIndex, dataType);
-				ih.bind(obsEncDateIndex, parseDate(zdis.readUTF()));
-				ih.execute();
-
-			}
-			db.setTransactionSuccessful();
-		} finally {
-			ih.close();
-			db.endTransaction();
-		}
-
-		long end = System.currentTimeMillis();
-		Log.i("END InsertPtsForms", String.format("InsertPtsForms Speed: %d ms, Records per second: %.2f", (int) (end - start), 1000 * (double) icount / (double) (end - start)));
-
-	}
-
-	private static void insertPatients(DataInputStream zdis) throws Exception {
+	private void insertPatients(DataInputStream zdis) throws Exception {
 
 		long start = System.currentTimeMillis();
 		SQLiteDatabase db = DbProvider.getDb();
+
+		SimpleDateFormat output = new SimpleDateFormat("MMM dd, yyyy");
+		SimpleDateFormat input = new SimpleDateFormat("yyyy-MM-dd");
 
 		InsertHelper ih = new InsertHelper(db, DataModel.PATIENTS_TABLE);
 		int ptIdIndex = ih.getColumnIndex(DataModel.KEY_PATIENT_ID);
@@ -317,23 +375,23 @@ public class SyncManager {
 		int ptGenderIndex = ih.getColumnIndex(DataModel.KEY_GENDER);
 
 		db.beginTransaction();
-		int icount = 0;
+		sLoopProgress = 0;
 		try {
-			icount = zdis.readInt();
-			Log.i(TAG, "insertPatients icount: " + icount);
-			for (int i = 1; i < icount + 1; i++) {
+			sLoopCount = zdis.readInt();
+			Log.i(TAG, "insertPatients icount: " + sLoopCount);
+			for (int i = 1; i < sLoopCount + 1; i++) {
 
 				ih.prepareForInsert();
-				int win = zdis.readInt();
-				ih.bind(ptIdIndex, win);
+				ih.bind(ptIdIndex, zdis.readInt());
 				ih.bind(ptFamilyIndex, zdis.readUTF());
 				ih.bind(ptMiddleIndex, zdis.readUTF());
 				ih.bind(ptGivenIndex, zdis.readUTF());
 				ih.bind(ptGenderIndex, zdis.readUTF());
-				ih.bind(ptBirthIndex, parseDate(zdis.readUTF()));
+				ih.bind(ptBirthIndex, parseDate(input, output, zdis.readUTF()));
 				ih.bind(ptIdentifierIndex, zdis.readUTF());
 				ih.execute();
 
+				sLoopProgress++;
 			}
 			db.setTransactionSuccessful();
 		} finally {
@@ -342,12 +400,15 @@ public class SyncManager {
 		}
 
 		long end = System.currentTimeMillis();
-		Log.i("END InsertPts", String.format("InsertPts Speed: %d ms, Records per second: %.2f", (int) (end - start), 1000 * (double) icount / (double) (end - start)));
+		Log.i("END InsertPts", String.format("InsertPts Speed: %d ms, Records per second: %.2f", (int) (end - start), 1000 * (double) sLoopCount / (double) (end - start)));
 
 	}
 
-	private static void insertObservations(DataInputStream zdis) throws Exception {
+	private void insertObservations(DataInputStream zdis) throws Exception {
 		long start = System.currentTimeMillis();
+
+		SimpleDateFormat output = new SimpleDateFormat("MMM dd, yyyy");
+		SimpleDateFormat input = new SimpleDateFormat("yyyy-MM-dd");
 
 		SQLiteDatabase db = DbProvider.getDb();
 		InsertHelper ih = new InsertHelper(db, DataModel.OBSERVATIONS_TABLE);
@@ -361,12 +422,11 @@ public class SyncManager {
 		int obsEncDateIndex = ih.getColumnIndex(DataModel.KEY_ENCOUNTER_DATE);
 
 		db.beginTransaction();
-		int icount = 0;
+		sLoopProgress = 0;
 		try {
-			icount = zdis.readInt();
-			Log.i(TAG, "insertObservations icount: " + icount);
-
-			for (int i = 1; i < icount + 1; i++) {
+			sLoopCount = zdis.readInt();
+			Log.i(TAG, "insertObservations icount: " + sLoopCount);
+			for (int i = 1; i < sLoopCount + 1; i++) {
 
 				ih.prepareForInsert();
 				ih.bind(ptIdIndex, zdis.readInt());
@@ -379,13 +439,14 @@ public class SyncManager {
 				} else if (dataType == DataModel.TYPE_DOUBLE) {
 					ih.bind(obsNumIndex, zdis.readDouble());
 				} else if (dataType == DataModel.TYPE_DATE) {
-					ih.bind(obsDateIndex, parseDate(zdis.readUTF()));
+					ih.bind(obsDateIndex, parseDate(input, output, zdis.readUTF()));
 				}
 
 				ih.bind(obsTypeIndex, dataType);
-				ih.bind(obsEncDateIndex, parseDate(zdis.readUTF()));
+				ih.bind(obsEncDateIndex, parseDate(input, output, zdis.readUTF()));
 				ih.execute();
 
+				sLoopProgress++;
 			}
 
 			db.setTransactionSuccessful();
@@ -396,17 +457,168 @@ public class SyncManager {
 		}
 
 		long end = System.currentTimeMillis();
-		Log.i("END InsertObs", String.format("InsertObs Speed: %d ms, Records per second: %.2f", (int) (end - start), 1000 * (double) icount / (double) (end - start)));
+		Log.i("END InsertObs", String.format("InsertObs Speed: %d ms, Records per second: %.2f", (int) (end - start), 1000 * (double) sLoopCount / (double) (end - start)));
 
 	}
 
-	private static String parseDate(final String s) {
-		date = s.split("T")[0];
+	private void insertPatientForms(final DataInputStream zdis) throws Exception {
+		long start = System.currentTimeMillis();
+
+		SimpleDateFormat output = new SimpleDateFormat("MMM dd, yyyy");
+		SimpleDateFormat input = new SimpleDateFormat("yyyy-MM-dd");
+
+		SQLiteDatabase db = DbProvider.getDb();
+		InsertHelper ih = new InsertHelper(db, DataModel.OBSERVATIONS_TABLE);
+
+		int ptIdIndex = ih.getColumnIndex(DataModel.KEY_PATIENT_ID);
+		int obsTextIndex = ih.getColumnIndex(DataModel.KEY_VALUE_TEXT);
+		int obsNumIndex = ih.getColumnIndex(DataModel.KEY_VALUE_NUMERIC);
+		int obsDateIndex = ih.getColumnIndex(DataModel.KEY_VALUE_DATE);
+		int obsIntIndex = ih.getColumnIndex(DataModel.KEY_VALUE_INT);
+		int obsFieldIndex = ih.getColumnIndex(DataModel.KEY_FIELD_NAME);
+		int obsTypeIndex = ih.getColumnIndex(DataModel.KEY_DATA_TYPE);
+		int obsEncDateIndex = ih.getColumnIndex(DataModel.KEY_ENCOUNTER_DATE);
+
+		db.beginTransaction();
+		sLoopProgress = 0;
 		try {
-			return OUTPUT_FORMAT.format(INPUT_FORMAT.parse(date));
+			sLoopProgress = zdis.readInt();
+			Log.i(TAG, "insertPatientForms icount: " + sLoopCount);
+			for (int i = 1; i < sLoopCount + 1; i++) {
+
+				ih.prepareForInsert();
+				ih.bind(ptIdIndex, zdis.readInt());
+				ih.bind(obsFieldIndex, zdis.readUTF());
+				byte dataType = zdis.readByte();
+				if (dataType == DataModel.TYPE_STRING) {
+					ih.bind(obsTextIndex, zdis.readUTF());
+				} else if (dataType == DataModel.TYPE_INT) {
+					ih.bind(obsIntIndex, zdis.readInt());
+				} else if (dataType == DataModel.TYPE_DOUBLE) {
+					ih.bind(obsNumIndex, zdis.readDouble());
+				} else if (dataType == DataModel.TYPE_DATE) {
+					ih.bind(obsDateIndex, parseDate(input, output, zdis.readUTF()));
+				}
+				ih.bind(obsTypeIndex, dataType);
+				ih.bind(obsEncDateIndex, parseDate(input, output, zdis.readUTF()));
+				ih.execute();
+
+				sLoopProgress++;
+			}
+			db.setTransactionSuccessful();
+		} finally {
+			ih.close();
+			db.endTransaction();
+		}
+
+		long end = System.currentTimeMillis();
+		Log.i("END InsertPtsForms", String.format("InsertPtsForms Speed: %d ms, Records per second: %.2f", (int) (end - start), 1000 * (double) sLoopCount / (double) (end - start)));
+
+	}
+
+	private String parseDate(SimpleDateFormat input, SimpleDateFormat output, String s) {
+
+		try {
+			return output.format(input.parse(s.split("T")[0]));
 		} catch (ParseException e) {
 			return "Unknown date";
 		}
 	}
 
+	public void toastSyncMessage(int syncType, int success, int total, int currentErrors, String dbError) {
+
+		String currentToast = createToastString(syncType, success, total, currentErrors);
+		if (currentToast != null) {
+
+			StringBuilder result = new StringBuilder();
+			result.append(currentToast);
+			if (currentErrors > 0) {
+				result.append(" (").append(mContext.getResources().getQuantityString(R.plurals.errors, currentErrors, currentErrors));
+				if (dbError != null && !dbError.equalsIgnoreCase(""))
+					result.append(" : ").append(dbError);
+				result.append(")");
+			}
+
+			// Give to Activity
+			Intent broadcast = new Intent(TOAST_SYNC_MESSAGE);
+			broadcast.putExtra(TOAST_MESSAGE, result.toString());
+			broadcast.putExtra(TOAST_ERROR, (currentErrors == 0) ? false : true);
+			LocalBroadcastManager.getInstance(mContext).sendBroadcast(broadcast);
+		}
+	}
+
+	private String createToastString(int syncMethod, int success, int total, int currentErrors) {
+
+		String toast = null;
+
+		// Get string based on sync method
+		int successNoSync = 0;
+		int successAllSync = 0;
+		int failPartialSync = 0;
+		int failNoSync = 0;
+		switch (syncMethod) {
+		case UPLOAD_FORMS:
+			failNoSync = R.string.sync_upload_forms_failed;
+			failPartialSync = R.plurals.sync_upload_forms_partial;
+			successNoSync = R.string.sync_upload_forms_not_needed;
+			successAllSync = R.plurals.sync_upload_forms_successful;
+			break;
+		case DOWNLOAD_FORMS:
+			failNoSync = R.string.sync_download_forms_failed;
+			failPartialSync = R.plurals.sync_download_forms_partial;
+			successNoSync = R.string.sync_download_forms_not_needed;
+			successAllSync = R.plurals.sync_download_forms_successful;
+			break;
+		case SYNC_COMPLETE:
+		default:
+			return mSyncResultString;
+		}
+
+		// ERRORS: Add to Current Toast
+		// Error 1: Exception
+		if (currentErrors > 0)
+			toast = mContext.getString(failNoSync);
+		// Error 2: Partial upload/download
+		else if (total > 0 && success != total)
+			toast = mContext.getResources().getQuantityString(failPartialSync, total, String.valueOf(total - success) + " of " + String.valueOf(total));
+
+		// SUCCESS: Add to SyncResult Toast (Don't show until Sync Complete)
+		StringBuilder sb = new StringBuilder();
+		if (mSyncResultString != null) {
+			sb.append(mSyncResultString);
+			sb.append(". ");
+		}
+		// Success 1: Nothing to upload/download
+		if (total == 0 && currentErrors == 0)
+			sb.append(mContext.getString(successNoSync));
+		// Success 2: All uploads/downloads were successful
+		else if (total > 0 && success == total)
+			sb.append(mContext.getResources().getQuantityString(successAllSync, total, String.valueOf(total)));
+		mSyncResultString = sb.toString();
+
+		return toast;
+	}
+
 }
+
+// private boolean isSyncActiveOrPending() {
+// AccountManager accountManager = AccountManager.get(mContext);
+// Account[] accounts =
+// accountManager.getAccountsByType(mContext.getString(R.string.app_account_type));
+//
+// if (accounts.length <= 0)
+// return false;
+// else
+// return ContentResolver.isSyncActive(accounts[0],
+// getString(R.string.app_provider_authority));
+// }
+
+// current = (int) Math.round(((float) i / (float) icount) *
+// 2.0);
+// if (current != progress) {
+// Log.i(TAG, "i=" + i + " current=" + current + " /progress=" +
+// progress + " icount=" + icount + " mProgress" +
+// sSyncProgress);
+// progress = current;
+// sSyncProgress = sSyncProgress + current;
+// }

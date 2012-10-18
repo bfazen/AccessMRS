@@ -1,12 +1,5 @@
 package com.alphabetbloc.clinic.ui.admin;
 
-import com.alphabetbloc.clinic.R;
-import com.alphabetbloc.clinic.listeners.SyncDataListener;
-import com.alphabetbloc.clinic.tasks.CheckConnectivityTask;
-import com.alphabetbloc.clinic.utilities.App;
-import com.alphabetbloc.clinic.utilities.EncryptionUtil;
-import com.alphabetbloc.clinic.utilities.NetworkUtils;
-
 import android.accounts.Account;
 import android.accounts.AccountAuthenticatorResponse;
 import android.accounts.AccountManager;
@@ -18,8 +11,6 @@ import android.content.SyncResult;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
-import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
@@ -28,7 +19,14 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
+
+import com.alphabetbloc.clinic.R;
+import com.alphabetbloc.clinic.listeners.SyncDataListener;
+import com.alphabetbloc.clinic.tasks.CheckConnectivityTask;
+import com.alphabetbloc.clinic.utilities.App;
+import com.alphabetbloc.clinic.utilities.EncryptionUtil;
+import com.alphabetbloc.clinic.utilities.NetworkUtils;
+import com.alphabetbloc.clinic.utilities.UiUtils;
 
 /**
  * 
@@ -68,14 +66,16 @@ public class SetupAccountActivity extends Activity implements SyncDataListener {
 	private String mNewPwd;
 	private Button mOfflineSetupButton;
 	private ImageView mCenterImage;
+	private Context mContext;
 
 	@Override
 	protected void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.account_setup);
+		mContext = this;
 		mImportFromConfig = getIntent().getBooleanExtra(USE_CONFIG_FILE, false);
-
+		
 		// dynamic views
 		mInstructionText = (TextView) findViewById(R.id.instruction);
 		mSubmitButton = (Button) findViewById(R.id.submit_button);
@@ -195,14 +195,15 @@ public class SetupAccountActivity extends Activity implements SyncDataListener {
 				if (userEntry.equals(mCurrentUser) && pwdEntry.equals(mCurrentPwd))
 					createView(REQUEST_CREDENTIAL_SETUP);
 				else
-					showCustomToast(getString(R.string.auth_server_verify_error));
+					UiUtils.toastAlert(mContext, getString(R.string.auth_error_title), getString(R.string.auth_server_verify_error));
 				break;
 
 			case ASK_NEW_ENTRY:
 				if (isAcceptable(userEntry))
 					checkServerCredentials(userEntry, pwdEntry);
 				else
-					showCustomToast(mUserText.getText().toString() + "is not a valid Username.  Please enter an id with only letters and numbers.");
+					//TODO! does this work, or do you need String.format()?
+					UiUtils.toastAlert(mContext, getString(R.string.auth_error_title), getString((R.string.auth_invalid_username), mUserText.getText().toString()));
 				break;
 			case FINISHED:
 				setResult(RESULT_OK);
@@ -210,7 +211,7 @@ public class SetupAccountActivity extends Activity implements SyncDataListener {
 				break;
 			case ENTRY_ERROR:
 			default:
-				showCustomToast("Please Click on White Box to Enter Username and Password.");
+				UiUtils.toastAlert(mContext, getString(R.string.auth_error_title), getString(R.string.auth_empty_entry));
 				break;
 			}
 		}
@@ -304,21 +305,6 @@ public class SetupAccountActivity extends Activity implements SyncDataListener {
 		// return false;
 
 		return true;
-	}
-
-	private void showCustomToast(String message) {
-		LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-		View view = inflater.inflate(R.layout.toast_view, null);
-
-		// set the text in the view
-		TextView tv = (TextView) view.findViewById(R.id.message);
-		tv.setText(message);
-
-		Toast t = new Toast(this);
-		t.setView(view);
-		t.setDuration(Toast.LENGTH_SHORT);
-		t.setGravity(Gravity.CENTER, 0, 0);
-		t.show();
 	}
 
 	@Override

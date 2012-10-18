@@ -11,6 +11,7 @@ import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
+import android.util.Log;
 
 import com.alphabetbloc.clinic.data.ActivityLog;
 import com.alphabetbloc.clinic.data.Form;
@@ -27,7 +28,7 @@ import com.alphabetbloc.clinic.utilities.App;
  */
 public class Db {
 
-//	private final static String TAG = Db.class.getSimpleName();
+	private final static String TAG = Db.class.getSimpleName();
 	private static Db instance;
 
 	public static synchronized Db open() {
@@ -196,24 +197,8 @@ public class Db {
 		return DbProvider.openDb().query(DataModel.OBSERVATIONS_TABLE, projection, selection, null, sortOrder);
 	}
 
-	public Cursor fetchAllPatients(int listtype) throws SQLException {
-
-		String listOrder = null;
-
-		switch (listtype) {
-		case DashboardActivity.LIST_SUGGESTED:
-			listOrder = DataModel.KEY_PRIORITY_FORM_NUMBER + " DESC, " + DataModel.KEY_FAMILY_NAME + " COLLATE NOCASE ASC";
-			break;
-		case DashboardActivity.LIST_INCOMPLETE:
-			listOrder = DataModel.KEY_SAVED_FORM_NUMBER + " DESC, " + DataModel.KEY_PRIORITY_FORM_NUMBER + " DESC, " + DataModel.KEY_FAMILY_NAME + " COLLATE NOCASE ASC";
-			break;
-		case DashboardActivity.LIST_COMPLETE:
-		case DashboardActivity.LIST_ALL:
-			listOrder = DataModel.KEY_FAMILY_NAME + " COLLATE NOCASE ASC";
-			break;
-		}
-
-		return fetchPatients(null, null, listtype, listOrder);
+	public Cursor fetchAllPatients(int listType) throws SQLException {
+		return fetchPatients(null, null, listType, null);
 	}
 
 	/**
@@ -226,18 +211,20 @@ public class Db {
 	 * @return cursor to the file
 	 * @throws SQLException
 	 */
-	public Cursor fetchPatients(String name, String identifier, int listtype) throws SQLException {
+	public Cursor searchPatients(String name, String identifier, int listType) throws SQLException {
 		String listOrder = DataModel.KEY_FAMILY_NAME + " COLLATE NOCASE ASC";
-		return fetchPatients(name, identifier, listtype, listOrder);
+		return fetchPatients(name, identifier, listType, listOrder);
 	}
 
-	public Cursor fetchPatients(String name, String identifier, int listtype, String listOrder) throws SQLException {
+	public Cursor fetchPatients(String name, String identifier, int listType, String listOrder) throws SQLException {
 
+		if (listOrder == null)
+			listOrder = getDefaultListOrder(listType);
 		String listSelection = null;
 		String table = DataModel.PATIENTS_TABLE;
 		String[] projection = null;
 		String groupBy = null;
-		switch (listtype) {
+		switch (listType) {
 		case DashboardActivity.LIST_SUGGESTED:
 			listSelection = DataModel.KEY_PRIORITY_FORM_NUMBER + " IS NOT NULL";
 			break;
@@ -246,22 +233,25 @@ public class Db {
 			break;
 		case DashboardActivity.LIST_COMPLETE:
 			table = DataModel.PATIENTS_TABLE + ", " + DataModel.FORMINSTANCES_TABLE;
-			projection = new String[] { DataModel.PATIENTS_TABLE + "." + DataModel.KEY_ID, DataModel.PATIENTS_TABLE + "." + DataModel.KEY_PATIENT_ID, DataModel.KEY_IDENTIFIER, DataModel.KEY_GIVEN_NAME, DataModel.KEY_FAMILY_NAME, DataModel.KEY_MIDDLE_NAME, DataModel.KEY_BIRTH_DATE, DataModel.KEY_GENDER,
-					DataModel.KEY_PRIORITY_FORM_NAMES, DataModel.KEY_PRIORITY_FORM_NUMBER, DataModel.KEY_SAVED_FORM_NUMBER, DataModel.KEY_SAVED_FORM_NAMES, DataModel.KEY_FORMINSTANCE_SUBTEXT, DataModel.KEY_CLIENT_CREATED, DataModel.KEY_UUID };
+			projection = new String[] { DataModel.PATIENTS_TABLE + "." + DataModel.KEY_ID, DataModel.PATIENTS_TABLE + "." + DataModel.KEY_PATIENT_ID, DataModel.KEY_IDENTIFIER, DataModel.KEY_GIVEN_NAME, DataModel.KEY_FAMILY_NAME, DataModel.KEY_MIDDLE_NAME,
+					DataModel.KEY_BIRTH_DATE, DataModel.KEY_GENDER, DataModel.KEY_PRIORITY_FORM_NAMES, DataModel.KEY_PRIORITY_FORM_NUMBER, DataModel.KEY_SAVED_FORM_NUMBER, DataModel.KEY_SAVED_FORM_NAMES, DataModel.KEY_FORMINSTANCE_SUBTEXT, DataModel.KEY_CLIENT_CREATED,
+					DataModel.KEY_UUID };
 			groupBy = DataModel.PATIENTS_TABLE + "." + DataModel.KEY_PATIENT_ID;
 			listSelection = DataModel.PATIENTS_TABLE + "." + DataModel.KEY_PATIENT_ID + "=" + DataModel.FORMINSTANCES_TABLE + "." + DataModel.KEY_PATIENT_ID;
 			break;
 		case DashboardActivity.LIST_SIMILAR_CLIENTS:
 		case DashboardActivity.LIST_ALL:
-			listSelection = "";
+			listSelection = null;
 			break;
 		}
 
 		StringBuilder selection = new StringBuilder();
 		if (name != null) {
 			// search using name
-			selection = createNameSelection(name, listtype);
-			selection.append(" AND ");
+			selection = createNameSelection(name, listType);
+			if (listSelection != null)
+				selection.append(" AND ").append(listSelection);
+			listSelection = selection.toString();
 
 		} else if (identifier != null) {
 			// escape all wildcard characters
@@ -269,12 +259,32 @@ public class Db {
 			identifier = identifier.replaceAll("%", "^%");
 			identifier = identifier.replaceAll("_", "^_");
 			selection.append(DataModel.KEY_IDENTIFIER).append(" LIKE '").append(identifier).append("%' ESCAPE '^'");
-			selection.append(" AND ");
+			if (listSelection != null)
+				selection.append(" AND ").append(listSelection);
+			listSelection = selection.toString();
+		}
+		Log.e(TAG, "SELECT " + projection + " FROM " + table + " WHERE " + listSelection + " GROUP BY " + groupBy + " ORDER BY " + listOrder);
+		return DbProvider.openDb().query(true, table, projection, listSelection, null, groupBy, null, listOrder, null);
+	}
+
+	private String getDefaultListOrder(int listtype) {
+		String listOrder = null;
+
+		switch (listtype) {
+		case DashboardActivity.LIST_SUGGESTED:
+			listOrder = DataModel.KEY_PRIORITY_FORM_NUMBER + " DESC, " + DataModel.KEY_FAMILY_NAME + " COLLATE NOCASE ASC";
+			break;
+		case DashboardActivity.LIST_INCOMPLETE:
+			listOrder = DataModel.KEY_SAVED_FORM_NUMBER + " DESC, " + DataModel.KEY_PRIORITY_FORM_NUMBER + " DESC, " + DataModel.KEY_FAMILY_NAME + " COLLATE NOCASE ASC";
+			break;
+		case DashboardActivity.LIST_COMPLETE:
+		case DashboardActivity.LIST_ALL:
+		default:
+			listOrder = DataModel.KEY_FAMILY_NAME + " COLLATE NOCASE ASC";
+			break;
 		}
 
-		selection.append(listSelection);
-
-		return DbProvider.openDb().query(true, table, projection, selection.toString(), null, groupBy, null, listOrder, null);
+		return listOrder;
 	}
 
 	private StringBuilder createNameSelection(String name, int listtype) {
@@ -325,52 +335,53 @@ public class Db {
 
 		Cursor c = fetchPatientObservations(patientId);
 
-		if (c != null && c.getCount() > 0) {
+		if (c != null) {
+			if (c.moveToFirst()) {
+				int valueTextIndex = c.getColumnIndex(DataModel.KEY_VALUE_TEXT);
+				int valueIntIndex = c.getColumnIndex(DataModel.KEY_VALUE_INT);
+				int valueDateIndex = c.getColumnIndex(DataModel.KEY_VALUE_DATE);
+				int valueNumericIndex = c.getColumnIndex(DataModel.KEY_VALUE_NUMERIC);
+				int fieldNameIndex = c.getColumnIndex(DataModel.KEY_FIELD_NAME);
+				int encounterDateIndex = c.getColumnIndex(DataModel.KEY_ENCOUNTER_DATE);
+				int dataTypeIndex = c.getColumnIndex(DataModel.KEY_DATA_TYPE);
 
-			int valueTextIndex = c.getColumnIndex(DataModel.KEY_VALUE_TEXT);
-			int valueIntIndex = c.getColumnIndex(DataModel.KEY_VALUE_INT);
-			int valueDateIndex = c.getColumnIndex(DataModel.KEY_VALUE_DATE);
-			int valueNumericIndex = c.getColumnIndex(DataModel.KEY_VALUE_NUMERIC);
-			int fieldNameIndex = c.getColumnIndex(DataModel.KEY_FIELD_NAME);
-			int encounterDateIndex = c.getColumnIndex(DataModel.KEY_ENCOUNTER_DATE);
-			int dataTypeIndex = c.getColumnIndex(DataModel.KEY_DATA_TYPE);
+				Observation obs;
+				String prevFieldName = null;
 
-			Observation obs;
-			String prevFieldName = null;
-			do {
-				String fieldName = c.getString(fieldNameIndex);
+				do {
+					String fieldName = c.getString(fieldNameIndex);
 
-				// Only get first (most recent) obs
-				if (!fieldName.equals(prevFieldName)) {
+					// Only get first (most recent) obs
+					if (!fieldName.equals(prevFieldName)) {
 
-					obs = new Observation();
-					obs.setFieldName(fieldName);
-					obs.setEncounterDate(c.getString(encounterDateIndex));
-					int dataType = c.getInt(dataTypeIndex);
-					obs.setDataType((byte) dataType);
-					switch (dataType) {
-					case DataModel.TYPE_INT:
-						obs.setValueInt(c.getInt(valueIntIndex));
-						break;
-					case DataModel.TYPE_DOUBLE:
-						obs.setValueNumeric(c.getDouble(valueNumericIndex));
-						break;
-					case DataModel.TYPE_DATE:
-						obs.setValueDate(c.getString(valueDateIndex));
-						break;
-					default:
-						obs.setValueText(c.getString(valueTextIndex));
+						obs = new Observation();
+						obs.setFieldName(fieldName);
+						obs.setEncounterDate(c.getString(encounterDateIndex));
+						int dataType = c.getInt(dataTypeIndex);
+						obs.setDataType((byte) dataType);
+						switch (dataType) {
+						case DataModel.TYPE_INT:
+							obs.setValueInt(c.getInt(valueIntIndex));
+							break;
+						case DataModel.TYPE_DOUBLE:
+							obs.setValueNumeric(c.getDouble(valueNumericIndex));
+							break;
+						case DataModel.TYPE_DATE:
+							obs.setValueDate(c.getString(valueDateIndex));
+							break;
+						default:
+							obs.setValueText(c.getString(valueTextIndex));
+						}
+
+						mObservations.add(obs);
+						prevFieldName = fieldName;
 					}
 
-					mObservations.add(obs);
-					prevFieldName = fieldName;
-				}
+				} while (c.moveToNext());
+			}
 
-			} while (c.moveToNext());
-		}
-
-		if (c != null)
 			c.close();
+		}
 
 		return mObservations;
 	}
@@ -383,8 +394,8 @@ public class Db {
 				// tables
 				DataModel.FORMS_TABLE + ", " + DataModel.FORMINSTANCES_TABLE,
 				// columns
-				new String[] { DataModel.FORMINSTANCES_TABLE + "." + DataModel.KEY_ID + ", " + DataModel.FORMINSTANCES_TABLE + "." + DataModel.KEY_FORM_ID + ", " + DataModel.FORMINSTANCES_TABLE + "." + DataModel.KEY_FORMINSTANCE_DISPLAY + ", " + DataModel.FORMINSTANCES_TABLE + "." + DataModel.KEY_PATH + ", "
-						+ DataModel.FORMS_TABLE + "." + DataModel.KEY_FORM_NAME + ", " + DataModel.FORMINSTANCES_TABLE + "." + DataModel.KEY_FORMINSTANCE_SUBTEXT },
+				new String[] { DataModel.FORMINSTANCES_TABLE + "." + DataModel.KEY_ID + ", " + DataModel.FORMINSTANCES_TABLE + "." + DataModel.KEY_FORM_ID + ", " + DataModel.FORMINSTANCES_TABLE + "." + DataModel.KEY_FORMINSTANCE_DISPLAY + ", " + DataModel.FORMINSTANCES_TABLE
+						+ "." + DataModel.KEY_PATH + ", " + DataModel.FORMS_TABLE + "." + DataModel.KEY_FORM_NAME + ", " + DataModel.FORMINSTANCES_TABLE + "." + DataModel.KEY_FORMINSTANCE_SUBTEXT },
 				// where
 				DataModel.FORMINSTANCES_TABLE + "." + DataModel.KEY_PATIENT_ID + "=" + patientId + " AND " + DataModel.FORMS_TABLE + "." + DataModel.KEY_FORM_ID + "=" + DataModel.FORMINSTANCES_TABLE + "." + DataModel.KEY_FORM_ID,
 				// group by, having
@@ -405,9 +416,8 @@ public class Db {
 
 		int lowestNegativeId = 0;
 		if (c != null) {
-			if (c.moveToFirst()) {
+			if (c.moveToFirst())
 				lowestNegativeId = c.getInt(c.getColumnIndex(DataModel.KEY_PATIENT_ID));
-			}
 			c.close();
 		}
 		return lowestNegativeId;
@@ -421,7 +431,8 @@ public class Db {
 		c = DbProvider.openDb().query(DataModel.DOWNLOAD_LOG_TABLE, projection, null, null, null);
 
 		if (c != null) {
-			datetime = c.getLong(c.getColumnIndex(DataModel.DOWNLOAD_TIME));
+			if (c.moveToFirst())
+				datetime = c.getLong(c.getColumnIndex(DataModel.DOWNLOAD_TIME));
 			c.close();
 		}
 		return datetime;
@@ -436,7 +447,8 @@ public class Db {
 		c = DbProvider.openDb().query(DataModel.PATIENTS_TABLE, projection, selection, null, null);
 
 		if (c != null) {
-			count = c.getInt(c.getColumnIndex(DataModel.KEY_PRIORITY_FORM_NUMBER));
+			if (c.moveToFirst())
+				count = c.getInt(c.getColumnIndex(DataModel.KEY_PRIORITY_FORM_NUMBER));
 			c.close();
 		}
 		return count;
@@ -450,7 +462,8 @@ public class Db {
 		c = DbProvider.openDb().query(DataModel.PATIENTS_TABLE, projection, selection, null, null);
 
 		if (c != null) {
-			count = c.getInt(c.getColumnIndex(DataModel.KEY_SAVED_FORM_NUMBER));
+			if (c.moveToFirst())
+				count = c.getInt(c.getColumnIndex(DataModel.KEY_SAVED_FORM_NUMBER));
 			c.close();
 		}
 		return count;
@@ -465,7 +478,8 @@ public class Db {
 		c = DbProvider.openDb().query(table, projection, null, null, null);
 
 		if (c != null) {
-			count = c.getInt(c.getColumnIndex(DataModel.KEY_PATIENT_ID));
+			if (c.moveToFirst())
+				count = c.getInt(c.getColumnIndex(DataModel.KEY_PATIENT_ID));
 			c.close();
 		}
 		return count;
@@ -497,16 +511,16 @@ public class Db {
 
 		c = DbProvider.openDb().rawQuery(subquery, null);
 		if (c != null) {
+			if (c.moveToFirst()) {
+				do {
+					String patientId = c.getString(c.getColumnIndex(DataModel.KEY_PATIENT_ID));
+					String formName = c.getString(c.getColumnIndex(DataModel.KEY_PRIORITY_FORM_NAMES));
+					ContentValues cv = new ContentValues();
+					cv.put(DataModel.KEY_PRIORITY_FORM_NAMES, formName);
 
-			do {
-				String patientId = c.getString(c.getColumnIndex(DataModel.KEY_PATIENT_ID));
-				String formName = c.getString(c.getColumnIndex(DataModel.KEY_PRIORITY_FORM_NAMES));
-				ContentValues cv = new ContentValues();
-				cv.put(DataModel.KEY_PRIORITY_FORM_NAMES, formName);
-
-				DbProvider.openDb().update(DataModel.PATIENTS_TABLE, cv, DataModel.KEY_PATIENT_ID + "=" + patientId, null);
-			} while (c.moveToNext());
-
+					DbProvider.openDb().update(DataModel.PATIENTS_TABLE, cv, DataModel.KEY_PATIENT_ID + "=" + patientId, null);
+				} while (c.moveToNext());
+			}
 			c.close();
 		}
 
@@ -520,17 +534,17 @@ public class Db {
 		String groupBy = DataModel.KEY_PATIENT_ID;
 		c = DbProvider.openDb().query(DataModel.OBSERVATIONS_TABLE, projection, selection, null, groupBy, null, null);
 		if (c != null) {
+			if (c.moveToFirst()) {
+				do {
+					String patientId = c.getString(c.getColumnIndex(DataModel.KEY_PATIENT_ID));
+					int formNumber = c.getInt(c.getColumnIndex(DataModel.KEY_PRIORITY_FORM_NUMBER));
+					ContentValues cv = new ContentValues();
+					cv.put(DataModel.KEY_PRIORITY_FORM_NUMBER, formNumber);
 
-			do {
-				String patientId = c.getString(c.getColumnIndex(DataModel.KEY_PATIENT_ID));
-				int formNumber = c.getInt(c.getColumnIndex(DataModel.KEY_PRIORITY_FORM_NUMBER));
-				ContentValues cv = new ContentValues();
-				cv.put(DataModel.KEY_PRIORITY_FORM_NUMBER, formNumber);
+					DbProvider.openDb().update(DataModel.PATIENTS_TABLE, cv, DataModel.KEY_PATIENT_ID + "=" + patientId, null);
 
-				DbProvider.openDb().update(DataModel.PATIENTS_TABLE, cv, DataModel.KEY_PATIENT_ID + "=" + patientId, null);
-
-			} while (c.moveToNext());
-
+				} while (c.moveToNext());
+			}
 			c.close();
 		}
 
@@ -580,8 +594,8 @@ public class Db {
 					// two columns (one of which is a group_concat()
 					new String[] { DataModel.OBSERVATIONS_TABLE + "." + DataModel.KEY_PATIENT_ID + ", group_concat(" + DataModel.FORMS_TABLE + "." + DataModel.KEY_FORM_NAME + ",\", \") AS " + DataModel.KEY_PRIORITY_FORM_NAMES },
 					// where
-					DataModel.OBSERVATIONS_TABLE + "." + DataModel.KEY_FIELD_NAME + "=" + DataModel.KEY_FIELD_FORM_VALUE + " AND " + DataModel.FORMS_TABLE + "." + DataModel.KEY_FORM_ID + "=" + DataModel.OBSERVATIONS_TABLE + "." + DataModel.KEY_VALUE_INT + " AND " + DataModel.OBSERVATIONS_TABLE + "."
-							+ DataModel.KEY_PATIENT_ID + "=" + updatePatientId,
+					DataModel.OBSERVATIONS_TABLE + "." + DataModel.KEY_FIELD_NAME + "=" + DataModel.KEY_FIELD_FORM_VALUE + " AND " + DataModel.FORMS_TABLE + "." + DataModel.KEY_FORM_ID + "=" + DataModel.OBSERVATIONS_TABLE + "." + DataModel.KEY_VALUE_INT + " AND "
+							+ DataModel.OBSERVATIONS_TABLE + "." + DataModel.KEY_PATIENT_ID + "=" + updatePatientId,
 					// group by
 					DataModel.OBSERVATIONS_TABLE + "." + DataModel.KEY_PATIENT_ID, null, null, null);
 
@@ -617,14 +631,15 @@ public class Db {
 		c = App.getApp().getContentResolver().query(Uri.parse(InstanceColumns.CONTENT_URI + "/groupbypatientid"), new String[] { InstanceColumns.PATIENT_ID, "group_concat( " + InstanceColumns.FORM_NAME + ") AS " + DataModel.KEY_SAVED_FORM_NAMES }, selection, selectionArgs, null);
 		ContentValues cv = new ContentValues();
 		if (c != null) {
-			do {
-				String patientId = c.getString(c.getColumnIndex(InstanceColumns.PATIENT_ID));
-				String formName = c.getString(c.getColumnIndex(DataModel.KEY_SAVED_FORM_NAMES));
-				cv.put(DataModel.KEY_SAVED_FORM_NAMES, formName);
+			if (c.moveToFirst()) {
+				do {
+					String patientId = c.getString(c.getColumnIndex(InstanceColumns.PATIENT_ID));
+					String formName = c.getString(c.getColumnIndex(DataModel.KEY_SAVED_FORM_NAMES));
+					cv.put(DataModel.KEY_SAVED_FORM_NAMES, formName);
 
-				DbProvider.openDb().update(DataModel.PATIENTS_TABLE, cv, DataModel.KEY_PATIENT_ID + "=" + patientId, null);
-			} while (c.moveToNext());
-
+					DbProvider.openDb().update(DataModel.PATIENTS_TABLE, cv, DataModel.KEY_PATIENT_ID + "=" + patientId, null);
+				} while (c.moveToNext());
+			}
 			c.close();
 		}
 
@@ -638,14 +653,16 @@ public class Db {
 		String selectionArgs[] = { InstanceProviderAPI.STATUS_INCOMPLETE };
 		c = App.getApp().getContentResolver().query(Uri.parse(InstanceColumns.CONTENT_URI + "/groupbypatientid"), new String[] { InstanceColumns.PATIENT_ID, "count(*) as " + InstanceColumns.STATUS }, selection, selectionArgs, null);
 		if (c != null) {
-			do {
-				String patientId = c.getString(c.getColumnIndex(InstanceColumns.PATIENT_ID));
-				int formNumber = c.getInt(c.getColumnIndex(InstanceColumns.STATUS));
-				ContentValues cv = new ContentValues();
-				cv.put(DataModel.KEY_SAVED_FORM_NUMBER, formNumber);
+			if (c.moveToFirst()) {
+				do {
+					String patientId = c.getString(c.getColumnIndex(InstanceColumns.PATIENT_ID));
+					int formNumber = c.getInt(c.getColumnIndex(InstanceColumns.STATUS));
+					ContentValues cv = new ContentValues();
+					cv.put(DataModel.KEY_SAVED_FORM_NUMBER, formNumber);
 
-				DbProvider.openDb().update(DataModel.PATIENTS_TABLE, cv, DataModel.KEY_PATIENT_ID + "=" + patientId, null);
-			} while (c.moveToNext());
+					DbProvider.openDb().update(DataModel.PATIENTS_TABLE, cv, DataModel.KEY_PATIENT_ID + "=" + patientId, null);
+				} while (c.moveToNext());
+			}
 			c.close();
 		}
 	}

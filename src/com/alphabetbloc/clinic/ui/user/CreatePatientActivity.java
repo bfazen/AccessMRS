@@ -161,13 +161,13 @@ public class CreatePatientActivity extends BaseActivity implements OnGestureList
 		boolean similarFound = false;
 
 		Cursor c = null;
-		c = Db.open().fetchPatients(mFirstName + " " + mLastName, null, DashboardActivity.LIST_SIMILAR_CLIENTS);
+		c = Db.open().searchPatients(mFirstName + " " + mLastName, null, DashboardActivity.LIST_SIMILAR_CLIENTS);
 		if (c != null && c.getCount() > 0) {
 			similarFound = true;
 		}
 
 		if (!similarFound && mPatientID != null && mPatientID.length() > 3) {
-			c = Db.open().fetchPatients(null, mPatientID, DashboardActivity.LIST_SIMILAR_CLIENTS);
+			c = Db.open().searchPatients(null, mPatientID, DashboardActivity.LIST_SIMILAR_CLIENTS);
 			if (c != null && c.getCount() > 0) {
 				similarFound = true;
 			}

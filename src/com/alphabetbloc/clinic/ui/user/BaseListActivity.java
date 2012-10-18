@@ -15,33 +15,30 @@ import android.content.SyncStatusObserver;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 import android.view.GestureDetector.SimpleOnGestureListener;
-import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
-import android.view.View;
 import android.view.Window;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import com.alphabetbloc.clinic.R;
 import com.alphabetbloc.clinic.services.RefreshDataService;
+import com.alphabetbloc.clinic.services.SyncManager;
 import com.alphabetbloc.clinic.ui.admin.ClinicLauncherActivity;
 import com.alphabetbloc.clinic.ui.admin.PreferencesActivity;
 import com.alphabetbloc.clinic.utilities.App;
 import com.alphabetbloc.clinic.utilities.FileUtils;
+import com.alphabetbloc.clinic.utilities.UiUtils;
 
 /**
  * 
- * @author Louis Fazen (louis.fazen@gmail.com) (All Methods except where noted
- *         otherwise)
+ * @author Louis Fazen (louis.fazen@gmail.com)
  * 
- * @author Carl Hartung (I think... Wrote the ShowCustomToast methods for
- *         Collect)
  */
 public class BaseListActivity extends ListActivity implements SyncStatusObserver {
+
+	private static final String TAG = BaseListActivity.class.getSimpleName();
 
 	// Swiping Parameters
 	protected static final int SWIPE_MIN_DISTANCE = 120;
@@ -53,7 +50,7 @@ public class BaseListActivity extends ListActivity implements SyncStatusObserver
 	private static final int MENU_USER_PREFERENCES = Menu.FIRST + 1;
 	private static final int MENU_ADMIN_PREFERENCES = Menu.FIRST + 2;
 
-	//Dialog
+	// Dialog
 	private static final int PROGRESS_DIALOG = 1;
 
 	private static Object mSyncObserverHandle;
@@ -64,7 +61,7 @@ public class BaseListActivity extends ListActivity implements SyncStatusObserver
 		super.onCreate(savedInstanceState);
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		if (!FileUtils.storageReady()) {
-			showCustomToast(getString(R.string.error, R.string.storage_error));
+			UiUtils.toastAlert(this, getString(R.string.error_storage_title), getString(R.string.error_storage));
 			finish();
 		}
 
@@ -135,7 +132,7 @@ public class BaseListActivity extends ListActivity implements SyncStatusObserver
 
 	@Override
 	public void onStatusChanged(int which) {
-
+		Log.e(TAG, "ContentResolver Status has Changed");
 		runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
@@ -193,21 +190,6 @@ public class BaseListActivity extends ListActivity implements SyncStatusObserver
 		return mSyncActiveDialog;
 	}
 
-	protected void showCustomToast(String message) {
-		LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-		View view = inflater.inflate(R.layout.toast_view, null);
-
-		// set the text in the view
-		TextView tv = (TextView) view.findViewById(R.id.message);
-		tv.setText(message);
-
-		Toast t = new Toast(this);
-		t.setView(view);
-		t.setDuration(Toast.LENGTH_SHORT);
-		t.setGravity(Gravity.CENTER, 0, 0);
-		t.show();
-	}
-
 	// BUTTONS
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -240,12 +222,11 @@ public class BaseListActivity extends ListActivity implements SyncStatusObserver
 			startActivity(admin);
 			return true;
 		case MENU_REFRESH:
-			Intent id = new Intent(getApplicationContext(), RefreshDataActivity.class);
-			id.putExtra(RefreshDataActivity.DIALOG, RefreshDataActivity.DIRECT_TO_DOWNLOAD);
-			startActivity(id);
+			SyncManager.syncData();
 			return true;
 		default:
 			return super.onOptionsItemSelected(item);
 		}
 	}
+
 }

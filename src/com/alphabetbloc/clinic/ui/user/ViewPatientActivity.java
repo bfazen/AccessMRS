@@ -34,6 +34,7 @@ import com.alphabetbloc.clinic.providers.DataModel;
 import com.alphabetbloc.clinic.providers.Db;
 import com.alphabetbloc.clinic.services.RefreshDataService;
 import com.alphabetbloc.clinic.utilities.App;
+import com.alphabetbloc.clinic.utilities.UiUtils;
 
 /**
  * 
@@ -64,7 +65,7 @@ public class ViewPatientActivity extends BasePatientActivity {
 		Integer patientId = Integer.valueOf(patientIdStr);
 		mPatient = getPatient(patientId);
 		if (mPatient == null) {
-			showCustomToast(getString(R.string.error, R.string.no_patient));
+			UiUtils.toastAlert(mContext, getString(R.string.error_db), getString(R.string.error, R.string.no_patient));
 			finish();
 		}
 
@@ -81,7 +82,7 @@ public class ViewPatientActivity extends BasePatientActivity {
 				return mFormHistoryDetector.onTouchEvent(event);
 			}
 		};
-		
+
 		mSwipeDetector = new GestureDetector(new myGestureListener());
 		mSwipeListener = new OnTouchListener() {
 			@Override
@@ -153,14 +154,16 @@ public class ViewPatientActivity extends BasePatientActivity {
 	}
 
 	private boolean checkForForms() {
-		boolean checkForms = false;
 
+		boolean checkForms = false;
 		Cursor c = Db.open().fetchAllForms();
-		if (c != null && c.getCount() >= 0) {
-			checkForms = true;
-		}
-		if (c != null)
+
+		if (c != null) {
+			if (c.getCount() >= 0)
+				checkForms = true;
 			c.close();
+		}
+
 		return checkForms;
 	}
 
@@ -168,36 +171,34 @@ public class ViewPatientActivity extends BasePatientActivity {
 
 		Cursor c = Db.open().fetchPatient(patientId);
 
-		if (c != null && c.getCount() > 0) {
-
-			int priorityIndex = c.getColumnIndexOrThrow(DataModel.KEY_PRIORITY_FORM_NUMBER);
-			int priorityFormIndex = c.getColumnIndexOrThrow(DataModel.KEY_PRIORITY_FORM_NAMES);
-			int savedNumberIndex = c.getColumnIndexOrThrow(DataModel.KEY_SAVED_FORM_NUMBER);
-			int savedFormIndex = c.getColumnIndexOrThrow(DataModel.KEY_SAVED_FORM_NAMES);
-
-			mPatient.setPriorityNumber(c.getInt(priorityIndex));
-			mPatient.setPriorityForms(c.getString(priorityFormIndex));
-			mPatient.setSavedNumber(c.getInt(savedNumberIndex));
-			mPatient.setSavedForms(c.getString(savedFormIndex));
-
-			if (c.getInt(priorityIndex) > 0) {
-				mPatient.setPriority(true);
-			} else {
-				mPatient.setPriority(false);
-			}
-
-			if (c.getInt(savedNumberIndex) > 0) {
-				mPatient.setSaved(true);
-			} else {
-				mPatient.setSaved(false);
-			}
-
-		}
-
 		if (c != null) {
+			if (c.moveToFirst()) {
+
+				int priorityIndex = c.getColumnIndexOrThrow(DataModel.KEY_PRIORITY_FORM_NUMBER);
+				int priorityFormIndex = c.getColumnIndexOrThrow(DataModel.KEY_PRIORITY_FORM_NAMES);
+				int savedNumberIndex = c.getColumnIndexOrThrow(DataModel.KEY_SAVED_FORM_NUMBER);
+				int savedFormIndex = c.getColumnIndexOrThrow(DataModel.KEY_SAVED_FORM_NAMES);
+
+				mPatient.setPriorityNumber(c.getInt(priorityIndex));
+				mPatient.setPriorityForms(c.getString(priorityFormIndex));
+				mPatient.setSavedNumber(c.getInt(savedNumberIndex));
+				mPatient.setSavedForms(c.getString(savedFormIndex));
+
+				if (c.getInt(priorityIndex) > 0) {
+					mPatient.setPriority(true);
+				} else {
+					mPatient.setPriority(false);
+				}
+
+				if (c.getInt(savedNumberIndex) > 0) {
+					mPatient.setSaved(true);
+				} else {
+					mPatient.setSaved(false);
+				}
+			}
+
 			c.close();
 		}
-
 	}
 
 	private void getAllObservations(Integer patientId) {
@@ -268,7 +269,8 @@ public class ViewPatientActivity extends BasePatientActivity {
 		// i.putExtra(KEY_PATIENT_ID, patientIdStr);
 		// startActivity(i);
 		// } else {
-		// showCustomToast(getString(R.string.no_forms));
+		// UiUtils.toastAlert(mContext, getString(R.string.error),
+		// getString(R.string.no_forms));
 		// }
 		// }
 		// });
@@ -341,7 +343,7 @@ public class ViewPatientActivity extends BasePatientActivity {
 				i.putExtra(KEY_PATIENT_ID, patientIdStr);
 				startActivity(i);
 			} else {
-				showCustomToast(getString(R.string.no_forms));
+				UiUtils.toastAlert(mContext, getString(R.string.error), getString(R.string.no_forms));
 			}
 			return false;
 		}

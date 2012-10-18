@@ -16,15 +16,11 @@ import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 import android.util.Log;
-import android.view.Gravity;
-import android.view.LayoutInflater;
-import android.view.View;
 import android.view.Window;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import com.alphabetbloc.clinic.R;
 import com.alphabetbloc.clinic.utilities.App;
+import com.alphabetbloc.clinic.utilities.UiUtils;
 
 /**
  * 
@@ -122,7 +118,7 @@ public class PreferencesActivity extends PreferenceActivity implements OnSharedP
 			String timeString = getDuration(newValue);
 			changedPref.setSummary(timeString);
 		} else {
-			showCustomToast(getString(R.string.pref_min_requirement));
+			UiUtils.toastAlert(this, getString(R.string.pref_not_allowed), getString(R.string.pref_min_requirement));
 			prefs.edit().putString(key, ADMIN_PREFERENCES.get(key)).commit();
 		}
 
@@ -149,7 +145,7 @@ public class PreferencesActivity extends PreferenceActivity implements OnSharedP
 				ContentResolver.addPeriodicSync(accounts[0], getString(R.string.app_provider_authority), new Bundle(), newValue);
 			}
 		} else {
-			showCustomToast(getString(R.string.pref_max_requirement));
+			UiUtils.toastAlert(this, getString(R.string.pref_not_allowed), getString(R.string.pref_max_requirement));
 			prefs.edit().putString(key, ADMIN_PREFERENCES.get(key)).commit();
 		}
 
@@ -161,7 +157,7 @@ public class PreferencesActivity extends PreferenceActivity implements OnSharedP
 			intValue = Integer.parseInt(value);
 			return true;
 		} catch (NumberFormatException nfe) {
-			showCustomToast(getString(R.string.pref_not_an_int));
+			UiUtils.toastAlert(this, getString(R.string.pref_not_allowed), getString(R.string.pref_not_an_int));
 			System.out.println("Could not parse " + nfe);
 			return false;
 		}
@@ -259,18 +255,4 @@ public class PreferencesActivity extends PreferenceActivity implements OnSharedP
 		getPreferenceScreen().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
 	}
 
-	private void showCustomToast(String message) {
-		LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-		View view = inflater.inflate(R.layout.toast_view, null);
-
-		// set the text in the view
-		TextView tv = (TextView) view.findViewById(R.id.message);
-		tv.setText(message);
-
-		Toast t = new Toast(this);
-		t.setView(view);
-		t.setDuration(Toast.LENGTH_SHORT);
-		t.setGravity(Gravity.CENTER, 0, 0);
-		t.show();
-	}
 }

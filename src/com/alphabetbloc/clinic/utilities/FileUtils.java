@@ -439,7 +439,11 @@ public class FileUtils {
 			KeyStore sslStore = KeyStore.getInstance(instance);
 			InputStream in = new FileInputStream(localTrustStoreFile);
 			try {
-				sslStore.load(in, EncryptionUtil.getPassword().toCharArray());
+				String password = EncryptionUtil.getPassword();
+				if (password != null)
+					sslStore.load(in, password.toCharArray());
+				else
+					sslStore = null;
 			} finally {
 				in.close();
 			}
@@ -449,8 +453,7 @@ public class FileUtils {
 			throw new RuntimeException(e);
 		}
 	}
-	
-	
+
 	public static boolean isDataWiped() {
 
 		File clinicDb = App.getApp().getDatabasePath(DataModel.DATABASE_NAME);

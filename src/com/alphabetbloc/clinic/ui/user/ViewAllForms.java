@@ -30,7 +30,6 @@ import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.alphabetbloc.clinic.R;
 import com.alphabetbloc.clinic.adapters.FormAdapter;
@@ -41,6 +40,7 @@ import com.alphabetbloc.clinic.providers.DataModel;
 import com.alphabetbloc.clinic.providers.Db;
 import com.alphabetbloc.clinic.utilities.App;
 import com.alphabetbloc.clinic.utilities.FileUtils;
+import com.alphabetbloc.clinic.utilities.UiUtils;
 import com.alphabetbloc.clinic.utilities.XformUtils;
 
 /**
@@ -81,7 +81,7 @@ public class ViewAllForms extends ViewFormsActivity {
 		setContentView(R.layout.example_cw_main);
 
 		if (!FileUtils.storageReady()) {
-			Toast.makeText(this, getString(R.string.error, R.string.storage_error), Toast.LENGTH_SHORT).show();
+			UiUtils.toastAlert(this, getString(R.string.error_storage_title), getString(R.string.error_storage));
 			finish();
 		}
 
@@ -119,30 +119,29 @@ public class ViewAllForms extends ViewFormsActivity {
 
 		Cursor c = Db.open().fetchAllForms();
 
-		if (c != null && c.getCount() >= 0) {
+		if (c != null) {
+			if (c.moveToFirst()) {
+				mTotalForms.clear();
+				int formIdIndex = c.getColumnIndex(DataModel.KEY_FORM_ID);
+				int nameIndex = c.getColumnIndex(DataModel.KEY_NAME);
+				int pathIndex = c.getColumnIndex(DataModel.KEY_PATH);
 
-			mTotalForms.clear();
-			int formIdIndex = c.getColumnIndex(DataModel.KEY_FORM_ID);
-			int nameIndex = c.getColumnIndex(DataModel.KEY_NAME);
-			int pathIndex = c.getColumnIndex(DataModel.KEY_PATH);
-
-			if (c.getCount() > 0) {
-				Form form;
-				do {
-					if (!c.isNull(formIdIndex)) {
-						form = new Form();
-						form.setFormId(c.getInt(formIdIndex));
-						form.setName(c.getString(nameIndex));
-						form.setPath(c.getString(pathIndex));
-						mTotalForms.add(form);
-					}
-				} while (c.moveToNext());
+				if (c.getCount() > 0) {
+					Form form;
+					do {
+						if (!c.isNull(formIdIndex)) {
+							form = new Form();
+							form.setFormId(c.getInt(formIdIndex));
+							form.setName(c.getString(nameIndex));
+							form.setPath(c.getString(pathIndex));
+							mTotalForms.add(form);
+						}
+					} while (c.moveToNext());
+				}
 			}
-		}
 
-		if (c != null)
 			c.close();
-
+		}
 	}
 
 	@Override
@@ -392,9 +391,10 @@ public class ViewAllForms extends ViewFormsActivity {
 		} else {
 			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 			boolean promptUser = prefs.getBoolean(getString(R.string.key_show_form_prompt), true);
-			if (promptUser)
+			if (promptUser){
 				mFormDialog = createAskDialog(f.getFormId().toString(), f.getName(), formType);
-			else
+				mFormDialog.show();
+			}else
 				launchFormEntry(f.getFormId().toString(), f.getName(), formType);
 
 			type = "New Form";
@@ -519,7 +519,7 @@ public class ViewAllForms extends ViewFormsActivity {
 			}
 
 		} catch (ActivityNotFoundException e) {
-			showCustomToast(getString(R.string.error, getString(R.string.odk_collect_error)));
+			UiUtils.toastAlert(this, getString(R.string.installation_error), getString(R.string.error, getString(R.string.odk_collect_error)));
 		}
 	}
 

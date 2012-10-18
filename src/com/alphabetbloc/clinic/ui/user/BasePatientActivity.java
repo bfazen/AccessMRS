@@ -17,7 +17,6 @@ import android.widget.TextView;
 import com.alphabetbloc.clinic.R;
 import com.alphabetbloc.clinic.data.Patient;
 import com.alphabetbloc.clinic.providers.DataModel;
-import com.alphabetbloc.clinic.providers.DbProvider;
 import com.alphabetbloc.clinic.providers.Db;
 
 /**
@@ -36,7 +35,7 @@ public class BasePatientActivity extends BaseListActivity implements SyncStatusO
 	public static final String KEY_OBSERVATION_FIELD_NAME = "KEY_OBSERVATION_FIELD_NAME";
 	private OnTouchListener mSwipeListener;
 	private GestureDetector mSwipeDetector;
-	
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -48,7 +47,7 @@ public class BasePatientActivity extends BaseListActivity implements SyncStatusO
 			}
 		};
 	}
-	
+
 	protected void createPatientHeader(Integer patientId) {
 
 		Patient focusPt = getPatient(patientId);
@@ -113,35 +112,35 @@ public class BasePatientActivity extends BaseListActivity implements SyncStatusO
 
 		Cursor c = Db.open().fetchPatient(patientId);
 
-		if (c != null && c.getCount() > 0) {
-			int patientIdIndex = c.getColumnIndex(DataModel.KEY_PATIENT_ID);
-			int identifierIndex = c.getColumnIndex(DataModel.KEY_IDENTIFIER);
-			int givenNameIndex = c.getColumnIndex(DataModel.KEY_GIVEN_NAME);
-			int familyNameIndex = c.getColumnIndex(DataModel.KEY_FAMILY_NAME);
-			int middleNameIndex = c.getColumnIndex(DataModel.KEY_MIDDLE_NAME);
-			int birthDateIndex = c.getColumnIndex(DataModel.KEY_BIRTH_DATE);
-			int genderIndex = c.getColumnIndex(DataModel.KEY_GENDER);
-			int priorityIndex = c.getColumnIndexOrThrow(DataModel.KEY_PRIORITY_FORM_NUMBER);
-			int priorityFormIndex = c.getColumnIndexOrThrow(DataModel.KEY_PRIORITY_FORM_NAMES);
-
-			p = new Patient();
-			p.setPatientId(c.getInt(patientIdIndex));
-			p.setIdentifier(c.getString(identifierIndex));
-			p.setGivenName(c.getString(givenNameIndex));
-			p.setFamilyName(c.getString(familyNameIndex));
-			p.setMiddleName(c.getString(middleNameIndex));
-			p.setBirthDate(c.getString(birthDateIndex));
-			p.setGender(c.getString(genderIndex));
-			p.setPriorityNumber(c.getInt(priorityIndex));
-			p.setPriorityForms(c.getString(priorityFormIndex));
-
-			if (c.getInt(priorityIndex) > 0) {
-				p.setPriority(true);
-			}
-
-		}
-
 		if (c != null) {
+			if (c.moveToFirst()) {
+
+				int patientIdIndex = c.getColumnIndex(DataModel.KEY_PATIENT_ID);
+				int identifierIndex = c.getColumnIndex(DataModel.KEY_IDENTIFIER);
+				int givenNameIndex = c.getColumnIndex(DataModel.KEY_GIVEN_NAME);
+				int familyNameIndex = c.getColumnIndex(DataModel.KEY_FAMILY_NAME);
+				int middleNameIndex = c.getColumnIndex(DataModel.KEY_MIDDLE_NAME);
+				int birthDateIndex = c.getColumnIndex(DataModel.KEY_BIRTH_DATE);
+				int genderIndex = c.getColumnIndex(DataModel.KEY_GENDER);
+				int priorityIndex = c.getColumnIndexOrThrow(DataModel.KEY_PRIORITY_FORM_NUMBER);
+				int priorityFormIndex = c.getColumnIndexOrThrow(DataModel.KEY_PRIORITY_FORM_NAMES);
+
+				p = new Patient();
+				p.setPatientId(c.getInt(patientIdIndex));
+				p.setIdentifier(c.getString(identifierIndex));
+				p.setGivenName(c.getString(givenNameIndex));
+				p.setFamilyName(c.getString(familyNameIndex));
+				p.setMiddleName(c.getString(middleNameIndex));
+				p.setBirthDate(c.getString(birthDateIndex));
+				p.setGender(c.getString(genderIndex));
+				p.setPriorityNumber(c.getInt(priorityIndex));
+				p.setPriorityForms(c.getString(priorityFormIndex));
+
+				if (c.getInt(priorityIndex) > 0) {
+					p.setPriority(true);
+				}
+			}
+			
 			c.close();
 		}
 
@@ -153,7 +152,7 @@ public class BasePatientActivity extends BaseListActivity implements SyncStatusO
 	public boolean onCreateOptionsMenu(Menu menu) {
 		return false;
 	}
-	
+
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		return false;

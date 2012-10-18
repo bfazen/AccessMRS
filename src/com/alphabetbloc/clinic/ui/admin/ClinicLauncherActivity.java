@@ -34,6 +34,7 @@ import com.alphabetbloc.clinic.ui.user.DashboardActivity;
 import com.alphabetbloc.clinic.utilities.App;
 import com.alphabetbloc.clinic.utilities.EncryptionUtil;
 import com.alphabetbloc.clinic.utilities.KeyStoreUtil;
+import com.alphabetbloc.clinic.utilities.UiUtils;
 
 /**
  * 
@@ -84,7 +85,7 @@ public class ClinicLauncherActivity extends Activity {
 		try {
 			getPackageManager().getPackageInfo("org.odk.collect.android", PackageManager.GET_META_DATA);
 		} catch (NameNotFoundException e) {
-			showCustomToast("Collect Must Be Installed To Use This Software!");
+			UiUtils.toastAlert(this, getString(R.string.installation_error), getString(R.string.collect_not_installed));
 			return false;
 		}
 
@@ -196,7 +197,7 @@ public class ClinicLauncherActivity extends Activity {
 			Log.e(TAG, "there is an account numer=" + accounts.length + "username=" + accounts[0].name);
 			return true;
 		} else {
-			showCustomToast("You must setup an account to use clinic!");
+			UiUtils.toastAlert(this, getString(R.string.installation_error), getString(R.string.auth_no_account));
 			Intent i = new Intent(this, SetupAccountActivity.class);
 			i.putExtra(SetupAccountActivity.LAUNCHED_FROM_ACCT_MGR, false);
 			startActivity(i);
@@ -224,21 +225,6 @@ public class ClinicLauncherActivity extends Activity {
 		Intent i = new Intent(this, SetupPreferencesActivity.class);
 		i.putExtra(SetupPreferencesActivity.SETUP_INTENT, SetupPreferencesActivity.RESET_COLLECT);
 		startActivity(i);
-	}
-
-	private void showCustomToast(String message) {
-		LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-		View view = inflater.inflate(R.layout.toast_view, null);
-
-		// set the text in the view
-		TextView tv = (TextView) view.findViewById(R.id.message);
-		tv.setText(message);
-
-		Toast t = new Toast(this);
-		t.setView(view);
-		t.setDuration(Toast.LENGTH_SHORT);
-		t.setGravity(Gravity.CENTER, 0, 0);
-		t.show();
 	}
 
 }

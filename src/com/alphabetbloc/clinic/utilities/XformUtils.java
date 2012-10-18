@@ -271,29 +271,28 @@ public class XformUtils {
 
 	}
 
-	// TODO! change this to retrive the one form you want!
+	// TODO! change this to retrieve the one form you want!
 	private static String getNameFromId(Integer id) {
 		String formName = null;
 		Cursor c = Db.open().fetchAllForms();
 
-		if (c != null && c.getCount() >= 0) {
+		if (c != null) {
+			if (c.moveToFirst()) {
+				int formIdIndex = c.getColumnIndex(DataModel.KEY_FORM_ID);
+				int nameIndex = c.getColumnIndex(DataModel.KEY_NAME);
 
-			int formIdIndex = c.getColumnIndex(DataModel.KEY_FORM_ID);
-			int nameIndex = c.getColumnIndex(DataModel.KEY_NAME);
-
-			if (c.getCount() > 0) {
-				do {
-					if (c.getInt(formIdIndex) == id) {
-						formName = c.getString(nameIndex);
-						break;
-					}
-				} while (c.moveToNext());
+				if (c.getCount() > 0) {
+					do {
+						if (c.getInt(formIdIndex) == id) {
+							formName = c.getString(nameIndex);
+							break;
+						}
+					} while (c.moveToNext());
+				}
 			}
-		}
-
-		if (c != null)
+			
 			c.close();
-
+		}
 		return formName;
 	}
 

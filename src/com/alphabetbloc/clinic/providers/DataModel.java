@@ -73,8 +73,8 @@ public class DataModel {
 	public static final String DOWNLOAD_TIME = "download_time";
 
 	//sync table
-	public static final String TABLE_NAME = "table";
-	public static final String SYNC_STATUS = "status";
+	public static final String TABLE_NAME = "table_name";
+	public static final String SYNC_STATUS = "sync_status";
 	public static final String SYNC_RESULT = "sync_result";
 	
 	// tables

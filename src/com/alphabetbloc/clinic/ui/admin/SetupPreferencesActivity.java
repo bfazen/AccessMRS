@@ -21,8 +21,6 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
-import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
@@ -30,7 +28,6 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.alphabetbloc.clinic.R;
 import com.alphabetbloc.clinic.providers.DataModel;
@@ -42,6 +39,7 @@ import com.alphabetbloc.clinic.utilities.Crypto;
 import com.alphabetbloc.clinic.utilities.EncryptionUtil;
 import com.alphabetbloc.clinic.utilities.FileUtils;
 import com.alphabetbloc.clinic.utilities.KeyStoreUtil;
+import com.alphabetbloc.clinic.utilities.UiUtils;
 
 /**
  * 
@@ -120,7 +118,8 @@ public class SetupPreferencesActivity extends Activity {
 			break;
 
 		case RESET_CLINIC:
-			showCustomToast(getString(R.string.sql_error_lost_db_key));
+			UiUtils.toastAlert(mContext, getString(R.string.sql_error_lost_db_key_title), getString(R.string.sql_error_lost_db_key));
+			Log.e(TAG, "RESETTING CLINIC: " + getString(R.string.sql_error_lost_db_key));
 			WakefulIntentService.sendWakefulWork(mContext, WipeDataService.class);
 			SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
 			settings.edit().putBoolean(getString(R.string.key_first_run), true).commit();
@@ -129,7 +128,8 @@ public class SetupPreferencesActivity extends Activity {
 			break;
 
 		case RESET_COLLECT:
-			showCustomToast(getString(R.string.sql_error_lost_db_key));
+			UiUtils.toastAlert(mContext, getString(R.string.sql_error_lost_db_key_title), getString(R.string.sql_error_lost_db_key));
+			Log.e(TAG, "RESETTING COLLECT: " + getString(R.string.sql_error_lost_db_key));
 			Intent i = new Intent(mContext, WipeDataService.class);
 			i.putExtra(WipeDataService.WIPE_CLINIC_DATA, false);
 			WakefulIntentService.sendWakefulWork(mContext, i);
@@ -214,7 +214,7 @@ public class SetupPreferencesActivity extends Activity {
 			String userEntry = mEditText.getText().toString();
 			mEditText.setText("");
 			if (userEntry.equals(""))
-				showCustomToast("Could not verify password. Please Click To Enter Password.");
+				UiUtils.toastAlert(mContext, getString(R.string.sql_error_title), getString(R.string.sql_error_empty_password));
 
 			switch (mStep) {
 			case VERIFY_ENTRY:
@@ -222,7 +222,7 @@ public class SetupPreferencesActivity extends Activity {
 					mStep = ASK_NEW_ENTRY;
 					mInstructionText.setText(R.string.sql_change_sqlcipher_pwd);
 				} else {
-					showCustomToast("Incorrect Password");
+					UiUtils.toastAlert(mContext, getString(R.string.sql_error_title), getString(R.string.sql_error_verify_pwd));
 				}
 				break;
 			case ASK_NEW_ENTRY:
@@ -232,7 +232,7 @@ public class SetupPreferencesActivity extends Activity {
 					mInstructionText.setText(R.string.sql_confirm_sqlcipher_pwd);
 					mStep = CONFIRM_ENTRY;
 				} else {
-					showCustomToast("Passwords must include a mix of numbers, upper and lower case letters and be at least six characters long.");
+					UiUtils.toastAlert(mContext, getString(R.string.sql_error_title), getString(R.string.sql_error_new_pwd));
 				}
 				break;
 			case CONFIRM_ENTRY:
@@ -243,7 +243,7 @@ public class SetupPreferencesActivity extends Activity {
 				} else {
 					mStep = ASK_NEW_ENTRY;
 					mInstructionText.setText(R.string.sql_set_sqlcipher_pwd);
-					showCustomToast("Passwords do not match. Please enter a new password");
+					UiUtils.toastAlert(mContext, getString(R.string.sql_error_title), getString(R.string.sql_error_confirm_pwd));
 				}
 				break;
 			default:
@@ -345,7 +345,7 @@ public class SetupPreferencesActivity extends Activity {
 		try {
 			// Simply opening the db should force it to start a new encrypted db
 			Cursor c = App.getApp().getContentResolver().query(Uri.parse(InstanceColumns.CONTENT_URI + "/reset"), null, null, null, null);
-			if(c != null)
+			if (c != null)
 				c.close();
 			isCollectSetup = true;
 
@@ -440,19 +440,5 @@ public class SetupPreferencesActivity extends Activity {
 		super.onActivityResult(requestCode, resultCode, data);
 	}
 
-	private void showCustomToast(String message) {
-		LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-		View view = inflater.inflate(R.layout.toast_view, null);
-
-		// set the text in the view
-		TextView tv = (TextView) view.findViewById(R.id.message);
-		tv.setText(message);
-
-		Toast t = new Toast(this);
-		t.setView(view);
-		t.setDuration(Toast.LENGTH_SHORT);
-		t.setGravity(Gravity.CENTER, 0, 0);
-		t.show();
-	}
 
 }

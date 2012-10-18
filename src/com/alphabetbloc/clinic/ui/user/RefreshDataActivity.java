@@ -4,31 +4,25 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.Gravity;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import com.alphabetbloc.clinic.R;
 import com.alphabetbloc.clinic.services.RefreshDataService;
 import com.alphabetbloc.clinic.utilities.FileUtils;
+import com.alphabetbloc.clinic.utilities.UiUtils;
 
 /**
  * 
- * @author Louis Fazen (louis.fazen@gmail.com) (All Methods except where noted otherwise)
+ * @author Louis Fazen (louis.fazen@gmail.com) (All Methods except where noted
+ *         otherwise)
  * 
- * @author Yaw Anokwa, Carl Hartung (specifically, ShowCustomToast Method was derived from ODK Clinic/Collect not sure
- *         of authorship?)
  */
 
-//TODO! Delete this class!!!1
-public class RefreshDataActivity extends Activity  {
+// TODO! Delete this class!!!1
+public class RefreshDataActivity extends Activity {
 
 	public final static int ASK_TO_DOWNLOAD = 1;
 	public final static int DIRECT_TO_DOWNLOAD = 2;
@@ -46,7 +40,7 @@ public class RefreshDataActivity extends Activity  {
 		// mContext = this;
 
 		if (!FileUtils.storageReady()) {
-			showCustomToast(getString(R.string.error, R.string.storage_error));
+			UiUtils.toastAlert(this, getString(R.string.error_storage_title), getString(R.string.error_storage));
 			setResult(RESULT_CANCELED);
 			finish();
 		}
@@ -55,10 +49,7 @@ public class RefreshDataActivity extends Activity  {
 
 		// get the task if we've changed orientations.
 
-			showDialog(showProgress);
-
-				
-
+		showDialog(showProgress);
 
 	}
 
@@ -67,7 +58,7 @@ public class RefreshDataActivity extends Activity  {
 		super.onResume();
 
 		if (mSyncDialog != null && !mSyncDialog.isShowing()) {
-			
+
 			mSyncDialog.show();
 		}
 
@@ -131,11 +122,10 @@ public class RefreshDataActivity extends Activity  {
 		DialogInterface.OnClickListener loadingButtonListener = new DialogInterface.OnClickListener() {
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
-				
-			
+
 				dialog.dismiss();
 				stopRefreshDataActivity(true);
-				
+
 			}
 		};
 
@@ -144,7 +134,7 @@ public class RefreshDataActivity extends Activity  {
 		pD.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
 		pD.setIndeterminate(false);
 		pD.setCancelable(false);
-//		pD.setButton(getString(R.string.cancel), loadingButtonListener);
+		// pD.setButton(getString(R.string.cancel), loadingButtonListener);
 		return pD;
 	}
 
@@ -191,22 +181,6 @@ public class RefreshDataActivity extends Activity  {
 		if (mAlertDialog != null && mAlertDialog.isShowing()) {
 			mAlertDialog.dismiss();
 		}
-
-	}
-
-	private void showCustomToast(String message) {
-
-		LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-		View view = inflater.inflate(R.layout.toast_view, null);
-
-		TextView tv = (TextView) view.findViewById(R.id.message);
-		tv.setText(message);
-
-		Toast t = new Toast(this);
-		t.setView(view);
-		t.setDuration(Toast.LENGTH_LONG);
-		t.setGravity(Gravity.BOTTOM, 0, -20);
-		t.show();
 
 	}
 
