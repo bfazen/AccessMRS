@@ -75,6 +75,7 @@ public class BaseActivity extends Activity implements SyncStatusObserver {
 					Log.e(TAG, "SyncStatusChanged: completing sync");
 					// dismiss dialog
 					if (mSyncActiveDialog != null) {
+						Log.e(TAG, "SyncStatusChanged: getting tid of syncDialog");
 						mSyncActiveDialog.dismiss();
 					}
 
@@ -156,14 +157,20 @@ public class BaseActivity extends Activity implements SyncStatusObserver {
 
 	}
 
-
 	private void updateSyncProgress() {
 		Log.i(TAG, "Updating Progress! with mSyncActiveDialog=" + mSyncActiveDialog);
 		SyncManager.sSyncComplete = false;
-		if (mSyncActiveDialog != null)
+		if (mSyncActiveDialog != null) {
+			Log.e(TAG, "mSyncActiveDialog is not null and SyncManager.sLoopProgress=" + SyncManager.sLoopProgress + " SyncManager.sSyncStep=" + SyncManager.sSyncStep);
 			mSyncActiveDialog.setProgress(0);
+			SyncManager.sSyncStep = 0;
+			SyncManager.sLoopProgress = 0;
+			SyncManager.sLoopCount = 0;
+		} else
+			Log.e(TAG, "mSyncActiveDialog is NULL and SyncManager.sLoopProgress=" + SyncManager.sLoopProgress + " SyncManager.sSyncStep=" + SyncManager.sSyncStep);
+
 		showDialog(PROGRESS_DIALOG);
-		
+
 		mExecutor.schedule(new Runnable() {
 			public void run() {
 
@@ -187,10 +194,8 @@ public class BaseActivity extends Activity implements SyncStatusObserver {
 				}
 			}
 		}, 0, TimeUnit.MILLISECONDS);
-		
-		
-	}
 
+	}
 
 	private BroadcastReceiver onNotice = new BroadcastReceiver() {
 		public void onReceive(Context ctxt, Intent i) {
@@ -223,49 +228,55 @@ public class BaseActivity extends Activity implements SyncStatusObserver {
 		ContentResolver.removeStatusChangeListener(mSyncObserverHandle);
 		LocalBroadcastManager.getInstance(this).unregisterReceiver(onNotice);
 	}
-	
-//	private void updateSyncProgressOriginal() {
-//		SyncManager.sSyncComplete = false;
-//		if (mSyncActiveDialog != null)
-//			mSyncActiveDialog.setProgress(0);
-//		showDialog(PROGRESS_DIALOG);
-//		mExecutor.schedule(new ProgressRunnable(), 0, TimeUnit.MILLISECONDS);
-//		Log.i(TAG, "Updating Progress! with mSyncActiveDialog=" + mSyncActiveDialog);
-//	}
-//	class ProgressRunnable implements Runnable {
-//		public void run() {
-//
-//			if (!SyncManager.sSyncComplete) {
-//				mExecutor.schedule(this, 800, TimeUnit.MILLISECONDS);
-//				BaseActivity.this.runOnUiThread(new Runnable() {
-//
-//					@Override
-//					public void run() {
-//						// Log.i(TAG, "Updating Progress: Title=" +
-//						// SyncManager.sSyncTitle + " Step=" +
-//						// SyncManager.sSyncStep + " Progress=" +
-//						// SyncManager.sLoopProgress + " Count=" +
-//						// SyncManager.sLoopCount);
-//						int loop = (SyncManager.sLoopProgress == SyncManager.sLoopCount) ? 0 : ((int) Math.round(((float) SyncManager.sLoopProgress / (float) SyncManager.sLoopCount) * 20F));
-//						mSyncActiveDialog.setProgress((SyncManager.sSyncStep * 10) + loop);
-//						mSyncActiveDialog.setMessage(SyncManager.sSyncTitle);
-//					}
-//				});
-//
-//			}
-//		}
-//	}
-//
-//	private void updateProgress() {
-//		Log.i(TAG, "Updating Progress: Title=" + SyncManager.sSyncTitle + " Step=" + SyncManager.sSyncStep + " Progress=" + SyncManager.sLoopProgress + " Count=" + SyncManager.sLoopCount);
-//		int loop = (SyncManager.sLoopProgress == SyncManager.sLoopCount) ? 0 : ((int) Math.round(((float) SyncManager.sLoopProgress / (float) SyncManager.sLoopCount) * 20F));
-//		Log.i(TAG, "Updating Progress: Add value=" + loop);
-//		mSyncActiveDialog.setProgress((SyncManager.sSyncStep * 10) + loop);
-//		mSyncActiveDialog.setMessage(SyncManager.sSyncTitle);
-//		// mSyncActiveDialog.setTitle(SyncManager.sSyncTitle);
-//
-//		Log.e(TAG, "just updated the Title to=" + SyncManager.sSyncTitle);
-//	}
 
+	// private void updateSyncProgressOriginal() {
+	// SyncManager.sSyncComplete = false;
+	// if (mSyncActiveDialog != null)
+	// mSyncActiveDialog.setProgress(0);
+	// showDialog(PROGRESS_DIALOG);
+	// mExecutor.schedule(new ProgressRunnable(), 0, TimeUnit.MILLISECONDS);
+	// Log.i(TAG, "Updating Progress! with mSyncActiveDialog=" +
+	// mSyncActiveDialog);
+	// }
+	// class ProgressRunnable implements Runnable {
+	// public void run() {
+	//
+	// if (!SyncManager.sSyncComplete) {
+	// mExecutor.schedule(this, 800, TimeUnit.MILLISECONDS);
+	// BaseActivity.this.runOnUiThread(new Runnable() {
+	//
+	// @Override
+	// public void run() {
+	// // Log.i(TAG, "Updating Progress: Title=" +
+	// // SyncManager.sSyncTitle + " Step=" +
+	// // SyncManager.sSyncStep + " Progress=" +
+	// // SyncManager.sLoopProgress + " Count=" +
+	// // SyncManager.sLoopCount);
+	// int loop = (SyncManager.sLoopProgress == SyncManager.sLoopCount) ? 0 :
+	// ((int) Math.round(((float) SyncManager.sLoopProgress / (float)
+	// SyncManager.sLoopCount) * 20F));
+	// mSyncActiveDialog.setProgress((SyncManager.sSyncStep * 10) + loop);
+	// mSyncActiveDialog.setMessage(SyncManager.sSyncTitle);
+	// }
+	// });
+	//
+	// }
+	// }
+	// }
+	//
+	// private void updateProgress() {
+	// Log.i(TAG, "Updating Progress: Title=" + SyncManager.sSyncTitle +
+	// " Step=" + SyncManager.sSyncStep + " Progress=" +
+	// SyncManager.sLoopProgress + " Count=" + SyncManager.sLoopCount);
+	// int loop = (SyncManager.sLoopProgress == SyncManager.sLoopCount) ? 0 :
+	// ((int) Math.round(((float) SyncManager.sLoopProgress / (float)
+	// SyncManager.sLoopCount) * 20F));
+	// Log.i(TAG, "Updating Progress: Add value=" + loop);
+	// mSyncActiveDialog.setProgress((SyncManager.sSyncStep * 10) + loop);
+	// mSyncActiveDialog.setMessage(SyncManager.sSyncTitle);
+	// // mSyncActiveDialog.setTitle(SyncManager.sSyncTitle);
+	//
+	// Log.e(TAG, "just updated the Title to=" + SyncManager.sSyncTitle);
+	// }
 
 }

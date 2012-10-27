@@ -1,7 +1,9 @@
 package com.alphabetbloc.clinic.ui.user;
 
-import android.accounts.Account;
-import android.accounts.AccountManager;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 import android.app.Dialog;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
@@ -25,9 +27,7 @@ import android.view.Window;
 import com.alphabetbloc.clinic.R;
 import com.alphabetbloc.clinic.services.RefreshDataService;
 import com.alphabetbloc.clinic.services.SyncManager;
-import com.alphabetbloc.clinic.ui.admin.ClinicLauncherActivity;
 import com.alphabetbloc.clinic.ui.admin.PreferencesActivity;
-import com.alphabetbloc.clinic.utilities.App;
 import com.alphabetbloc.clinic.utilities.FileUtils;
 import com.alphabetbloc.clinic.utilities.UiUtils;
 
@@ -53,8 +53,10 @@ public class BaseListActivity extends ListActivity implements SyncStatusObserver
 	// Dialog
 	private static final int PROGRESS_DIALOG = 1;
 
-	private static Object mSyncObserverHandle;
 	private static ProgressDialog mSyncActiveDialog;
+	private static Object mSyncObserverHandle;
+	private Context mToastCtx;
+	private ScheduledExecutorService mExecutor = Executors.newScheduledThreadPool(5);
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -62,23 +64,145 @@ public class BaseListActivity extends ListActivity implements SyncStatusObserver
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		if (!FileUtils.storageReady()) {
 			UiUtils.toastAlert(this, getString(R.string.error_storage_title), getString(R.string.error_storage));
+			setResult(RESULT_CANCELED);
 			finish();
 		}
+	}
 
+	@Override
+	public void onStatusChanged(int which) {
+		Log.e(TAG, "SyncStatusObserver Status has Changed");
+		runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				if (!RefreshDataService.isSyncActive) {
+					// Sync is not yet active, so we must be starting a sync
+					Log.e(TAG, "SyncStatusChanged: starting a Sync");
+					updateSyncProgress();
+					// showDialog(PROGRESS_DIALOG);
+
+				} else {
+					// we are just completing a sync (whether success or not)
+					Log.e(TAG, "SyncStatusChanged: completing sync");
+					// dismiss dialog
+					if (mSyncActiveDialog != null) {
+						mSyncActiveDialog.dismiss();
+					}
+
+					// refreshView
+					// Intent relaunch = new Intent(App.getApp(),
+					// ClinicLauncherActivity.class);
+					// relaunch.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+					// relaunch.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+					// startActivity(relaunch);
+				}
+			}
+		});
+
+	}
+
+	@Override
+	protected Dialog onCreateDialog(int id) {
+		mSyncActiveDialog = new ProgressDialog(this);
+		mSyncActiveDialog.setIcon(android.R.drawable.ic_dialog_info);
+		mSyncActiveDialog.setTitle(getString(R.string.sync_in_progress_title));
+		mSyncActiveDialog.setMessage(getString(R.string.sync_in_progress));
+		mSyncActiveDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+		mSyncActiveDialog.setCancelable(false);
+		return mSyncActiveDialog;
+	}
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		super.onCreateOptionsMenu(menu);
+		menu.add(0, MENU_REFRESH, MENU_REFRESH, getString(R.string.download_patients)).setIcon(R.drawable.ic_menu_refresh);
+		menu.add(0, MENU_USER_PREFERENCES, MENU_USER_PREFERENCES, getString(R.string.pref_settings)).setIcon(android.R.drawable.ic_menu_preferences);
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
+		boolean showMenu = prefs.getBoolean(getString(R.string.key_show_settings_menu), false);
+		if (showMenu)
+			menu.add(0, MENU_ADMIN_PREFERENCES, MENU_ADMIN_PREFERENCES, getString(R.string.pref_admin_settings)).setIcon(android.R.drawable.ic_lock_lock);
+
+		return true;
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		savePosition();
+
+		switch (item.getItemId()) {
+		case MENU_USER_PREFERENCES:
+			Intent user = new Intent(this, PreferencesActivity.class);
+			user.putExtra(PreferencesActivity.ADMIN_PREFERENCE, false);
+			startActivity(user);
+			return true;
+		case MENU_ADMIN_PREFERENCES:
+			Intent admin = new Intent(this, PreferencesActivity.class);
+			admin.putExtra(PreferencesActivity.ADMIN_PREFERENCE, true);
+			startActivity(admin);
+			return true;
+		case MENU_REFRESH:
+			SyncManager.syncData();
+			return true;
+		default:
+			return super.onOptionsItemSelected(item);
+		}
 	}
 
 	@Override
 	protected void onResume() {
 		super.onResume();
-		IntentFilter filter = new IntentFilter(RefreshDataService.REFRESH_BROADCAST);
+		IntentFilter filter = new IntentFilter(SyncManager.TOAST_SYNC_MESSAGE);
 		LocalBroadcastManager.getInstance(this).registerReceiver(onNotice, filter);
 		mSyncObserverHandle = ContentResolver.addStatusChangeListener(ContentResolver.SYNC_OBSERVER_TYPE_ACTIVE, this);
-		if (mSyncActiveDialog != null && !mSyncActiveDialog.isShowing()) {
-			mSyncActiveDialog.show();
-		}
+
+		if (RefreshDataService.isSyncActive) {
+
+			Log.i(TAG, "onResume and Sync is active!");
+			if (mSyncActiveDialog != null && !mSyncActiveDialog.isShowing())
+				mSyncActiveDialog.show();
+			else if (mSyncActiveDialog == null)
+				showDialog(PROGRESS_DIALOG);
+
+		} else
+			Log.i(TAG, "onResume and Sync is NOT active!");
 
 	}
 
+
+	private void updateSyncProgress() {
+		Log.i(TAG, "Updating Progress! with mSyncActiveDialog=" + mSyncActiveDialog);
+		SyncManager.sSyncComplete = false;
+		if (mSyncActiveDialog != null)
+			mSyncActiveDialog.setProgress(0);
+		showDialog(PROGRESS_DIALOG);
+		
+		mExecutor.schedule(new Runnable() {
+			public void run() {
+
+				if (!SyncManager.sSyncComplete) {
+					mExecutor.schedule(this, 800, TimeUnit.MILLISECONDS);
+					BaseListActivity.this.runOnUiThread(new Runnable() {
+
+						@Override
+						public void run() {
+							// Log.i(TAG, "Updating Progress: Title=" +
+							// SyncManager.sSyncTitle + " Step=" +
+							// SyncManager.sSyncStep + " Progress=" +
+							// SyncManager.sLoopProgress + " Count=" +
+							// SyncManager.sLoopCount);
+							int loop = (SyncManager.sLoopProgress == SyncManager.sLoopCount) ? 0 : ((int) Math.round(((float) SyncManager.sLoopProgress / (float) SyncManager.sLoopCount) * 20F));
+							mSyncActiveDialog.setProgress((SyncManager.sSyncStep * 10) + loop);
+							mSyncActiveDialog.setMessage(SyncManager.sSyncTitle);
+						}
+					});
+
+				}
+			}
+		}, 0, TimeUnit.MILLISECONDS);
+		
+		
+	}
+	
 	protected class myGestureListener extends SimpleOnGestureListener {
 
 		@Override
@@ -107,126 +231,31 @@ public class BaseListActivity extends ListActivity implements SyncStatusObserver
 
 	}
 
-	// LIFECYCLE
-	@Override
-	protected void onPause() {
-		super.onPause();
-		ContentResolver.removeStatusChangeListener(mSyncObserverHandle);
-		LocalBroadcastManager.getInstance(this).unregisterReceiver(onNotice);
-	}
-
 	protected BroadcastReceiver onNotice = new BroadcastReceiver() {
 		public void onReceive(Context ctxt, Intent i) {
 			savePosition();
-			Intent intent = new Intent(getBaseContext(), RefreshDataActivity.class);
-			intent.putExtra(RefreshDataActivity.DIALOG, RefreshDataActivity.ASK_TO_DOWNLOAD);
-			startActivity(intent);
+			
+			boolean error = i.getBooleanExtra(SyncManager.TOAST_ERROR, false);
+			String toast = i.getStringExtra(SyncManager.TOAST_MESSAGE);
+
+			UiUtils.toastSyncMessage(mToastCtx, toast, error);
 
 		}
 	};
 
+	@Override
+	protected void onPause() {
+		super.onPause();
+		if (mSyncActiveDialog != null) {
+			mSyncActiveDialog.dismiss();
+		}
+		ContentResolver.removeStatusChangeListener(mSyncObserverHandle);
+		LocalBroadcastManager.getInstance(this).unregisterReceiver(onNotice);
+	}
+	
 	protected void savePosition() {
 		// TODO Fill in this method if you want to save the position of the item
 		// in the scroll list..
 	}
-
-	@Override
-	public void onStatusChanged(int which) {
-		Log.e(TAG, "ContentResolver Status has Changed");
-		runOnUiThread(new Runnable() {
-			@Override
-			public void run() {
-				checkSyncActivity();
-			}
-		});
-
-	}
-
-	public boolean checkSyncActivity() {
-		boolean syncActive = false;
-		AccountManager accountManager = AccountManager.get(App.getApp());
-		Account[] accounts = accountManager.getAccountsByType(App.getApp().getString(R.string.app_account_type));
-
-		if (accounts.length <= 0)
-			return false;
-
-		syncActive = ContentResolver.isSyncActive(accounts[0], getString(R.string.app_provider_authority));
-
-		if (syncActive) {
-			// we are starting a sync
-			showDialog(PROGRESS_DIALOG);
-
-		} else {
-
-			// we have just completed a sync
-			if (mSyncActiveDialog != null) {
-				mSyncActiveDialog.dismiss();
-				mSyncActiveDialog = null;
-			}
-
-			Intent relaunch = new Intent(this, ClinicLauncherActivity.class);
-			relaunch.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-			relaunch.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-			startActivity(relaunch);
-			finish();
-		}
-
-		return syncActive;
-	}
-
-	@Override
-	protected Dialog onCreateDialog(int id) {
-		if (mSyncActiveDialog != null && mSyncActiveDialog.isShowing()) {
-			mSyncActiveDialog.dismiss();
-		}
-
-		mSyncActiveDialog = new ProgressDialog(this);
-		mSyncActiveDialog.setIcon(android.R.drawable.ic_dialog_info);
-		mSyncActiveDialog.setTitle(getString(R.string.sync_in_progress_title));
-		mSyncActiveDialog.setMessage(getString(R.string.sync_in_progress));
-		mSyncActiveDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-		mSyncActiveDialog.setIndeterminate(true);
-		mSyncActiveDialog.setCancelable(false);
-		return mSyncActiveDialog;
-	}
-
-	// BUTTONS
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		super.onCreateOptionsMenu(menu);
-
-		menu.add(0, MENU_REFRESH, MENU_REFRESH, getString(R.string.download_patients)).setIcon(R.drawable.ic_menu_refresh);
-		menu.add(0, MENU_USER_PREFERENCES, MENU_USER_PREFERENCES, getString(R.string.pref_settings)).setIcon(android.R.drawable.ic_menu_preferences);
-		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
-		boolean showMenu = prefs.getBoolean(getString(R.string.key_show_settings_menu), false);
-		if (showMenu)
-			menu.add(0, MENU_ADMIN_PREFERENCES, MENU_ADMIN_PREFERENCES, getString(R.string.pref_admin_settings)).setIcon(android.R.drawable.ic_lock_lock);
-
-		return true;
-
-	}
-
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		savePosition();
-
-		switch (item.getItemId()) {
-		case MENU_USER_PREFERENCES:
-			Intent user = new Intent(getApplicationContext(), PreferencesActivity.class);
-			user.putExtra(PreferencesActivity.ADMIN_PREFERENCE, false);
-			startActivity(user);
-			return true;
-		case MENU_ADMIN_PREFERENCES:
-			Intent admin = new Intent(getApplicationContext(), PreferencesActivity.class);
-			admin.putExtra(PreferencesActivity.ADMIN_PREFERENCE, true);
-			startActivity(admin);
-			return true;
-		case MENU_REFRESH:
-			SyncManager.syncData();
-			return true;
-		default:
-			return super.onOptionsItemSelected(item);
-		}
-	}
-
+	
 }

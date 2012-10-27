@@ -17,12 +17,15 @@ import android.accounts.Account;
 import android.content.AbstractThreadedSyncAdapter;
 import android.content.ContentProviderClient;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SyncResult;
 import android.os.Bundle;
 import android.util.Log;
 
 import com.alphabetbloc.clinic.R;
 import com.alphabetbloc.clinic.data.Form;
+import com.alphabetbloc.clinic.ui.admin.ClinicLauncherActivity;
+import com.alphabetbloc.clinic.ui.user.DashboardActivity;
 import com.alphabetbloc.clinic.utilities.FileUtils;
 import com.alphabetbloc.clinic.utilities.NetworkUtils;
 import com.alphabetbloc.clinic.utilities.UiUtils;
@@ -70,11 +73,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 			// download new forms
 			mSyncManager.addSyncStep(mContext.getString(R.string.sync_downloading_forms)); // 3
 			Form[] formsToDownload = findNewFormsOnServer(client, syncResult);
-			// mSyncManager.addSyncStep(mContext.getString(R.string.sync_downloading_forms));
-			// // 4
 			Form[] formsDownloaded = downloadNewForms(client, formsToDownload, syncResult);
-			// mSyncManager.addSyncStep(mContext.getString(R.string.sync_downloading_forms));
-			// // 5
 			dbError = mSyncManager.updateDownloadedForms(formsDownloaded, syncResult);
 			Log.e(TAG, "Downloaded New Forms with result errors=" + syncResult.stats.numIoExceptions);
 			int downloadErrors = ((int) syncResult.stats.numIoExceptions) - uploadErrors;
@@ -84,12 +83,21 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 			mSyncManager.addSyncStep(mContext.getString(R.string.sync_downloading_data)); // 6
 			File temp = downloadObsStream(client, syncResult);
 			mSyncManager.addSyncStep(mContext.getString(R.string.sync_updating_data)); // 7->10
-			dbError = mSyncManager.readObsFile(temp, syncResult);
+			if (temp != null){
+				dbError = mSyncManager.readObsFile(temp, syncResult);
+				FileUtils.deleteFile(temp.getAbsolutePath());
+			}
+			int downloadObsErrors = ((int) syncResult.stats.numIoExceptions) - (uploadErrors + downloadErrors);
+			mSyncManager.toastSyncMessage(SyncManager.DOWNLOAD_OBS, -1, -1, downloadObsErrors, dbError);
 			Log.e(TAG, "Downloaded New Obs with result errors=" + syncResult.stats.numIoExceptions);
-			mSyncManager.toastSyncMessage(SyncManager.SYNC_COMPLETE, -1, -1, (int) syncResult.stats.numIoExceptions, dbError);
+			mSyncManager.toastSyncMessage(SyncManager.SYNC_COMPLETE, -1, -1, (int) syncResult.stats.numIoExceptions, null);
 
 		} else {
-			++syncResult.stats.numIoExceptions;
+//			++syncResult.stats.numIoExceptions;
+			Log.e(TAG, "client is null!  Check the credential storage!");
+			Intent i = new Intent(mContext, ClinicLauncherActivity.class);
+			i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+			mContext.startActivity(i);
 			UiUtils.toastAlert(mContext.getString(R.string.sync_error), mContext.getString(R.string.no_connection));
 		}
 
@@ -108,7 +116,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 
 				NetworkUtils.postEntity(client, NetworkUtils.getFormUploadUrl(), entity);
 				Log.e(TAG, "everything okay! added an instance...");
-				uploadedInstances.add(instancePaths[i]);		
+				uploadedInstances.add(instancePaths[i]);
 
 			} catch (Exception e) {
 				Log.e(TAG, "Exception on uploading instance =" + instancePaths[i]);
@@ -131,7 +139,6 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 		// find all forms from server
 		ArrayList<Form> allServerForms = new ArrayList<Form>();
 		try {
-			// showProgress("Updating Forms");
 			InputStream is = NetworkUtils.getStream(client, NetworkUtils.getFormListDownloadUrl());
 			allServerForms = mSyncManager.readFormListStream(is);
 			is.close();
@@ -162,14 +169,11 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 	 * @return error message or null if successful
 	 */
 	private Form[] downloadNewForms(HttpClient client, Form[] newForms, SyncResult syncResult) {
-		Log.i(TAG, "DownloadNewForms Called");
-		// showProgress("Downloading Forms");
+
 		ArrayList<Form> downloadedForms = new ArrayList<Form>();
 		FileUtils.createFolder(FileUtils.getExternalFormsPath());
 
-		int totalForms = newForms.length;
-
-		for (int i = 0; i < totalForms; i++) {
+		for (int i = 0; i < newForms.length; i++) {
 
 			String formId = newForms[i].getFormId() + "";
 
@@ -236,14 +240,20 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 			}
 
 		} catch (FileNotFoundException e) {
+			FileUtils.deleteFile(tempFile.getAbsolutePath());
 			e.printStackTrace();
 			++syncResult.stats.numIoExceptions;
+			return null;
 		} catch (IOException e) {
+			FileUtils.deleteFile(tempFile.getAbsolutePath());
 			e.printStackTrace();
 			++syncResult.stats.numIoExceptions;
+			return null;
 		} catch (Exception e) {
+			FileUtils.deleteFile(tempFile.getAbsolutePath());
 			e.printStackTrace();
 			++syncResult.stats.numIoExceptions;
+			return null;
 		}
 
 		return tempFile;

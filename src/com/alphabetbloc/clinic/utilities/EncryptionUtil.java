@@ -41,7 +41,7 @@ public class EncryptionUtil {
 		if (string != null && key != null) {
 			encryptedString = Crypto.encrypt(string, key);
 		} else {
-			Log.w("ClinicApp", "Encryption key not found in keystore: " + ClinicLauncherActivity.SQLCIPHER_KEY_NAME);
+			Log.w(TAG, "Encryption key not found in keystore: " + ClinicLauncherActivity.SQLCIPHER_KEY_NAME);
 		}
 
 		return encryptedString;
@@ -53,7 +53,7 @@ public class EncryptionUtil {
 		if (string != null && key != null) {
 			decryptedString = Crypto.decrypt(string, key);
 		} else {
-			Log.w("ClinicApp", "Encryption key not found in keystore: " + ClinicLauncherActivity.SQLCIPHER_KEY_NAME);
+			Log.w(TAG, "Encryption key not found in keystore: " + ClinicLauncherActivity.SQLCIPHER_KEY_NAME);
 		}
 		return decryptedString;
 	}

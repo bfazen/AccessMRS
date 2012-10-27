@@ -135,7 +135,9 @@ public class ClinicLauncherActivity extends Activity {
 		KeyStoreUtil ks = KeyStoreUtil.getInstance();
 		if (ks.state() == KeyStoreUtil.State.UNLOCKED) {
 			//already setup
+			Log.e(TAG, "Credential Storage is Setup");
 			return true;
+		
 		} else {
 			try {
 				if (Build.VERSION.SDK_INT < 11) {

@@ -1,7 +1,6 @@
 package com.alphabetbloc.clinic.providers;
 
 import net.sqlcipher.DatabaseUtils;
-import net.sqlcipher.SQLException;
 import net.sqlcipher.database.SQLiteConstraintException;
 import net.sqlcipher.database.SQLiteDatabase;
 import net.sqlcipher.database.SQLiteOpenHelper;
@@ -12,12 +11,6 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.util.Log;
 
-import com.alphabetbloc.clinic.data.ActivityLog;
-import com.alphabetbloc.clinic.data.Form;
-import com.alphabetbloc.clinic.data.FormInstance;
-import com.alphabetbloc.clinic.data.Observation;
-import com.alphabetbloc.clinic.data.Patient;
-import com.alphabetbloc.clinic.ui.user.DashboardActivity;
 import com.alphabetbloc.clinic.utilities.App;
 import com.alphabetbloc.clinic.utilities.EncryptionUtil;
 
@@ -238,7 +231,7 @@ public class DbProvider extends ContentProvider {
 
 	public int countRows(String table) {
 		long count = 0;
-		count = DatabaseUtils.queryNumEntries(sDb, DataModel.FORMS_TABLE);
+		count = DatabaseUtils.queryNumEntries(sDb, table);
 		int intcount = safeLongToInt(count);
 		return intcount;
 	}

@@ -115,7 +115,7 @@ public class WipeDataService extends WakefulIntentService {
 		if (allDeleted)
 			cancelAlarms(WakefulIntentService.WIPE_DATA, getApplicationContext());
 
-		Log.e(TAG, "sending a broadcast = ");
+		Log.e(TAG, "sending a broadcast with allDeleted = " + allDeleted);
 		Intent i = new Intent(WIPE_DATA_COMPLETE);
 		sendBroadcast(i);
 	}

@@ -90,6 +90,7 @@ public class SetupAccountActivity extends Activity implements SyncDataListener {
 			@Override
 			public void onClick(View v) {
 				addAccount(mNewUser, mNewPwd);
+				setResult(RESULT_OK);
 				finish();
 			}
 		});

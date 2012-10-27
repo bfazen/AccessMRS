@@ -57,7 +57,8 @@ public class SyncManager {
 	public static final String TOAST_ERROR = "toast_error";
 	public static final int UPLOAD_FORMS = 1;
 	public static final int DOWNLOAD_FORMS = 2;
-	public static final int SYNC_COMPLETE = 3;
+	public static final int DOWNLOAD_OBS = 3;
+	public static final int SYNC_COMPLETE = 4;
 
 	private String mSyncResultString;
 	private Context mContext;
@@ -188,6 +189,7 @@ public class SyncManager {
 			Db.open().updateFormInstance(path, DataModel.STATUS_SUBMITTED);
 			// c.close();
 			// }
+
 		} catch (Exception e) {
 			e.printStackTrace();
 			++syncResult.stats.numIoExceptions;
@@ -316,13 +318,13 @@ public class SyncManager {
 			if (dis != null) {
 				DbProvider dbHelper = DbProvider.openDb();
 				// open db and clean entries
-				dbHelper.delete(DataModel.PATIENTS_TABLE, DataModel.KEY_CLIENT_CREATED + " IS NULL OR " + DataModel.KEY_CLIENT_CREATED + "=?", new String[] { "2" });
+				dbHelper.delete(DataModel.PATIENTS_TABLE, DataModel.KEY_CLIENT_CREATED + " IS NULL", null);
 				dbHelper.delete(DataModel.OBSERVATIONS_TABLE, null, null);
-//				dbHelper.delete(DataModel.FORMINSTANCES_TABLE, null, null);
 
 				insertPatients(dis);
 				addSyncStep(mContext.getString(R.string.sync_updating_data)); // 8
 				insertObservations(dis);
+
 				try {
 					addSyncStep(mContext.getString(R.string.sync_updating_data)); // 9
 					insertPatientForms(dis);
@@ -333,9 +335,9 @@ public class SyncManager {
 
 				dis.close();
 			}
-			FileUtils.deleteFile(tempFile.getAbsolutePath());
 
 			updateClinicObs();
+
 		} catch (Exception e) {
 			e.printStackTrace();
 			++syncResult.stats.numIoExceptions;
@@ -526,7 +528,7 @@ public class SyncManager {
 	}
 
 	public void toastSyncMessage(int syncType, int success, int total, int currentErrors, String dbError) {
-
+		Log.e(TAG, "toasting a sync message with parameters=" + syncType + ", " + success + ", " + total + ", " + currentErrors + ", " + dbError);
 		String currentToast = createToastString(syncType, success, total, currentErrors);
 		if (currentToast != null) {
 
@@ -539,7 +541,7 @@ public class SyncManager {
 				result.append(")");
 			}
 
-			// Give to Activity
+			// Send to Activity
 			Intent broadcast = new Intent(TOAST_SYNC_MESSAGE);
 			broadcast.putExtra(TOAST_MESSAGE, result.toString());
 			broadcast.putExtra(TOAST_ERROR, (currentErrors == 0) ? false : true);
@@ -569,6 +571,10 @@ public class SyncManager {
 			successNoSync = R.string.sync_download_forms_not_needed;
 			successAllSync = R.plurals.sync_download_forms_successful;
 			break;
+		case DOWNLOAD_OBS:
+			failNoSync = R.string.sync_download_obs_failed;
+			// don't toast success
+			break;
 		case SYNC_COMPLETE:
 		default:
 			return mSyncResultString;
@@ -581,21 +587,22 @@ public class SyncManager {
 		// Error 2: Partial upload/download
 		else if (total > 0 && success != total)
 			toast = mContext.getResources().getQuantityString(failPartialSync, total, String.valueOf(total - success) + " of " + String.valueOf(total));
-
+		
 		// SUCCESS: Add to SyncResult Toast (Don't show until Sync Complete)
-		StringBuilder sb = new StringBuilder();
-		if (mSyncResultString != null) {
-			sb.append(mSyncResultString);
-			sb.append(". ");
+		else {
+			StringBuilder sb = new StringBuilder();
+			if (mSyncResultString != null) {
+				sb.append(mSyncResultString);
+				sb.append(". ");
+			}
+			// Success 1: Nothing to upload/download
+			if (total == 0 && currentErrors == 0)
+				sb.append(mContext.getString(successNoSync));
+			// Success 2: All uploads/downloads were successful
+			else if (total > 0 && success == total)
+				sb.append(mContext.getResources().getQuantityString(successAllSync, total, String.valueOf(total)));
+			mSyncResultString = sb.toString();
 		}
-		// Success 1: Nothing to upload/download
-		if (total == 0 && currentErrors == 0)
-			sb.append(mContext.getString(successNoSync));
-		// Success 2: All uploads/downloads were successful
-		else if (total > 0 && success == total)
-			sb.append(mContext.getResources().getQuantityString(successAllSync, total, String.valueOf(total)));
-		mSyncResultString = sb.toString();
-
 		return toast;
 	}
 

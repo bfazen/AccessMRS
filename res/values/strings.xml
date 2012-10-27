@@ -216,7 +216,7 @@
     <string name="download_patients">Refresh Data</string>
     <string name="downloading">%s…</string>
     <string name="sync_in_progress_title">Refreshing Data …</string>
-    <string name="sync_in_progress">Currently refreshing data.  Please be patient.</string>
+    <string name="sync_in_progress">Connecting To Server …</string>
     <string name="sync_upload_forms_not_needed">No Forms to Upload</string>
     <string name="sync_upload_forms_failed">Could not upload forms. Please check connection.</string>
 
@@ -241,6 +241,7 @@
         <item quantity="other">Sorry, %s forms failed to download.</item>
     </plurals>
 
+    <string name="sync_download_obs_failed">Could not download data. Please check connection.</string>
     <string name="uploading_patients">Uploading Forms…</string>
     <string name="refresh_clients_title">Refresh Client List</string>
     <string name="refresh_clients_text">Your client list is out of date. Please refresh data now.</string>

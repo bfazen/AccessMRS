@@ -31,6 +31,8 @@ import android.util.Base64;
 import android.util.Log;
 
 import com.alphabetbloc.clinic.listeners.EncryptDataListener;
+import com.alphabetbloc.clinic.providers.DataModel;
+import com.alphabetbloc.clinic.providers.Db;
 import com.alphabetbloc.clinic.utilities.App;
 import com.alphabetbloc.clinic.utilities.FileUtils;
 
@@ -101,6 +103,7 @@ public class EncryptionService extends WakefulIntentService {
 				count++;
 		}
 
+		Db.open().deleteTemporaryPatients();
 		// TODO? add cancel threshold to prevent looping unsuccessful alarms?
 		// BUT if not encrypting, better to keep trying, negatively effect
 		// performance, and have user complain as we want to know about this ...

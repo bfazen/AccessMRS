@@ -526,6 +526,28 @@ public class Db {
 
 	}
 
+	public void deleteTemporaryPatients() throws SQLException {
+
+		Cursor c = null;
+		String query = "SELECT " + DataModel.PATIENTS_TABLE + "." + DataModel.KEY_PATIENT_ID + " AS " + DataModel.KEY_PATIENT_ID + 
+				" FROM " + DataModel.PATIENTS_TABLE + " LEFT OUTER JOIN " + DataModel.FORMINSTANCES_TABLE + 
+				" ON " + DataModel.PATIENTS_TABLE + "." + DataModel.KEY_PATIENT_ID + " = " + DataModel.FORMINSTANCES_TABLE + "." + DataModel.KEY_PATIENT_ID + 
+				" WHERE " + DataModel.KEY_CLIENT_CREATED + "= 2" + " AND " + DataModel.FORMINSTANCES_TABLE + "." + DataModel.KEY_PATIENT_ID + " IS NULL";
+		
+		c = DbProvider.openDb().rawQuery(query, null);
+		if (c != null) {
+			if (c.moveToFirst()) {
+				do {
+					String patientId = c.getString(c.getColumnIndex(DataModel.KEY_PATIENT_ID));
+					DbProvider.openDb().delete(DataModel.PATIENTS_TABLE, DataModel.KEY_PATIENT_ID + "=?", new String[] { patientId });
+					
+				} while (c.moveToNext());
+			}
+			c.close();
+		}
+
+	}
+	
 	public void updatePriorityFormNumbers() throws SQLException {
 
 		Cursor c = null;

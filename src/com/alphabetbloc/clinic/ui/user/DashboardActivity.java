@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -256,6 +257,8 @@ public class DashboardActivity extends BaseActivity {
 
 			vg.addView(patientsButton);
 		}
+		
+		Log.e(TAG, "total patients=" + patients);
 	}
 
 	private void setAddClientUi(ViewGroup vg) {

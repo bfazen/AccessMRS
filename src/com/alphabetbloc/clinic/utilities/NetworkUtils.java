@@ -70,7 +70,7 @@ public class NetworkUtils {
 	public static final String FORMLIST_DOWNLOAD_URL = "/moduleServlet/xformshelper/xfhFormList?type=odk_clinic&program=";
 	public static final String FORM_DOWNLOAD_URL = "/moduleServlet/xformshelper/xfhFormDownload?type=odk_clinic";
 
-	private static final int CONNECTION_TIMEOUT = 30000;
+	private static final int CONNECTION_TIMEOUT = 60000;
 	private static final int MAX_CONN_PER_ROUTE = 20;
 	private static final int MAX_CONNECTIONS = 20;
 
