@@ -14,12 +14,6 @@
 
 package com.alphabetbloc.clinic.services;
 
-import com.alphabetbloc.clinic.receivers.DeleteDecryptedDataReceiver;
-import com.alphabetbloc.clinic.receivers.EncryptDataReceiver;
-import com.alphabetbloc.clinic.receivers.RefreshDataReceiver;
-import com.alphabetbloc.clinic.receivers.WipeDataReceiver;
-import com.alphabetbloc.clinic.utilities.App;
-
 import android.app.AlarmManager;
 import android.app.IntentService;
 import android.app.PendingIntent;
@@ -28,6 +22,11 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.PowerManager;
 import android.util.Log;
+
+import com.alphabetbloc.clinic.receivers.DeleteDecryptedDataReceiver;
+import com.alphabetbloc.clinic.receivers.EncryptDataReceiver;
+import com.alphabetbloc.clinic.receivers.WipeDataReceiver;
+import com.alphabetbloc.clinic.utilities.App;
 
 /**
  * 
@@ -38,8 +37,6 @@ abstract public class WakefulIntentService extends IntentService {
 	abstract protected void doWakefulWork(Intent intent);
 
 	public static final String NAME = "com.commonsware.cwac.wakeful.WakefulIntentService";
-	// static final String LAST_ALARM = "lastAlarm";
-	public static final String REFRESH_DATA = "refresh.data";
 	public static final String ENCRYPT_DATA = "encrypt.data";
 	public static final String DELETE_DECRYPTED_DATA = "delete.decrypted.data";
 	public static final String WIPE_DATA = "wipe.all.data";
@@ -78,10 +75,7 @@ abstract public class WakefulIntentService extends IntentService {
 			AlarmManager mgr = (AlarmManager) ctxt.getSystemService(Context.ALARM_SERVICE);
 
 			Intent i = null;
-			// TODO! Delete this IF STATEMENT is syncadapter works!
-			if (receiver.equals(REFRESH_DATA)) {
-				i = new Intent(App.getApp(), RefreshDataReceiver.class);
-			} else if (receiver.equals(ENCRYPT_DATA)) {
+			if (receiver.equals(ENCRYPT_DATA)) {
 				i = new Intent(App.getApp(), EncryptDataReceiver.class);
 			} else if (receiver.equals(DELETE_DECRYPTED_DATA)) {
 				i = new Intent(App.getApp(), DeleteDecryptedDataReceiver.class);
@@ -97,9 +91,7 @@ abstract public class WakefulIntentService extends IntentService {
 	public static void cancelAlarms(String receiver, Context ctxt) {
 		Intent i = null;
 		AlarmManager mgr = (AlarmManager) ctxt.getSystemService(Context.ALARM_SERVICE);
-		if (receiver.equals(REFRESH_DATA)) {
-			i = new Intent(App.getApp(), RefreshDataReceiver.class);
-		} else if (receiver.equals(ENCRYPT_DATA)) {
+		if (receiver.equals(ENCRYPT_DATA)) {
 			i = new Intent(App.getApp(), EncryptDataReceiver.class);
 		} else if (receiver.equals(DELETE_DECRYPTED_DATA)) {
 			i = new Intent(App.getApp(), DeleteDecryptedDataReceiver.class);
@@ -109,11 +101,11 @@ abstract public class WakefulIntentService extends IntentService {
 
 		PendingIntent pi = PendingIntent.getBroadcast(App.getApp(), 0, i, 0);
 		try {
-	        mgr.cancel(pi);
-	        Log.e("WakefulIntentService", "Successfully cancelled an alarm with receiver=" + receiver);
-	    } catch (Exception e) {
-	        Log.e("WakefulIntentService", "AlarmManager update was not canceled. " + e.toString());
-	    }
+			mgr.cancel(pi);
+			Log.e("WakefulIntentService", "Successfully cancelled an alarm with receiver=" + receiver);
+		} catch (Exception e) {
+			Log.e("WakefulIntentService", "AlarmManager update was not canceled. " + e.toString());
+		}
 	}
 
 	public WakefulIntentService(String name) {
