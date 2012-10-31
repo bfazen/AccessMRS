@@ -15,6 +15,7 @@ import com.alphabetbloc.clinic.R;
 import com.alphabetbloc.clinic.providers.DataModel;
 import com.alphabetbloc.clinic.ui.admin.ClinicLauncherActivity;
 import com.alphabetbloc.clinic.utilities.App;
+import com.alphabetbloc.clinic.utilities.ClinicLauncher;
 import com.alphabetbloc.clinic.utilities.FileUtils;
 
 /**
@@ -31,6 +32,7 @@ public class WipeDataService extends WakefulIntentService {
 	private static final String TAG = WipeDataService.class.getSimpleName();
 	public static final String WIPE_DATA_COMPLETE = "com.alphabetbloc.android.settings.WIPE_DATA_SERVICE_COMPLETE";
 	public static final String WIPE_CLINIC_DATA = "wipe_clinic_data";
+	public static final String WIPE_DATA_REQUESTED = "wipe_data_requested";
 	private Context mCollectCtx;
 
 	public WipeDataService() {
@@ -40,6 +42,9 @@ public class WipeDataService extends WakefulIntentService {
 	
 	@Override
 	protected void doWakefulWork(Intent intent) {
+		SharedPreferences prefs = getSharedPreferences(WakefulIntentService.NAME, 0);
+		prefs.edit().putBoolean(WIPE_DATA_REQUESTED, true).commit();
+		
 		boolean allDeleted = true;
 		int attempts = 0;
 		boolean wipeClinic = intent.getBooleanExtra(WIPE_CLINIC_DATA, true);
@@ -112,9 +117,10 @@ public class WipeDataService extends WakefulIntentService {
 
 		} while (!allDeleted && (attempts < 4));
 
-		if (allDeleted)
+		if (allDeleted){
+			prefs.edit().putBoolean(WIPE_DATA_REQUESTED, false).commit();
 			cancelAlarms(WakefulIntentService.WIPE_DATA, getApplicationContext());
-
+		}
 		Log.e(TAG, "sending a broadcast with allDeleted = " + allDeleted);
 		Intent i = new Intent(WIPE_DATA_COMPLETE);
 		sendBroadcast(i);

@@ -31,9 +31,10 @@ import android.util.Base64;
 import android.util.Log;
 
 import com.alphabetbloc.clinic.listeners.EncryptDataListener;
-import com.alphabetbloc.clinic.providers.DataModel;
 import com.alphabetbloc.clinic.providers.Db;
+import com.alphabetbloc.clinic.ui.admin.ClinicLauncherActivity;
 import com.alphabetbloc.clinic.utilities.App;
+import com.alphabetbloc.clinic.utilities.ClinicLauncher;
 import com.alphabetbloc.clinic.utilities.FileUtils;
 
 /**
@@ -80,6 +81,16 @@ public class EncryptionService extends WakefulIntentService {
 	protected void doWakefulWork(Intent intent) {
 		mContext = this;
 		Log.e(TAG, "encryptionservice is now running");
+		if (!ClinicLauncher.isSetupComplete()) {
+			if (!ClinicLauncherActivity.sLaunching) {
+				Log.e(TAG, "Clinic is Not Setup... and not currently active... so EncryptionService is requesting setup");
+				Intent i = ClinicLauncher.getLaunchIntent();
+				i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+				startActivity(i);
+			}
+			Log.e(TAG, "Clinic is Not Setup... so EncryptionService is ending");
+			stopSelf();
+		}
 		// get all recently submitted files
 		ArrayList<Map<String, Object>> submittedFiles = findSubmittedFiles();
 		if (submittedFiles.isEmpty())
@@ -212,7 +223,7 @@ public class EncryptionService extends WakefulIntentService {
 		// we have now encrypted and stored the key, so safe to delete cleartext
 		if (result)
 			result = FileUtils.deleteAllFiles(parentDir.getAbsolutePath());
-		
+
 		return result;
 	}
 

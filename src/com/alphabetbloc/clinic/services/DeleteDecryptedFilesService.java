@@ -17,7 +17,9 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.alphabetbloc.clinic.tasks.DecryptionTask;
+import com.alphabetbloc.clinic.ui.admin.ClinicLauncherActivity;
 import com.alphabetbloc.clinic.utilities.App;
+import com.alphabetbloc.clinic.utilities.ClinicLauncher;
 import com.alphabetbloc.clinic.utilities.FileUtils;
 
 /**
@@ -41,6 +43,16 @@ public class DeleteDecryptedFilesService extends WakefulIntentService {
 	@Override
 	protected void doWakefulWork(Intent intent) {
 		Log.e(TAG, "delete decrypted files service is now running");
+		if (!ClinicLauncher.isSetupComplete()) {
+			if (!ClinicLauncherActivity.sLaunching) {
+				Log.e(TAG, "Clinic is Not Setup... and not currently active... so DeleteDecryptedFilesService is requesting setup");
+				Intent i = ClinicLauncher.getLaunchIntent();
+				i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+				startActivity(i);
+			}
+			Log.e(TAG, "Clinic is Not Setup... so DeleteDecryptedFilesService is ending");
+			stopSelf();
+		}
 		mContext = this;
 
 		// get all recently submitted files

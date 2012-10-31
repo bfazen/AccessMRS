@@ -28,7 +28,7 @@ import com.alphabetbloc.clinic.providers.Db;
  * 
  */
 
-public class BasePatientActivity extends BaseListActivity implements SyncStatusObserver {
+public abstract class BasePatientActivity extends BaseListActivity implements SyncStatusObserver {
 
 	// intent extras
 	public static final String KEY_PATIENT_ID = "PATIENT_ID";
@@ -159,7 +159,6 @@ public class BasePatientActivity extends BaseListActivity implements SyncStatusO
 	}
 
 	// LIFECYCLE
-
 	@Override
 	protected void onPause() {
 		super.onPause();

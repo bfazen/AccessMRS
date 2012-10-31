@@ -93,7 +93,7 @@ public class ViewCompletedForms extends ViewFormsActivity implements DecryptionL
 			mDecryptionTask.setDecryptionListener(this);
 	}
 
-	private void refreshView() {
+	protected void refreshView() {
 		mMergeAdapter = new MergeAdapter();
 		mMergeAdapter = createFormHistoryList(mMergeAdapter, getCompletedForms(mPatientId.toString()));
 		mListView = getListView();

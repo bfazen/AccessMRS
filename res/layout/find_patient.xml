@@ -33,11 +33,11 @@
             android:layout_height="wrap_content"
             android:layout_alignBottom="@+id/add_client"
             android:layout_alignTop="@+id/add_client"
+            android:layout_marginRight="3dp"
+            android:layout_toLeftOf="@+id/add_client"
             android:ellipsize="end"
             android:hint="@string/search_hint"
             android:singleLine="true"
-            android:layout_marginRight="3dp"
-            android:layout_toLeftOf="@+id/add_client"
             android:textSize="18sp" />
 
         <ImageButton
@@ -49,12 +49,28 @@
             android:src="@drawable/add_client" />
     </RelativeLayout>
 
-    <LinearLayout
-        android:id="@+id/patientholder"
+    <RelativeLayout
+        android:id="@+id/patient_loader"
         android:layout_width="fill_parent"
         android:layout_height="0dp"
         android:layout_weight="1.0"
         android:orientation="vertical" >
+
+        <ProgressBar
+            android:id="@+id/loading_wheel"
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true" />
+    </RelativeLayout>
+
+    <LinearLayout
+        android:id="@+id/patient_holder"
+        android:layout_width="fill_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1.0"
+        android:orientation="vertical"
+        android:visibility="gone" >
 
         <ListView
             android:id="@android:id/list"
@@ -88,19 +104,19 @@
             android:id="@+id/similar_client_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:padding="10dip"
             android:layout_alignParentLeft="true"
             android:layout_toLeftOf="@+id/center_image"
+            android:padding="10dip"
             android:text="@string/similar_client_button_text"
             android:textSize="18sp" />
-        
+
         <ImageView
-             android:contentDescription="@string/icon"
             android:id="@+id/center_image"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerHorizontal="true"
-            android:layout_centerVertical="true"/>
+            android:layout_centerVertical="true"
+            android:contentDescription="@string/icon" />
 
         <Button
             android:id="@+id/cancel_client_button"
@@ -111,7 +127,6 @@
             android:padding="10dip"
             android:text="@string/cancel"
             android:textSize="18sp" />
-
     </RelativeLayout>
 
 </LinearLayout>

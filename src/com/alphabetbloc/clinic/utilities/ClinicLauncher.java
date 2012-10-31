@@ -1,4 +1,4 @@
-package com.alphabetbloc.clinic.ui.admin;
+package com.alphabetbloc.clinic.utilities;
 
 import java.io.File;
 
@@ -30,9 +30,10 @@ import android.widget.Toast;
 import com.alphabetbloc.clinic.R;
 import com.alphabetbloc.clinic.providers.DataModel;
 import com.alphabetbloc.clinic.providers.DbProvider;
+import com.alphabetbloc.clinic.ui.admin.SetupAccountActivity;
+import com.alphabetbloc.clinic.ui.admin.SetupPreferencesActivity;
 import com.alphabetbloc.clinic.ui.user.DashboardActivity;
 import com.alphabetbloc.clinic.utilities.App;
-import com.alphabetbloc.clinic.utilities.ClinicLauncher;
 import com.alphabetbloc.clinic.utilities.EncryptionUtil;
 import com.alphabetbloc.clinic.utilities.KeyStoreUtil;
 import com.alphabetbloc.clinic.utilities.UiUtils;
@@ -42,80 +43,60 @@ import com.alphabetbloc.clinic.utilities.UiUtils;
  * @author Louis Fazen (louis.fazen@gmail.com)
  * 
  */
-public class ClinicLauncherActivity extends Activity {
+public class ClinicLauncher {
 
-	public static final String TAG = ClinicLauncherActivity.class.getSimpleName();
+	public static final String TAG = ClinicLauncher.class.getSimpleName();
 	public static final String SQLCIPHER_KEY_NAME = "sqlCipherDbKey";
 	public static final String OLD_UNLOCK_ACTION = "android.credentials.UNLOCK";
 	public static final String UNLOCK_ACTION = "com.android.credentials.UNLOCK";
-	public static boolean sLaunching = false;
-	private Intent mDashboardIntent = new Intent(App.getApp(), DashboardActivity.class);
+	public static boolean sIsCollectInstalled = true;
+	public static Intent sLaunchIntent;
+	
+	public static boolean isSetupComplete() {
+		boolean isSetupComplete = false;
 
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		requestWindowFeature(Window.FEATURE_NO_TITLE);
-		setContentView(R.layout.loading);
-	}
-
-	@Override
-	protected void onResume() {
-		super.onResume();
-		refreshView();
-	}
-
-	private void refreshView() {
-		sLaunching = true;
-		Intent i = ClinicLauncher.getLaunchIntent();
-		if (i != null)
-			startActivity(i);
-
-		if (i == null || i.filterEquals(mDashboardIntent)){
-			sLaunching = false;
-			finish();
+		if (!isCollectInstalled()) {
+			Log.e(TAG, "Collect is NOT installed");
+		} else if (!isClinicSetup()) {
+			setupClinic();
+			Log.e(TAG, "Clinic is NOT setup");
+		} else if (!isCollectSetup()) {
+			setupCollect();
+			Log.e(TAG, "Collect is NOT setup");
+		} else {
+			// if we made it here, we are all setup!
+			isSetupComplete = true;
 		}
-	}
 
-	// private void refreshView() {
-	//
-	// if (ClinicLauncher.isSetupComplete()) {
-	// startActivity(new Intent(this, DashboardActivity.class));
-	// finish();
-	// } else if (ClinicLauncher.sIsCollectInstalled) {
-	// finish();
-	// } else {
-	// startActivity(ClinicLauncher.sLaunchIntent);
-	// }
-	//
-	// }
-	//
-	// public boolean isSetupComplete() {
-	// boolean isSetupComplete = false;
-	//
-	// if (!isCollectInstalled()) {
-	// finish();
-	// Log.e(TAG, "Collect is NOT installed");
-	// } else if (!isClinicSetup()) {
-	// setupClinic();
-	// Log.e(TAG, "Clinic is NOT setup");
-	// } else if (!isCollectSetup()) {
-	// setupCollect();
-	// Log.e(TAG, "Collect is NOT setup");
-	// } else {
-	// // if we made it here, we are all setup!
-	// isSetupComplete = true;
-	// }
-	//
-	// return isSetupComplete;
-	// }
+		return isSetupComplete;
+	}
+	
+	public static Intent getLaunchIntent() {
+
+		if (!isCollectInstalled()) {
+			sLaunchIntent = null;
+			Log.e(TAG, "Collect is NOT installed");
+		} else if (!isClinicSetup()) {
+			setupClinic();
+			Log.e(TAG, "Clinic is NOT setup");
+		} else if (!isCollectSetup()) {
+			setupCollect();
+			Log.e(TAG, "Collect is NOT setup");
+		} else {
+			// if we made it here, we are all setup!
+			sLaunchIntent = new Intent(App.getApp(), DashboardActivity.class);
+		}
+
+		return sLaunchIntent;
+	}
 
 	// Step 1: check for collect -> fail
-	private boolean isCollectInstalled() {
+	private static boolean isCollectInstalled() {
 		Log.e(TAG, "isCollectInstalled");
 		try {
-			getPackageManager().getPackageInfo("org.odk.collect.android", PackageManager.GET_META_DATA);
+			App.getApp().getPackageManager().getPackageInfo("org.odk.collect.android", PackageManager.GET_META_DATA);
 		} catch (NameNotFoundException e) {
-			UiUtils.toastAlert(this, getString(R.string.installation_error), getString(R.string.collect_not_installed));
+			UiUtils.toastAlert(App.getApp(), App.getApp().getString(R.string.installation_error), App.getApp().getString(R.string.collect_not_installed));
 			return false;
 		}
 
@@ -123,14 +104,14 @@ public class ClinicLauncherActivity extends Activity {
 	}
 
 	// Step 2: check clinic -> create the setup intent
-	private boolean isClinicSetup() {
+	private static boolean isClinicSetup() {
 		boolean setupComplete = true;
 		Log.e(TAG, "isClinicSetup");
 		// Shortcut: if db open & have an account, we are setup
 		AccountManager accountManager = AccountManager.get(App.getApp());
 		Account[] accounts = accountManager.getAccountsByType(App.getApp().getString(R.string.app_account_type));
 		String password = EncryptionUtil.getPassword();
-		if (getDatabasePath(DataModel.DATABASE_NAME).exists() && accounts.length > 0 && password != null) {
+		if (App.getApp().getDatabasePath(DataModel.DATABASE_NAME).exists() && accounts.length > 0 && password != null) {
 			// make sure Db is open
 			DbProvider.openDb();
 			if (DbProvider.isOpen())
@@ -141,7 +122,7 @@ public class ClinicLauncherActivity extends Activity {
 	}
 
 	// Step 2: check clinic -> create the setup intent
-	private void setupClinic() {
+	private static void setupClinic() {
 
 		boolean setupComplete = false;
 
@@ -160,7 +141,7 @@ public class ClinicLauncherActivity extends Activity {
 
 	}
 
-	private boolean setupCredentialStorage() {
+	private static boolean setupCredentialStorage() {
 		// Step 1: check keystore is unlocked -> unlock or setup if necessary
 		KeyStoreUtil ks = KeyStoreUtil.getInstance();
 		if (ks.state() == KeyStoreUtil.State.UNLOCKED) {
@@ -171,40 +152,40 @@ public class ClinicLauncherActivity extends Activity {
 		} else {
 			try {
 				if (Build.VERSION.SDK_INT < 11) {
-					startActivity(new Intent(OLD_UNLOCK_ACTION));
+					sLaunchIntent = new Intent(OLD_UNLOCK_ACTION);
 				} else {
-					startActivity(new Intent(UNLOCK_ACTION));
+					sLaunchIntent = new Intent(UNLOCK_ACTION);
 				}
 			} catch (ActivityNotFoundException e) {
 				Log.e(TAG, "No UNLOCK activity: " + e.getMessage(), e);
-				Toast.makeText(this, "No keystore unlock activity found.", Toast.LENGTH_SHORT).show();
+				Toast.makeText(App.getApp(), "No keystore unlock activity found.", Toast.LENGTH_SHORT).show();
 			}
 			return false;
 		}
 	}
 
-	private boolean setupFirstInstall() {
+	private static boolean setupFirstInstall() {
 		Log.e(TAG, "setupFirstInstall");
 		// Step 2: check previous use -> launch initial setup if first run
-		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
-		boolean firstRun = settings.getBoolean(getString(R.string.key_first_run), true);
+		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(App.getApp());
+		boolean firstRun = settings.getBoolean(App.getApp().getString(R.string.key_first_run), true);
 		if (!firstRun) {
 			// already setup
 			return true;
 		} else {
 			Log.e(TAG, "it is considered the first run now!");
-			Intent i = new Intent(this, SetupPreferencesActivity.class);
+			Intent i = new Intent(App.getApp(), SetupPreferencesActivity.class);
 			i.putExtra(SetupPreferencesActivity.SETUP_INTENT, SetupPreferencesActivity.FIRST_RUN);
-			startActivity(i);
+			sLaunchIntent = i;
 			return false;
 		}
 
 	}
 
-	private boolean setupDatabases() {
+	private static boolean setupDatabases() {
 		Log.e(TAG, "setupDatabases");
 		// Step 3: check Db exists, has a key and pwd -> reset clinic if missing
-		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
+		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(App.getApp());
 		File db = App.getApp().getDatabasePath(DataModel.DATABASE_NAME);
 		String pwd = settings.getString(SQLCIPHER_KEY_NAME, "");
 		SecretKeySpec key = EncryptionUtil.getKey(SQLCIPHER_KEY_NAME);
@@ -215,15 +196,15 @@ public class ClinicLauncherActivity extends Activity {
 			return true;
 		} else {
 			// not first run, but have lost Db info! CATASTROPHE... SO RESET.
-			Intent i = new Intent(this, SetupPreferencesActivity.class);
+			Intent i = new Intent(App.getApp(), SetupPreferencesActivity.class);
 			i.putExtra(SetupPreferencesActivity.SETUP_INTENT, SetupPreferencesActivity.RESET_CLINIC);
-			startActivity(i);
+			sLaunchIntent = i;
 			return false;
 		}
 
 	}
 
-	private boolean setupAccount() {
+	private static boolean setupAccount() {
 		Log.e(TAG, "setupAccount");
 		// Step 4: Check for sync account -> setup new account if none
 		AccountManager accountManager = AccountManager.get(App.getApp());
@@ -233,16 +214,16 @@ public class ClinicLauncherActivity extends Activity {
 			Log.e(TAG, "there is an account numer=" + accounts.length + "username=" + accounts[0].name);
 			return true;
 		} else {
-			UiUtils.toastAlert(this, getString(R.string.installation_error), getString(R.string.auth_no_account));
-			Intent i = new Intent(this, SetupAccountActivity.class);
+			UiUtils.toastAlert(App.getApp(), App.getApp().getString(R.string.installation_error), App.getApp().getString(R.string.auth_no_account));
+			Intent i = new Intent(App.getApp(), SetupAccountActivity.class);
 			i.putExtra(SetupAccountActivity.LAUNCHED_FROM_ACCT_MGR, false);
-			startActivity(i);
+			sLaunchIntent = i;
 			return false;
 		}
 	}
 
 	// Step 3: Open or create the collect db -> reset collect db if fail
-	private boolean isCollectSetup() {
+	private static boolean isCollectSetup() {
 		Log.e(TAG, "isCollectSetup");
 		try {
 			Cursor c = App.getApp().getContentResolver().query(InstanceColumns.CONTENT_URI, null, null, null, null);
@@ -260,12 +241,12 @@ public class ClinicLauncherActivity extends Activity {
 		return true;
 	}
 
-	private void setupCollect() {
+	private static void setupCollect() {
 		Log.e(TAG, "setupCollect");
 		// Lost key! (clinic reinstalled?) CATASTROPHE... SO RESET COLLECT
-		Intent i = new Intent(this, SetupPreferencesActivity.class);
+		Intent i = new Intent(App.getApp(), SetupPreferencesActivity.class);
 		i.putExtra(SetupPreferencesActivity.SETUP_INTENT, SetupPreferencesActivity.RESET_COLLECT);
-		startActivity(i);
+		sLaunchIntent = i;
 	}
 
 }

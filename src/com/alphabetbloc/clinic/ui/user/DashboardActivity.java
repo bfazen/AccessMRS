@@ -77,7 +77,8 @@ public class DashboardActivity extends BaseActivity {
 	}
 
 	// REFRESH UI
-	private void refreshView() {
+	@Override
+	protected void refreshView() {
 		mLayout = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
 		// Refresh Data UI

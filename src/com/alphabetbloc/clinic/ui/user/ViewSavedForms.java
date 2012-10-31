@@ -60,7 +60,7 @@ public class ViewSavedForms extends ViewFormsActivity {
 			refreshView();
 	}
 
-	private void refreshView() {
+	protected void refreshView() {
 		mMergeAdapter = new MergeAdapter();
 		mMergeAdapter = createFormHistoryList(mMergeAdapter, getSavedForms(mPatientId.toString()));
 		mListView = getListView();

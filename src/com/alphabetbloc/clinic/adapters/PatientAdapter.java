@@ -126,4 +126,12 @@ public class PatientAdapter extends ArrayAdapter<Patient> {
 		}
 		return v;
 	}
+
+	@Override
+	public void notifyDataSetChanged() {
+		
+		super.notifyDataSetChanged();
+	}
+	
+	
 }

@@ -33,7 +33,7 @@ import com.alphabetbloc.clinic.utilities.App;
  * 
  */
 
-public class ViewFormsActivity extends BasePatientActivity {
+public abstract class ViewFormsActivity extends BasePatientActivity {
 
 	public static final String EDIT_FORM = "edit_form";
 	public static final int FILL_FORM = 3;

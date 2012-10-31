@@ -96,8 +96,6 @@ public class ViewPatientActivity extends BasePatientActivity {
 	@Override
 	protected void onResume() {
 		super.onResume();
-		IntentFilter filter = new IntentFilter(RefreshDataService.REFRESH_BROADCAST);
-		LocalBroadcastManager.getInstance(this).registerReceiver(onNotice, filter);
 		if (mPatient != null) {
 
 			// TODO Create more efficient SQL query to get only latest obs
@@ -227,7 +225,7 @@ public class ViewPatientActivity extends BasePatientActivity {
 	 * startActivity(ip); } } }
 	 */
 
-	private void refreshView() {
+	protected void refreshView() {
 
 		View mFormView;
 		MergeAdapter adapter = new MergeAdapter();

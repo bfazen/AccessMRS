@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SyncStatusObserver;
 import android.database.Cursor;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -20,6 +21,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -35,7 +37,6 @@ import com.alphabetbloc.clinic.providers.Db;
  * @author Louis Fazen (louis.fazen@gmail.com) (All Methods except where noted
  *         otherwise)
  * 
- * @Author Yaw Anokwa (the getPatients() method)
  */
 public class ListPatientActivity extends BaseListActivity implements SyncStatusObserver {
 
@@ -47,11 +48,8 @@ public class ListPatientActivity extends BaseListActivity implements SyncStatusO
 	public static int mListType;
 	private EditText mSearchText;
 	private TextWatcher mFilterTextWatcher;
-	private ArrayAdapter<Patient> mPatientAdapter;
-	private ArrayList<Patient> mPatients = new ArrayList<Patient>();
+	public ArrayAdapter<Patient> mPatientAdapter;
 	private Context mContext;
-	private String mSearchPatientStr = null;
-	private String mSearchPatientId = null;
 	private RelativeLayout mSearchBar;
 	private ImageButton mAddClientButton;
 	private Button mSimilarClientButton;
@@ -59,6 +57,8 @@ public class ListPatientActivity extends BaseListActivity implements SyncStatusO
 	private GestureDetector mClientDetector;
 	private OnTouchListener mClientListener;
 	private ListView mClientListView;
+	private RelativeLayout mLoadingWheel;
+	private LinearLayout mPatientList;
 	private int mIndex = 0;
 	private int mTop = 0;
 	private OnTouchListener mSwipeListener;
@@ -72,10 +72,6 @@ public class ListPatientActivity extends BaseListActivity implements SyncStatusO
 		setTitle(getString(R.string.app_name) + " > " + getString(R.string.find_patient));
 		// get intents
 		mListType = getIntent().getIntExtra(DashboardActivity.LIST_TYPE, 1);
-		if (mListType == DashboardActivity.LIST_SIMILAR_CLIENTS) {
-			mSearchPatientStr = getIntent().getStringExtra("search_name_string");
-			mSearchPatientId = getIntent().getStringExtra("search_id_string");
-		}
 
 		mFilterTextWatcher = new TextWatcher() {
 			@Override
@@ -160,18 +156,177 @@ public class ListPatientActivity extends BaseListActivity implements SyncStatusO
 				return mSwipeDetector.onTouchEvent(event);
 			}
 		};
+
+		mPatientList = (LinearLayout) findViewById(R.id.patient_holder);
+		mLoadingWheel = (RelativeLayout) findViewById(R.id.patient_loader);
+		mPatientList.setVisibility(View.GONE);
+		mLoadingWheel.setVisibility(View.VISIBLE);
+
+		ArrayList<Patient> patients = new ArrayList<Patient>();
+		mPatientAdapter = new PatientAdapter(mContext, R.layout.patient_list_item, patients);
+		mPatientAdapter.setNotifyOnChange(true);
+		mClientListView = getListView();
+		mClientListView.setAdapter(mPatientAdapter);
+		mClientListView.setOnTouchListener(mClientListener);
+
+		RelativeLayout listLayout = (RelativeLayout) findViewById(R.id.list_type);
+		TextView listText = (TextView) findViewById(R.id.name_text);
+		ImageView listIcon = (ImageView) findViewById(R.id.section_image);
+
+		switch (mListType) {
+		case DashboardActivity.LIST_SUGGESTED:
+			listLayout.setBackgroundResource(R.color.priority);
+			listIcon.setBackgroundResource(R.drawable.ic_priority);
+			listText.setText(R.string.suggested_clients_section);
+			break;
+		case DashboardActivity.LIST_INCOMPLETE:
+			listLayout.setBackgroundResource(R.color.saved);
+			listIcon.setBackgroundResource(R.drawable.ic_saved);
+			listText.setText(R.string.incomplete_clients_section);
+			break;
+		case DashboardActivity.LIST_COMPLETE:
+			listLayout.setBackgroundResource(R.color.completed);
+			listIcon.setBackgroundResource(R.drawable.ic_completed);
+			listText.setText(R.string.completed_clients_section);
+			break;
+		case DashboardActivity.LIST_SIMILAR_CLIENTS:
+			listLayout.setBackgroundResource(R.color.priority);
+			listIcon.setBackgroundResource(R.drawable.ic_priority);
+			listText.setText(R.string.all_clients_section);
+			mSearchText.setVisibility(View.GONE);
+			mAddClientButton.setVisibility(View.GONE);
+			mSearchBar.setVisibility(View.GONE);
+			mSimilarClientButton.setVisibility(View.VISIBLE);
+			mCancelClientButton.setVisibility(View.VISIBLE);
+
+			break;
+		case DashboardActivity.LIST_ALL:
+			listLayout.setBackgroundResource(R.color.dark_gray);
+			listIcon.setBackgroundResource(R.drawable.ic_additional);
+			listText.setText(R.string.all_clients_section);
+			break;
+		}
+
+		listLayout.setOnTouchListener(mSwipeListener);
 	}
 
 	@Override
 	protected void onResume() {
 		super.onResume();
+
 		mSearchText.setText(mSearchText.getText().toString());
 		// NB: get immediate view position
 		if (mClientListView != null)
 			mClientListView.setSelectionFromTop(mIndex, mTop);
 
-		// then refresh the view
-		findPatients();
+		refreshView();
+	}
+
+	//TODO! Change this to a SimpleCursorAdapter?
+	protected void refreshView() {
+
+		new AsyncTask<Void, Void, ArrayList<Patient>>() {
+
+			@Override
+			protected ArrayList<Patient> doInBackground(Void... params) {
+
+				ArrayList<Patient> patients = new ArrayList<Patient>();
+				String mSearchPatientStr = null;
+				String mSearchPatientId = null;
+				if (mListType == DashboardActivity.LIST_SIMILAR_CLIENTS) {
+					mSearchPatientStr = getIntent().getStringExtra("search_name_string");
+					mSearchPatientId = getIntent().getStringExtra("search_id_string");
+					if (mSearchPatientId != null && mSearchPatientId.length() < 4)
+						mSearchPatientId = null;
+				}
+
+				Cursor c = null;
+				if (mSearchPatientStr != null || mSearchPatientId != null)
+					c = Db.open().searchPatients(mSearchPatientStr, mSearchPatientId, mListType);
+				else
+					c = Db.open().fetchAllPatients(mListType);
+
+				if (c != null) {
+
+					if (c.moveToFirst()) {
+						int patientIdIndex = c.getColumnIndex(DataModel.KEY_PATIENT_ID);
+						int identifierIndex = c.getColumnIndex(DataModel.KEY_IDENTIFIER);
+						int givenNameIndex = c.getColumnIndex(DataModel.KEY_GIVEN_NAME);
+						int familyNameIndex = c.getColumnIndex(DataModel.KEY_FAMILY_NAME);
+						int middleNameIndex = c.getColumnIndex(DataModel.KEY_MIDDLE_NAME);
+						int birthDateIndex = c.getColumnIndex(DataModel.KEY_BIRTH_DATE);
+						int genderIndex = c.getColumnIndex(DataModel.KEY_GENDER);
+						int priorityIndex = c.getColumnIndexOrThrow(DataModel.KEY_PRIORITY_FORM_NUMBER);
+						int priorityFormIndex = c.getColumnIndexOrThrow(DataModel.KEY_PRIORITY_FORM_NAMES);
+						int savedIndex = c.getColumnIndexOrThrow(DataModel.KEY_SAVED_FORM_NUMBER);
+						int savedFormIndex = c.getColumnIndexOrThrow(DataModel.KEY_SAVED_FORM_NAMES);
+
+						if (c.getCount() > 0) {
+
+							Patient p;
+							do {
+								p = new Patient();
+								p.setPatientId(c.getInt(patientIdIndex));
+								p.setIdentifier(c.getString(identifierIndex));
+								p.setGivenName(c.getString(givenNameIndex));
+								p.setFamilyName(c.getString(familyNameIndex));
+								p.setMiddleName(c.getString(middleNameIndex));
+								p.setBirthDate(c.getString(birthDateIndex));
+								p.setGender(c.getString(genderIndex));
+								p.setPriorityNumber(c.getInt(priorityIndex));
+								p.setPriorityForms(c.getString(priorityFormIndex));
+								p.setSavedNumber(c.getInt(savedIndex));
+								p.setSavedForms(c.getString(savedFormIndex));
+								p.setUuid(c.getString(savedFormIndex));
+
+								if (c.getInt(priorityIndex) > 0) {
+									p.setPriority(true);
+								} else {
+									p.setPriority(false);
+								}
+
+								if (c.getInt(savedIndex) > 0) {
+									p.setSaved(true);
+								} else {
+									p.setSaved(false);
+								}
+
+								patients.add(p);
+
+							} while (c.moveToNext());
+						}
+					}
+
+					c.close();
+				}
+
+				return patients;
+			}
+
+			@Override
+			protected void onPostExecute(ArrayList<Patient> patients) {
+				mPatientAdapter.clear();
+				for (Patient p : patients) {
+					mPatientAdapter.add(p);
+				}
+				mPatientAdapter.getFilter().filter(mSearchText.getText().toString());
+				mPatientAdapter.notifyDataSetChanged();
+
+				mPatientList.setVisibility(View.VISIBLE);
+				mLoadingWheel.setVisibility(View.GONE);
+				if (mListType == DashboardActivity.LIST_SIMILAR_CLIENTS)
+					((TextView) findViewById(R.id.name_text)).setText(mContext.getResources().getQuantityString(R.plurals.errors, patients.size(), patients.size()));
+
+			}
+		}.execute();
+
+	}
+
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		mSearchText.removeTextChangedListener(mFilterTextWatcher);
+
 	}
 
 	// TODO!: consider changing this whole thing to a viewpager... may be much
@@ -218,162 +373,6 @@ public class ListPatientActivity extends BaseListActivity implements SyncStatusO
 		mIndex = mClientListView.getFirstVisiblePosition();
 		View v = mClientListView.getChildAt(0);
 		mTop = (v == null) ? 0 : v.getTop();
-	}
-
-	// VIEW:
-	private void findPatients() {
-
-		if (mSearchPatientStr == null && mSearchPatientId == null) {
-			mPatients.clear();
-			getPatients(null, null);
-		} else {
-			mPatients.clear();
-			if (mSearchPatientStr != null) {
-
-				getPatients(mSearchPatientStr, null);
-			}
-			if (mSearchPatientId != null && mSearchPatientId.length() > 3) {
-
-				getPatients(null, mSearchPatientId);
-			}
-		}
-
-		refreshView();
-	}
-
-	private void getPatients(String searchString, String patientId) {
-
-		Cursor c = null;
-		if (mSearchPatientStr != null || mSearchPatientId != null) {
-
-			c = Db.open().searchPatients(searchString, patientId, mListType);
-		} else {
-			c = Db.open().fetchAllPatients(mListType);
-		}
-
-		if (c != null) {
-			if (c.moveToFirst()) {
-				int patientIdIndex = c.getColumnIndex(DataModel.KEY_PATIENT_ID);
-				int identifierIndex = c.getColumnIndex(DataModel.KEY_IDENTIFIER);
-				int givenNameIndex = c.getColumnIndex(DataModel.KEY_GIVEN_NAME);
-				int familyNameIndex = c.getColumnIndex(DataModel.KEY_FAMILY_NAME);
-				int middleNameIndex = c.getColumnIndex(DataModel.KEY_MIDDLE_NAME);
-				int birthDateIndex = c.getColumnIndex(DataModel.KEY_BIRTH_DATE);
-				int genderIndex = c.getColumnIndex(DataModel.KEY_GENDER);
-				int priorityIndex = c.getColumnIndexOrThrow(DataModel.KEY_PRIORITY_FORM_NUMBER);
-				int priorityFormIndex = c.getColumnIndexOrThrow(DataModel.KEY_PRIORITY_FORM_NAMES);
-				int savedIndex = c.getColumnIndexOrThrow(DataModel.KEY_SAVED_FORM_NUMBER);
-				int savedFormIndex = c.getColumnIndexOrThrow(DataModel.KEY_SAVED_FORM_NAMES);
-
-				if (c.getCount() > 0) {
-
-					Patient p;
-					do {
-						p = new Patient();
-						p.setPatientId(c.getInt(patientIdIndex));
-						p.setIdentifier(c.getString(identifierIndex));
-						p.setGivenName(c.getString(givenNameIndex));
-						p.setFamilyName(c.getString(familyNameIndex));
-						p.setMiddleName(c.getString(middleNameIndex));
-						p.setBirthDate(c.getString(birthDateIndex));
-						p.setGender(c.getString(genderIndex));
-						p.setPriorityNumber(c.getInt(priorityIndex));
-						p.setPriorityForms(c.getString(priorityFormIndex));
-						p.setSavedNumber(c.getInt(savedIndex));
-						p.setSavedForms(c.getString(savedFormIndex));
-						p.setUuid(c.getString(savedFormIndex));
-
-						if (c.getInt(priorityIndex) > 0) {
-							p.setPriority(true);
-						} else {
-							p.setPriority(false);
-						}
-
-						if (c.getInt(savedIndex) > 0) {
-							p.setSaved(true);
-						} else {
-							p.setSaved(false);
-						}
-
-						mPatients.add(p);
-
-					} while (c.moveToNext());
-				}
-			}
-
-			c.close();
-		}
-	}
-
-	private void refreshView() {
-
-		RelativeLayout listLayout = (RelativeLayout) findViewById(R.id.list_type);
-		TextView listText = (TextView) findViewById(R.id.name_text);
-		ImageView listIcon = (ImageView) findViewById(R.id.section_image);
-
-		switch (mListType) {
-		case DashboardActivity.LIST_SUGGESTED:
-			listLayout.setBackgroundResource(R.color.priority);
-			listIcon.setBackgroundResource(R.drawable.ic_priority);
-			listText.setText(R.string.suggested_clients_section);
-			break;
-		case DashboardActivity.LIST_INCOMPLETE:
-			listLayout.setBackgroundResource(R.color.saved);
-			listIcon.setBackgroundResource(R.drawable.ic_saved);
-			listText.setText(R.string.incomplete_clients_section);
-			break;
-		case DashboardActivity.LIST_COMPLETE:
-			listLayout.setBackgroundResource(R.color.completed);
-			listIcon.setBackgroundResource(R.drawable.ic_completed);
-			listText.setText(R.string.completed_clients_section);
-			break;
-		case DashboardActivity.LIST_SIMILAR_CLIENTS:
-			listLayout.setBackgroundResource(R.color.priority);
-			listIcon.setBackgroundResource(R.drawable.ic_priority);
-			String similarClient;
-			if (mPatients.size() < 2) {
-				similarClient = getString(R.string.similar_client_section);
-			} else {
-				similarClient = getString(R.string.similar_clients_section);
-			}
-			listText.setText(String.valueOf(mPatients.size()) + " " + similarClient);
-			mSearchText.setVisibility(View.GONE);
-			mAddClientButton.setVisibility(View.GONE);
-			mSearchBar.setVisibility(View.GONE);
-			mSimilarClientButton.setVisibility(View.VISIBLE);
-			mCancelClientButton.setVisibility(View.VISIBLE);
-
-			break;
-		case DashboardActivity.LIST_ALL:
-			listLayout.setBackgroundResource(R.color.dark_gray);
-			listIcon.setBackgroundResource(R.drawable.ic_additional);
-			listText.setText(R.string.all_clients_section);
-			break;
-		}
-
-		mPatientAdapter = new PatientAdapter(this, R.layout.patient_list_item, mPatients);
-		// setListAdapter(mPatientAdapter);
-
-		mClientListView = getListView();
-		mClientListView.setAdapter(mPatientAdapter);
-
-		mClientListView.setOnTouchListener(mClientListener);
-		listLayout.setOnTouchListener(mSwipeListener);
-
-		// get the same item position as before (but now should have updated
-		// numbers)
-		if (mIndex > 0 || mTop > 0) {
-			mClientListView.setSelectionFromTop(mIndex, mTop);
-			mIndex = 0;
-			mTop = 0;
-		}
-	}
-
-	@Override
-	protected void onDestroy() {
-		super.onDestroy();
-		mSearchText.removeTextChangedListener(mFilterTextWatcher);
-
 	}
 
 }

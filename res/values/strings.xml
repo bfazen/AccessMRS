@@ -26,7 +26,7 @@
     <string name="key_show_form_prompt">show_form_prompt</string>
 
     <!-- Defaults -->
-    <string name="default_server">https://41.57.100.29:8443/amrs</string>
+    <string name="default_server">https://41.57.100.6:8443/amrs</string>
     <string name="default_username">JGreen</string>
     <string name="default_password">Password2012</string>
     <string name="default_provider">1</string>
@@ -38,7 +38,7 @@
     <string name="default_enable_activity_logging">true</string>
     <string name="default_use_client_auth">false</string>
     <string name="default_min_refresh_seconds">60</string>
-    <string name="default_max_refresh_seconds">120</string>
+    <string name="default_max_refresh_seconds">620</string>
 
     <!-- UI STRINGS -->
     <!-- PREFERENCES -->
@@ -208,8 +208,11 @@
     <string name="add_temporary">For this visit only</string>
     <string name="add_permanent">Permanently: Keep Me Updated on This Client</string>
     <string name="add_create_new">Create New Client</string>
-    <string name="similar_clients_section">Similar Clients Found. Only create a new client if they are not listed below:</string>
-    <string name="similar_client_section">Similar Client Found. Only create a new client if they are not listed below:</string>
+
+    <plurals name="similar_clients_section">
+        <item quantity="one">%s Similar Client Found. Only create a new client if they are not listed below:</item>
+        <item quantity="other">%s Similar Clients Found. Only create a new client if they are not listed below:</item>
+    </plurals>
 
     <!-- Refreshing Data -->
     <string name="refresh_title">Refreshing Data</string>
@@ -319,6 +322,7 @@
     <string name="error_storage">SD card is not available.  Please check the card or disconnect from USB.</string>
     <string name="error_storage_title">Storage Error</string>
     <string name="error_db">Database Error</string>
+    <string name="error_connection">Connection Error. Please Check Your Service and Try Again</string>
 
     <!-- Misc Resources -->
     <string name="female">Female</string>

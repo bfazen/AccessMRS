@@ -86,28 +86,4 @@ public class SSLTestActivity extends Activity implements SyncDataListener {
 			resultText.setText(getString(R.string.ssl_test_failure));
 		}
 	}
-
-	@Override
-	public void sslSetupComplete(String result, SyncResult syncResult) {
-		// Do Nothing
-
-	}
-
-	@Override
-	public void uploadComplete(String result) {
-		// Do Nothing
-
-	}
-
-	@Override
-	public void downloadComplete(String result) {
-		// Do Nothing
-
-	}
-
-	@Override
-	public void progressUpdate(String message, int progress, int max) {
-		// Do Nothing
-
-	}
 }

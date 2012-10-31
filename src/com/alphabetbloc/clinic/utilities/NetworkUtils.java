@@ -264,43 +264,38 @@ public class NetworkUtils {
 		return entity;
 	}
 
-	public static void postEntity(HttpClient client, String url, MultipartEntity entity) throws IOException{
+	public static void postEntity(HttpClient client, String url, MultipartEntity entity) throws IOException {
 
-			HttpPost httppost = new HttpPost(url);
-			httppost.setEntity(entity);
-			HttpResponse response = client.execute(httppost);
+		HttpPost httppost = new HttpPost(url);
+		httppost.setEntity(entity);
+		HttpResponse response = client.execute(httppost);
 
-			// verify response is okay
-			int responseCode = response.getStatusLine().getStatusCode();
-			Log.d(TAG, "httppost response=" + responseCode);
-			if (responseCode != HttpURLConnection.HTTP_OK) 
-				throw new IOException("httpClient DID NOT execute httpost! caught an exception!");
+		// verify response is okay
+		int responseCode = response.getStatusLine().getStatusCode();
+		Log.d(TAG, "httppost response=" + responseCode);
+		if (responseCode != HttpURLConnection.HTTP_OK)
+			throw new IOException(App.getApp().getString(R.string.error_connection));
 	}
 
-	public static InputStream getStream(HttpClient client, String url) {
+	public static InputStream getStream(HttpClient client, String url) throws Exception {
 
-		try {
-			HttpGet get = new HttpGet(url);
-			HttpResponse response = client.execute(get);
+		HttpGet get = new HttpGet(url);
+		HttpResponse response = client.execute(get);
 
-			// verify response is okay
-			if (response.getStatusLine().getStatusCode() != 200) {
-				Log.e(TAG, "Error: " + response.getStatusLine());
-			} else {
-				Log.e(TAG, "NO Error!: " + response.getStatusLine());
-			}
+		// verify response is okay
+		if (response.getStatusLine().getStatusCode() != 200) {
+			Log.e(TAG, "Error: " + response.getStatusLine());
+			throw new IOException(App.getApp().getString(R.string.error_connection));
+		} else {
+			Log.e(TAG, "NO Error!: " + response.getStatusLine());
+		}
 
-			// Get hold of the response entity
-			HttpEntity entity = response.getEntity();
+		// Get hold of the response entity
+		HttpEntity entity = response.getEntity();
 
-			if (entity != null) {
-				InputStream is = entity.getContent();
-				return is;
-			}
-
-		} catch (Exception e) {
-			e.printStackTrace();
-			return null;
+		if (entity != null) {
+			InputStream is = entity.getContent();
+			return is;
 		}
 
 		return null;
@@ -325,7 +320,7 @@ public class NetworkUtils {
 			throw new IOException("Access denied. Check your username and password.");
 		} else if (status <= 0 || status >= HttpURLConnection.HTTP_BAD_REQUEST) {
 			zdis.close();
-			throw new IOException("Connection Failed. Please Try Again.");
+			throw new IOException(App.getApp().getString(R.string.error_connection));
 		} else {
 			assert (status == HttpURLConnection.HTTP_OK); // success
 			return zdis;

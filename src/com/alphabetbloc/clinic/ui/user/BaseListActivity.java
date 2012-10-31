@@ -4,12 +4,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
@@ -36,9 +38,7 @@ import com.alphabetbloc.clinic.utilities.UiUtils;
  * @author Louis Fazen (louis.fazen@gmail.com)
  * 
  */
-public class BaseListActivity extends ListActivity implements SyncStatusObserver {
-
-	private static final String TAG = BaseListActivity.class.getSimpleName();
+public abstract class BaseListActivity extends ListActivity implements SyncStatusObserver {
 
 	// Swiping Parameters
 	protected static final int SWIPE_MIN_DISTANCE = 120;
@@ -49,13 +49,13 @@ public class BaseListActivity extends ListActivity implements SyncStatusObserver
 	private static final int MENU_REFRESH = Menu.FIRST;
 	private static final int MENU_USER_PREFERENCES = Menu.FIRST + 1;
 	private static final int MENU_ADMIN_PREFERENCES = Menu.FIRST + 2;
-
-	// Dialog
-	private static final int PROGRESS_DIALOG = 1;
+	private static final String TAG = BaseListActivity.class.getSimpleName();
 
 	private static ProgressDialog mSyncActiveDialog;
+	private static AlertDialog mRequestSyncDialog;
 	private static Object mSyncObserverHandle;
 	private Context mToastCtx;
+	private static boolean mPaused;
 	private ScheduledExecutorService mExecutor = Executors.newScheduledThreadPool(5);
 
 	@Override
@@ -71,45 +71,74 @@ public class BaseListActivity extends ListActivity implements SyncStatusObserver
 
 	@Override
 	public void onStatusChanged(int which) {
-		Log.e(TAG, "SyncStatusObserver Status has Changed");
 		runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
 				if (!RefreshDataService.isSyncActive) {
 					// Sync is not yet active, so we must be starting a sync
-					Log.e(TAG, "SyncStatusChanged: starting a Sync");
-					updateSyncProgress();
-					// showDialog(PROGRESS_DIALOG);
+					Log.d(TAG, "SyncStatusChanged: starting a Sync");
+					if (!SyncManager.sStartSync)
+						showRequestSyncDialog();
 
 				} else {
 					// we are just completing a sync (whether success or not)
-					Log.e(TAG, "SyncStatusChanged: completing sync");
+					Log.d(TAG, "SyncStatusChanged: completing sync");
 					// dismiss dialog
 					if (mSyncActiveDialog != null) {
 						mSyncActiveDialog.dismiss();
+						mSyncActiveDialog = null;
 					}
 
-					// refreshView
-					// Intent relaunch = new Intent(App.getApp(),
-					// ClinicLauncherActivity.class);
-					// relaunch.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-					// relaunch.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-					// startActivity(relaunch);
+					refreshView();
+
 				}
 			}
 		});
 
 	}
 
-	@Override
-	protected Dialog onCreateDialog(int id) {
+	protected abstract void refreshView();
+
+	private void showProgressDialog() {
+		SyncManager.sSyncStep = 0;
+		SyncManager.sLoopProgress = 0;
+		SyncManager.sLoopCount = 0;
 		mSyncActiveDialog = new ProgressDialog(this);
 		mSyncActiveDialog.setIcon(android.R.drawable.ic_dialog_info);
 		mSyncActiveDialog.setTitle(getString(R.string.sync_in_progress_title));
 		mSyncActiveDialog.setMessage(getString(R.string.sync_in_progress));
 		mSyncActiveDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
 		mSyncActiveDialog.setCancelable(false);
-		return mSyncActiveDialog;
+		mSyncActiveDialog.setProgress(0);
+		mSyncActiveDialog.show();
+	}
+
+	private void showRequestSyncDialog() {
+		DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				switch (which) {
+				case DialogInterface.BUTTON_POSITIVE:
+					dialog.dismiss();
+					SyncManager.sStartSync = true;
+					updateSyncProgress();
+					break;
+
+				case DialogInterface.BUTTON_NEGATIVE:
+					SyncManager.sEndSync = true;
+					break;
+				}
+			}
+		};
+
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setIcon(android.R.drawable.ic_dialog_info);
+		builder.setTitle(getString(R.string.refresh_clients_title));
+		builder.setMessage(getString(R.string.refresh_clients_text));
+		builder.setPositiveButton(getString(R.string.refresh), dialogClickListener);
+		builder.setNegativeButton(getString(R.string.cancel), dialogClickListener);
+		mRequestSyncDialog = builder.create();
+		mRequestSyncDialog.show();
 	}
 
 	@Override
@@ -150,46 +179,31 @@ public class BaseListActivity extends ListActivity implements SyncStatusObserver
 
 	@Override
 	protected void onResume() {
+		mPaused = false;
 		super.onResume();
-		IntentFilter filter = new IntentFilter(SyncManager.TOAST_SYNC_MESSAGE);
-		LocalBroadcastManager.getInstance(this).registerReceiver(onNotice, filter);
+		IntentFilter filter = new IntentFilter(SyncManager.SYNC_MESSAGE);
+		LocalBroadcastManager.getInstance(this).registerReceiver(onSyncNotice, filter);
 		mSyncObserverHandle = ContentResolver.addStatusChangeListener(ContentResolver.SYNC_OBSERVER_TYPE_ACTIVE, this);
 
-		if (RefreshDataService.isSyncActive) {
-
-			Log.i(TAG, "onResume and Sync is active!");
-			if (mSyncActiveDialog != null && !mSyncActiveDialog.isShowing())
-				mSyncActiveDialog.show();
-			else if (mSyncActiveDialog == null)
-				showDialog(PROGRESS_DIALOG);
-
-		} else
-			Log.i(TAG, "onResume and Sync is NOT active!");
-
+		if (RefreshDataService.isSyncActive)
+			updateSyncProgress();
 	}
 
-
 	private void updateSyncProgress() {
-		Log.i(TAG, "Updating Progress! with mSyncActiveDialog=" + mSyncActiveDialog);
-		SyncManager.sSyncComplete = false;
-		if (mSyncActiveDialog != null)
-			mSyncActiveDialog.setProgress(0);
-		showDialog(PROGRESS_DIALOG);
-		
+		SyncManager.sEndSync = false;
+
+		if (mSyncActiveDialog == null)
+			showProgressDialog();
+
 		mExecutor.schedule(new Runnable() {
 			public void run() {
 
-				if (!SyncManager.sSyncComplete) {
+				if (!SyncManager.sEndSync && !mPaused) {
 					mExecutor.schedule(this, 800, TimeUnit.MILLISECONDS);
 					BaseListActivity.this.runOnUiThread(new Runnable() {
 
 						@Override
 						public void run() {
-							// Log.i(TAG, "Updating Progress: Title=" +
-							// SyncManager.sSyncTitle + " Step=" +
-							// SyncManager.sSyncStep + " Progress=" +
-							// SyncManager.sLoopProgress + " Count=" +
-							// SyncManager.sLoopCount);
 							int loop = (SyncManager.sLoopProgress == SyncManager.sLoopCount) ? 0 : ((int) Math.round(((float) SyncManager.sLoopProgress / (float) SyncManager.sLoopCount) * 20F));
 							mSyncActiveDialog.setProgress((SyncManager.sSyncStep * 10) + loop);
 							mSyncActiveDialog.setMessage(SyncManager.sSyncTitle);
@@ -199,10 +213,9 @@ public class BaseListActivity extends ListActivity implements SyncStatusObserver
 				}
 			}
 		}, 0, TimeUnit.MILLISECONDS);
-		
-		
+
 	}
-	
+
 	protected class myGestureListener extends SimpleOnGestureListener {
 
 		@Override
@@ -231,31 +244,34 @@ public class BaseListActivity extends ListActivity implements SyncStatusObserver
 
 	}
 
-	protected BroadcastReceiver onNotice = new BroadcastReceiver() {
+	protected BroadcastReceiver onSyncNotice = new BroadcastReceiver() {
 		public void onReceive(Context ctxt, Intent i) {
 			savePosition();
-			
-			boolean error = i.getBooleanExtra(SyncManager.TOAST_ERROR, false);
-			String toast = i.getStringExtra(SyncManager.TOAST_MESSAGE);
-
-			UiUtils.toastSyncMessage(mToastCtx, toast, error);
-
+			boolean newSync = i.getBooleanExtra(SyncManager.START_NEW_SYNC, false);
+			if (newSync) {
+				// we are starting a new sync automatically
+				updateSyncProgress();
+			} else {
+				// we have ongoing sync, with new sync message
+				boolean error = i.getBooleanExtra(SyncManager.TOAST_ERROR, false);
+				String toast = i.getStringExtra(SyncManager.TOAST_MESSAGE);
+				UiUtils.toastSyncMessage(mToastCtx, toast, error);
+			}
 		}
 	};
 
 	@Override
 	protected void onPause() {
+		mPaused = true;
 		super.onPause();
-		if (mSyncActiveDialog != null) {
-			mSyncActiveDialog.dismiss();
-		}
+
 		ContentResolver.removeStatusChangeListener(mSyncObserverHandle);
-		LocalBroadcastManager.getInstance(this).unregisterReceiver(onNotice);
+		LocalBroadcastManager.getInstance(this).unregisterReceiver(onSyncNotice);
 	}
-	
+
 	protected void savePosition() {
 		// TODO Fill in this method if you want to save the position of the item
 		// in the scroll list..
 	}
-	
+
 }

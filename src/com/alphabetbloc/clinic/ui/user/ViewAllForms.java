@@ -160,7 +160,7 @@ public class ViewAllForms extends ViewFormsActivity {
 		}
 	}
 
-	private void refreshView() {
+	protected void refreshView() {
 
 		boolean selectedIds = false;
 		if (mSelectedFormIds != null && mSelectedFormIds.size() > 0) {

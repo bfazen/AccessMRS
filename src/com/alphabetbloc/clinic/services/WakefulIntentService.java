@@ -18,6 +18,7 @@ import com.alphabetbloc.clinic.receivers.DeleteDecryptedDataReceiver;
 import com.alphabetbloc.clinic.receivers.EncryptDataReceiver;
 import com.alphabetbloc.clinic.receivers.RefreshDataReceiver;
 import com.alphabetbloc.clinic.receivers.WipeDataReceiver;
+import com.alphabetbloc.clinic.utilities.App;
 
 import android.app.AlarmManager;
 import android.app.IntentService;
@@ -26,6 +27,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.PowerManager;
+import android.util.Log;
 
 /**
  * 
@@ -78,17 +80,17 @@ abstract public class WakefulIntentService extends IntentService {
 			Intent i = null;
 			// TODO! Delete this IF STATEMENT is syncadapter works!
 			if (receiver.equals(REFRESH_DATA)) {
-				i = new Intent(ctxt, RefreshDataReceiver.class);
+				i = new Intent(App.getApp(), RefreshDataReceiver.class);
 			} else if (receiver.equals(ENCRYPT_DATA)) {
-				i = new Intent(ctxt, EncryptDataReceiver.class);
+				i = new Intent(App.getApp(), EncryptDataReceiver.class);
 			} else if (receiver.equals(DELETE_DECRYPTED_DATA)) {
-				i = new Intent(ctxt, DeleteDecryptedDataReceiver.class);
+				i = new Intent(App.getApp(), DeleteDecryptedDataReceiver.class);
 			} else if (receiver.equals(WIPE_DATA)) {
-				i = new Intent(ctxt, WipeDataReceiver.class);
+				i = new Intent(App.getApp(), WipeDataReceiver.class);
 			}
-			PendingIntent pi = PendingIntent.getBroadcast(ctxt, 0, i, 0);
+			PendingIntent pi = PendingIntent.getBroadcast(App.getApp(), 0, i, 0);
 
-			listener.scheduleAlarms(mgr, pi, ctxt);
+			listener.scheduleAlarms(mgr, pi, App.getApp());
 		}
 	}
 
@@ -96,17 +98,22 @@ abstract public class WakefulIntentService extends IntentService {
 		Intent i = null;
 		AlarmManager mgr = (AlarmManager) ctxt.getSystemService(Context.ALARM_SERVICE);
 		if (receiver.equals(REFRESH_DATA)) {
-			i = new Intent(ctxt, RefreshDataReceiver.class);
+			i = new Intent(App.getApp(), RefreshDataReceiver.class);
 		} else if (receiver.equals(ENCRYPT_DATA)) {
-			i = new Intent(ctxt, EncryptDataReceiver.class);
+			i = new Intent(App.getApp(), EncryptDataReceiver.class);
 		} else if (receiver.equals(DELETE_DECRYPTED_DATA)) {
-			i = new Intent(ctxt, DeleteDecryptedDataReceiver.class);
+			i = new Intent(App.getApp(), DeleteDecryptedDataReceiver.class);
 		} else if (receiver.equals(WIPE_DATA)) {
-			i = new Intent(ctxt, WipeDataReceiver.class);
+			i = new Intent(App.getApp(), WipeDataReceiver.class);
 		}
 
-		PendingIntent pi = PendingIntent.getBroadcast(ctxt, 0, i, 0);
-		mgr.cancel(pi);
+		PendingIntent pi = PendingIntent.getBroadcast(App.getApp(), 0, i, 0);
+		try {
+	        mgr.cancel(pi);
+	        Log.e("WakefulIntentService", "Successfully cancelled an alarm with receiver=" + receiver);
+	    } catch (Exception e) {
+	        Log.e("WakefulIntentService", "AlarmManager update was not canceled. " + e.toString());
+	    }
 	}
 
 	public WakefulIntentService(String name) {

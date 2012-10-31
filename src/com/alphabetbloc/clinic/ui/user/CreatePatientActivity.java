@@ -156,6 +156,11 @@ public class CreatePatientActivity extends BaseActivity implements OnGestureList
 
 	}
 
+	@Override
+	protected void refreshView() {
+		// do nothing
+	}
+
 	private boolean similarClientCheck() {
 		// Verify the client against the db
 		boolean similarFound = false;

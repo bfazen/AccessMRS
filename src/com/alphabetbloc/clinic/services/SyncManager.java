@@ -39,7 +39,6 @@ import com.alphabetbloc.clinic.providers.DataModel;
 import com.alphabetbloc.clinic.providers.Db;
 import com.alphabetbloc.clinic.providers.DbProvider;
 import com.alphabetbloc.clinic.utilities.App;
-import com.alphabetbloc.clinic.utilities.FileUtils;
 import com.alphabetbloc.clinic.utilities.UiUtils;
 import com.alphabetbloc.clinic.utilities.XformUtils;
 
@@ -52,13 +51,15 @@ import com.alphabetbloc.clinic.utilities.XformUtils;
 public class SyncManager {
 
 	private static final String TAG = SyncManager.class.getSimpleName();
-	public static final String TOAST_SYNC_MESSAGE = "com.alphabetbloc.clinic.utilities.toast_sync_message";
+	public static final String SYNC_MESSAGE = "com.alphabetbloc.clinic.utilities.sync_message";
 	public static final String TOAST_MESSAGE = "toast_message";
 	public static final String TOAST_ERROR = "toast_error";
+	public static final String START_NEW_SYNC = "start_new_sync";
 	public static final int UPLOAD_FORMS = 1;
 	public static final int DOWNLOAD_FORMS = 2;
 	public static final int DOWNLOAD_OBS = 3;
 	public static final int SYNC_COMPLETE = 4;
+	public static final String MANUAL_SYNC = "manual_sync";
 
 	private String mSyncResultString;
 	private Context mContext;
@@ -66,7 +67,9 @@ public class SyncManager {
 	public static int sLoopCount;
 	public static int sLoopProgress;
 	public static String sSyncTitle;
-	public static boolean sSyncComplete = false;
+	public static boolean sEndSync = false;
+	public static boolean sStartSync;
+
 
 	// Android OS does not allow concurrent sync... so static progress int works
 	public SyncManager(Context context) {
@@ -75,7 +78,7 @@ public class SyncManager {
 		sSyncStep = 0;
 		sLoopProgress = 0;
 		sLoopCount = 0;
-		sSyncComplete = false;
+		sEndSync = false;
 		Log.i(TAG, "New SyncManager with: Step=" + sSyncStep + " Progress=" + sLoopProgress + " Count=" + sLoopCount);
 	}
 
@@ -86,10 +89,13 @@ public class SyncManager {
 		Account[] accounts = accountManager.getAccountsByType(App.getApp().getString(R.string.app_account_type));
 		if (accounts.length > 0) {
 
+			sStartSync = true;
+
 			// TODO! Not sure if this is the best way to do it?
 			Bundle bundle = new Bundle();
 			bundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
 			bundle.putBoolean(ContentResolver.SYNC_EXTRAS_FORCE, true);
+			// bundle.putBoolean(MANUAL_SYNC, true);
 			// bundle.putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true);
 			// //this resets the scheduled sync
 			ContentResolver.requestSync(accounts[0], App.getApp().getString(R.string.app_provider_authority), bundle);
@@ -527,7 +533,26 @@ public class SyncManager {
 		}
 	}
 
-	public void toastSyncMessage(int syncType, int success, int total, int currentErrors, String dbError) {
+	public void toastSyncResult(int totalErrors, String errorMessage) {
+
+		StringBuilder result = new StringBuilder();
+		result.append(mSyncResultString);
+		if (totalErrors > 0) {
+			result.append(" (").append(mContext.getResources().getQuantityString(R.plurals.errors, totalErrors, totalErrors));
+			if (errorMessage != null)
+				result.append(" : ").append(errorMessage);
+			result.append(")");
+		}
+
+		// Send to Activity
+		Intent broadcast = new Intent(SYNC_MESSAGE);
+		broadcast.putExtra(TOAST_MESSAGE, result.toString());
+		broadcast.putExtra(TOAST_ERROR, (totalErrors == 0) ? false : true);
+		LocalBroadcastManager.getInstance(mContext).sendBroadcast(broadcast);
+
+	}
+
+	public void toastSyncUpdate(int syncType, int success, int total, int currentErrors, String dbError) {
 		Log.e(TAG, "toasting a sync message with parameters=" + syncType + ", " + success + ", " + total + ", " + currentErrors + ", " + dbError);
 		String currentToast = createToastString(syncType, success, total, currentErrors);
 		if (currentToast != null) {
@@ -542,7 +567,7 @@ public class SyncManager {
 			}
 
 			// Send to Activity
-			Intent broadcast = new Intent(TOAST_SYNC_MESSAGE);
+			Intent broadcast = new Intent(SYNC_MESSAGE);
 			broadcast.putExtra(TOAST_MESSAGE, result.toString());
 			broadcast.putExtra(TOAST_ERROR, (currentErrors == 0) ? false : true);
 			LocalBroadcastManager.getInstance(mContext).sendBroadcast(broadcast);
@@ -575,7 +600,6 @@ public class SyncManager {
 			failNoSync = R.string.sync_download_obs_failed;
 			// don't toast success
 			break;
-		case SYNC_COMPLETE:
 		default:
 			return mSyncResultString;
 		}
@@ -587,7 +611,7 @@ public class SyncManager {
 		// Error 2: Partial upload/download
 		else if (total > 0 && success != total)
 			toast = mContext.getResources().getQuantityString(failPartialSync, total, String.valueOf(total - success) + " of " + String.valueOf(total));
-		
+
 		// SUCCESS: Add to SyncResult Toast (Don't show until Sync Complete)
 		else {
 			StringBuilder sb = new StringBuilder();

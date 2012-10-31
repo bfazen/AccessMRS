@@ -104,7 +104,7 @@ public class SetupPreferencesActivity extends Activity {
 	}
 
 	private void refreshView() {
-
+		Log.e(TAG, "Refreshing view with mSetupType=" + mSetupType);
 		switch (mSetupType) {
 
 		case FIRST_RUN:
@@ -434,11 +434,12 @@ public class SetupPreferencesActivity extends Activity {
 			// we have now setup everything!
 			final SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
 			settings.edit().putBoolean(getString(R.string.key_first_run), false).commit();
+
 			mSetupType = FINISH;
-			refreshView();
-		}
+			Log.d(TAG, "Account Successfully setup and mSetupType=" + mSetupType);
+		} else
+			Log.e(TAG, "There was an error encountered during account setup... still considered first run");
 		super.onActivityResult(requestCode, resultCode, data);
 	}
-
 
 }

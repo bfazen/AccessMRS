@@ -24,9 +24,11 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.XmlResourceParser;
+import android.util.Log;
 
 import com.alphabetbloc.clinic.services.WakefulIntentService;
 import com.alphabetbloc.clinic.services.WakefulIntentService.AlarmListener;
+import com.alphabetbloc.clinic.services.WipeDataService;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -41,6 +43,7 @@ import org.xmlpull.v1.XmlPullParserException;
  */
 public class WipeDataReceiver extends BroadcastReceiver {
 	private static final String WAKEFUL_META_DATA = "com.commonsware.cwac.wakeful";
+	private static final String TAG = WipeDataReceiver.class.getSimpleName();
 
 	@Override
 	public void onReceive(Context ctxt, Intent intent) {
@@ -50,9 +53,15 @@ public class WipeDataReceiver extends BroadcastReceiver {
 			if (intent.getAction() == null) {
 				SharedPreferences prefs = ctxt.getSharedPreferences(WakefulIntentService.NAME, 0);
 
-				prefs.edit().putLong(WakefulIntentService.WIPE_DATA, System.currentTimeMillis()).commit();
-
-				listener.sendWakefulWork(ctxt);
+				boolean wipeData = prefs.getBoolean(WipeDataService.WIPE_DATA_REQUESTED, false);
+				if (wipeData) {
+					Log.e(TAG, "Wipe Data has been Requested");
+					prefs.edit().putLong(WakefulIntentService.WIPE_DATA, System.currentTimeMillis()).commit();
+					listener.sendWakefulWork(ctxt);
+				} else {
+					Log.d(TAG, "Not wiping data...");
+				}
+				// otherwise, do nothing
 			} else {
 				WakefulIntentService.scheduleAlarms(listener, WakefulIntentService.WIPE_DATA, ctxt, true);
 			}
