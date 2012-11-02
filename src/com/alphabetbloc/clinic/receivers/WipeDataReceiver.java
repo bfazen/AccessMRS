@@ -44,6 +44,7 @@ import org.xmlpull.v1.XmlPullParserException;
 public class WipeDataReceiver extends BroadcastReceiver {
 	private static final String WAKEFUL_META_DATA = "com.commonsware.cwac.wakeful";
 	private static final String TAG = WipeDataReceiver.class.getSimpleName();
+	private static final String WIPE_DATA_FROM_ADMIN_SMS_REQUEST = "com.alphabetbloc.clinic.WIPE_DATA_FROM_ADMIN_SMS_REQUEST";
 
 	@Override
 	public void onReceive(Context ctxt, Intent intent) {
@@ -51,9 +52,16 @@ public class WipeDataReceiver extends BroadcastReceiver {
 
 		if (listener != null) {
 			if (intent.getAction() == null) {
-				SharedPreferences prefs = ctxt.getSharedPreferences(WakefulIntentService.NAME, 0);
 
-				boolean wipeData = prefs.getBoolean(WipeDataService.WIPE_DATA_REQUESTED, false);
+				SharedPreferences prefs = ctxt.getSharedPreferences(WakefulIntentService.NAME, 0);
+				
+				// check for intent
+				boolean wipeData = intent.getBooleanExtra(WIPE_DATA_FROM_ADMIN_SMS_REQUEST, false);
+				if (wipeData)
+					prefs.edit().putBoolean(WipeDataService.WIPE_DATA_REQUESTED, wipeData).commit();
+
+				// check for existing wipe data request
+				wipeData = prefs.getBoolean(WipeDataService.WIPE_DATA_REQUESTED, false);
 				if (wipeData) {
 					Log.e(TAG, "Wipe Data has been Requested");
 					prefs.edit().putLong(WakefulIntentService.WIPE_DATA, System.currentTimeMillis()).commit();
