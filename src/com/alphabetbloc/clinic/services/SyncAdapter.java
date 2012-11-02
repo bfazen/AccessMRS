@@ -3,28 +3,26 @@ package com.alphabetbloc.clinic.services;
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.Iterator;
+import java.util.List;
 
 import org.apache.http.client.HttpClient;
 import org.apache.http.entity.mime.MultipartEntity;
 
 import android.accounts.Account;
+import android.app.ActivityManager;
+import android.app.ActivityManager.RunningAppProcessInfo;
 import android.content.AbstractThreadedSyncAdapter;
 import android.content.ContentProviderClient;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SyncResult;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
@@ -47,173 +45,74 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 	private static final String TAG = SyncAdapter.class.getSimpleName();
 	private Context mContext;
 	private SyncManager mSyncManager;
-	private ScheduledExecutorService mExecutor = Executors.newScheduledThreadPool(5);
 	private String mTimeoutException;
-	private Handler h;
-
-	// private Handler h;
 
 	public SyncAdapter(Context context, boolean autoInitialize) {
 		super(context, autoInitialize);
 		mContext = context;
 	}
 
-	// TODO! 3 ways to make this work:
-	// 1. Thread Sleep for 1 second, then check again... simple
-	// 2. Handler... this also posts a runnable as below, but it occurs on the
-	// same thread (so should work better than scheduled executor? ... but not
-	// sure I got it to work)
-	// 3. ScheduledExecutor service (this did work... but the syncResult kept
-	// going through (sync was considered ended because it posted it as a
-	// delayed runnable on another thread
-
-//	@Override
-//	public void onPerformSync(Account account, Bundle extras, String authority, ContentProviderClient provider, final SyncResult syncResult) {
-//
-//		mSyncManager = new SyncManager(mContext);
-//		SyncManager.sStartSync = extras.getBoolean(SyncManager.MANUAL_SYNC, false);
-//
-//		Looper.prepare();
-//		h = new Handler();
-//		h.post(new Runnable() {
-//			int count = 0;
-//
-//			public void run() {
-//				if (SyncManager.sEndSync) {
-//					// Sync was cancelled by user, so quit
-//				} else if (SyncManager.sStartSync || count > 30) {
-//					// Inform Activity
-//					Intent broadcast = new Intent(SyncManager.SYNC_MESSAGE);
-//					broadcast.putExtra(SyncManager.START_NEW_SYNC, true);
-//					LocalBroadcastManager.getInstance(mContext).sendBroadcast(broadcast); //
-//					// Start the Sync
-//					performSync(syncResult);
-//					SyncManager.sEndSync = true;
-//					SyncManager.sStartSync = false;
-//				} else {
-//					// repeat check every second up until 30 seconds
-//					h.postDelayed(this, 1000);
-//					count++;
-//				}
-//			}
-//		});
-//
-//		Log.e(TAG, "sync is now ending");
-//	}
-
-	// @Override
-//	public void onPerformSync2(Account account, Bundle extras, String authority, ContentProviderClient provider, final SyncResult syncResult) {
-//		mSyncManager = new SyncManager(mContext);
-//
-//		SyncManager.sStartSync = extras.getBoolean(SyncManager.MANUAL_SYNC, false);
-//		mExecutor.schedule(new Runnable() {
-//
-//			int count = 0;
-//
-//			public void run() {
-//				if (SyncManager.sEndSync) {
-//					// Sync was cancelled by user, so quit
-//				} else if (SyncManager.sStartSync || count > 30) {
-//					// Inform Activity
-//					Intent broadcast = new Intent(SyncManager.SYNC_MESSAGE); //
-//					broadcast.putExtra(SyncManager.START_NEW_SYNC, true); //
-//					LocalBroadcastManager.getInstance(mContext).sendBroadcast(broadcast); //
-//					// Start the Sync
-//					performSync(syncResult);
-//					SyncManager.sEndSync = true;
-//					SyncManager.sStartSync = false;
-//				} else {
-//					// repeat check every second up until 30 seconds
-//					mExecutor.schedule(this, 1000, TimeUnit.MILLISECONDS);
-//					count++;
-//				}
-//
-//			}
-//		}, 0, TimeUnit.MILLISECONDS);
-//		while (!SyncManager.sEndSync) {
-//		}
-//		Log.e(TAG, "sync is now ending");
-//	}
-
 	@Override
 	public void onPerformSync(Account account, Bundle extras, String authority, ContentProviderClient provider, final SyncResult syncResult) {
-		Log.i(TAG, "Sync Started");
+		Log.i(TAG, "Sync Requested... asking user.");
 		Thread.currentThread().setName(TAG);
 
 		mSyncManager = new SyncManager(mContext);
+		
+		//check user activity
+		if(isUserEnteringData())
+			SyncManager.sCancelSync = true;
+
+		// ask user to sync
 		int count = 0;
-		while(!SyncManager.sStartSync && !SyncManager.sEndSync && count < 20){
+		while(!SyncManager.sStartSync && !SyncManager.sCancelSync && count < 20){
 			android.os.SystemClock.sleep(1000);
 			count++;
-			Log.e(TAG, "Waiting for User with count=" + count);
+			Log.v(TAG, "Waiting for User with count=" + count);
 		}
 		
-		
-		if(!SyncManager.sEndSync) {	
-			Log.e(TAG, "sync is now automatically starting");
+		// sync
+		if(!SyncManager.sCancelSync) {	
+			Log.i(TAG, "Starting an actual sync");
 			// Inform Activity
 			Intent broadcast = new Intent(SyncManager.SYNC_MESSAGE);
 			broadcast.putExtra(SyncManager.START_NEW_SYNC, true);
 			LocalBroadcastManager.getInstance(mContext).sendBroadcast(broadcast);
+			
 			// Start the Sync
 			performSync(syncResult);
-			SyncManager.sEndSync = true;
-			SyncManager.sStartSync = false;
 		} else {
-			Log.e(TAG, "User cancelled the sync");
+			Log.i(TAG, "User cancelled the sync");
 		}
+		
+		SyncManager.sEndSync = true;
+		SyncManager.sStartSync = false;
+		SyncManager.sCancelSync = false;
 
-		Log.e(TAG, "sync is now ending");
+		Log.i(TAG, "sync is now ending");
 	}
 
-	
-//if (askUserToSync(count)) 
-//	private boolean askUserToSync(int count) {
-//
-//		// Sync was cancelled by user, so quit
-//		if (SyncManager.sEndSync)
-//			return false;
-//
-//		// Sync was accepted by User, or after wait of 30s
-//		else if (SyncManager.sStartSync || count > 30)
-//			return true;
-//
-//		// repeat check every second up until 30 seconds
-//		else {
-//			try {
-//				Thread.sleep(1000);
-//			} catch (InterruptedException e) {
-//				Log.i(TAG, "Sync was Interrupted When Waiting for User");
-//				e.printStackTrace();
-//			}
-//			return askUserToSync(count++);
-//		}
-//
-//	}
-	
-//	private boolean askUserToSync2(int count) {
-//
-//		// Sync was cancelled by user, so quit
-//		if (SyncManager.sEndSync)
-//			return false;
-//
-//		// Sync was accepted by User, or after wait of 30s
-//		else if (SyncManager.sStartSync || count > 30)
-//			return true;
-//
-//		// repeat check every second up until 30 seconds
-//		else {
-//			try {
-//				Thread.sleep(1000);
-//			} catch (InterruptedException e) {
-//				Log.i(TAG, "Sync was Interrupted When Waiting for User");
-//				e.printStackTrace();
-//			}
-//			return askUserToSync(count++);
-//		}
-//
-//	}
+	private boolean isUserEnteringData() {
+		RunningAppProcessInfo currentApp = null;
+		String collectPackage = "org.odk.collect.android";
+		
+		ActivityManager	am = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
+		List<RunningAppProcessInfo> l = am.getRunningAppProcesses();
+		Iterator<RunningAppProcessInfo> i = l.iterator();
+		
+		while (i.hasNext()) {
+			currentApp = i.next();
+			if (currentApp.importance == RunningAppProcessInfo.IMPORTANCE_FOREGROUND){
+				if(currentApp.processName.equalsIgnoreCase(collectPackage)) 
+					return true;
+				else
+					return false;
+			}
+		}
 
+		return false;
+	}
+	
 	private void performSync(SyncResult syncResult) {
 		mTimeoutException = null;
 		HttpClient client = NetworkUtils.getHttpClient();
@@ -221,36 +120,42 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 			// ++syncResult.stats.numIoExceptions;
 			Log.e(TAG, "client is null!  Check the credential storage!");
 			Intent i = new Intent(mContext, ClinicLauncherActivity.class);
+			i.putExtra(ClinicLauncherActivity.LAUNCH_DASHBOARD, false);
 			i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 			mContext.startActivity(i);
 			UiUtils.toastAlert(mContext.getString(R.string.sync_error), mContext.getString(R.string.no_connection));
 			return;
 		}
 
+		
 		// UPLOAD FORMS
-		mSyncManager.addSyncStep(mContext.getString(R.string.sync_uploading_forms)); // 1
+		mSyncManager.addSyncStep(mContext.getString(R.string.sync_uploading_forms), false); // 0%
 		String[] instancesToUpload = mSyncManager.getInstancesToUpload();
 		String[] instancesUploaded = uploadInstances(client, instancesToUpload, syncResult);
-		mSyncManager.addSyncStep(mContext.getString(R.string.sync_uploading_forms)); // 2
+		mSyncManager.addSyncStep(mContext.getString(R.string.sync_uploading_forms), (instancesUploaded.length < 1) ? true : false); // 10%
 		String dbError = mSyncManager.updateUploadedForms(instancesUploaded, syncResult);
+		mSyncManager.addSyncStep(mContext.getString(R.string.sync_uploading_forms), (instancesUploaded.length < 1) ? true : false); // 20%
 		int uploadErrors = (int) syncResult.stats.numIoExceptions;
 		mSyncManager.toastSyncUpdate(SyncManager.UPLOAD_FORMS, instancesUploaded.length, instancesToUpload.length, uploadErrors, dbError);
-		Log.e(TAG, "End of Upload ConnectionTimeOutException=" + mTimeoutException);
+		Log.v(TAG, "End of Upload ConnectionTimeOutException=" + mTimeoutException);
 		if (mTimeoutException != null) {
 			mSyncManager.toastSyncResult((int) syncResult.stats.numIoExceptions, mTimeoutException);
 			return;
 		}
 
 		// DOWNLOAD NEW FORMS
-		mSyncManager.addSyncStep(mContext.getString(R.string.sync_downloading_forms)); // 3
+		mSyncManager.addSyncStep(mContext.getString(R.string.sync_downloading_forms), false); // No Change
 		Form[] formsToDownload = findNewFormsOnServer(client, syncResult);
+		mSyncManager.addSyncStep(mContext.getString(R.string.sync_downloading_forms), (formsToDownload.length < 1) ? true : false); //30%
 		if (mTimeoutException != null) {
 			mSyncManager.toastSyncResult((int) syncResult.stats.numIoExceptions, mTimeoutException);
 			return;
 		}
 		Form[] formsDownloaded = downloadNewForms(client, formsToDownload, syncResult);
+		mSyncManager.addSyncStep(mContext.getString(R.string.sync_downloading_forms), (formsDownloaded.length < 1) ? true : false); //40%
 		dbError = mSyncManager.updateDownloadedForms(formsDownloaded, syncResult);
-		Log.e(TAG, "Downloaded New Forms with result errors=" + syncResult.stats.numIoExceptions);
+		mSyncManager.addSyncStep(mContext.getString(R.string.sync_downloading_forms), (formsDownloaded.length < 1) ? true : false); //50%
+		Log.v(TAG, "Downloaded New Forms with result errors=" + syncResult.stats.numIoExceptions);
 		int downloadErrors = ((int) syncResult.stats.numIoExceptions) - uploadErrors;
 		mSyncManager.toastSyncUpdate(SyncManager.DOWNLOAD_FORMS, formsDownloaded.length, formsToDownload.length, downloadErrors, dbError);
 		if (mTimeoutException != null) {
@@ -259,16 +164,16 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 		}
 
 		// DOWNLOAD NEW OBS
-		mSyncManager.addSyncStep(mContext.getString(R.string.sync_downloading_data)); // 6
+		mSyncManager.addSyncStep(mContext.getString(R.string.sync_downloading_data), false); // No Change
 		File temp = downloadObsStream(client, syncResult);
-		mSyncManager.addSyncStep(mContext.getString(R.string.sync_updating_data)); // 7->10
+		mSyncManager.addSyncStep(mContext.getString(R.string.sync_updating_data), true); //60%  
 		if (temp != null) {
-			dbError = mSyncManager.readObsFile(temp, syncResult);
+			dbError = mSyncManager.readObsFile(temp, syncResult); //70-100%
 			FileUtils.deleteFile(temp.getAbsolutePath());
 		}
 		int downloadObsErrors = ((int) syncResult.stats.numIoExceptions) - (uploadErrors + downloadErrors);
 		mSyncManager.toastSyncUpdate(SyncManager.DOWNLOAD_OBS, -1, -1, downloadObsErrors, dbError);
-		Log.e(TAG, "Downloaded New Obs with result errors=" + syncResult.stats.numIoExceptions);
+		Log.v(TAG, "Downloaded New Obs with result errors=" + syncResult.stats.numIoExceptions);
 
 		// TOAST RESULT
 		mSyncManager.toastSyncResult((int) syncResult.stats.numIoExceptions, null);
@@ -276,7 +181,8 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 	}
 
 	public String[] uploadInstances(HttpClient client, String[] instancePaths, SyncResult syncResult) {
-
+		SyncManager.sLoopProgress = 0;
+		SyncManager.sLoopCount = instancePaths.length;
 		ArrayList<String> uploadedInstances = new ArrayList<String>();
 		for (int i = 0; i < instancePaths.length; i++) {
 
@@ -290,7 +196,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 					continue;
 
 				NetworkUtils.postEntity(client, NetworkUtils.getFormUploadUrl(), entity);
-				Log.e(TAG, "everything okay! added an instance...");
+				Log.v(TAG, "everything okay! added an instance...");
 				uploadedInstances.add(instancePaths[i]);
 
 			} catch (IOException e) {
@@ -304,6 +210,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 				++syncResult.stats.numIoExceptions;
 			}
 
+			SyncManager.sLoopProgress++;
 		}
 
 		return uploadedInstances.toArray(new String[uploadedInstances.size()]);
@@ -355,6 +262,8 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 	 */
 	private Form[] downloadNewForms(HttpClient client, Form[] newForms, SyncResult syncResult) {
 
+		SyncManager.sLoopProgress = 0;
+		SyncManager.sLoopCount = newForms.length;
 		ArrayList<Form> downloadedForms = new ArrayList<Form>();
 		FileUtils.createFolder(FileUtils.getExternalFormsPath());
 
@@ -394,6 +303,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 				e.printStackTrace();
 			}
 
+			SyncManager.sLoopProgress++;
 		}
 
 		return downloadedForms.toArray(new Form[downloadedForms.size()]);

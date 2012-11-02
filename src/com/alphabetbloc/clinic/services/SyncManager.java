@@ -67,9 +67,9 @@ public class SyncManager {
 	public static int sLoopCount;
 	public static int sLoopProgress;
 	public static String sSyncTitle;
-	public static boolean sEndSync = false;
+	public static boolean sEndSync;
 	public static boolean sStartSync;
-
+	public static boolean sCancelSync;
 
 	// Android OS does not allow concurrent sync... so static progress int works
 	public SyncManager(Context context) {
@@ -103,29 +103,29 @@ public class SyncManager {
 			UiUtils.toastAlert(App.getApp().getString(R.string.sync_error), App.getApp().getString(R.string.no_account_setup));
 	}
 
-	public void addSyncStep(String title) {
+	public void addSyncStep(String title, boolean increment) {
 
-		if (sLoopCount > 0) {
+		if (increment)
+			sSyncStep++;
+		else if (sLoopCount > 0) {
 			// If leaving loop, round up and reset counters
-			float syncStepAndLoop = (float) sSyncStep + ((float) sLoopProgress / (float) sLoopCount);
-			sSyncStep = (int) (syncStepAndLoop + 0.5);
+			float loop = ((float) SyncManager.sLoopProgress / (float) SyncManager.sLoopCount);
+			sSyncStep = (int) ((float) sSyncStep + loop + 0.5F);
 			sLoopProgress = 0;
 			sLoopCount = 0;
-		} else {
-			// or increment
-			sSyncStep++;
 		}
 
+		// Or else just update the title
+		sSyncTitle = title;
+
+		Log.i(TAG, "addSyncStep: Step=" + sSyncStep + " Progress=" + sLoopProgress + " Count=" + sLoopCount);
 		// if (sSyncStep == 0)
 		// sSyncStep++;
-		Log.i(TAG, "addSyncStep: Step=" + sSyncStep + " Progress=" + sLoopProgress + " Count=" + sLoopCount);
 		// int roundLoopUp = (int) (syncStepAndLoop + 0.5);
 		// if (roundLoopUp <= sSyncStep)
 		// roundLoopUp++;
 		// sSyncStep = roundLoopUp;
 		//
-
-		sSyncTitle = title;
 	}
 
 	// UPLOAD SECTION:
@@ -328,11 +328,11 @@ public class SyncManager {
 				dbHelper.delete(DataModel.OBSERVATIONS_TABLE, null, null);
 
 				insertPatients(dis);
-				addSyncStep(mContext.getString(R.string.sync_updating_data)); // 8
+				addSyncStep(mContext.getString(R.string.sync_updating_data), false); // 70%
 				insertObservations(dis);
 
 				try {
-					addSyncStep(mContext.getString(R.string.sync_updating_data)); // 9
+					addSyncStep(mContext.getString(R.string.sync_updating_data), false); // 90% (doubled due to slow speed)
 					insertPatientForms(dis);
 				} catch (EOFException e) {
 					// do nothing for EOFExceptions in this case
@@ -343,7 +343,8 @@ public class SyncManager {
 			}
 
 			updateClinicObs();
-
+			addSyncStep(mContext.getString(R.string.sync_updating_data), false); // 100%
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 			++syncResult.stats.numIoExceptions;
@@ -431,6 +432,7 @@ public class SyncManager {
 
 		db.beginTransaction();
 		sLoopProgress = 0;
+		int count = 0;
 		try {
 			sLoopCount = zdis.readInt();
 			Log.i(TAG, "insertObservations icount: " + sLoopCount);
@@ -453,8 +455,9 @@ public class SyncManager {
 				ih.bind(obsTypeIndex, dataType);
 				ih.bind(obsEncDateIndex, parseDate(input, output, zdis.readUTF()));
 				ih.execute();
-
-				sLoopProgress++;
+				
+				count++;
+				sLoopProgress = count * 2;
 			}
 
 			db.setTransactionSuccessful();
@@ -553,7 +556,7 @@ public class SyncManager {
 	}
 
 	public void toastSyncUpdate(int syncType, int success, int total, int currentErrors, String dbError) {
-		Log.e(TAG, "toasting a sync message with parameters=" + syncType + ", " + success + ", " + total + ", " + currentErrors + ", " + dbError);
+		Log.v(TAG, "toasting a sync message with parameters=" + syncType + ", " + success + ", " + total + ", " + currentErrors + ", " + dbError);
 		String currentToast = createToastString(syncType, success, total, currentErrors);
 		if (currentToast != null) {
 
