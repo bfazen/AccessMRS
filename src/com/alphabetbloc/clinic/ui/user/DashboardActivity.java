@@ -30,7 +30,7 @@ import com.alphabetbloc.clinic.utilities.UiUtils;
  * @author Louis Fazen (louis.fazen@gmail.com)
  * 
  */
-public class DashboardActivity extends BaseActivity {
+public class DashboardActivity extends BaseUserActivity {
 
 	// Request codes
 	public static final int DOWNLOAD_PATIENT = 1;
@@ -259,7 +259,7 @@ public class DashboardActivity extends BaseActivity {
 			vg.addView(patientsButton);
 		}
 		
-		Log.e(TAG, "total patients=" + patients);
+		Log.v(TAG, "total patients=" + patients);
 	}
 
 	private void setAddClientUi(ViewGroup vg) {

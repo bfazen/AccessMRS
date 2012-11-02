@@ -28,7 +28,7 @@ import com.alphabetbloc.clinic.providers.Db;
  * 
  */
 
-public abstract class BasePatientActivity extends BaseListActivity implements SyncStatusObserver {
+public abstract class BasePatientActivity extends BaseUserListActivity implements SyncStatusObserver {
 
 	// intent extras
 	public static final String KEY_PATIENT_ID = "PATIENT_ID";

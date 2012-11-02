@@ -38,7 +38,7 @@ import com.alphabetbloc.clinic.providers.Db;
  *         otherwise)
  * 
  */
-public class ListPatientActivity extends BaseListActivity implements SyncStatusObserver {
+public class ListPatientActivity extends BaseUserListActivity implements SyncStatusObserver {
 
 	// Menu ID's
 	public static final int DOWNLOAD_PATIENT = 1;

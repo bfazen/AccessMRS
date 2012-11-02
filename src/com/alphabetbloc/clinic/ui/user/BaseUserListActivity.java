@@ -5,7 +5,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import android.app.AlertDialog;
-import android.app.Dialog;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
@@ -38,7 +37,7 @@ import com.alphabetbloc.clinic.utilities.UiUtils;
  * @author Louis Fazen (louis.fazen@gmail.com)
  * 
  */
-public abstract class BaseListActivity extends ListActivity implements SyncStatusObserver {
+public abstract class BaseUserListActivity extends ListActivity implements SyncStatusObserver {
 
 	// Swiping Parameters
 	protected static final int SWIPE_MIN_DISTANCE = 120;
@@ -49,7 +48,7 @@ public abstract class BaseListActivity extends ListActivity implements SyncStatu
 	private static final int MENU_REFRESH = Menu.FIRST;
 	private static final int MENU_USER_PREFERENCES = Menu.FIRST + 1;
 	private static final int MENU_ADMIN_PREFERENCES = Menu.FIRST + 2;
-	private static final String TAG = BaseListActivity.class.getSimpleName();
+	private static final String TAG = BaseUserListActivity.class.getSimpleName();
 
 	private static ProgressDialog mSyncActiveDialog;
 	private static AlertDialog mRequestSyncDialog;
@@ -67,6 +66,7 @@ public abstract class BaseListActivity extends ListActivity implements SyncStatu
 			setResult(RESULT_CANCELED);
 			finish();
 		}
+		mToastCtx = this;
 	}
 
 	@Override
@@ -87,6 +87,11 @@ public abstract class BaseListActivity extends ListActivity implements SyncStatu
 					if (mSyncActiveDialog != null) {
 						mSyncActiveDialog.dismiss();
 						mSyncActiveDialog = null;
+					}
+
+					if (mRequestSyncDialog != null) {
+						mRequestSyncDialog.dismiss();
+						mRequestSyncDialog = null;
 					}
 
 					refreshView();
@@ -125,7 +130,7 @@ public abstract class BaseListActivity extends ListActivity implements SyncStatu
 					break;
 
 				case DialogInterface.BUTTON_NEGATIVE:
-					SyncManager.sEndSync = true;
+					SyncManager.sCancelSync = true;
 					break;
 				}
 			}
@@ -200,11 +205,11 @@ public abstract class BaseListActivity extends ListActivity implements SyncStatu
 
 				if (!SyncManager.sEndSync && !mPaused) {
 					mExecutor.schedule(this, 800, TimeUnit.MILLISECONDS);
-					BaseListActivity.this.runOnUiThread(new Runnable() {
+					BaseUserListActivity.this.runOnUiThread(new Runnable() {
 
 						@Override
 						public void run() {
-							int loop = (SyncManager.sLoopProgress == SyncManager.sLoopCount) ? 0 : ((int) Math.round(((float) SyncManager.sLoopProgress / (float) SyncManager.sLoopCount) * 20F));
+							int loop = (SyncManager.sLoopProgress == SyncManager.sLoopCount) ? 0 : ((int) Math.round(((float) SyncManager.sLoopProgress / (float) SyncManager.sLoopCount) * 10F));
 							mSyncActiveDialog.setProgress((SyncManager.sSyncStep * 10) + loop);
 							mSyncActiveDialog.setMessage(SyncManager.sSyncTitle);
 						}
@@ -250,6 +255,10 @@ public abstract class BaseListActivity extends ListActivity implements SyncStatu
 			boolean newSync = i.getBooleanExtra(SyncManager.START_NEW_SYNC, false);
 			if (newSync) {
 				// we are starting a new sync automatically
+				if (mRequestSyncDialog != null) {
+					mRequestSyncDialog.dismiss();
+					mRequestSyncDialog = null;
+				}
 				updateSyncProgress();
 			} else {
 				// we have ongoing sync, with new sync message
@@ -270,7 +279,7 @@ public abstract class BaseListActivity extends ListActivity implements SyncStatu
 	}
 
 	protected void savePosition() {
-		// TODO Fill in this method if you want to save the position of the item
+		// TODO Fill in method if you want to save the position of the item
 		// in the scroll list..
 	}
 

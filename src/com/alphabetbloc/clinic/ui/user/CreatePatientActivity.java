@@ -50,7 +50,7 @@ import com.alphabetbloc.clinic.utilities.XformUtils;
  * @author Louis Fazen (louis.fazen@gmail.com)
  * 
  */
-public class CreatePatientActivity extends BaseActivity implements OnGestureListener {
+public class CreatePatientActivity extends BaseUserActivity implements OnGestureListener {
 	public static final Integer PERMANENT_NEW_CLIENT = 1;
 	public static final Integer TEMPORARY_NEW_CLIENT = 2;
 	private static final String TAG = CreatePatientActivity.class.getSimpleName();
@@ -137,7 +137,7 @@ public class CreatePatientActivity extends BaseActivity implements OnGestureList
 				} else if (mCreateCode == null) {
 					Toast.makeText(CreatePatientActivity.this, "Please specify whether you wish to receive updates on this client in the future.", Toast.LENGTH_SHORT).show();
 				} else if (similarClientCheck()) {
-					Log.e("louis.fazen", "client is similar");
+					Log.d(TAG, "client is similar");
 					// ask provider for verification
 					Intent i = new Intent(mContext, ListPatientActivity.class);
 					i.putExtra(DashboardActivity.LIST_TYPE, DashboardActivity.LIST_SIMILAR_CLIENTS);
@@ -288,7 +288,7 @@ public class CreatePatientActivity extends BaseActivity implements OnGestureList
 		int sexRadioId = sexRadioGroup.getCheckedRadioButtonId();
 		RadioButton radioSexButton = (RadioButton) findViewById(sexRadioId);
 		if (radioSexButton != null) {
-			Log.e("louis.fazen", "radiosexButton.getText()=" + radioSexButton.getText());
+			Log.v(TAG, "radiosexButton.getText()=" + radioSexButton.getText());
 			if (radioSexButton.getText().equals(femaleRadio)) {
 				mSex = "F";
 			} else if (radioSexButton.getText().equals(maleRadio)) {
@@ -338,7 +338,7 @@ public class CreatePatientActivity extends BaseActivity implements OnGestureList
 		RadioButton tempPermButton = (RadioButton) findViewById(tempPermId);
 
 		if (tempPermButton != null) {
-			Log.e("louis.fazen", "radiosexButton.getText()=" + tempPermButton.getText());
+			Log.v(TAG, "radiosexButton.getText()=" + tempPermButton.getText());
 			if (tempPermButton.getText().equals(permRadio)) {
 				mCreateCode = PERMANENT_NEW_CLIENT;
 			} else if (tempPermButton.getText().equals(tempRadio)) {
