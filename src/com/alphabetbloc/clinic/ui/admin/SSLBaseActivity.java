@@ -1,17 +1,13 @@
 package com.alphabetbloc.clinic.ui.admin;
 
-import java.io.File;
 import java.util.ArrayList;
 
 import android.app.AlertDialog;
-import android.app.ListActivity;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.Window;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -19,7 +15,6 @@ import android.widget.TextView;
 
 import com.alphabetbloc.clinic.R;
 import com.alphabetbloc.clinic.data.Certificate;
-import com.alphabetbloc.clinic.utilities.EncryptionUtil;
 
 /**
  * 
@@ -27,45 +22,43 @@ import com.alphabetbloc.clinic.utilities.EncryptionUtil;
  *
  */
 
-public abstract class SSLBaseActivity extends ListActivity {
+public abstract class SSLBaseActivity extends BaseAdminListActivity {
 //	private static final String TAG = ManageSSLActivity.class.getSimpleName();
-	// Common to Key/Trust Store
-	protected File mLocalStoreFile;
-	protected String mStorePassword;
-	protected String trustStorePropDefault;
-
+	
 	// Override
-	protected String mLocalStoreFileName;
-	protected int mLocalStoreResourceId;
-	protected String mStoreString;
-	protected String mStoreTitleString;
-	protected String mImportFormat;
-
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
-		setContentView(R.layout.add_certificates);
-		trustStorePropDefault = System.getProperty("javax.net.ssl.trustStore"); // System
-		mStorePassword = EncryptionUtil.getPassword();
-	}
-
-	@Override
-	protected void onResume() {
-		super.onResume();
-
-		// View
-		TextView title = (TextView) findViewById(R.id.store_title);
-		title.setText(String.format(getString(R.string.ssl_store_title), mStoreTitleString));
-		setProgressBarIndeterminateVisibility(false);
-		showStoreItems();
-	}
-
+	private String mStoreString;
+	private String mStoreTitleString;
+	private String mImportFormat;
+	
 	protected void refreshView() {
 		findViewById(android.R.id.content).invalidate();
 		showStoreItems();
 	}
 
+	protected void setStoreString(String storeString){
+		mStoreString = storeString;
+	}
+	
+	protected void setStoreTitleString(String storeTitleString){
+		mStoreTitleString = storeTitleString;
+	}
+	
+	protected void setImportFormat(String importFormat){
+		mImportFormat = importFormat;
+	}
+	
+	protected String getStoreString(){
+		return mStoreString;
+	}
+	
+	protected String getStoreTitleString(){
+		return mStoreTitleString;
+	}
+	
+	protected String getImportFormat(){
+		return mImportFormat;
+	}
+	
 	protected abstract ArrayList<Certificate> getStoreFiles();
 
 	protected abstract void showStoreItems();
@@ -73,15 +66,6 @@ public abstract class SSLBaseActivity extends ListActivity {
 	protected abstract void remove(String alias);
 
 	protected abstract void addFromExternalStroage();
-
-	@Override
-	protected void onPause() {
-		if (trustStorePropDefault != null)
-			System.setProperty("javax.net.ssl.trustStore", trustStorePropDefault);
-		else
-			System.clearProperty("javax.net.ssl.trustStore");
-		super.onPause();
-	}
 
 	protected View buildSectionLabel(int layoutId, String label) {
 		LayoutInflater vi = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);

@@ -22,17 +22,20 @@ import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 import javax.security.auth.x500.X500Principal;
 
-
 import com.alphabetbloc.clinic.R;
 import com.alphabetbloc.clinic.adapters.CertificateAdapter;
 import com.alphabetbloc.clinic.adapters.MergeAdapter;
 import com.alphabetbloc.clinic.data.Certificate;
+import com.alphabetbloc.clinic.utilities.EncryptionUtil;
 import com.alphabetbloc.clinic.utilities.FileUtils;
 
 import android.content.Context;
 import android.os.AsyncTask;
+import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
+import android.view.Window;
+import android.widget.TextView;
 import android.widget.Toast;
 
 /**
@@ -42,22 +45,43 @@ import android.widget.Toast;
  */
 
 public class SSLAddCertificatesActivity extends SSLBaseActivity {
-	// Common to Key/Trust Store
 	private Context mContext;
 	private String TAG = SSLAddCertificatesActivity.class.getSimpleName();
+	private File mLocalStoreFile;
+	private String mStorePassword;
+	private String trustStorePropDefault;
+	private String mLocalStoreFileName;
 
 	@Override
-	protected void onResume() {
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
+		setContentView(R.layout.add_certificates);
 		mContext = this;
+		
+		trustStorePropDefault = System.getProperty("javax.net.ssl.trustStore"); // System
+		mStorePassword = EncryptionUtil.getPassword();
 		mLocalStoreFileName = FileUtils.MY_TRUSTSTORE;
-		mLocalStoreResourceId = R.raw.mytruststore;
-		mStoreString = "certificate";
-		mStoreTitleString = "Certificate";
-		mImportFormat = "DER";
+		setStoreString("certificate");
+		setStoreTitleString("Certificate");
+		setImportFormat("DER");
 		mLocalStoreFile = new File(getFilesDir(), mLocalStoreFileName);
-		if(!mLocalStoreFile.exists())
+		if (!mLocalStoreFile.exists())
 			FileUtils.setupDefaultSslStore(mLocalStoreFileName);
-		super.onResume();
+
+		TextView title = (TextView) findViewById(R.id.store_title);
+		title.setText(String.format(getString(R.string.ssl_store_title), getStoreTitleString()));
+		setProgressBarIndeterminateVisibility(false);
+		showStoreItems();
+	}
+
+	@Override
+	protected void onPause() {
+		if (trustStorePropDefault != null)
+			System.setProperty("javax.net.ssl.trustStore", trustStorePropDefault);
+		else
+			System.clearProperty("javax.net.ssl.trustStore");
+		super.onPause();
 	}
 
 	@Override
@@ -193,9 +217,9 @@ public class SSLAddCertificatesActivity extends SSLBaseActivity {
 	}
 
 	protected KeyStore loadTrustStore() {
-		if(!mLocalStoreFile.exists())
+		if (!mLocalStoreFile.exists())
 			FileUtils.setupDefaultSslStore(mLocalStoreFileName);
-		
+
 		try {
 			Log.e(TAG, "localStoreFilePath=" + mLocalStoreFile.getAbsolutePath());
 			KeyStore localTrustStore = KeyStore.getInstance("BKS");
@@ -221,7 +245,7 @@ public class SSLAddCertificatesActivity extends SSLBaseActivity {
 
 	@Override
 	protected ArrayList<Certificate> getStoreFiles() {
-		
+
 		ArrayList<Certificate> androidCerts = new ArrayList<Certificate>();
 
 		try {
@@ -348,15 +372,15 @@ public class SSLAddCertificatesActivity extends SSLBaseActivity {
 		protected void onPostExecute(Integer result) {
 			setProgressBarIndeterminateVisibility(false);
 			refreshView();
-
+			String storeString = getStoreString();
 			if (result != null) {
 				if (result < 1) {
-					Toast.makeText(SSLAddCertificatesActivity.this, String.format(getAlertMessage(), mStoreString, mStoreString), Toast.LENGTH_LONG).show();
+					Toast.makeText(SSLAddCertificatesActivity.this, String.format(getAlertMessage(), storeString, storeString), Toast.LENGTH_LONG).show();
 				} else {
-					Toast.makeText(SSLAddCertificatesActivity.this, String.format(getSuccessMessage(), result, mStoreString, mStoreString), Toast.LENGTH_LONG).show();
+					Toast.makeText(SSLAddCertificatesActivity.this, String.format(getSuccessMessage(), result, storeString,storeString), Toast.LENGTH_LONG).show();
 				}
 			} else {
-				Toast.makeText(SSLAddCertificatesActivity.this, String.format(getString(R.string.ssl_error_message), mStoreString) + error.getMessage(), Toast.LENGTH_LONG).show();
+				Toast.makeText(SSLAddCertificatesActivity.this, String.format(getString(R.string.ssl_error_message), storeString) + error.getMessage(), Toast.LENGTH_LONG).show();
 			}
 
 		}

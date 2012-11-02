@@ -12,7 +12,10 @@ import java.util.List;
 
 import android.content.Context;
 import android.os.AsyncTask;
+import android.os.Bundle;
 import android.os.Environment;
+import android.view.Window;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.alphabetbloc.clinic.R;
@@ -28,23 +31,45 @@ import com.alphabetbloc.clinic.utilities.FileUtils;
  */
 
 public class SSLClientAuthActivity extends SSLBaseActivity {
-	private Context mContext;
+	
 //	private static final String TAG = ClientAuthenticationActivity.class.getSimpleName();
-
+	private Context mContext;
+	private File mLocalStoreFile;
+	private String trustStorePropDefault;
+	private String mLocalStoreFileName;
+	
 	@Override
-	protected void onResume() {
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
+		setContentView(R.layout.add_certificates);
 		mContext = this;
+		
+		trustStorePropDefault = System.getProperty("javax.net.ssl.trustStore"); // System
 		mLocalStoreFileName = FileUtils.MY_KEYSTORE;
-		mLocalStoreResourceId = R.raw.mykeystore;
-		mStoreString = "key";
-		mStoreTitleString = "Key";
-		mImportFormat = "BKS";
+		setStoreString("key");
+		setStoreTitleString("Key");
+		setImportFormat("BKS");
+
 		mLocalStoreFile = new File(getFilesDir(), mLocalStoreFileName);
 		if(!mLocalStoreFile.exists())
 			FileUtils.setupDefaultSslStore(mLocalStoreFileName);
-		super.onResume();
+		
+		TextView title = (TextView) findViewById(R.id.store_title);
+		title.setText(String.format(getString(R.string.ssl_store_title), getStoreTitleString()));
+		setProgressBarIndeterminateVisibility(false);
+		showStoreItems();
 	}
 
+	@Override
+	protected void onPause() {
+		if (trustStorePropDefault != null)
+			System.setProperty("javax.net.ssl.trustStore", trustStorePropDefault);
+		else
+			System.clearProperty("javax.net.ssl.trustStore");
+		super.onPause();
+	}
+	
 	@Override
 	protected void showStoreItems() {
 		new AsyncTask<Void, Void, Void>() {
@@ -101,7 +126,7 @@ public class SSLClientAuthActivity extends SSLBaseActivity {
 	protected void remove(String name) {
 		File file = new File(getFilesDir(), name);
 		if (file.delete())
-			Toast.makeText(mContext, "Deleted 1 keystore file", Toast.LENGTH_SHORT);
+			Toast.makeText(mContext, "Deleted 1 keystore file", Toast.LENGTH_SHORT).show();
 		refreshView();
 	}
 
@@ -110,7 +135,7 @@ public class SSLClientAuthActivity extends SSLBaseActivity {
 		String[] certs = listKeyStoreFiles();
 		// int certsAdded = 0;
 		if (certs.length > 1) {
-			Toast.makeText(mContext, "You can only have one keystore file", Toast.LENGTH_SHORT);
+			Toast.makeText(mContext, "You can only have one keystore file", Toast.LENGTH_SHORT).show();
 		} else {
 
 			for (String certFilename : certs) {
@@ -142,7 +167,7 @@ public class SSLClientAuthActivity extends SSLBaseActivity {
 			}
 		}
 
-		Toast.makeText(mContext, "Replaced the current keystore file", Toast.LENGTH_SHORT);
+		Toast.makeText(mContext, "Replaced the current keystore file", Toast.LENGTH_SHORT).show();
 		refreshView();
 	}
 
