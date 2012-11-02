@@ -13,9 +13,8 @@ import android.util.Log;
 
 import com.alphabetbloc.clinic.R;
 import com.alphabetbloc.clinic.providers.DataModel;
-import com.alphabetbloc.clinic.ui.admin.ClinicLauncherActivity;
 import com.alphabetbloc.clinic.utilities.App;
-import com.alphabetbloc.clinic.utilities.ClinicLauncher;
+import com.alphabetbloc.clinic.utilities.EncryptionUtil;
 import com.alphabetbloc.clinic.utilities.FileUtils;
 
 /**
@@ -170,7 +169,7 @@ public class WipeDataService extends WakefulIntentService {
 
 		try {
 			// first try
-			prefs.edit().putString(ClinicLauncherActivity.SQLCIPHER_KEY_NAME, null).commit();
+			prefs.edit().putString(EncryptionUtil.SQLCIPHER_KEY_NAME, null).commit();
 			success = checkSqlCipherPref(prefs);
 
 			// second try
@@ -187,7 +186,7 @@ public class WipeDataService extends WakefulIntentService {
 	}
 
 	private boolean checkSqlCipherPref(SharedPreferences prefs) {
-		String test = prefs.getString(ClinicLauncherActivity.SQLCIPHER_KEY_NAME, null);
+		String test = prefs.getString(EncryptionUtil.SQLCIPHER_KEY_NAME, null);
 		if (test == null)
 			return true;
 		else

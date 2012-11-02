@@ -36,12 +36,14 @@ public class RefreshDataService extends Service {
 		if (!ClinicLauncher.isSetupComplete()) {
 			if (!ClinicLauncherActivity.sLaunching) {
 				Log.e(TAG, "Clinic is Not Setup... and not currently active... so RefreshDataService is requesting setup");
-				Intent i = ClinicLauncher.getLaunchIntent();
+				Intent i = new Intent(App.getApp(), ClinicLauncherActivity.class);
+				i.putExtra(ClinicLauncherActivity.LAUNCH_DASHBOARD, false);
 				i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 				startActivity(i);
 			}
 			Log.e(TAG, "Clinic is Not Setup... so RefreshDataService is ending");
 			stopSelf();
+			return;
 		}
 		
 		isSyncActive = true;

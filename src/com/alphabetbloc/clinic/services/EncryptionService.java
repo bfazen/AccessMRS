@@ -84,18 +84,21 @@ public class EncryptionService extends WakefulIntentService {
 		if (!ClinicLauncher.isSetupComplete()) {
 			if (!ClinicLauncherActivity.sLaunching) {
 				Log.e(TAG, "Clinic is Not Setup... and not currently active... so EncryptionService is requesting setup");
-				Intent i = ClinicLauncher.getLaunchIntent();
+				Intent i = new Intent(App.getApp(), ClinicLauncherActivity.class);
+				i.putExtra(ClinicLauncherActivity.LAUNCH_DASHBOARD, false);
 				i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 				startActivity(i);
 			}
 			Log.e(TAG, "Clinic is Not Setup... so EncryptionService is ending");
 			stopSelf();
+			return;
 		}
 		// get all recently submitted files
 		ArrayList<Map<String, Object>> submittedFiles = findSubmittedFiles();
-		if (submittedFiles.isEmpty())
+		if (submittedFiles.isEmpty()){
 			stopSelf();
-
+			return;
+		}
 		// in case this service is interrupted, make sure we resume it later.
 		scheduleAlarms(new EncryptDataListener(), WakefulIntentService.ENCRYPT_DATA, mContext, true);
 

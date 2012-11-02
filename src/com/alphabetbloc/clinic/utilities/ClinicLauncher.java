@@ -8,23 +8,15 @@ import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
-import android.app.Activity;
 import android.content.ActivityNotFoundException;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.database.Cursor;
 import android.os.Build;
-import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
-import android.view.Gravity;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.Window;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.alphabetbloc.clinic.R;
@@ -33,10 +25,6 @@ import com.alphabetbloc.clinic.providers.DbProvider;
 import com.alphabetbloc.clinic.ui.admin.SetupAccountActivity;
 import com.alphabetbloc.clinic.ui.admin.SetupPreferencesActivity;
 import com.alphabetbloc.clinic.ui.user.DashboardActivity;
-import com.alphabetbloc.clinic.utilities.App;
-import com.alphabetbloc.clinic.utilities.EncryptionUtil;
-import com.alphabetbloc.clinic.utilities.KeyStoreUtil;
-import com.alphabetbloc.clinic.utilities.UiUtils;
 
 /**
  * 
@@ -46,7 +34,6 @@ import com.alphabetbloc.clinic.utilities.UiUtils;
 public class ClinicLauncher {
 
 	public static final String TAG = ClinicLauncher.class.getSimpleName();
-	public static final String SQLCIPHER_KEY_NAME = "sqlCipherDbKey";
 	public static final String OLD_UNLOCK_ACTION = "android.credentials.UNLOCK";
 	public static final String UNLOCK_ACTION = "com.android.credentials.UNLOCK";
 	public static boolean sIsCollectInstalled = true;
@@ -92,7 +79,6 @@ public class ClinicLauncher {
 
 	// Step 1: check for collect -> fail
 	private static boolean isCollectInstalled() {
-		Log.e(TAG, "isCollectInstalled");
 		try {
 			App.getApp().getPackageManager().getPackageInfo("org.odk.collect.android", PackageManager.GET_META_DATA);
 		} catch (NameNotFoundException e) {
@@ -106,7 +92,6 @@ public class ClinicLauncher {
 	// Step 2: check clinic -> create the setup intent
 	private static boolean isClinicSetup() {
 		boolean setupComplete = true;
-		Log.e(TAG, "isClinicSetup");
 		// Shortcut: if db open & have an account, we are setup
 		AccountManager accountManager = AccountManager.get(App.getApp());
 		Account[] accounts = accountManager.getAccountsByType(App.getApp().getString(R.string.app_account_type));
@@ -146,7 +131,6 @@ public class ClinicLauncher {
 		KeyStoreUtil ks = KeyStoreUtil.getInstance();
 		if (ks.state() == KeyStoreUtil.State.UNLOCKED) {
 			// already setup
-			Log.e(TAG, "Credential Storage is Setup");
 			return true;
 
 		} else {
@@ -165,7 +149,6 @@ public class ClinicLauncher {
 	}
 
 	private static boolean setupFirstInstall() {
-		Log.e(TAG, "setupFirstInstall");
 		// Step 2: check previous use -> launch initial setup if first run
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(App.getApp());
 		boolean firstRun = settings.getBoolean(App.getApp().getString(R.string.key_first_run), true);
@@ -183,12 +166,11 @@ public class ClinicLauncher {
 	}
 
 	private static boolean setupDatabases() {
-		Log.e(TAG, "setupDatabases");
 		// Step 3: check Db exists, has a key and pwd -> reset clinic if missing
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(App.getApp());
 		File db = App.getApp().getDatabasePath(DataModel.DATABASE_NAME);
-		String pwd = settings.getString(SQLCIPHER_KEY_NAME, "");
-		SecretKeySpec key = EncryptionUtil.getKey(SQLCIPHER_KEY_NAME);
+		String pwd = settings.getString(EncryptionUtil.SQLCIPHER_KEY_NAME, "");
+		SecretKeySpec key = EncryptionUtil.getKey(EncryptionUtil.SQLCIPHER_KEY_NAME);
 
 		// TODO! Fix this...
 		if (db != null && db.exists() && !pwd.equals("") && key != null) {
@@ -205,7 +187,6 @@ public class ClinicLauncher {
 	}
 
 	private static boolean setupAccount() {
-		Log.e(TAG, "setupAccount");
 		// Step 4: Check for sync account -> setup new account if none
 		AccountManager accountManager = AccountManager.get(App.getApp());
 		Account[] accounts = accountManager.getAccountsByType(App.getApp().getString(R.string.app_account_type));
@@ -224,7 +205,6 @@ public class ClinicLauncher {
 
 	// Step 3: Open or create the collect db -> reset collect db if fail
 	private static boolean isCollectSetup() {
-		Log.e(TAG, "isCollectSetup");
 		try {
 			Cursor c = App.getApp().getContentResolver().query(InstanceColumns.CONTENT_URI, null, null, null, null);
 			if (c != null)
@@ -242,7 +222,6 @@ public class ClinicLauncher {
 	}
 
 	private static void setupCollect() {
-		Log.e(TAG, "setupCollect");
 		// Lost key! (clinic reinstalled?) CATASTROPHE... SO RESET COLLECT
 		Intent i = new Intent(App.getApp(), SetupPreferencesActivity.class);
 		i.putExtra(SetupPreferencesActivity.SETUP_INTENT, SetupPreferencesActivity.RESET_COLLECT);

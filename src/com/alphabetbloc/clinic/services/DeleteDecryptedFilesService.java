@@ -46,20 +46,23 @@ public class DeleteDecryptedFilesService extends WakefulIntentService {
 		if (!ClinicLauncher.isSetupComplete()) {
 			if (!ClinicLauncherActivity.sLaunching) {
 				Log.e(TAG, "Clinic is Not Setup... and not currently active... so DeleteDecryptedFilesService is requesting setup");
-				Intent i = ClinicLauncher.getLaunchIntent();
+				Intent i = new Intent(App.getApp(), ClinicLauncherActivity.class);
+				i.putExtra(ClinicLauncherActivity.LAUNCH_DASHBOARD, false);
 				i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 				startActivity(i);
 			}
 			Log.e(TAG, "Clinic is Not Setup... so DeleteDecryptedFilesService is ending");
 			stopSelf();
+			return;
 		}
 		mContext = this;
 
 		// get all recently submitted files
 		ArrayList<Map<String, Object>> decryptedInstances = findDecryptedInstances();
-		if (decryptedInstances.isEmpty())
+		if (decryptedInstances.isEmpty()){
 			stopSelf();
-
+			return;
+		}
 		boolean allDeleted = true;
 		for (Map<String, Object> current : decryptedInstances) {
 			String dbPath = (String) current.get(INSTANCE_PATH);
