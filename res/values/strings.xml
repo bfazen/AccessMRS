@@ -323,7 +323,9 @@
     <string name="error_storage_title">Storage Error</string>
     <string name="error_db">Database Error</string>
     <string name="error_connection">Connection Error. Please Check Your Service and Try Again</string>
-
+    <string name="error_filesystem">File Error</string>
+    <string name="error_opening_file">Sorry, there has been an error opening this file. The file may be corrupt or missing from storage.</string>
+    
     <!-- Misc Resources -->
     <string name="female">Female</string>
     <string name="male">Male</string>

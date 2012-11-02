@@ -1,6 +1,5 @@
 package com.alphabetbloc.clinic.ui.admin;
 
-import android.app.Activity;
 import android.content.SharedPreferences;
 import android.content.SyncResult;
 import android.os.Bundle;
@@ -22,7 +21,7 @@ import com.alphabetbloc.clinic.utilities.NetworkUtils;
  * @author Louis Fazen (louis.fazen@gmail.com)
  *
  */
-public class SSLTestActivity extends Activity implements SyncDataListener {
+public class SSLTestActivity extends BaseAdminActivity implements SyncDataListener {
 
 	// private static final String TAG =
 	// TestSslConnectionActivity.class.getSimpleName();

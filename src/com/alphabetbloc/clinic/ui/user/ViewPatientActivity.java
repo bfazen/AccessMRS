@@ -7,11 +7,9 @@ import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.os.Bundle;
-import android.support.v4.content.LocalBroadcastManager;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -32,7 +30,6 @@ import com.alphabetbloc.clinic.data.Observation;
 import com.alphabetbloc.clinic.data.Patient;
 import com.alphabetbloc.clinic.providers.DataModel;
 import com.alphabetbloc.clinic.providers.Db;
-import com.alphabetbloc.clinic.services.RefreshDataService;
 import com.alphabetbloc.clinic.utilities.App;
 import com.alphabetbloc.clinic.utilities.UiUtils;
 

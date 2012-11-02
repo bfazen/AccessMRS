@@ -13,7 +13,6 @@ import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
 import android.preference.Preference;
-import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Window;
@@ -27,15 +26,11 @@ import com.alphabetbloc.clinic.utilities.UiUtils;
  * @author Louis Fazen (louis.fazen@gmail.com)
  * 
  */
-public class PreferencesActivity extends PreferenceActivity implements OnSharedPreferenceChangeListener {
+public class PreferencesActivity extends BasePreferenceActivity implements OnSharedPreferenceChangeListener {
 
 	private static final String TAG = PreferencesActivity.class.getSimpleName();
 	private static final Map<String, String> ADMIN_PREFERENCES = createAdminPreferenceMap();
 	private static final Map<String, String> USER_PREFERENCES = createUserPreferenceMap();
-	// private static final Map<String, String> PREFERENCE_UNCHECKED_STRINGS =
-	// createUnCheckedStringsMap();
-	// private static final Map<String, String> PREFERENCE_CHECKED_STRINGS =
-	// createCheckedStringsMap();
 	public static final String ADMIN_PREFERENCE = "admin_preference";
 
 	@Override
@@ -95,13 +90,6 @@ public class PreferencesActivity extends PreferenceActivity implements OnSharedP
 			} else if (key.equalsIgnoreCase(getString(R.string.key_server))) {
 				changedPref.setSummary(newValue);
 			}
-			// } else if (changedPref instanceof CheckBoxPreference) {
-			// boolean status = prefs.getBoolean(key,
-			// Boolean.valueOf(DEFAULT_PREFERENCES_VALUE.get(key)));
-			// if (status)
-			// changedPref.setSummary(PREFERENCE_CHECKED_STRINGS.get(key));
-			// else
-			// changedPref.setSummary(PREFERENCE_UNCHECKED_STRINGS.get(key));
 		}
 	}
 
@@ -152,7 +140,7 @@ public class PreferencesActivity extends PreferenceActivity implements OnSharedP
 	}
 
 	private boolean isInteger(String value) {
-		int intValue = 0;
+		Integer intValue = 0;
 		try {
 			intValue = Integer.parseInt(value);
 			return true;

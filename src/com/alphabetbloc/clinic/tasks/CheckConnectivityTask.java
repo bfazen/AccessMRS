@@ -35,7 +35,7 @@ public class CheckConnectivityTask extends AsyncTask<SyncResult, String, String>
 	private String mServer;
 	static final int MAX_CONN_PER_ROUTE = 20;
 	static final int MAX_CONNECTIONS = 20;
-	private static final String TAG = CheckConnectivityTask.class.getSimpleName();
+//	private static final String TAG = CheckConnectivityTask.class.getSimpleName();
 
 	protected SyncDataListener mStateListener;
 	private HttpClient httpClient;

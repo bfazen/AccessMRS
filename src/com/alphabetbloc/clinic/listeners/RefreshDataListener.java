@@ -39,7 +39,7 @@ public class RefreshDataListener implements WakefulIntentService.AlarmListener {
 	public void scheduleAlarms(AlarmManager mgr, PendingIntent pi, Context ctxt) {
 		// set the alarm to wake up the device at interval of 1 day, and go off
 		// at inexact times (for better performance)
-		Log.e("louis.fazen", "WakefulIntentService.schedule Alarms  is called");
+//		Log.e("louis.fazen", "WakefulIntentService.schedule Alarms  is called");
 
 		// this is called
 		// 1. whenever the app starts if forced is true
@@ -60,7 +60,7 @@ public class RefreshDataListener implements WakefulIntentService.AlarmListener {
 		// the alarms...
 		long recentDownload = Db.open().fetchMostRecentDownload();
 		long timeSinceRefresh = System.currentTimeMillis() - recentDownload;
-		Log.e("louis.fazen", "Minutes since last refresh: " + timeSinceRefresh / (1000 * 60));
+		Log.i("louis.fazen", "Minutes since last refresh: " + timeSinceRefresh / (1000 * 60));
 
 		long days = 1000 * 60 * 60 * 24;
 		// establishes threshold for Setting Alarm Frequency
@@ -79,7 +79,7 @@ public class RefreshDataListener implements WakefulIntentService.AlarmListener {
 
 	public void sendWakefulWork(Context ctxt) {
 		// to run the business logic in a background thread, call service
-		Log.e("louis.fazen", "sendWakefulWork is called");
+		Log.i("louis.fazen", "sendWakefulWork is called");
 		WakefulIntentService.sendWakefulWork(ctxt, AlarmIntentService.class);
 	}
 

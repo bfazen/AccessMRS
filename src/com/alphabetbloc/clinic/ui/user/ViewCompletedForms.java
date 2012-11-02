@@ -21,7 +21,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
 import android.widget.ListView;
-import android.widget.Toast;
 
 import com.alphabetbloc.clinic.R;
 import com.alphabetbloc.clinic.adapters.MergeAdapter;
@@ -31,6 +30,7 @@ import com.alphabetbloc.clinic.listeners.DeleteDecryptedDataListener;
 import com.alphabetbloc.clinic.services.WakefulIntentService;
 import com.alphabetbloc.clinic.tasks.DecryptionTask;
 import com.alphabetbloc.clinic.utilities.FileUtils;
+import com.alphabetbloc.clinic.utilities.UiUtils;
 
 /**
  * Displays all the Completed/Finalized forms from Collect instances.db If
@@ -206,7 +206,7 @@ public class ViewCompletedForms extends ViewFormsActivity implements DecryptionL
 		if (allFilesDecrypted && mClickedForm != null)
 			launchFormView(mClickedForm);
 		else {
-			Toast.makeText(mContext, "Sorry, there has been an error opening this file.", Toast.LENGTH_SHORT);
+			UiUtils.toastAlert(mContext, getString(R.string.error_filesystem), getString(R.string.error_opening_file));
 			Log.e(TAG, "Error in Decrypting the file: " + mClickedForm.getPath());
 		}
 	}

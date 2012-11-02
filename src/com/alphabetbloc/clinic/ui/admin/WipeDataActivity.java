@@ -1,6 +1,5 @@
 package com.alphabetbloc.clinic.ui.admin;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.BroadcastReceiver;
@@ -22,7 +21,7 @@ import com.alphabetbloc.clinic.utilities.UiUtils;
  * @author Louis Fazen (louis.fazen@gmail.com) (All Methods except where noted
  *         otherwise)
  */
-public class WipeDataActivity extends Activity {
+public class WipeDataActivity extends BaseAdminActivity {
 
 	// private static final String TAG = WipeDataActivity.class.getSimpleName();
 	private AlertDialog mAlertDialog;

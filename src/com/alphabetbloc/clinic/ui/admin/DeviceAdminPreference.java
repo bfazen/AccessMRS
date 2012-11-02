@@ -1,19 +1,18 @@
 package com.alphabetbloc.clinic.ui.admin;
 
-import com.alphabetbloc.clinic.R;
-
-import android.app.Activity;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
+
+import com.alphabetbloc.clinic.R;
 
 /**
  * @author Louis Fazen (louis.fazen@gmail.com)
  * 
  */
 
-public class DeviceAdminPreference extends Activity {
+public class DeviceAdminPreference extends BaseAdminActivity {
 
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
