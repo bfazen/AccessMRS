@@ -140,9 +140,8 @@ public class PreferencesActivity extends BasePreferenceActivity implements OnSha
 	}
 
 	private boolean isInteger(String value) {
-		Integer intValue = 0;
 		try {
-			intValue = Integer.parseInt(value);
+			Integer.parseInt(value);
 			return true;
 		} catch (NumberFormatException nfe) {
 			UiUtils.toastAlert(this, getString(R.string.pref_not_allowed), getString(R.string.pref_not_an_int));

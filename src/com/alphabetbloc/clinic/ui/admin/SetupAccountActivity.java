@@ -1,15 +1,10 @@
 package com.alphabetbloc.clinic.ui.admin;
 
-import java.io.IOException;
-
 import android.accounts.Account;
 import android.accounts.AccountAuthenticatorResponse;
 import android.accounts.AccountManager;
 import android.accounts.AccountManagerCallback;
 import android.accounts.AccountManagerFuture;
-import android.accounts.AuthenticatorException;
-import android.accounts.OperationCanceledException;
-import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -42,7 +37,7 @@ import com.alphabetbloc.clinic.utilities.UiUtils;
  * @author Louis Fazen (louis.fazen@gmail.com)
  * 
  */
-public class SetupAccountActivity extends Activity implements SyncDataListener {
+public class SetupAccountActivity extends BaseAdminActivity implements SyncDataListener {
 
 	// setAccountAuthenticatorResult(android.os.Bundle);
 	private static final String TAG = SetupAccountActivity.class.getSimpleName();
@@ -76,7 +71,6 @@ public class SetupAccountActivity extends Activity implements SyncDataListener {
 	private Button mOfflineSetupButton;
 	private ImageView mCenterImage;
 	private Context mContext;
-	private boolean mExit = false;
 
 	@Override
 	protected void onCreate(Bundle icicle) {
@@ -98,43 +92,37 @@ public class SetupAccountActivity extends Activity implements SyncDataListener {
 
 			@Override
 			public void onClick(View v) {
-				mExit = false;
-				setupNewAccount();
-				// addAccount(mNewUser, mNewPwd, false);
+				removeOldAccounts();
 			}
 		});
-	}
-
-	@Override
-	protected void onResume() {
-		super.onResume();
-
+		
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 		boolean firstRun = prefs.getBoolean(getString(R.string.key_first_run), true);
-		boolean importFromConfig = getIntent().getBooleanExtra(USE_CONFIG_FILE, false);
-		if (firstRun)
+		mImportFromConfig = getIntent().getBooleanExtra(USE_CONFIG_FILE, false);
+		if (mImportFromConfig){
+			createView(LOADING);
+			importFromConfigFile();
+			removeOldAccounts();
+		} else if (firstRun)
 			createView(REQUEST_CREDENTIAL_SETUP);
-		else if (importFromConfig) {
-			mNewUser = prefs.getString(getString(R.string.key_username), getString(R.string.default_username));
-			mNewPwd = prefs.getString(getString(R.string.key_password), getString(R.string.default_password));
-			mExit = true;
-			setupNewAccount();
-			// addAccount(username, password, true);
-		} else if (NetworkUtils.getServerUsername() != null)
+		else if (NetworkUtils.getServerUsername() != null)
 			createView(REQUEST_CREDENTIAL_CHANGE);
 		else
 			createView(REQUEST_CREDENTIAL_SETUP);
 	}
 
-	// private void importFromConfigFile() {
-	// SharedPreferences prefs =
-	// PreferenceManager.getDefaultSharedPreferences(this);
-	// String username = prefs.getString(getString(R.string.key_username),
-	// getString(R.string.default_username));
-	// String password = prefs.getString(getString(R.string.key_password),
-	// getString(R.string.default_password));
-	// addAccount(username, password);
-	// }
+	private void importFromConfigFile() {
+
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+		mNewUser = prefs.getString(getString(R.string.key_username), getString(R.string.default_username));
+
+		String encPwd = prefs.getString(getString(R.string.key_password), getString(R.string.default_password));
+		if (encPwd.equalsIgnoreCase(getString(R.string.default_password)))
+			mNewPwd = encPwd;
+		else
+			mNewPwd = EncryptionUtil.decryptString(encPwd);
+
+	}
 
 	private void createView(int view) {
 		// if not loading, set appropriate buttons/text
@@ -247,6 +235,7 @@ public class SetupAccountActivity extends Activity implements SyncDataListener {
 		}
 	};
 
+	// STEP 1:
 	private void checkServerCredentials(String username, String password) {
 		createView(LOADING);
 
@@ -259,12 +248,31 @@ public class SetupAccountActivity extends Activity implements SyncDataListener {
 		verifyWithServer.execute(new SyncResult());
 	}
 
-	private void setupNewAccount() {
+	// STEP 2:
+	@Override
+	public void syncComplete(String result, SyncResult syncResult) {
+		Log.v(TAG, "Sync with Server Complete with result=" + result);
+		if (Boolean.valueOf(result)) {
+			removeOldAccounts();
+		} else
+			createView(CREDENTIAL_ENTRY_ERROR);
+	}
+
+	private static boolean isAcceptable(String userEntry) {
+		// CHANGED: accepting all characters now...
+		// long l = Long.valueOf(userEntry);
+		// if (l < 0 || l > Integer.MAX_VALUE)
+		// return false;
+		return true;
+	}
+
+	// STEP 3:
+	private void removeOldAccounts() {
 		createView(LOADING);
 		AccountManager am = AccountManager.get(this);
 		// STEP 1: if old account exists, delete and replace with new account
 		Account[] accounts = am.getAccountsByType(getString(R.string.app_account_type));
-		Log.e(TAG, "about to remove old accounts number=" + accounts.length);
+		Log.v(TAG, "about to remove old accounts number=" + accounts.length);
 
 		if (accounts.length > 0) {
 			for (Account a : accounts) {
@@ -277,6 +285,7 @@ public class SetupAccountActivity extends Activity implements SyncDataListener {
 
 	}
 
+	// STEP 4:
 	private final Handler myHandler = new Handler();
 	private AccountManagerFuture<Boolean> myFuture = null;
 	private boolean removedAccount = false;
@@ -286,29 +295,30 @@ public class SetupAccountActivity extends Activity implements SyncDataListener {
 			if (amf != null) {
 				try {
 					removedAccount = myFuture.getResult();
-					Log.e(TAG, "We got the future! with removedAccount=" + removedAccount);
 				} catch (Exception e) {
-					// handle error
+					e.printStackTrace();
 				}
 			}
 			if (removedAccount) {
 
-				addAccount(mNewUser, mNewPwd, mExit);
-
+				if (addAccount(mNewUser, mNewPwd)) {
+					Log.i(TAG, "Account was successfully created with user: " + mNewUser);
+					setupAccountSync(mNewUser);
+					finishAccountSetup(mNewUser);
+				} else {
+					Log.e(TAG, "Account Setup Failed");
+					createView(REQUEST_CREDENTIAL_SETUP);
+				}
 			} else {
 
-				Log.e(TAG, "Could not delete the account for some reason...");
-				if (mExit)
-					finish();
-				else
-					createView(REQUEST_CREDENTIAL_SETUP);
+				Log.e(TAG, "Error: Could not delete old account. Please setup new account manually.");
+				createView(REQUEST_CREDENTIAL_SETUP);
 			}
 		}
 	};
 
-	private boolean addAccount(String username, String password, boolean exit) {
-		// STEP 2: AddNewAccount
-		Log.e(TAG, "about to and add new account with u=" + username + " p=" + password);
+	// STEP 5:
+	private boolean addAccount(String username, String password) {
 
 		final Account account = new Account(username, getString(R.string.app_account_type));
 		String encPwd = EncryptionUtil.encryptString(password);
@@ -320,70 +330,48 @@ public class SetupAccountActivity extends Activity implements SyncDataListener {
 		prefs.edit().putString(getString(R.string.key_username), username).commit();
 		prefs.edit().putString(getString(R.string.key_password), encPwd).commit();
 
-		if (accountCreated) {
-			Log.e(TAG, "account was created");
-
-			String authority = getString(R.string.app_provider_authority);
-
-			// Set up sync (IF global settings background data & auto-sync)
-			ContentResolver.setIsSyncable(account, authority, 1);
-			ContentResolver.setSyncAutomatically(account, authority, true);
-
-			String interval = prefs.getString(getString(R.string.key_max_refresh_seconds), getString(R.string.default_max_refresh_seconds));
-			ContentResolver.addPeriodicSync(account, authority, new Bundle(), Integer.valueOf(interval));
-
-			// Pass account back to account manager
-			Bundle extras = getIntent().getExtras();
-			boolean launchedFromAccountMgr = getIntent().getBooleanExtra(LAUNCHED_FROM_ACCT_MGR, false);
-			if (extras != null && launchedFromAccountMgr) {
-
-				Log.e(TAG, "launched from the account manager...");
-				AccountAuthenticatorResponse response = extras.getParcelable(AccountManager.KEY_ACCOUNT_AUTHENTICATOR_RESPONSE);
-				Bundle result = new Bundle();
-				result.putString(AccountManager.KEY_ACCOUNT_NAME, username);
-				result.putString(AccountManager.KEY_ACCOUNT_TYPE, getString(R.string.app_account_type));
-				response.onResult(result);
-
-			} else {
-				Log.e(TAG, "not launched from the account manager");
-				setResult(RESULT_OK);
-			}
-
-			if (exit) {
-				Log.e(TAG, "Exit called... so exiting now");
-				UiUtils.toastMessage(mContext, null, getString(R.string.auth_server_setup_complete), 0, Gravity.CENTER, Toast.LENGTH_SHORT);
-				finish();
-			} else {
-				Log.e(TAG, "Exit NOT called... so creating the finished view");
-				createView(FINISHED);
-			}
-		} else {
-			Log.e(TAG, "Account Setup Failed");
-			createView(REQUEST_CREDENTIAL_SETUP);
-		}
-
 		return accountCreated;
 	}
 
-	@Override
-	public void syncComplete(String result, SyncResult syncResult) {
-		Log.e(TAG, "syncComplete...! but result=" + result);
-		if (Boolean.valueOf(result)) {
-			mExit = false;
-			setupNewAccount();
-			// addAccount(mNewUser, mNewPwd, false);
-		} else {
-			Log.e(TAG, "Credential could not be verified");
-			createView(CREDENTIAL_ENTRY_ERROR);
-		}
+	// STEP 6:
+	private void setupAccountSync(String username) {
+		Account account = new Account(username, getString(R.string.app_account_type));
+		String authority = getString(R.string.app_provider_authority);
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(App.getApp());
+		prefs.edit().putBoolean(getString(R.string.key_first_run), false).commit();
+
+		// Set up sync (IF global settings background data & auto-sync)
+		ContentResolver.setIsSyncable(account, authority, 1);
+		ContentResolver.setSyncAutomatically(account, authority, true);
+		String interval = prefs.getString(getString(R.string.key_max_refresh_seconds), getString(R.string.default_max_refresh_seconds));
+		ContentResolver.addPeriodicSync(account, authority, new Bundle(), Integer.valueOf(interval));
 	}
 
-	private static boolean isAcceptable(String userEntry) {
-		// CHANGED: accepting all characters now...
-		// long l = Long.valueOf(userEntry);
-		// if (l < 0 || l > Integer.MAX_VALUE)
-		// return false;
-		return true;
+	// STEP 7:
+	private void finishAccountSetup(String username) {
+		// Pass account back to account manager
+		Bundle extras = getIntent().getExtras();
+		boolean launchedFromAccountMgr = getIntent().getBooleanExtra(LAUNCHED_FROM_ACCT_MGR, false);
+		if (extras != null && launchedFromAccountMgr) {
+
+			Log.v(TAG, "launched from the account manager...");
+			AccountAuthenticatorResponse response = extras.getParcelable(AccountManager.KEY_ACCOUNT_AUTHENTICATOR_RESPONSE);
+			Bundle result = new Bundle();
+			result.putString(AccountManager.KEY_ACCOUNT_NAME, username);
+			result.putString(AccountManager.KEY_ACCOUNT_TYPE, getString(R.string.app_account_type));
+			response.onResult(result);
+
+		} else {
+			Log.v(TAG, "not launched from the account manager");
+			setResult(RESULT_OK);
+		}
+
+		// End the Activity
+		if (mImportFromConfig) {
+			UiUtils.toastMessage(mContext, null, getString(R.string.auth_server_setup_complete), 0, Gravity.CENTER, Toast.LENGTH_SHORT);
+			finish();
+		} else
+			createView(FINISHED);
 	}
 
 	// Bundle params = new Bundle();

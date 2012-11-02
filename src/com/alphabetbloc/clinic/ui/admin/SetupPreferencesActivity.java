@@ -9,7 +9,6 @@ import javax.crypto.SecretKey;
 
 import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
-import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -46,7 +45,7 @@ import com.alphabetbloc.clinic.utilities.UiUtils;
  * @author Louis Fazen (louis.fazen@gmail.com)
  * 
  */
-public class SetupPreferencesActivity extends Activity {
+public class SetupPreferencesActivity extends BaseAdminActivity {
 
 	private Context mContext;
 	public static final String TAG = SetupPreferencesActivity.class.getSimpleName();
@@ -59,10 +58,9 @@ public class SetupPreferencesActivity extends Activity {
 	public static final int FIRST_RUN = 0;
 	public static final int RESET_COLLECT = 1;
 	public static final int RESET_CLINIC = 2;
-	public static final int FINISH = 3;
 	public static final int ACCOUNT_SETUP = 4;
 
-	// strong passphrase config variables
+	// TODO! strong passphrase config variables
 	// private final static int MIN_PASS_LENGTH = 6;
 	// private final static int MAX_PASS_ATTEMPTS = 3;
 	// private final static int PASS_RETRY_WAIT_TIMEOUT = 30000;
@@ -92,19 +90,18 @@ public class SetupPreferencesActivity extends Activity {
 		mContext = this;
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		mSetupType = getIntent().getIntExtra(SETUP_INTENT, 0);
-		Log.e(TAG, "mSetupType=" + mSetupType);
+		refreshView();
 	}
 
 	@Override
 	protected void onResume() {
 		super.onResume();
 		IntentFilter filter = new IntentFilter(WipeDataService.WIPE_DATA_COMPLETE);
-		registerReceiver(onNotice, filter);
-		refreshView();
+		registerReceiver(mWipeDataComplete, filter);
 	}
 
 	private void refreshView() {
-		Log.e(TAG, "Refreshing view with mSetupType=" + mSetupType);
+		Log.v(TAG, "Refreshing view with mSetupType=" + mSetupType);
 		switch (mSetupType) {
 
 		case FIRST_RUN:
@@ -133,12 +130,8 @@ public class SetupPreferencesActivity extends Activity {
 			Intent i = new Intent(mContext, WipeDataService.class);
 			i.putExtra(WipeDataService.WIPE_CLINIC_DATA, false);
 			WakefulIntentService.sendWakefulWork(mContext, i);
-			mSetupType = FINISH;
 			createView(LOADING);
 			break;
-
-		case FINISH:
-			finish();
 
 		default:
 			break;
@@ -149,12 +142,12 @@ public class SetupPreferencesActivity extends Activity {
 	@Override
 	protected void onPause() {
 		super.onPause();
-		unregisterReceiver(onNotice);
+		unregisterReceiver(mWipeDataComplete);
 	}
 
-	protected BroadcastReceiver onNotice = new BroadcastReceiver() {
+	protected BroadcastReceiver mWipeDataComplete = new BroadcastReceiver() {
 		public void onReceive(Context ctxt, Intent i) {
-			refreshView();
+			finish();
 		}
 	};
 
@@ -380,7 +373,8 @@ public class SetupPreferencesActivity extends Activity {
 
 		// launch AccountSetupActivity to import prefs into the account or
 		// request setup
-		startActivityForResult(i, ACCOUNT_SETUP);
+		startActivity(i);
+		finish();
 	}
 
 	private boolean importConfigFile() {
@@ -390,12 +384,15 @@ public class SetupPreferencesActivity extends Activity {
 		if (!configFile.exists())
 			configFile = hiddenConfigFile;
 
-		String[] booleanPrefs = { getString(R.string.key_client_auth), getString(R.string.key_use_saved_searches), getString(R.string.key_enable_activity_log), getString(R.string.key_show_settings_menu) };
-
 		boolean success = false;
 		if (configFile.exists()) {
 			// Read text from file
 			try {
+				String[] booleanPrefs = { getString(R.string.key_client_auth), 
+										getString(R.string.key_use_saved_searches), 
+										getString(R.string.key_enable_activity_log), 
+										getString(R.string.key_show_settings_menu) };
+				String password = getString(R.string.key_password);
 				BufferedReader br = new BufferedReader(new FileReader(configFile));
 				String line;
 
@@ -404,19 +401,22 @@ public class SetupPreferencesActivity extends Activity {
 					int equal = line.indexOf("=");
 					String prefName = line.substring(0, equal);
 					String prefValue = line.substring(equal + 1);
-
+					
+					if(prefName.equalsIgnoreCase(password))
+						prefValue = EncryptionUtil.encryptString(prefValue);
+					
 					boolean booleanPref = false;
 					for (String currentPref : booleanPrefs) {
 						if (currentPref.equals(prefName))
 							booleanPref = true;
 					}
+
 					if (booleanPref)
 						settings.edit().putBoolean(prefName, Boolean.parseBoolean(prefValue)).commit();
 					else
 						settings.edit().putString(prefName, prefValue).commit();
 
-					Log.e(TAG, "line is = " + line);
-					Log.e(TAG, "prefName= " + prefName + " value=" + prefValue + " boolean=" + booleanPref);
+					Log.v(TAG, "Imported Preference #" + line + " :"+ prefName + " boolean=" + booleanPref);
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -425,21 +425,6 @@ public class SetupPreferencesActivity extends Activity {
 		}
 
 		return success;
-	}
-
-	// STEP 5: Save state (via First Run) and Finish
-	@Override
-	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		if (requestCode == ACCOUNT_SETUP && resultCode == RESULT_OK) {
-			// we have now setup everything!
-			final SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
-			settings.edit().putBoolean(getString(R.string.key_first_run), false).commit();
-
-			mSetupType = FINISH;
-			Log.d(TAG, "Account Successfully setup and mSetupType=" + mSetupType);
-		} else
-			Log.e(TAG, "There was an error encountered during account setup... still considered first run");
-		super.onActivityResult(requestCode, resultCode, data);
 	}
 
 }
