@@ -338,7 +338,6 @@ public class SetupAccountActivity extends BaseAdminActivity implements SyncDataL
 		Account account = new Account(username, getString(R.string.app_account_type));
 		String authority = getString(R.string.app_provider_authority);
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(App.getApp());
-		prefs.edit().putBoolean(getString(R.string.key_first_run), false).commit();
 
 		// Set up sync (IF global settings background data & auto-sync)
 		ContentResolver.setIsSyncable(account, authority, 1);

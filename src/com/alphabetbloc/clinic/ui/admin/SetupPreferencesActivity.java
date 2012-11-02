@@ -357,23 +357,28 @@ public class SetupPreferencesActivity extends BaseAdminActivity {
 		}
 	}
 
-	// STEP 4: Setup Preferences & Android Account
+	// STEP 4: Setup Preferences
 	private void setupPreferences() {
 		// Setup Default Prefs
 		PreferenceManager.setDefaultValues(this, R.xml.preferences_admin, false);
 
-		// Overwrite default prefs from config file or account setup activity
+		// Overwrite default prefs from config file
+		boolean imported = importConfigFile();
+
+		launcAccountSetup(imported);
+	}
+	
+	// STEP 5: Setup Android Account
+	private void launcAccountSetup(boolean useConfigFile) {
+		// launch AccountSetupActivity
 		Intent i = new Intent(mContext, SetupAccountActivity.class);
 		i.putExtra(SetupAccountActivity.LAUNCHED_FROM_ACCT_MGR, false);
-
-		if (importConfigFile())
-			i.putExtra(SetupAccountActivity.USE_CONFIG_FILE, true);
-		else
-			i.putExtra(SetupAccountActivity.USE_CONFIG_FILE, false);
-
-		// launch AccountSetupActivity to import prefs into the account or
-		// request setup
+		i.putExtra(SetupAccountActivity.USE_CONFIG_FILE, useConfigFile);
 		startActivity(i);
+
+		// Finished First Run Db and Preferences Setup
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
+		prefs.edit().putBoolean(getString(R.string.key_first_run), false).commit();
 		finish();
 	}
 
@@ -388,10 +393,7 @@ public class SetupPreferencesActivity extends BaseAdminActivity {
 		if (configFile.exists()) {
 			// Read text from file
 			try {
-				String[] booleanPrefs = { getString(R.string.key_client_auth), 
-										getString(R.string.key_use_saved_searches), 
-										getString(R.string.key_enable_activity_log), 
-										getString(R.string.key_show_settings_menu) };
+				String[] booleanPrefs = { getString(R.string.key_client_auth), getString(R.string.key_use_saved_searches), getString(R.string.key_enable_activity_log), getString(R.string.key_show_settings_menu) };
 				String password = getString(R.string.key_password);
 				BufferedReader br = new BufferedReader(new FileReader(configFile));
 				String line;
@@ -401,10 +403,10 @@ public class SetupPreferencesActivity extends BaseAdminActivity {
 					int equal = line.indexOf("=");
 					String prefName = line.substring(0, equal);
 					String prefValue = line.substring(equal + 1);
-					
-					if(prefName.equalsIgnoreCase(password))
+
+					if (prefName.equalsIgnoreCase(password))
 						prefValue = EncryptionUtil.encryptString(prefValue);
-					
+
 					boolean booleanPref = false;
 					for (String currentPref : booleanPrefs) {
 						if (currentPref.equals(prefName))
@@ -416,7 +418,7 @@ public class SetupPreferencesActivity extends BaseAdminActivity {
 					else
 						settings.edit().putString(prefName, prefValue).commit();
 
-					Log.v(TAG, "Imported Preference #" + line + " :"+ prefName + " boolean=" + booleanPref);
+					Log.v(TAG, "Imported Preference #" + line + " :" + prefName + " boolean=" + booleanPref);
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
