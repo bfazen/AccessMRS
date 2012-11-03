@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.alphabetbloc.clinic"
+    package="com.alphabetbloc.accessmrs"
     android:sharedUserId="com.alphabetbloc.apps.android.integrated"
     android:versionCode="1"
     android:versionName="@string/app_version" >
@@ -59,7 +59,7 @@
     <uses-permission android:name="com.alphabetbloc.android.permission.TOGGLE_INTERNET" />
 
     <application
-        android:name=".utilities.App"
+        android:name="com.alphabetbloc.accessmrs.utilities.App"
         android:icon="@drawable/icon"
         android:label="@string/app_name"
         android:theme="@android:style/Theme.Light.NoTitleBar.Fullscreen" >
@@ -67,7 +67,7 @@
         <!-- Activities -->
         <!-- User Activities -->
         <activity
-            android:name=".ui.admin.ClinicLauncherActivity"
+            android:name=".ui.admin.AccessMrsLauncherActivity"
             android:label="@string/app_name"
             android:launchMode="singleTop"
             android:screenOrientation="portrait" >
@@ -156,19 +156,19 @@
             android:label="@string/app_name"
             android:screenOrientation="portrait" />
 
-        <!-- Un-used Clinic activities (could be added back in later...) -->
+        <!-- Un-used AccessMRS activities (could be added back in later...) -->
         <activity
-            android:name="org.odk.clinic.android.unused.ObservationChartActivity"
+            android:name="org.odk.accessmrs.android.unused.ObservationChartActivity"
             android:label="@string/app_name"
             android:screenOrientation="portrait" />
         <activity
-            android:name="org.odk.clinic.android.unused.ObservationTimelineActivity"
+            android:name="org.odk.accessmrs.android.unused.ObservationTimelineActivity"
             android:label="@string/app_name"
             android:screenOrientation="portrait" />
 
         <!-- Providers -->
         <provider
-            android:name=".providers.DbProvider"
+            android:name="com.alphabetbloc.accessmrs.providers.DbProvider"
             android:authorities="@string/app_provider_authority" />
 
         <!-- Receivers -->
@@ -190,12 +190,12 @@
                 android:name="com.commonsware.cwac.wakeful"
                 android:resource="@xml/wakeful_delete_decrypted_data" />
         </receiver>
-        <receiver android:name=".receivers.WipeDataReceiver" >
+        <receiver android:name="com.alphabetbloc.accessmrs.receivers.WipeDataReceiver" >
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
             <intent-filter>
-                <action android:name="com.alphabetbloc.clinic.WIPE_DATA_SERVICE" />
+                <action android:name="com.alphabetbloc.accessmrs.WIPE_DATA_SERVICE" />
             </intent-filter>
             <!-- Could add other things here, eg. SMS to force encryption... -->
             <meta-data
@@ -225,7 +225,7 @@
         <service android:name=".services.WipeDataService" >
         </service>
         <service
-            android:name=".services.AccountAuthenticatorService"
+            android:name="com.alphabetbloc.accessmrs.services.AccountAuthenticatorService"
             android:process=":auth" >
             <intent-filter>
                 <action android:name="android.accounts.AccountAuthenticator" />

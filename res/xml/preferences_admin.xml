@@ -6,7 +6,7 @@
             android:summary="@string/account_change_username_password"
             android:title="@string/account_change_details" >
             <intent
-                android:targetClass="com.alphabetbloc.clinic.ui.admin.SetupAccountActivity"
+                android:targetClass="com.alphabetbloc.accessmrs.ui.admin.SetupAccountActivity"
                 android:targetPackage="@string/app_package_name" />
         </Preference>
 
@@ -75,7 +75,7 @@
             android:summary="@string/pref_wipe_data_desc"
             android:title="@string/pref_wipe_all_data" >
             <intent
-                android:targetClass="com.alphabetbloc.clinic.ui.admin.WipeDataActivity"
+                android:targetClass="com.alphabetbloc.accessmrs.ui.admin.WipeDataActivity"
                 android:targetPackage="@string/app_package_name" />
         </Preference>
     </PreferenceCategory>
@@ -99,21 +99,21 @@
             android:summary="@string/ssl_client_auth_desc"
             android:title="@string/ssl_client_auth" >
             <intent
-                android:targetClass="com.alphabetbloc.clinic.ui.admin.SSLClientAuthActivity"
+                android:targetClass="com.alphabetbloc.accessmrs.ui.admin.SSLClientAuthActivity"
                 android:targetPackage="@string/app_package_name" />
         </Preference>
         <Preference
             android:summary="@string/ssl_manage_certs_desc"
             android:title="@string/ssl_manage_certs" >
             <intent
-                android:targetClass="com.alphabetbloc.clinic.ui.admin.SSLAddCertificatesActivity"
+                android:targetClass="com.alphabetbloc.accessmrs.ui.admin.SSLAddCertificatesActivity"
                 android:targetPackage="@string/app_package_name" />
         </Preference>
         <Preference
             android:summary="@string/ssl_manage_certs_desc"
             android:title="@string/ssl_test_ssl" >
             <intent
-                android:targetClass="com.alphabetbloc.clinic.ui.admin.SSLTestActivity"
+                android:targetClass="com.alphabetbloc.accessmrs.ui.admin.SSLTestActivity"
                 android:targetPackage="@string/app_package_name" />
         </Preference>
     </PreferenceCategory>

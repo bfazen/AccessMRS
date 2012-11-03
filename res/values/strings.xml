@@ -3,11 +3,11 @@
 
     <!-- NON UI STRING CONSTANTS (referenced in both java and xml). -->
     <!-- APP -->
-    <string name="app_name">Clinic for CHWs</string>
+    <string name="app_name">AccessMRS</string>
     <string name="app_version">1.0.2</string>
-    <string name="app_package_name">com.alphabetbloc.clinic</string>
-    <string name="app_provider_authority">com.alphabetbloc.clinic.providers.dbprovider</string>
-    <string name="app_account_type">com.alphabetbloc.clinic.account</string>
+    <string name="app_package_name">com.alphabetbloc.accessmrs</string>
+    <string name="app_provider_authority">com.alphabetbloc.accessmrs.providers.dbprovider</string>
+    <string name="app_account_type">com.alphabetbloc.accessmrs.account</string>
 
     <!-- Keys -->
     <string name="key_server">server</string>
@@ -136,7 +136,7 @@
     <string name="ssl_test_failure">Unable to Connect to Server.</string>
 
     <!-- DEVICE SETUP -->
-    <!-- ClinicLauncherActivity SQLLite Setup with SQLCipher Password -->
+    <!-- AccessMRS LauncherActivity SQLLite Setup with SQLCipher Password -->
     <string name="sql_verify_pwd">Enter your passphrase:</string>
     <string name="sql_set_sqlcipher_pwd">Please enter a secure password for your database.</string>
     <string name="sql_change_sqlcipher_pwd">Please enter a new password for your database.</string>
@@ -170,7 +170,7 @@
     <string name="auth_server_setup_complete">Congratulations, you have now setup an account with OpenMRS.</string>
     <string name="auth_dont_verify">Don\'t Verify</string>
     <string name="auth_try_again">Try Again</string>
-    <string name="auth_no_account">You must have an OpenMRS account setup to use Clinic.</string>
+    <string name="auth_no_account">You must have an OpenMRS account setup to use AccessMRS.</string>
     <string name="auth_error_title">Authentication Error</string>
     <string name="auth_invalid_username">%s is not a valid Username.  Please enter an id with only letters and numbers.</string>
     <string name="auth_empty_entry">Please Click on White Box to Enter Username and Password.</string>
@@ -268,7 +268,7 @@
     <string name="completed_client">Completed Client</string>
     <string name="incomplete_clients">Incomplete Clients</string>
     <string name="incomplete_client">Incomplete Client</string>
-    <string name="dashboard_title">Clinic For CHWs</string>
+    <string name="dashboard_title">AccessMRS</string>
     <string name="ss_service_started">Update Clients Started</string>
     <string name="ss_service_label">Update Client List</string>
     <string name="all_clients_section">All Available Clients</string>
