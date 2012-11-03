@@ -4,15 +4,24 @@ import java.io.File;
 import java.util.List;
 
 import org.odk.collect.android.provider.InstanceProviderAPI;
+import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
+import android.accounts.Account;
+import android.accounts.AccountManager;
+import android.accounts.AccountManagerCallback;
+import android.accounts.AccountManagerFuture;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.net.Uri;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.alphabetbloc.clinic.R;
 import com.alphabetbloc.clinic.providers.DataModel;
+import com.alphabetbloc.clinic.providers.DbProvider;
 import com.alphabetbloc.clinic.utilities.App;
 import com.alphabetbloc.clinic.utilities.EncryptionUtil;
 import com.alphabetbloc.clinic.utilities.FileUtils;
@@ -33,21 +42,24 @@ public class WipeDataService extends WakefulIntentService {
 	public static final String WIPE_CLINIC_DATA = "wipe_clinic_data";
 	public static final String WIPE_DATA_REQUESTED = "wipe_data_requested";
 	private Context mCollectCtx;
+	private final Handler myHandler = new Handler();
+	private AccountManagerFuture<Boolean> myFuture = null;
+	private boolean removedAccount = false;
+	private boolean removingComplete = false;
 
 	public WipeDataService() {
 		super("AppService");
 	}
 
-	
 	@Override
 	protected void doWakefulWork(Intent intent) {
 		SharedPreferences prefs = getSharedPreferences(WakefulIntentService.NAME, 0);
 		prefs.edit().putBoolean(WIPE_DATA_REQUESTED, true).commit();
-		
+
 		boolean allDeleted = true;
 		int attempts = 0;
 		boolean wipeClinic = intent.getBooleanExtra(WIPE_CLINIC_DATA, true);
-		Log.e(TAG, "Wiping Data Collect = true and Clinic = " + wipeClinic);
+		Log.w(TAG, "Wiping Data Collect = true and Clinic = " + wipeClinic);
 
 		do {
 
@@ -84,15 +96,19 @@ public class WipeDataService extends WakefulIntentService {
 					allDeleted = allDeleted & deleteDirectory(clinicExternalCache);
 					allDeleted = allDeleted & deleteDirectory(clinicInternalCache);
 
-					// delete db keys
-					SharedPreferences clinicPrefs = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
-					allDeleted = allDeleted & deleteSqlCipherDbKeys(clinicPrefs);
+					// close the db to prevent errors
+					DbProvider.lock();
+					
+					// delete db keys and pwds
+					allDeleted = allDeleted & deleteSqlCipherDbKeys();
+
+					// delete the clinic account & password
+					deleteAccounts();
 
 					// delete clinic db
 					allDeleted = allDeleted & deleteClinicDb();
 
-					// Delete the entire external instances dir (which is
-					// encrypted)
+					// Delete the external instances dir (which is encrypted)
 					String instancePath = FileUtils.getExternalInstancesPath();
 					File externalInstanceDir = new File(instancePath);
 					allDeleted = allDeleted & deleteDirectory(externalInstanceDir);
@@ -107,7 +123,17 @@ public class WipeDataService extends WakefulIntentService {
 					App.resetDb();
 
 					// next clinic run, treat it as a fresh setup
+					SharedPreferences clinicPrefs = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
 					clinicPrefs.edit().putBoolean(getString(R.string.key_first_run), true).commit();
+
+					// wait for accounts to be deleted (at most 30s)
+					int count = 0;
+					while (!removingComplete && count < 30) {
+						android.os.SystemClock.sleep(1000);
+						count++;
+					}
+
+					allDeleted = allDeleted & removedAccount;
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -116,11 +142,14 @@ public class WipeDataService extends WakefulIntentService {
 
 		} while (!allDeleted && (attempts < 4));
 
-		if (allDeleted){
+		if (allDeleted) {
+			Log.v(TAG, "Successfully wiped all sensitive data.  Ending service and canceling alarms.");
 			prefs.edit().putBoolean(WIPE_DATA_REQUESTED, false).commit();
 			cancelAlarms(WakefulIntentService.WIPE_DATA, getApplicationContext());
+		} else {
+			Log.w(TAG, "There was an error wiping data. Alarm is set to try again at a later time.");
 		}
-		Log.e(TAG, "sending a broadcast with allDeleted = " + allDeleted);
+		
 		Intent i = new Intent(WIPE_DATA_COMPLETE);
 		sendBroadcast(i);
 	}
@@ -155,7 +184,7 @@ public class WipeDataService extends WakefulIntentService {
 			}
 
 			if (success)
-				Log.e(TAG, "All insecure files have been deleted!");
+				Log.i(TAG, "All insecure files have been deleted!");
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -164,12 +193,15 @@ public class WipeDataService extends WakefulIntentService {
 		return success;
 	}
 
-	private boolean deleteSqlCipherDbKeys(SharedPreferences prefs) {
+	private boolean deleteSqlCipherDbKeys() {
 		boolean success = false;
 
 		try {
 			// first try
+			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(App.getApp());
 			prefs.edit().putString(EncryptionUtil.SQLCIPHER_KEY_NAME, null).commit();
+			prefs.edit().putString(getString(R.string.key_password), null).commit();
+			prefs.edit().putString(getString(R.string.key_username), null).commit();
 			success = checkSqlCipherPref(prefs);
 
 			// second try
@@ -186,8 +218,10 @@ public class WipeDataService extends WakefulIntentService {
 	}
 
 	private boolean checkSqlCipherPref(SharedPreferences prefs) {
-		String test = prefs.getString(EncryptionUtil.SQLCIPHER_KEY_NAME, null);
-		if (test == null)
+		String testKey = prefs.getString(EncryptionUtil.SQLCIPHER_KEY_NAME, null);
+		String testPwd = prefs.getString(getString(R.string.key_password), null);
+		String testUser = prefs.getString(getString(R.string.key_username), null);
+		if (testKey == null && testPwd == null && testUser == null)
 			return true;
 		else
 			return false;
@@ -213,6 +247,10 @@ public class WipeDataService extends WakefulIntentService {
 	private boolean deleteCollectInstancesDb() {
 		boolean success = false;
 		try {
+			Cursor c = App.getApp().getContentResolver().query(Uri.parse(InstanceColumns.CONTENT_URI + "/close"), null, null, null, null);
+			if (c != null)
+				c.close();
+
 			// first try
 			success = mCollectCtx.deleteDatabase(InstanceProviderAPI.DATABASE_NAME);
 
@@ -227,5 +265,33 @@ public class WipeDataService extends WakefulIntentService {
 
 		return success;
 	}
+
+	private void deleteAccounts() {
+		AccountManager am = AccountManager.get(this);
+		Account[] accounts = am.getAccountsByType(getString(R.string.app_account_type));
+
+		if (accounts.length > 0) {
+			for (Account a : accounts) {
+				myFuture = am.removeAccount(a, myCallback, myHandler);
+			}
+		} else {
+			removedAccount = true;
+		}
+	}
+
+	// STEP 4:
+	private AccountManagerCallback<Boolean> myCallback = new AccountManagerCallback<Boolean>() {
+		@Override
+		public void run(final AccountManagerFuture<Boolean> amf) {
+			if (amf != null) {
+				try {
+					removedAccount = myFuture.getResult();
+					removingComplete = true;
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	};
 
 }

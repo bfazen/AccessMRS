@@ -80,25 +80,28 @@ public class EncryptionService extends WakefulIntentService {
 	@Override
 	protected void doWakefulWork(Intent intent) {
 		mContext = this;
-		Log.e(TAG, "encryptionservice is now running");
+		Log.v(TAG, "Starting service to encrypt all submitted files.");
 		if (!ClinicLauncher.isSetupComplete()) {
 			if (!ClinicLauncherActivity.sLaunching) {
-				Log.e(TAG, "Clinic is Not Setup... and not currently active... so EncryptionService is requesting setup");
+				Log.v(TAG, "Clinic is Not Setup... and not currently active... so EncryptionService is requesting setup");
 				Intent i = new Intent(App.getApp(), ClinicLauncherActivity.class);
 				i.putExtra(ClinicLauncherActivity.LAUNCH_DASHBOARD, false);
 				i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 				startActivity(i);
 			}
-			Log.e(TAG, "Clinic is Not Setup... so EncryptionService is ending");
+			Log.v(TAG, "Clinic is Not Setup... so EncryptionService is ending");
 			stopSelf();
 			return;
 		}
 		// get all recently submitted files
 		ArrayList<Map<String, Object>> submittedFiles = findSubmittedFiles();
 		if (submittedFiles.isEmpty()){
+			cancelAlarms(WakefulIntentService.ENCRYPT_DATA, mContext);
+			Log.v(TAG, "No Files Found to Encrypt. Ending service and canceling future alarms.");
 			stopSelf();
 			return;
 		}
+		
 		// in case this service is interrupted, make sure we resume it later.
 		scheduleAlarms(new EncryptDataListener(), WakefulIntentService.ENCRYPT_DATA, mContext, true);
 
@@ -123,9 +126,9 @@ public class EncryptionService extends WakefulIntentService {
 		// performance, and have user complain as we want to know about this ...
 		if (allEncrypted) {
 			cancelAlarms(WakefulIntentService.ENCRYPT_DATA, mContext);
-			Log.i(TAG, count + " files encrypted.");
+			Log.v(TAG, count + " files successfully encrypted. Ending service and canceling future alarms.");
 		} else {
-			Log.w(TAG, "An error occurred while attempting to encrypt a recently submitted file! ");
+			Log.e(TAG, "An error occurred while attempting to encrypt a recently submitted file!");
 		}
 	}
 
@@ -154,7 +157,7 @@ public class EncryptionService extends WakefulIntentService {
 				int idIndex = c.getColumnIndex(InstanceColumns._ID);
 				int pathIndex = c.getColumnIndex(InstanceColumns.INSTANCE_FILE_PATH);
 
-				Log.e(TAG, "path index is= " + String.valueOf(pathIndex) + " idindex = " + String.valueOf(idIndex));
+				Log.v(TAG, "path index is= " + String.valueOf(pathIndex) + " idindex = " + String.valueOf(idIndex));
 				if (c.moveToFirst()) {
 					do {
 						instanceDbPath = c.getString(pathIndex);

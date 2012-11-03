@@ -34,16 +34,16 @@ public class AlarmIntentService extends WakefulIntentService {
 	@Override
 	protected void doWakefulWork(Intent intent) {
 		mContext = this;
-		Log.e(TAG, "alarmintent service is now running");
+		Log.v(TAG, "alarmintent service is now running");
 		// Find the most recent download time
 		long recentDownload = Db.open().fetchMostRecentDownload();
 		long timeSinceRefresh = System.currentTimeMillis() - recentDownload;
-		Log.e(TAG, "Minutes since last refresh: " + timeSinceRefresh / (1000 * 60));
+		Log.v(TAG, "Minutes since last refresh: " + timeSinceRefresh / (1000 * 60));
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
 		String minRefreshSeconds = prefs.getString(getString(R.string.key_min_refresh_seconds), getString(R.string.default_min_refresh_seconds));
 		long minRefreshMs = 1000L * Long.valueOf(minRefreshSeconds);
 		if (timeSinceRefresh > minRefreshMs) {
-			Log.e(TAG, "RefreshClientService about to start SS service");
+			Log.v(TAG, "RefreshClientService about to start SS service");
 			ComponentName comp = new ComponentName(mContext.getPackageName(), RefreshDataService.class.getName());
 			Intent i = new Intent();
 			i.setComponent(comp);
@@ -63,7 +63,7 @@ public class AlarmIntentService extends WakefulIntentService {
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
-		Log.e(TAG, "RefreshClientService OnDestroy is called");
+		Log.v(TAG, "RefreshClientService OnDestroy is called");
 	}
 
 }

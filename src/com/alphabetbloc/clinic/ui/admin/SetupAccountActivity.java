@@ -107,8 +107,11 @@ public class SetupAccountActivity extends BaseAdminActivity implements SyncDataL
 			createView(REQUEST_CREDENTIAL_SETUP);
 		else if (NetworkUtils.getServerUsername() != null)
 			createView(REQUEST_CREDENTIAL_CHANGE);
-		else
+		else { 
+			// Launched from a Service that found no account
+			UiUtils.toastAlert(App.getApp().getString(R.string.installation_error), App.getApp().getString(R.string.auth_no_account));
 			createView(REQUEST_CREDENTIAL_SETUP);
+		}
 	}
 
 	private void importFromConfigFile() {

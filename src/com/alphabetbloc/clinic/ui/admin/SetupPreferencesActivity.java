@@ -299,8 +299,6 @@ public class SetupPreferencesActivity extends BaseAdminActivity {
 							db.delete();
 						DbProvider.createDb();
 
-						// encrypt a new Collect instances Db
-
 					} else
 						DbProvider.rekeyDb(userEntry);
 
@@ -316,6 +314,7 @@ public class SetupPreferencesActivity extends BaseAdminActivity {
 			@Override
 			protected void onPostExecute(Boolean success) {
 				if (success) {
+					// encrypt a new Collect instances Db
 					SetupPreferencesActivity.this.encryptCollectDb();
 				} else {
 					if (error != null)

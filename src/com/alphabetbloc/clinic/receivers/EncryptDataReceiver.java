@@ -48,12 +48,14 @@ public class EncryptDataReceiver extends BroadcastReceiver {
 
 		if (listener != null) {
 			if (intent.getAction() == null) {
+				//Stared from ALARM MANAGER
 				SharedPreferences prefs = ctxt.getSharedPreferences(WakefulIntentService.NAME, 0);
 
 				prefs.edit().putLong(WakefulIntentService.ENCRYPT_DATA, System.currentTimeMillis()).commit();
 
 				listener.sendWakefulWork(ctxt);
 			} else {
+				//Started from a BOOT_COMPLETED broadcast
 				WakefulIntentService.scheduleAlarms(listener, WakefulIntentService.ENCRYPT_DATA, ctxt, true);
 			}
 		}

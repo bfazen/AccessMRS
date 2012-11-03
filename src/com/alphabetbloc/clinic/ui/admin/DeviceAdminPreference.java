@@ -21,7 +21,7 @@ public class DeviceAdminPreference extends BaseAdminActivity {
 		Bundle extra = getIntent().getExtras();
 		Boolean toggleMenu = extra.getBoolean(getString(R.string.key_show_settings_menu));
 		Boolean toggleLog = extra.getBoolean(getString(R.string.key_enable_activity_log));
-		Log.e("ChvSetMenuPreference", "Resetting the menu with toggle= " + toggleMenu);
+		Log.v("ChvSetMenuPreference", "Resetting the menu with toggle= " + toggleMenu);
 
 		// update the prefs
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());

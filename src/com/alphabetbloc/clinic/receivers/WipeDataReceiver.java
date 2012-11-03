@@ -45,25 +45,26 @@ public class WipeDataReceiver extends BroadcastReceiver {
 	private static final String WAKEFUL_META_DATA = "com.commonsware.cwac.wakeful";
 	private static final String TAG = WipeDataReceiver.class.getSimpleName();
 	private static final String WIPE_DATA_FROM_ADMIN_SMS_REQUEST = "com.alphabetbloc.clinic.WIPE_DATA_FROM_ADMIN_SMS_REQUEST";
-
+	public static final String WIPE_DATA_SERVICE = "com.alphabetbloc.clinic.WIPE_DATA_SERVICE";
+	
 	@Override
 	public void onReceive(Context ctxt, Intent intent) {
 		AlarmListener listener = getListener(ctxt);
-
+		String action = intent.getAction();
+		
 		if (listener != null) {
-			if (intent.getAction() == null) {
-
+			if (action == null || action.equalsIgnoreCase(WIPE_DATA_SERVICE)) {
+		
+				//Stared from ALARM MANAGER (action == null) OR Specific Broadcast
 				SharedPreferences prefs = ctxt.getSharedPreferences(WakefulIntentService.NAME, 0);
 				
 				// check for intent
 				boolean wipeData = intent.getBooleanExtra(WIPE_DATA_FROM_ADMIN_SMS_REQUEST, false);
 				if (wipeData)
 					prefs.edit().putBoolean(WipeDataService.WIPE_DATA_REQUESTED, wipeData).commit();
-
 				// check for existing wipe data request
 				wipeData = prefs.getBoolean(WipeDataService.WIPE_DATA_REQUESTED, false);
 				if (wipeData) {
-					Log.e(TAG, "Wipe Data has been Requested");
 					prefs.edit().putLong(WakefulIntentService.WIPE_DATA, System.currentTimeMillis()).commit();
 					listener.sendWakefulWork(ctxt);
 				} else {
@@ -71,6 +72,7 @@ public class WipeDataReceiver extends BroadcastReceiver {
 				}
 				// otherwise, do nothing
 			} else {
+				//Stared from a BOOT_COMPLETED broadcast
 				WakefulIntentService.scheduleAlarms(listener, WakefulIntentService.WIPE_DATA, ctxt, true);
 			}
 		}

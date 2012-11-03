@@ -129,9 +129,9 @@ public class NetworkUtils {
 		final AccountManager am = AccountManager.get(App.getApp());
 		Account[] accounts = am.getAccountsByType(App.getApp().getString(R.string.app_account_type));
 
-		Log.e(TAG, "accounts.length =" + accounts.length);
+		Log.v(TAG, "accounts.length =" + accounts.length);
 		if (accounts.length <= 0) {
-			Log.e(TAG, "no accounts have been set up");
+			Log.v(TAG, "no accounts have been set up");
 
 		} else {
 
@@ -146,7 +146,7 @@ public class NetworkUtils {
 		HttpClient client = null;
 		try {
 
-			Log.e(TAG, "httpClient is null, download is creating a new client");
+			Log.v(TAG, "httpClient is null, download is creating a new client");
 			SSLContext sslContext = createSslContext();
 			MySSLSocketFactory socketFactory = new MySSLSocketFactory(sslContext, new BrowserCompatHostnameVerifier());
 			client = createHttpClient(socketFactory);
@@ -258,7 +258,7 @@ public class NetworkUtils {
 				}
 			}
 		} else {
-			Log.e(TAG, "no files to upload in instance");
+			Log.v(TAG, "no files to upload in instance");
 		}
 
 		return entity;
@@ -287,7 +287,7 @@ public class NetworkUtils {
 			Log.e(TAG, "Error: " + response.getStatusLine());
 			throw new IOException(App.getApp().getString(R.string.error_connection));
 		} else {
-			Log.e(TAG, "NO Error!: " + response.getStatusLine());
+			Log.v(TAG, "NO Error!: " + response.getStatusLine());
 		}
 
 		// Get hold of the response entity

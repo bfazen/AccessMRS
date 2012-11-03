@@ -69,7 +69,7 @@ public class DecryptionTask extends AsyncTask<Object, Void, Boolean> {
 			decrypted = decryptFormInstance(id, inPath, outPath);
 		
 		if (decrypted)
-			Log.e(TAG, "Decryption Sucessful!");
+			Log.v(TAG, "Decryption Sucessful!");
 		else
 			Log.e(TAG, "Decryption Error with Collect Instance Id: " + String.valueOf(id) + " at path=" + inPath);
 
@@ -102,7 +102,7 @@ public class DecryptionTask extends AsyncTask<Object, Void, Boolean> {
 		for (File f : filesToDecrypt) {
 			try {
 				anydone = decryptFile(f.getAbsolutePath(), outPath, c, key);
-				Log.e(TAG, "after decrypting... anydone=" + anydone);
+				Log.v(TAG, "after decrypting... anydone=" + anydone);
 				alldone = alldone & anydone;
 			} catch (Exception e) {
 				Log.e(TAG, "Error decrypting: " + f.getName());
@@ -248,7 +248,7 @@ public class DecryptionTask extends AsyncTask<Object, Void, Boolean> {
 	protected void onPostExecute(Boolean alldone) {
 		super.onPostExecute(alldone);
 		if (mListener != null) {
-			Log.e(TAG, "about to send to listener anydone =" + anydone);
+			Log.v(TAG, "about to send to listener anydone =" + anydone);
 			mListener.setDeleteDecryptedFilesAlarm(anydone);
 			mListener.decryptComplete(alldone);
 		}

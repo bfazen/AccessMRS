@@ -263,7 +263,7 @@ public class Db {
 				selection.append(" AND ").append(listSelection);
 			listSelection = selection.toString();
 		}
-		Log.e(TAG, "SELECT " + projection + " FROM " + table + " WHERE " + listSelection + " GROUP BY " + groupBy + " ORDER BY " + listOrder);
+		Log.v(TAG, "SELECT " + projection + " FROM " + table + " WHERE " + listSelection + " GROUP BY " + groupBy + " ORDER BY " + listOrder);
 		return DbProvider.openDb().query(true, table, projection, listSelection, null, groupBy, null, listOrder, null);
 	}
 

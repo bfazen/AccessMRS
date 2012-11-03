@@ -97,7 +97,7 @@ public class FileUtils {
 						if (!file.delete()) {
 							Log.i(TAG, "Failed to delete " + file);
 						} else
-							Log.e(TAG, "successfully deleted a file from:" + path);
+							Log.v(TAG, "successfully deleted a file from:" + path);
 					}
 				}
 				return folder.delete();
@@ -200,7 +200,7 @@ public class FileUtils {
 						else if (!file.delete())
 							Log.i(TAG, "Failed to delete " + file);
 						else
-							Log.e(TAG, "successfully deleted a file from:" + path);
+							Log.v(TAG, "successfully deleted a file from:" + path);
 					}
 
 				}

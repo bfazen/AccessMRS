@@ -36,20 +36,20 @@ public class ClinicLauncher {
 	public static final String TAG = ClinicLauncher.class.getSimpleName();
 	public static final String OLD_UNLOCK_ACTION = "android.credentials.UNLOCK";
 	public static final String UNLOCK_ACTION = "com.android.credentials.UNLOCK";
-	public static boolean sIsCollectInstalled = true;
+	public static final String COLLECT_NOT_INSTALLED = "collect_not_installed";
 	public static Intent sLaunchIntent;
 	
 	public static boolean isSetupComplete() {
 		boolean isSetupComplete = false;
 
 		if (!isCollectInstalled()) {
-			Log.e(TAG, "Collect is NOT installed");
+			Log.w(TAG, "Collect is NOT installed");
 		} else if (!isClinicSetup()) {
 			setupClinic();
-			Log.e(TAG, "Clinic is NOT setup");
+			Log.w(TAG, "Clinic is NOT setup");
 		} else if (!isCollectSetup()) {
 			setupCollect();
-			Log.e(TAG, "Collect is NOT setup");
+			Log.w(TAG, "Collect is NOT setup");
 		} else {
 			// if we made it here, we are all setup!
 			isSetupComplete = true;
@@ -62,13 +62,13 @@ public class ClinicLauncher {
 
 		if (!isCollectInstalled()) {
 			sLaunchIntent = null;
-			Log.e(TAG, "Collect is NOT installed");
+			Log.w(TAG, "Collect is NOT installed");
 		} else if (!isClinicSetup()) {
 			setupClinic();
-			Log.e(TAG, "Clinic is NOT setup");
+			Log.w(TAG, "Clinic is NOT setup");
 		} else if (!isCollectSetup()) {
 			setupCollect();
-			Log.e(TAG, "Collect is NOT setup");
+			Log.w(TAG, "Collect is NOT setup");
 		} else {
 			// if we made it here, we are all setup!
 			sLaunchIntent = new Intent(App.getApp(), DashboardActivity.class);
@@ -82,7 +82,7 @@ public class ClinicLauncher {
 		try {
 			App.getApp().getPackageManager().getPackageInfo("org.odk.collect.android", PackageManager.GET_META_DATA);
 		} catch (NameNotFoundException e) {
-			UiUtils.toastAlert(App.getApp(), App.getApp().getString(R.string.installation_error), App.getApp().getString(R.string.collect_not_installed));
+			sLaunchIntent = new Intent(COLLECT_NOT_INSTALLED);
 			return false;
 		}
 
@@ -156,7 +156,7 @@ public class ClinicLauncher {
 			// already setup
 			return true;
 		} else {
-			Log.e(TAG, "it is considered the first run now!");
+			Log.w(TAG, "it is considered the first run now!");
 			Intent i = new Intent(App.getApp(), SetupPreferencesActivity.class);
 			i.putExtra(SetupPreferencesActivity.SETUP_INTENT, SetupPreferencesActivity.FIRST_RUN);
 			sLaunchIntent = i;
@@ -192,10 +192,9 @@ public class ClinicLauncher {
 		Account[] accounts = accountManager.getAccountsByType(App.getApp().getString(R.string.app_account_type));
 		if (accounts.length > 0) {
 			// already setup
-			Log.e(TAG, "there is an account numer=" + accounts.length + "username=" + accounts[0].name);
+			Log.v(TAG, "there is an account numer=" + accounts.length + "username=" + accounts[0].name);
 			return true;
 		} else {
-			UiUtils.toastAlert(App.getApp(), App.getApp().getString(R.string.installation_error), App.getApp().getString(R.string.auth_no_account));
 			Intent i = new Intent(App.getApp(), SetupAccountActivity.class);
 			i.putExtra(SetupAccountActivity.LAUNCHED_FROM_ACCT_MGR, false);
 			sLaunchIntent = i;
@@ -214,7 +213,7 @@ public class ClinicLauncher {
 
 			}
 		} catch (Exception e) {
-			Log.e(TAG, "collect db does not exist?!");
+			Log.w(TAG, "collect db does not exist?!");
 			return false;
 		}
 

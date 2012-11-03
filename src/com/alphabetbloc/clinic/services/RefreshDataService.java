@@ -35,20 +35,19 @@ public class RefreshDataService extends Service {
 		
 		if (!ClinicLauncher.isSetupComplete()) {
 			if (!ClinicLauncherActivity.sLaunching) {
-				Log.e(TAG, "Clinic is Not Setup... and not currently active... so RefreshDataService is requesting setup");
+				Log.v(TAG, "Clinic is Not Setup... and not currently active... so RefreshDataService is requesting setup");
 				Intent i = new Intent(App.getApp(), ClinicLauncherActivity.class);
 				i.putExtra(ClinicLauncherActivity.LAUNCH_DASHBOARD, false);
 				i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 				startActivity(i);
 			}
-			Log.e(TAG, "Clinic is Not Setup... so RefreshDataService is ending");
-			stopSelf();
-			return;
+			Log.v(TAG, "Clinic is Not Setup... so RefreshDataService is Cancelling Sync");
+			SyncManager.sCancelSync = true;
 		}
 		
 		isSyncActive = true;
 		showNotification();
-		Log.i(TAG, "syncActive! Creating a new service");
+		Log.v(TAG, "syncActive! Creating a new service");
 		synchronized (sSyncAdapterLock) {
 			if (sSyncAdapter == null) {
 				sSyncAdapter = new SyncAdapter(getApplicationContext(), true);
@@ -65,7 +64,7 @@ public class RefreshDataService extends Service {
 	@Override
 	public void onDestroy() {
 		isSyncActive = false;
-		Log.i(TAG, "syncNotActive, Shutting down the Service");
+		Log.v(TAG, "syncNotActive, Shutting down the Service");
 		if (mNM != null)
 			mNM.cancel(NOTIFICATION);
 		super.onDestroy();

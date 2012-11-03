@@ -221,12 +221,12 @@ public class SSLAddCertificatesActivity extends SSLBaseActivity {
 			FileUtils.setupDefaultSslStore(mLocalStoreFileName);
 
 		try {
-			Log.e(TAG, "localStoreFilePath=" + mLocalStoreFile.getAbsolutePath());
+			Log.v(TAG, "localStoreFilePath=" + mLocalStoreFile.getAbsolutePath());
 			KeyStore localTrustStore = KeyStore.getInstance("BKS");
 			InputStream in = new FileInputStream(mLocalStoreFile);
 
 			if (in != null)
-				Log.e(TAG, "in is NOT NULL");
+				Log.v(TAG, "in is NOT NULL");
 			if (localTrustStore == null)
 				Log.e(TAG, "localTrustStore is NULL");
 			if (mStorePassword == null)

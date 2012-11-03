@@ -102,9 +102,10 @@ abstract public class WakefulIntentService extends IntentService {
 		PendingIntent pi = PendingIntent.getBroadcast(App.getApp(), 0, i, 0);
 		try {
 			mgr.cancel(pi);
-			Log.e("WakefulIntentService", "Successfully cancelled an alarm with receiver=" + receiver);
+			pi.cancel();
+			Log.v("WakefulIntentService", "Successfully cancelled an alarm with receiver=" + receiver);
 		} catch (Exception e) {
-			Log.e("WakefulIntentService", "AlarmManager update was not canceled. " + e.toString());
+			Log.v("WakefulIntentService", "AlarmManager update was not canceled. " + e.toString());
 		}
 	}
 

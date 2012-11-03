@@ -161,7 +161,7 @@ public class SyncManager {
 			for (int i = 0; i < uploaded.length; i++) {
 
 				path = uploaded[i];
-				Log.e(TAG, "Updating the uploaded instance in db " + path);
+				Log.v(TAG, "Updating the uploaded instance in db " + path);
 				// update clinic
 				e = updateClinicInstances(path, syncResult);
 				if (e != null)

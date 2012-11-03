@@ -42,16 +42,16 @@ public class DeleteDecryptedFilesService extends WakefulIntentService {
 
 	@Override
 	protected void doWakefulWork(Intent intent) {
-		Log.e(TAG, "delete decrypted files service is now running");
+		Log.v(TAG, "Service starting to find and delete any decrypted files.");
 		if (!ClinicLauncher.isSetupComplete()) {
 			if (!ClinicLauncherActivity.sLaunching) {
-				Log.e(TAG, "Clinic is Not Setup... and not currently active... so DeleteDecryptedFilesService is requesting setup");
+				Log.v(TAG, "Clinic is Not Setup... and not currently active... so DeleteDecryptedFilesService is requesting setup");
 				Intent i = new Intent(App.getApp(), ClinicLauncherActivity.class);
 				i.putExtra(ClinicLauncherActivity.LAUNCH_DASHBOARD, false);
 				i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 				startActivity(i);
 			}
-			Log.e(TAG, "Clinic is Not Setup... so DeleteDecryptedFilesService is ending");
+			Log.v(TAG, "Clinic is Not Setup... so DeleteDecryptedFilesService is ending");
 			stopSelf();
 			return;
 		}
@@ -60,6 +60,12 @@ public class DeleteDecryptedFilesService extends WakefulIntentService {
 		// get all recently submitted files
 		ArrayList<Map<String, Object>> decryptedInstances = findDecryptedInstances();
 		if (decryptedInstances.isEmpty()){
+			if (!decryptedFilesExist()){
+				cancelAlarms(WakefulIntentService.DELETE_DECRYPTED_DATA, mContext);
+				Log.v(TAG, "No decrypted files found. Service is now ending and canceling future alarms.");
+			} else {
+				Log.v(TAG, "No files require deletion at the time. Service is now ending.");
+			}
 			stopSelf();
 			return;
 		}
@@ -88,8 +94,10 @@ public class DeleteDecryptedFilesService extends WakefulIntentService {
 		}
 
 		// Cancel this service IF there are no more decrypted instances on disk
-		if (allDeleted && !decryptedFilesExist())
+		if (allDeleted && !decryptedFilesExist()){
 			cancelAlarms(WakefulIntentService.DELETE_DECRYPTED_DATA, mContext);
+			Log.v(TAG, "Successfully deleted all decrypted files. Service is now ending and canceling future alarms.");
+		}
 	}
 
 	/**
@@ -129,7 +137,7 @@ public class DeleteDecryptedFilesService extends WakefulIntentService {
 					do {
 						dbPath = c.getString(pathIndex);
 						instanceId = c.getInt(idIndex);
-						Log.e(TAG, "DeleteDecrypted files found id=" + instanceId + " path=" + dbPath);
+						Log.v(TAG, "DeleteDecrypted files found id=" + instanceId + " path=" + dbPath);
 						Map<String, Object> temp = new HashMap<String, Object>();
 						temp.put(INSTANCE_ID, instanceId);
 						temp.put(INSTANCE_PATH, dbPath);

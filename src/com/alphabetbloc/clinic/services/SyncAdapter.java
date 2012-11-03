@@ -118,7 +118,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 		HttpClient client = NetworkUtils.getHttpClient();
 		if (client == null) {
 			// ++syncResult.stats.numIoExceptions;
-			Log.e(TAG, "client is null!  Check the credential storage!");
+			Log.e(TAG, "HttpClient is null!  Check the credential storage!");
 			Intent i = new Intent(mContext, ClinicLauncherActivity.class);
 			i.putExtra(ClinicLauncherActivity.LAUNCH_DASHBOARD, false);
 			i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

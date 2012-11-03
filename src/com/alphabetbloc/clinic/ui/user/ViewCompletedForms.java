@@ -85,7 +85,7 @@ public class ViewCompletedForms extends ViewFormsActivity implements DecryptionL
 		refreshView();
 
 		if (mDecryptDialog != null && !mDecryptDialog.isShowing()) {
-			Log.e(TAG, "mDecryptDialog is SHOWING FROM ON RESUME!");
+			Log.v(TAG, "mDecryptDialog is SHOWING FROM ON RESUME!");
 			mDecryptDialog.show();
 		}
 
@@ -164,7 +164,7 @@ public class ViewCompletedForms extends ViewFormsActivity implements DecryptionL
 		File encFile = new File(encPath);
 		if (encFile.exists())
 			encrypted = true;
-		Log.e(TAG, "File is Encrypted=" + encrypted);
+		Log.v(TAG, "File is Encrypted=" + encrypted);
 		return encrypted;
 	}
 
@@ -182,7 +182,7 @@ public class ViewCompletedForms extends ViewFormsActivity implements DecryptionL
 		File decFile = new File(decPath);
 
 		if (decFile.exists() && ((System.currentTimeMillis() - decFile.lastModified()) < maxDecrypt)) {
-			Log.e(TAG, "File is already decrytped!");
+			Log.v(TAG, "File is already decrytped!");
 			return true;
 
 		} else if (decFile.exists()) {
@@ -197,7 +197,7 @@ public class ViewCompletedForms extends ViewFormsActivity implements DecryptionL
 		if (mDecryptDialog != null) {
 			mDecryptDialog.cancel();
 			mDecryptDialog = null;
-			Log.e(TAG, "mDecryptDialog is CANCELLED!");
+			Log.v(TAG, "mDecryptDialog is CANCELLED!");
 		}
 		if (mDecryptionTask != null) {
 			mDecryptionTask.setDecryptionListener(null);
@@ -207,7 +207,7 @@ public class ViewCompletedForms extends ViewFormsActivity implements DecryptionL
 			launchFormView(mClickedForm);
 		else {
 			UiUtils.toastAlert(mContext, getString(R.string.error_filesystem), getString(R.string.error_opening_file));
-			Log.e(TAG, "Error in Decrypting the file: " + mClickedForm.getPath());
+			Log.v(TAG, "Error in Decrypting the file: " + mClickedForm.getPath());
 		}
 	}
 

@@ -51,7 +51,7 @@ public class PreferencesActivity extends BasePreferenceActivity implements OnSha
 		}
 		if (keys != null) {
 			for (int i = 0; i < keys.length; i++) {
-				Log.e(TAG, "key i=" + i + " key=" + keys[i]);
+				Log.v(TAG, "key i=" + i + " key=" + keys[i]);
 				setPreferenceSummary(prefs, keys[i]);
 			}
 		}
@@ -96,7 +96,7 @@ public class PreferencesActivity extends BasePreferenceActivity implements OnSha
 	private void updateSyncMinimum(SharedPreferences prefs, Preference changedPref, String key, Integer newValue) {
 
 		String compareKey = getString(R.string.key_max_refresh_seconds);
-		Log.e(TAG, "compareKey=" + compareKey + "compareValue=" + ADMIN_PREFERENCES.get(compareKey));
+		Log.v(TAG, "compareKey=" + compareKey + "compareValue=" + ADMIN_PREFERENCES.get(compareKey));
 		String compareValueS = prefs.getString(compareKey, ADMIN_PREFERENCES.get(compareKey));
 		Integer compareValue = Integer.valueOf(compareValueS);
 
