@@ -53,11 +53,11 @@ public class AccessMrsLauncherActivity extends Activity {
 				// Error
 				if (i == null)
 					sLaunching = false;
-
-				// Don't Launch if Collect Not Installed
-				else if (i.getAction() != null && i.getAction().equalsIgnoreCase(AccessMrsLauncher.COLLECT_NOT_INSTALLED)) {
+				
+				// Don't Launch if AccessForms Not Installed
+				else if (i.getAction() != null && i.getAction().equalsIgnoreCase(AccessMrsLauncher.ACCESS_FORMS_NOT_INSTALLED)) {
 					if (foregroundApp)
-						UiUtils.toastAlert(App.getApp().getString(R.string.installation_error), App.getApp().getString(R.string.collect_not_installed));
+						UiUtils.toastAlert(App.getApp().getString(R.string.installation_error), App.getApp().getString(R.string.access_forms_not_installed));
 					sLaunching = false;
 				}
 

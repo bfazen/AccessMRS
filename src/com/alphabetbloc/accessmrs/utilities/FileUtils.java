@@ -27,8 +27,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.odk.collect.android.provider.FormsProviderAPI.FormsColumns;
-import org.odk.collect.android.provider.InstanceProviderAPI;
 
 import android.content.Context;
 import android.content.pm.PackageManager.NameNotFoundException;
@@ -37,6 +35,8 @@ import android.database.sqlite.SQLiteException;
 import android.os.Environment;
 import android.util.Log;
 
+import com.alphabetbloc.accessforms.provider.InstanceProviderAPI;
+import com.alphabetbloc.accessforms.provider.FormsProviderAPI.FormsColumns;
 import com.alphabetbloc.accessmrs.providers.DataModel;
 import com.alphabetbloc.accessmrs.R;
 
@@ -267,11 +267,11 @@ public class FileUtils {
 	}
 
 	/**
-	 * Checks if a form exists in Collect Db and on Sd. If it does, we already
+	 * Checks if a form exists in AccessForms Db and on Sd. If it does, we already
 	 * have the form, and there is no need to download!
 	 * 
 	 * @param formId
-	 * @return true if form exists in Collect Db.
+	 * @return true if form exists in AccessForms Db.
 	 */
 	public static boolean doesXformExist(String formId) {
 
@@ -310,12 +310,12 @@ public class FileUtils {
 	}
 
 	// PATHS
-	// INTERNAL (COLLECT)
+	// INTERNAL (AccessForms)
 	public static File getInternalInstanceDirectory() {
 		File instanceDir = null;
 		try {
-			Context collectContext = App.getApp().createPackageContext("org.odk.collect.android", Context.CONTEXT_RESTRICTED);
-			instanceDir = new File(collectContext.getFilesDir(), INSTANCES);
+			Context AccessFormsContext = App.getApp().createPackageContext("com.alphabetbloc.accessforms", Context.CONTEXT_RESTRICTED);
+			instanceDir = new File(AccessFormsContext.getFilesDir(), INSTANCES);
 		} catch (NameNotFoundException e) {
 			e.printStackTrace();
 		}
@@ -461,15 +461,15 @@ public class FileUtils {
 			Log.e(TAG, "AccessMRS data was not wiped properly");
 			return false;
 		}
-		Context collectCtx = null;
+		Context AccessFormsCtx = null;
 		try {
-			collectCtx = App.getApp().createPackageContext("org.odk.collect.android", Context.CONTEXT_RESTRICTED);
+			AccessFormsCtx = App.getApp().createPackageContext("com.alphabetbloc.accessforms", Context.CONTEXT_RESTRICTED);
 		} catch (NameNotFoundException e) {
 			e.printStackTrace();
 		}
-		File collectDb = collectCtx.getDatabasePath(InstanceProviderAPI.DATABASE_NAME);
-		if (collectDb != null && collectDb.exists()) {
-			Log.e(TAG, "collect data was not wiped properly");
+		File AccessFormsDb = AccessFormsCtx.getDatabasePath(InstanceProviderAPI.DATABASE_NAME);
+		if (AccessFormsDb != null && AccessFormsDb.exists()) {
+			Log.e(TAG, "AccessForms data was not wiped properly");
 			return false;
 		}
 		return true;

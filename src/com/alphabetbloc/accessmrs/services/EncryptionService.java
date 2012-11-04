@@ -20,8 +20,6 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
-import org.odk.collect.android.provider.InstanceProviderAPI;
-import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -30,6 +28,8 @@ import android.database.Cursor;
 import android.util.Base64;
 import android.util.Log;
 
+import com.alphabetbloc.accessforms.provider.InstanceProviderAPI;
+import com.alphabetbloc.accessforms.provider.InstanceProviderAPI.InstanceColumns;
 import com.alphabetbloc.accessmrs.listeners.EncryptDataListener;
 import com.alphabetbloc.accessmrs.providers.Db;
 import com.alphabetbloc.accessmrs.ui.admin.AccessMrsLauncherActivity;
@@ -39,7 +39,7 @@ import com.alphabetbloc.accessmrs.utilities.FileUtils;
 
 /**
  * Encrypts Xform instances and their associated media files on the SD Card, and
- * deletes all Cleartext files from parent ODK Collect instance directory. Each
+ * deletes all Cleartext files from parent AccessForms (i.e ODK Collect) instance directory. Each
  * Form and its media files share a unique 256-bit AES key with different IVs.
  * Key is stored locally on phone database, allowing for easy decryption for
  * viewing old files through the DecryptionTask. <br>
@@ -134,10 +134,10 @@ public class EncryptionService extends WakefulIntentService {
 
 	/**
 	 * This searches the database for any record of a recently submitted file as
-	 * labeled under Collect Db Status 'submitted'. These files need to be
+	 * labeled under AccessForms Db Status 'submitted'. These files need to be
 	 * encrypted, and status then updated to 'encrypted'.
 	 * 
-	 * @return ArrayList of Maps that contain both the path and Collect Instance
+	 * @return ArrayList of Maps that contain both the path and AccessForms Instance
 	 *         Id of the decrypted instance file.
 	 */
 	private static ArrayList<Map<String, Object>> findSubmittedFiles() {
@@ -201,12 +201,12 @@ public class EncryptionService extends WakefulIntentService {
 
 		final SecretKeySpec keySpec = new SecretKeySpec(key, KEYSPEC_ALGORITHM);
 
-		// 2. update CollectDb with key and new path
+		// 2. update AccessFormsDb with key and new path
 		boolean logged = false;
 
 		String keyString = Base64.encodeToString(key, Base64.NO_WRAP);
 		if (id != null && keyString != null)
-			logged = updateCollectDb(id, keyString);
+			logged = updateAccessFormsDb(id, keyString);
 
 		// ONLY proceed if we have logged key!
 		if (!logged) {
@@ -254,14 +254,14 @@ public class EncryptionService extends WakefulIntentService {
 	}
 
 	/**
-	 * We update the collect Db with a phantom de-crypted file path and the
+	 * We update the AccessForms Db with a phantom de-crypted file path and the
 	 * keyString to make that de-crypted file on demand
 	 * 
 	 * @param id
 	 * @param filepath
 	 * @param base64key
 	 */
-	private static boolean updateCollectDb(Integer id, String base64key) {
+	private static boolean updateAccessFormsDb(Integer id, String base64key) {
 		boolean updated = false;
 
 		try {

@@ -5,14 +5,14 @@ import java.util.ArrayList;
 import net.sqlcipher.SQLException;
 import net.sqlcipher.database.SQLiteQueryBuilder;
 
-import org.odk.collect.android.provider.InstanceProviderAPI;
-import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
 import android.util.Log;
 
+import com.alphabetbloc.accessforms.provider.InstanceProviderAPI;
+import com.alphabetbloc.accessforms.provider.InstanceProviderAPI.InstanceColumns;
 import com.alphabetbloc.accessmrs.data.ActivityLog;
 import com.alphabetbloc.accessmrs.data.Form;
 import com.alphabetbloc.accessmrs.data.FormInstance;
@@ -667,7 +667,7 @@ public class Db {
 
 	}
 
-	// saved forms are kept in the collect database...
+	// saved forms are kept in the AccessForms (i.e. ODK Collect) database...
 	public void updateSavedFormNumbers() throws SQLException {
 		DbProvider.openDb();
 		Cursor c = null;
@@ -723,7 +723,7 @@ public class Db {
 
 	// TODO! Verify that this is ever called (if moveToFirst is null?) I think
 	// the logic is wrong here!
-	// saved forms are kept in the collect database...
+	// saved forms are kept in the AccessForms (i.e. ODK Collect)  database...
 	public void updateSavedFormNumbersByPatientId(String updatePatientId) throws SQLException {
 		DbProvider.openDb();
 		Cursor c = null;

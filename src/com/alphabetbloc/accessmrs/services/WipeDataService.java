@@ -3,8 +3,6 @@ package com.alphabetbloc.accessmrs.services;
 import java.io.File;
 import java.util.List;
 
-import org.odk.collect.android.provider.InstanceProviderAPI;
-import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
@@ -19,6 +17,8 @@ import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import com.alphabetbloc.accessforms.provider.InstanceProviderAPI;
+import com.alphabetbloc.accessforms.provider.InstanceProviderAPI.InstanceColumns;
 import com.alphabetbloc.accessmrs.providers.DataModel;
 import com.alphabetbloc.accessmrs.providers.DbProvider;
 import com.alphabetbloc.accessmrs.utilities.App;
@@ -41,7 +41,7 @@ public class WipeDataService extends WakefulIntentService {
 	public static final String WIPE_DATA_COMPLETE = "com.alphabetbloc.android.settings.WIPE_DATA_SERVICE_COMPLETE";
 	public static final String WIPE_ACCESS_MRS_DATA = "wipe_access_mrs_data";
 	public static final String WIPE_DATA_REQUESTED = "wipe_data_requested";
-	private Context mCollectCtx;
+	private Context mAccessFormsCtx;
 	private final Handler myHandler = new Handler();
 	private AccountManagerFuture<Boolean> myFuture = null;
 	private boolean removedAccount = false;
@@ -59,35 +59,35 @@ public class WipeDataService extends WakefulIntentService {
 		boolean allDeleted = true;
 		int attempts = 0;
 		boolean wipeAccessMrs = intent.getBooleanExtra(WIPE_ACCESS_MRS_DATA, true);
-		Log.w(TAG, "Wiping Data Collect = true and AccessMrs = " + wipeAccessMrs);
+		Log.w(TAG, "Wiping Data AccessForms = true and AccessMRS = " + wipeAccessMrs);
 
 		do {
 
-			// COLLECT
+			// ACCESS-FORMS
 			try {
 				// delete most insecure files first:
 				File internalInstancesDir = FileUtils.getInternalInstanceDirectory();
 				allDeleted = allDeleted & deleteDirectory(internalInstancesDir);
 
 				// get context
-				mCollectCtx = App.getApp().createPackageContext("org.odk.collect.android", Context.CONTEXT_RESTRICTED);
-				if (mCollectCtx == null)
+				mAccessFormsCtx = App.getApp().createPackageContext("com.alphabetbloc.accessforms", Context.CONTEXT_RESTRICTED);
+				if (mAccessFormsCtx == null)
 					allDeleted = false;
 
 				// delete cache
-				File collectInternalCache = mCollectCtx.getCacheDir();
-				File collectExternalCache = mCollectCtx.getExternalCacheDir();
-				allDeleted = allDeleted & deleteDirectory(collectExternalCache);
-				allDeleted = allDeleted & deleteDirectory(collectInternalCache);
+				File AccessFormsInternalCache = mAccessFormsCtx.getCacheDir();
+				File AccessFormsExternalCache = mAccessFormsCtx.getExternalCacheDir();
+				allDeleted = allDeleted & deleteDirectory(AccessFormsExternalCache);
+				allDeleted = allDeleted & deleteDirectory(AccessFormsInternalCache);
 
 				// delete instances db
-				allDeleted = allDeleted & deleteCollectInstancesDb();
+				allDeleted = allDeleted & deleteAccessFormsInstancesDb();
 
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 
-			// ACCESSMRS
+			// ACCESS-MRS
 			if (wipeAccessMrs) {
 				try {
 					// delete cache
@@ -244,7 +244,7 @@ public class WipeDataService extends WakefulIntentService {
 		return success;
 	}
 
-	private boolean deleteCollectInstancesDb() {
+	private boolean deleteAccessFormsInstancesDb() {
 		boolean success = false;
 		try {
 			Cursor c = App.getApp().getContentResolver().query(Uri.parse(InstanceColumns.CONTENT_URI + "/close"), null, null, null, null);
@@ -252,11 +252,11 @@ public class WipeDataService extends WakefulIntentService {
 				c.close();
 
 			// first try
-			success = mCollectCtx.deleteDatabase(InstanceProviderAPI.DATABASE_NAME);
+			success = mAccessFormsCtx.deleteDatabase(InstanceProviderAPI.DATABASE_NAME);
 
 			// second try
 			if (!success) {
-				File db = mCollectCtx.getDatabasePath(InstanceProviderAPI.DATABASE_NAME);
+				File db = mAccessFormsCtx.getDatabasePath(InstanceProviderAPI.DATABASE_NAME);
 				success = db.delete();
 			}
 		} catch (Exception e) {

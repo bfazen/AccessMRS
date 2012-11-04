@@ -4,7 +4,6 @@ import java.io.File;
 
 import javax.crypto.spec.SecretKeySpec;
 
-import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
@@ -19,6 +18,7 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.alphabetbloc.accessforms.provider.InstanceProviderAPI.InstanceColumns;
 import com.alphabetbloc.accessmrs.providers.DataModel;
 import com.alphabetbloc.accessmrs.providers.DbProvider;
 import com.alphabetbloc.accessmrs.ui.admin.SetupAccountActivity;
@@ -36,20 +36,20 @@ public class AccessMrsLauncher {
 	public static final String TAG = AccessMrsLauncher.class.getSimpleName();
 	public static final String OLD_UNLOCK_ACTION = "android.credentials.UNLOCK";
 	public static final String UNLOCK_ACTION = "com.android.credentials.UNLOCK";
-	public static final String COLLECT_NOT_INSTALLED = "collect_not_installed";
+	public static final String ACCESS_FORMS_NOT_INSTALLED = "com.alphabetbloc.accessforms.access_forms_not_installed";
 	public static Intent sLaunchIntent;
 	
 	public static boolean isSetupComplete() {
 		boolean isSetupComplete = false;
 
-		if (!isCollectInstalled()) {
-			Log.w(TAG, "Collect is NOT installed");
+		if (!isAccessFormsInstalled()) {
+			Log.w(TAG, "AccessForms is NOT installed");
 		} else if (!isAccessMrsSetup()) {
 			setupAccessMrs();
 			Log.w(TAG, "AccessMRS is NOT setup");
-		} else if (!isCollectSetup()) {
-			setupCollect();
-			Log.w(TAG, "Collect is NOT setup");
+		} else if (!isAccessFormsSetup()) {
+			setupAccessForms();
+			Log.w(TAG, "AccessForms is NOT setup");
 		} else {
 			// if we made it here, we are all setup!
 			isSetupComplete = true;
@@ -60,15 +60,14 @@ public class AccessMrsLauncher {
 	
 	public static Intent getLaunchIntent() {
 
-		if (!isCollectInstalled()) {
-			sLaunchIntent = null;
-			Log.w(TAG, "Collect is NOT installed");
+		if (!isAccessFormsInstalled()) {
+			Log.w(TAG, "AccessForms is NOT installed");
 		} else if (!isAccessMrsSetup()) {
 			setupAccessMrs();
 			Log.w(TAG, "AccessMRS is NOT setup");
-		} else if (!isCollectSetup()) {
-			setupCollect();
-			Log.w(TAG, "Collect is NOT setup");
+		} else if (!isAccessFormsSetup()) {
+			setupAccessForms();
+			Log.w(TAG, "AccessForms is NOT setup");
 		} else {
 			// if we made it here, we are all setup!
 			sLaunchIntent = new Intent(App.getApp(), DashboardActivity.class);
@@ -77,12 +76,12 @@ public class AccessMrsLauncher {
 		return sLaunchIntent;
 	}
 
-	// Step 1: check for collect -> fail
-	private static boolean isCollectInstalled() {
+	// Step 1: check for AccessForms -> fail
+	private static boolean isAccessFormsInstalled() {
 		try {
-			App.getApp().getPackageManager().getPackageInfo("org.odk.collect.android", PackageManager.GET_META_DATA);
+			App.getApp().getPackageManager().getPackageInfo("com.alphabetbloc.accessforms", PackageManager.GET_META_DATA);
 		} catch (NameNotFoundException e) {
-			sLaunchIntent = new Intent(COLLECT_NOT_INSTALLED);
+			sLaunchIntent = new Intent(ACCESS_FORMS_NOT_INSTALLED);
 			return false;
 		}
 
@@ -202,28 +201,28 @@ public class AccessMrsLauncher {
 		}
 	}
 
-	// Step 3: Open or create the collect db -> reset collect db if fail
-	private static boolean isCollectSetup() {
+	// Step 3: Open or create the AccessForms db -> reset ACCESS_FORMS db if fail
+	private static boolean isAccessFormsSetup() {
 		try {
 			Cursor c = App.getApp().getContentResolver().query(InstanceColumns.CONTENT_URI, null, null, null, null);
 			if (c != null)
 				c.close();
 			else {
-				// TODO! try to open collect? / needs to run through install...
+				// TODO! try to open AccessForms? / needs to run through install...
 
 			}
 		} catch (Exception e) {
-			Log.w(TAG, "collect db does not exist?!");
+			Log.w(TAG, "AccessForms db does not exist?!");
 			return false;
 		}
 
 		return true;
 	}
 
-	private static void setupCollect() {
-		// Lost key! (AccessMrs reinstalled?) CATASTROPHE... SO RESET COLLECT
+	private static void setupAccessForms() {
+		// Lost key! (AccessMrs reinstalled?) CATASTROPHE... SO RESET AccessForms
 		Intent i = new Intent(App.getApp(), SetupPreferencesActivity.class);
-		i.putExtra(SetupPreferencesActivity.SETUP_INTENT, SetupPreferencesActivity.RESET_COLLECT);
+		i.putExtra(SetupPreferencesActivity.SETUP_INTENT, SetupPreferencesActivity.RESET_ACCESS_FORMS);
 		sLaunchIntent = i;
 	}
 

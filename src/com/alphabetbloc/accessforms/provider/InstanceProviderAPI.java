@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.odk.collect.android.provider;
+package com.alphabetbloc.accessforms.provider;
 
 import android.net.Uri;
 import android.provider.BaseColumns;
@@ -26,7 +26,7 @@ import android.provider.BaseColumns;
  *
  */
 public final class InstanceProviderAPI {
-    public static final String AUTHORITY = "org.odk.collect.android.provider.odk.instances";
+    public static final String AUTHORITY = "com.alphabetbloc.accessforms.provider.odk.instances";
 
     // This class cannot be instantiated
     private InstanceProviderAPI() {}

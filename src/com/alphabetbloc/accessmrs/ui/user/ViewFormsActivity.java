@@ -5,8 +5,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 
-import org.odk.collect.android.provider.InstanceProviderAPI;
-import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -15,6 +13,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 
+import com.alphabetbloc.accessforms.provider.InstanceProviderAPI;
+import com.alphabetbloc.accessforms.provider.InstanceProviderAPI.InstanceColumns;
 import com.alphabetbloc.accessmrs.adapters.FormAdapter;
 import com.alphabetbloc.accessmrs.adapters.MergeAdapter;
 import com.alphabetbloc.accessmrs.data.ActivityLog;
@@ -238,7 +238,7 @@ public abstract class ViewFormsActivity extends BasePatientActivity {
 	}
 
 	protected void updateDatabases(int requestCode, Intent intent, Integer patientId) {
-		// 1. GET instance from Collect
+		// 1. GET instance from AccessForms
 		Uri u = intent.getData();
 		String dbjrFormId = null;
 		String displayName = null;

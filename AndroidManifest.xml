@@ -59,7 +59,7 @@
     <uses-permission android:name="com.alphabetbloc.android.permission.TOGGLE_INTERNET" />
 
     <application
-        android:name="com.alphabetbloc.accessmrs.utilities.App"
+        android:name=".utilities.App"
         android:icon="@drawable/icon"
         android:label="@string/app_name"
         android:theme="@android:style/Theme.Light.NoTitleBar.Fullscreen" >
@@ -168,7 +168,7 @@
 
         <!-- Providers -->
         <provider
-            android:name="com.alphabetbloc.accessmrs.providers.DbProvider"
+            android:name=".providers.DbProvider"
             android:authorities="@string/app_provider_authority" />
 
         <!-- Receivers -->
@@ -190,7 +190,7 @@
                 android:name="com.commonsware.cwac.wakeful"
                 android:resource="@xml/wakeful_delete_decrypted_data" />
         </receiver>
-        <receiver android:name="com.alphabetbloc.accessmrs.receivers.WipeDataReceiver" >
+        <receiver android:name=".receivers.WipeDataReceiver" >
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
@@ -225,7 +225,7 @@
         <service android:name=".services.WipeDataService" >
         </service>
         <service
-            android:name="com.alphabetbloc.accessmrs.services.AccountAuthenticatorService"
+            android:name=".services.AccountAuthenticatorService"
             android:process=":auth" >
             <intent-filter>
                 <action android:name="android.accounts.AccountAuthenticator" />

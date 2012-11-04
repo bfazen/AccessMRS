@@ -175,9 +175,8 @@ public class DbProvider extends ContentProvider {
 
 	@Override
 	public boolean onCreate() {
-		// From Collect (this gets called before the app is created, so we do
-		// nothing)
-		// Collect has it set to true though?
+		// From AccessForms (this gets called before the app is created, so we do
+		// nothing) AccessForms has it set to true though?
 		return false;
 	}
 

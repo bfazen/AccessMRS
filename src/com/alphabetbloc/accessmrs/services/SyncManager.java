@@ -15,8 +15,6 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import net.sqlcipher.DatabaseUtils.InsertHelper;
 import net.sqlcipher.database.SQLiteDatabase;
 
-import org.odk.collect.android.provider.InstanceProviderAPI;
-import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -33,6 +31,8 @@ import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
+import com.alphabetbloc.accessforms.provider.InstanceProviderAPI;
+import com.alphabetbloc.accessforms.provider.InstanceProviderAPI.InstanceColumns;
 import com.alphabetbloc.accessmrs.data.Form;
 import com.alphabetbloc.accessmrs.providers.DataModel;
 import com.alphabetbloc.accessmrs.providers.Db;
@@ -167,10 +167,10 @@ public class SyncManager {
 				if (e != null)
 					error.append(" AccessMRS Form ").append(i).append(": ").append(e);
 
-				// update collect
-				e = updateCollectInstances(path, syncResult);
+				// update AccessForms
+				e = updateAccessFormsInstances(path, syncResult);
 				if (e != null)
-					error.append(" Collect Form ").append(i).append(": ").append(e);
+					error.append(" AccessForms Form ").append(i).append(": ").append(e);
 
 				sLoopProgress++;
 			}
@@ -205,7 +205,7 @@ public class SyncManager {
 		return null;
 	}
 
-	public String updateCollectInstances(String path, SyncResult syncResult) {
+	public String updateAccessFormsInstances(String path, SyncResult syncResult) {
 
 		try {
 			ContentValues insertValues = new ContentValues();
@@ -293,9 +293,9 @@ public class SyncManager {
 					// update AccessMRS
 					Db.open().updateFormPath(downloaded[i].getFormId(), downloaded[i].getPath());
 
-					// update collect
+					// update AccessForms
 					if (!XformUtils.insertSingleForm(downloaded[i].getPath()))
-						UiUtils.toastSyncMessage(null, "ODK Collect not initialized.", true);
+						UiUtils.toastSyncMessage(null, "AccessForms not initialized.", true);
 
 					sLoopProgress++;
 

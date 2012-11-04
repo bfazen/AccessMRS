@@ -38,9 +38,6 @@ import net.sqlcipher.database.SQLiteException;
 import org.kxml2.io.KXmlParser;
 import org.kxml2.io.KXmlSerializer;
 import org.kxml2.kdom.Element;
-import org.odk.collect.android.provider.FormsProviderAPI.FormsColumns;
-import org.odk.collect.android.provider.InstanceProviderAPI;
-import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
@@ -54,6 +51,9 @@ import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import com.alphabetbloc.accessforms.provider.InstanceProviderAPI;
+import com.alphabetbloc.accessforms.provider.FormsProviderAPI.FormsColumns;
+import com.alphabetbloc.accessforms.provider.InstanceProviderAPI.InstanceColumns;
 import com.alphabetbloc.accessmrs.data.Observation;
 import com.alphabetbloc.accessmrs.data.Patient;
 import com.alphabetbloc.accessmrs.providers.DataModel;
@@ -77,7 +77,7 @@ public class XformUtils {
 	public static final String REGISTRATION_FORM_XML = "patient_registration.xml";
 	private static final String REGISTRATION_FORM_NAME = "PatientRegistrationForm";
 
-	private static final DateFormat COLLECT_INSTANCE_NAME_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
+	private static final DateFormat ACCESS_FORMS_INSTANCE_NAME_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
 	private static final String TAG = XformUtils.class.getSimpleName();
 	private static HashMap<String, String> mInstanceValues = new HashMap<String, String>();
 	private static Element mFormNode;
@@ -218,7 +218,7 @@ public class XformUtils {
 			// Assigned here:
 			// + FormsColumns.FORM_FILE_PATH
 
-			// Assigned in Collect:
+			// Assigned in AccessForms:
 			// + FormsColumns.DISPLAY_SUBTEXT
 			// + FormsColumns.DATE
 			// + FormsColumns.MD5_HASH
@@ -335,7 +335,7 @@ public class XformUtils {
 		} else {
 			instanceName = jrFormId;
 		}
-		instanceName = instanceName + "_" + COLLECT_INSTANCE_NAME_DATE_FORMAT.format(new Date());
+		instanceName = instanceName + "_" + ACCESS_FORMS_INSTANCE_NAME_DATE_FORMAT.format(new Date());
 
 		// make db path and internal path
 		String dbPath = File.separator + instanceName + File.separator + instanceName + FileUtils.XML_EXT;

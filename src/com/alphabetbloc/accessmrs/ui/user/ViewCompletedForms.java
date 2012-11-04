@@ -2,7 +2,6 @@ package com.alphabetbloc.accessmrs.ui.user;
 
 import java.io.File;
 
-import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
 import android.app.AlarmManager;
 import android.app.ProgressDialog;
@@ -22,6 +21,7 @@ import android.view.View;
 import android.view.View.OnTouchListener;
 import android.widget.ListView;
 
+import com.alphabetbloc.accessforms.provider.InstanceProviderAPI.InstanceColumns;
 import com.alphabetbloc.accessmrs.adapters.MergeAdapter;
 import com.alphabetbloc.accessmrs.data.Form;
 import com.alphabetbloc.accessmrs.listeners.DecryptionListener;
@@ -33,7 +33,7 @@ import com.alphabetbloc.accessmrs.utilities.UiUtils;
 import com.alphabetbloc.accessmrs.R;
 
 /**
- * Displays all the Completed/Finalized forms from Collect instances.db If
+ * Displays all the Completed/Finalized forms from AccessForms instances.db If
  * called from ViewPatient, then it has a patient, and must have Patient heading
  * If called from AllFormList, then is has patientId = -1, and has different
  * heading
@@ -121,7 +121,7 @@ public class ViewCompletedForms extends ViewFormsActivity implements DecryptionL
 		startActivityLog(mPatientId.toString(), f.getFormId().toString(), "Previous Encounter", false);
 
 		Intent intent = new Intent();
-		intent.setComponent(new ComponentName("org.odk.collect.android", "org.odk.collect.android.activities.FormEntryActivity"));
+		intent.setComponent(new ComponentName("com.alphabetbloc.accessforms", "org.odk.collect.android.activities.FormEntryActivity"));
 		intent.setAction(Intent.ACTION_VIEW);
 		intent.putExtra(EDIT_FORM, false);
 		intent.setData(Uri.parse(InstanceColumns.CONTENT_URI + "/" + f.getInstanceId()));

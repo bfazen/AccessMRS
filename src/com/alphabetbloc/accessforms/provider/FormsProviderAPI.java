@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.odk.collect.android.provider;
+package com.alphabetbloc.accessforms.provider;
 
 import android.net.Uri;
 import android.os.Environment;
@@ -27,7 +27,7 @@ import android.provider.BaseColumns;
  *
  */
 public final class FormsProviderAPI {
-    public static final String AUTHORITY = "org.odk.collect.android.provider.odk.forms";
+    public static final String AUTHORITY = "com.alphabetbloc.accessforms.provider.odk.forms";
 
     // This class cannot be instantiated
     private FormsProviderAPI() {}
@@ -44,7 +44,7 @@ public final class FormsProviderAPI {
         public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.odk.form";
         public static final String CONTENT_ITEM_TYPE = "vnd.android.cursor.item/vnd.odk.form";
         
-        public static final String COLLECT_FORMS_PATH = Environment.getExternalStorageDirectory() + "/odk/forms";
+        public static final String ACCESS_FORMS_PATH = Environment.getExternalStorageDirectory() + "/odk/forms";
 
 
         // These are the only things needed for an insert

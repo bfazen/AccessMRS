@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
 import android.app.AlarmManager;
 import android.content.ContentValues;
@@ -16,6 +15,7 @@ import android.database.Cursor;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import com.alphabetbloc.accessforms.provider.InstanceProviderAPI.InstanceColumns;
 import com.alphabetbloc.accessmrs.tasks.DecryptionTask;
 import com.alphabetbloc.accessmrs.ui.admin.AccessMrsLauncherActivity;
 import com.alphabetbloc.accessmrs.utilities.App;
@@ -59,8 +59,8 @@ public class DeleteDecryptedFilesService extends WakefulIntentService {
 
 		// get all recently submitted files
 		ArrayList<Map<String, Object>> decryptedInstances = findDecryptedInstances();
-		if (decryptedInstances.isEmpty()){
-			if (!decryptedFilesExist()){
+		if (decryptedInstances.isEmpty()) {
+			if (!decryptedFilesExist()) {
 				cancelAlarms(WakefulIntentService.DELETE_DECRYPTED_DATA, mContext);
 				Log.v(TAG, "No decrypted files found. Service is now ending and canceling future alarms.");
 			} else {
@@ -94,7 +94,7 @@ public class DeleteDecryptedFilesService extends WakefulIntentService {
 		}
 
 		// Cancel this service IF there are no more decrypted instances on disk
-		if (allDeleted && !decryptedFilesExist()){
+		if (allDeleted && !decryptedFilesExist()) {
 			cancelAlarms(WakefulIntentService.DELETE_DECRYPTED_DATA, mContext);
 			Log.v(TAG, "Successfully deleted all decrypted files. Service is now ending and canceling future alarms.");
 		}
@@ -109,8 +109,8 @@ public class DeleteDecryptedFilesService extends WakefulIntentService {
 	 * like multiple images, audio recordings, or video on encryption each
 	 * pass).
 	 * 
-	 * @return ArrayList of Maps that contain both the path and Collect Instance
-	 *         Id of the decrypted instance file.
+	 * @return ArrayList of Maps that contain both the path and AccessForms
+	 *         (i.e. ODK Collect) Instance Id of the decrypted instance file.
 	 */
 	private ArrayList<Map<String, Object>> findDecryptedInstances() {
 		// calculate datetime threshold for deciding whether to delete
@@ -161,7 +161,7 @@ public class DeleteDecryptedFilesService extends WakefulIntentService {
 		if (c != null) {
 			if (c.getCount() > 0)
 				anyDecryptedFile = true;
-			
+
 			c.close();
 		}
 
@@ -169,7 +169,7 @@ public class DeleteDecryptedFilesService extends WakefulIntentService {
 	}
 
 	/**
-	 * We update the collect Db with null to show there are no remaining files
+	 * We update the AccessForms (i.e. ODK Collect) Db with null to show there are no remaining files
 	 * to be decrypted.
 	 * 
 	 * @param id

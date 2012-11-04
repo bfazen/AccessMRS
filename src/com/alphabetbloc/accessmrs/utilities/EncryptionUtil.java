@@ -22,7 +22,7 @@ public class EncryptionUtil {
 
 	/**
 	 * We are using one universal password for this application. This holds for
-	 * SqlCipherDb in both AccessMRS and Collect, as well as for both the keystore
+	 * SqlCipherDb in both AccessMRS and AccessForms, as well as for both the keystore
 	 * and the trustore for SSL Server and Client Authentication.
 	 * 
 	 * @return The common password for keystore and truststore.

@@ -3,9 +3,6 @@ package com.alphabetbloc.accessmrs.ui.user;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import org.odk.collect.android.provider.FormsProviderAPI.FormsColumns;
-import org.odk.collect.android.provider.InstanceProviderAPI;
-import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
@@ -31,6 +28,9 @@ import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.alphabetbloc.accessforms.provider.InstanceProviderAPI;
+import com.alphabetbloc.accessforms.provider.FormsProviderAPI.FormsColumns;
+import com.alphabetbloc.accessforms.provider.InstanceProviderAPI.InstanceColumns;
 import com.alphabetbloc.accessmrs.adapters.FormAdapter;
 import com.alphabetbloc.accessmrs.adapters.MergeAdapter;
 import com.alphabetbloc.accessmrs.data.Form;
@@ -212,7 +212,7 @@ public class ViewAllForms extends ViewFormsActivity {
 			}
 		}
 
-		// 4. SAVED FORMS: gather the saved forms from Collect Instances.Db
+		// 4. SAVED FORMS: gather the saved forms from AccessForms Instances.Db
 		String sSelection = InstanceColumns.STATUS + "=? and " + InstanceColumns.PATIENT_ID + "=?";
 		String sSelectionArgs[] = { InstanceProviderAPI.STATUS_INCOMPLETE, String.valueOf(mPatient.getPatientId()) };
 		ArrayList<Form> savedForms = queryInstances(sSelection, sSelectionArgs);
@@ -444,7 +444,7 @@ public class ViewAllForms extends ViewFormsActivity {
 
 	private void launchFormViewOnly(String uriString, String formId) {
 		Intent intent = new Intent();
-		intent.setComponent(new ComponentName("org.odk.collect.android", "org.odk.collect.android.activities.FormEntryActivity"));
+		intent.setComponent(new ComponentName("com.alphabetbloc.accessforms", "org.odk.collect.android.activities.FormEntryActivity"));
 		intent.setAction(Intent.ACTION_VIEW);
 		intent.putExtra(EDIT_FORM, false);
 		intent.putExtra("path_name", uriString);
@@ -454,14 +454,14 @@ public class ViewAllForms extends ViewFormsActivity {
 
 	private void launchSavedFormEntry(int instanceId, int priority) {
 		Intent intent = new Intent();
-		intent.setComponent(new ComponentName("org.odk.collect.android", "org.odk.collect.android.activities.FormEntryActivity"));
+		intent.setComponent(new ComponentName("com.alphabetbloc.accessforms", "org.odk.collect.android.activities.FormEntryActivity"));
 		intent.setAction(Intent.ACTION_EDIT);
 		intent.setData(Uri.parse(InstanceColumns.CONTENT_URI + "/" + instanceId));
 		startActivityForResult(intent, priority);
 	}
 
 	// NB: RESULT_OK based on:
-	// Collect.FormEntryActivity.finishReturnInstance() line1654
+	// AccessForms FormEntryActivity.finishReturnInstance() line1654
 	// Uri instance = Uri.withAppendedPath(InstanceColumns.CONTENT_URI, id);
 	// setResult(RESULT_OK, new Intent().setData(instance));
 	// BUT ListPatientActivity does not include it
@@ -501,12 +501,12 @@ public class ViewAllForms extends ViewFormsActivity {
 
 			if (id != -1) {
 
-				// create instance in Collect
+				// create instance in AccessForms
 				int instanceId = XformUtils.createFormInstance(mPatient, formPath, jrFormId, formname);
 
 				if (instanceId != -1) {
 					Intent intent = new Intent();
-					intent.setComponent(new ComponentName("org.odk.collect.android", "org.odk.collect.android.activities.FormEntryActivity"));
+					intent.setComponent(new ComponentName("com.alphabetbloc.accessforms", "org.odk.collect.android.activities.FormEntryActivity"));
 					// NB: changed this from ACTION_VIEW
 					intent.setAction(Intent.ACTION_EDIT);
 					intent.setData(Uri.parse(InstanceColumns.CONTENT_URI + "/" + instanceId));
@@ -519,7 +519,7 @@ public class ViewAllForms extends ViewFormsActivity {
 			}
 
 		} catch (ActivityNotFoundException e) {
-			UiUtils.toastAlert(this, getString(R.string.installation_error), getString(R.string.error, getString(R.string.odk_collect_error)));
+			UiUtils.toastAlert(this, getString(R.string.installation_error), getString(R.string.error, getString(R.string.access_forms_error)));
 		}
 	}
 

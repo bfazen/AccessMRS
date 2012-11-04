@@ -2,8 +2,6 @@ package com.alphabetbloc.accessmrs.ui.user;
 
 import java.util.ArrayList;
 
-import org.odk.collect.android.provider.InstanceProviderAPI;
-import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
 import android.content.Context;
 import android.content.Intent;
@@ -23,6 +21,8 @@ import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.alphabetbloc.accessforms.provider.InstanceProviderAPI;
+import com.alphabetbloc.accessforms.provider.InstanceProviderAPI.InstanceColumns;
 import com.alphabetbloc.accessmrs.adapters.MergeAdapter;
 import com.alphabetbloc.accessmrs.adapters.ObservationAdapter;
 import com.alphabetbloc.accessmrs.data.Observation;

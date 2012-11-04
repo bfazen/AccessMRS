@@ -2,7 +2,6 @@ package com.alphabetbloc.accessmrs.ui.user;
 
 import java.util.ArrayList;
 
-import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
 import android.content.ComponentName;
 import android.content.Intent;
@@ -14,12 +13,13 @@ import android.view.View;
 import android.view.View.OnTouchListener;
 import android.widget.ListView;
 
+import com.alphabetbloc.accessforms.provider.InstanceProviderAPI.InstanceColumns;
 import com.alphabetbloc.accessmrs.adapters.MergeAdapter;
 import com.alphabetbloc.accessmrs.data.Form;
 import com.alphabetbloc.accessmrs.R;
 
 /**
- * Displays all the Saved forms from Collect instances.db. * This View is only
+ * Displays all the Saved forms from AccessForms instances.db. * This View is only
  * called from ViewPatientList and AllFormList when int CompletedForms > 5 If
  * called from ViewPatient, then it has a patient, and accounts for Priority
  * Forms If called from AllFormList, then is has patientId = -1, and skips
@@ -100,7 +100,7 @@ public class ViewSavedForms extends ViewFormsActivity {
 		startActivityLog(mPatientId.toString(), f.getFormId().toString(), "Saved", priority);
 
 		Intent intent = new Intent();
-		intent.setComponent(new ComponentName("org.odk.collect.android", "org.odk.collect.android.activities.FormEntryActivity"));
+		intent.setComponent(new ComponentName("com.alphabetbloc.accessforms", "org.odk.collect.android.activities.FormEntryActivity"));
 		intent.setAction(Intent.ACTION_EDIT);
 		intent.setData(Uri.parse(InstanceColumns.CONTENT_URI + "/" + f.getInstanceId()));
 		startActivityForResult(intent, formType);

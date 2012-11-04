@@ -142,7 +142,7 @@
     <string name="sql_change_sqlcipher_pwd">Please enter a new password for your database.</string>
     <string name="sql_confirm_sqlcipher_pwd">Please Re-enter Your Password.</string>
     <string name="sql_error_lost_db_key">ERROR! The key to the Database has been lost! Current Database is useless. Deleting and Reinstalling.</string>
-    <string name="collect_not_installed">Collect Must Be Installed To Use This Software!</string>
+    <string name="access_forms_not_installed">The companion application AccessForms Must Be Installed To Use AccessMRS Software. Please install AccessForms and try again.</string>
     <string name="sql_error_lost_db_key_title">SYSTEM ERROR</string>
     <string name="sql_error_empty_password">Could not verify password. Please Click To Enter Password.</string>
     <string name="sql_error_verify_pwd">Password is incorrect. Please try again.</string>
@@ -318,7 +318,7 @@
     <string name="no_patient">No patient found.</string>
     <string name="no_account_setup">Please setup an account to sync data.</string>
     <string name="no_upload_patients">No forms to upload!</string>
-    <string name="odk_collect_error">Error: ODK Collect not installed.</string>
+    <string name="access_forms_error">Error: AccessForms is not installed.</string>
     <string name="error_storage">SD card is not available.  Please check the card or disconnect from USB.</string>
     <string name="error_storage_title">Storage Error</string>
     <string name="error_db">Database Error</string>

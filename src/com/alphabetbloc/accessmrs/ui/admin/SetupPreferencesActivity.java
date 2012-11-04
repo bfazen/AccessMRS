@@ -7,7 +7,6 @@ import java.io.IOException;
 
 import javax.crypto.SecretKey;
 
-import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -28,6 +27,7 @@ import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.alphabetbloc.accessforms.provider.InstanceProviderAPI.InstanceColumns;
 import com.alphabetbloc.accessmrs.providers.DataModel;
 import com.alphabetbloc.accessmrs.providers.DbProvider;
 import com.alphabetbloc.accessmrs.services.WakefulIntentService;
@@ -56,7 +56,7 @@ public class SetupPreferencesActivity extends BaseAdminActivity {
 	// intents
 	public static final String SETUP_INTENT = "setup_intent";
 	public static final int FIRST_RUN = 0;
-	public static final int RESET_COLLECT = 1;
+	public static final int RESET_ACCESS_FORMS = 1;
 	public static final int RESET_ACCESS_MRS = 2;
 	public static final int ACCOUNT_SETUP = 4;
 
@@ -124,9 +124,9 @@ public class SetupPreferencesActivity extends BaseAdminActivity {
 			createView(LOADING);
 			break;
 
-		case RESET_COLLECT:
+		case RESET_ACCESS_FORMS:
 			UiUtils.toastAlert(mContext, getString(R.string.sql_error_lost_db_key_title), getString(R.string.sql_error_lost_db_key));
-			Log.e(TAG, "RESETTING COLLECT: " + getString(R.string.sql_error_lost_db_key));
+			Log.e(TAG, "RESETTING ACCESS FORMS: " + getString(R.string.sql_error_lost_db_key));
 			Intent i = new Intent(mContext, WipeDataService.class);
 			i.putExtra(WipeDataService.WIPE_ACCESS_MRS_DATA, false);
 			WakefulIntentService.sendWakefulWork(mContext, i);
@@ -177,7 +177,7 @@ public class SetupPreferencesActivity extends BaseAdminActivity {
 
 		// if not loading, set appropriate buttons/text
 		switch (view) {
-		// TODO! does not work yet b/c also have to rekey collectDb
+		// TODO! does not work yet b/c also have to rekey AccessFormsDb
 		case REQUEST_DB_REKEY:
 			mStep = VERIFY_ENTRY;
 			isFreshInstall = false;
@@ -314,8 +314,8 @@ public class SetupPreferencesActivity extends BaseAdminActivity {
 			@Override
 			protected void onPostExecute(Boolean success) {
 				if (success) {
-					// encrypt a new Collect instances Db
-					SetupPreferencesActivity.this.encryptCollectDb();
+					// encrypt a new AccessForms instances Db
+					SetupPreferencesActivity.this.encryptAccessFormsDb();
 				} else {
 					if (error != null)
 						Log.e(TAG, "Error adding new SQLCipher key to the Keystore!" + error.getMessage());
@@ -330,28 +330,28 @@ public class SetupPreferencesActivity extends BaseAdminActivity {
 
 	}
 
-	// STEP 3: Encrypt the Collect Db
-	private void encryptCollectDb() {
-		boolean isCollectSetup = true;
+	// STEP 3: Encrypt the AccessForms Db
+	private void encryptAccessFormsDb() {
+		boolean isAccessFormsSetup = true;
 
 		try {
 			// Simply opening the db should force it to start a new encrypted db
 			Cursor c = App.getApp().getContentResolver().query(Uri.parse(InstanceColumns.CONTENT_URI + "/reset"), null, null, null, null);
 			if (c != null)
 				c.close();
-			isCollectSetup = true;
+			isAccessFormsSetup = true;
 
 		} catch (Exception e) {
 
 			e.printStackTrace();
-			isCollectSetup = false;
+			isAccessFormsSetup = false;
 		}
 
-		if (isCollectSetup) {
-			Log.d(TAG, "Successfully encrypted Collect db with new password.");
+		if (isAccessFormsSetup) {
+			Log.d(TAG, "Successfully encrypted AccessForms db with new password.");
 			setupPreferences();
 		} else {
-			mSetupType = RESET_COLLECT;
+			mSetupType = RESET_ACCESS_FORMS;
 			refreshView();
 		}
 	}

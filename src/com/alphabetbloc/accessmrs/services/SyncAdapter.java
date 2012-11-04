@@ -94,7 +94,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 
 	private boolean isUserEnteringData() {
 		RunningAppProcessInfo currentApp = null;
-		String collectPackage = "org.odk.collect.android";
+		String accessFormsPackage = "com.alphabetbloc.accessforms";
 		
 		ActivityManager	am = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
 		List<RunningAppProcessInfo> l = am.getRunningAppProcesses();
@@ -103,7 +103,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 		while (i.hasNext()) {
 			currentApp = i.next();
 			if (currentApp.importance == RunningAppProcessInfo.IMPORTANCE_FOREGROUND){
-				if(currentApp.processName.equalsIgnoreCase(collectPackage)) 
+				if(currentApp.processName.equalsIgnoreCase(accessFormsPackage)) 
 					return true;
 				else
 					return false;

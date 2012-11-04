@@ -6,7 +6,7 @@ package com.alphabetbloc.accessmrs.data;
  * @author Yaw Anokwa (starting version was from ODK Clinic)
  */
 public class Form {
-	//_id in Collect instances.db
+	//_id in AccessForms instances.db
 	private Integer instanceId = null;
 	//number of form as posted in Xform
     private Integer formId = null;

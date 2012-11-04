@@ -17,7 +17,6 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
-import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
 import android.content.ContentValues;
 import android.database.Cursor;
@@ -25,6 +24,7 @@ import android.os.AsyncTask;
 import android.util.Base64;
 import android.util.Log;
 
+import com.alphabetbloc.accessforms.provider.InstanceProviderAPI.InstanceColumns;
 import com.alphabetbloc.accessmrs.listeners.DecryptionListener;
 import com.alphabetbloc.accessmrs.services.EncryptionService;
 import com.alphabetbloc.accessmrs.utilities.App;
@@ -32,7 +32,7 @@ import com.alphabetbloc.accessmrs.utilities.FileUtils;
 
 /**
  * Decrypts Xform instances and their associated media files on the SD Card,
- * deletes all Cleartext files from parent ODK Collect instance directory. Each
+ * deletes all Cleartext files from parent AccessForms instance directory. Each
  * Form and its media files share a unique 256-bit AES key with different IVs.
  * Key is stored locally on phone database, allowing for easy decryption for
  * viewing old files through the DecryptionTask. <br>
@@ -51,7 +51,7 @@ import com.alphabetbloc.accessmrs.utilities.FileUtils;
 public class DecryptionTask extends AsyncTask<Object, Void, Boolean> {
 
 	private static final String TAG = DecryptionTask.class.getSimpleName();
-	public static final String COLLECT_INSTANCE_ID = "collect_instance_id";
+	public static final String ACCESS_FORMS_INSTANCE_ID = "access_forms_instance_id";
 	public static final String MAX_DECRYPT_TIME = "maximum_time_decrypted";
 	private DecryptionListener mListener;
 	private boolean anydone = false;
@@ -71,7 +71,7 @@ public class DecryptionTask extends AsyncTask<Object, Void, Boolean> {
 		if (decrypted)
 			Log.v(TAG, "Decryption Sucessful!");
 		else
-			Log.e(TAG, "Decryption Error with Collect Instance Id: " + String.valueOf(id) + " at path=" + inPath);
+			Log.e(TAG, "Decryption Error with AccessForms Instance Id: " + String.valueOf(id) + " at path=" + inPath);
 
 		return decrypted;
 	}
@@ -155,7 +155,7 @@ public class DecryptionTask extends AsyncTask<Object, Void, Boolean> {
 
 	
 	/**
-	 * We update the collect Db with the time of decryption so that we can be
+	 * We update the AccessForms Db with the time of decryption so that we can be
 	 * sure to delete later!
 	 * 
 	 * @param id

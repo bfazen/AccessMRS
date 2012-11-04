@@ -5,9 +5,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.UUID;
 
-import org.odk.collect.android.provider.FormsProviderAPI.FormsColumns;
-import org.odk.collect.android.provider.InstanceProviderAPI;
-import org.odk.collect.android.provider.InstanceProviderAPI.InstanceColumns;
 
 import android.content.ComponentName;
 import android.content.Context;
@@ -35,6 +32,9 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Toast;
 
+import com.alphabetbloc.accessforms.provider.InstanceProviderAPI;
+import com.alphabetbloc.accessforms.provider.FormsProviderAPI.FormsColumns;
+import com.alphabetbloc.accessforms.provider.InstanceProviderAPI.InstanceColumns;
 import com.alphabetbloc.accessmrs.data.ActivityLog;
 import com.alphabetbloc.accessmrs.data.FormInstance;
 import com.alphabetbloc.accessmrs.data.Patient;
@@ -72,7 +72,7 @@ public class CreatePatientActivity extends BaseUserActivity implements OnGesture
 	private Date mDbBirthDate;
 	private Integer mCreateCode = null;
 
-	// for launching the form into collect:
+	// for launching the form into AccessForms:
 	private ActivityLog mActivityLog;
 	private static final int REGISTRATION = 5;
 	private static final int VERIFY_SIMILAR_CLIENTS = 6;
@@ -87,7 +87,7 @@ public class CreatePatientActivity extends BaseUserActivity implements OnGesture
 		mGestureDetector = new GestureDetector(this);
 		mContext = this;
 
-		// check to see if form exists in Collect Db
+		// check to see if form exists in AccessForms Db
 		String dbjrFormId = "no_registration_form";
 		String registrationFormId = "-1";
 		Cursor cursor = App.getApp().getContentResolver().query(FormsColumns.CONTENT_URI, new String[] { FormsColumns.JR_FORM_ID }, FormsColumns.JR_FORM_ID + "=?", new String[] { registrationFormId }, null);
@@ -145,9 +145,9 @@ public class CreatePatientActivity extends BaseUserActivity implements OnGesture
 					i.putExtra("search_id_string", mPatientID);
 					startActivityForResult(i, VERIFY_SIMILAR_CLIENTS);
 				} else {
-					// Add client to db, create & save form to Collect
+					// Add client to db, create & save form to AccessForms
 					addClientToDb();
-					addFormToCollect();
+					addFormToAccessForms();
 				}
 
 			}
@@ -211,7 +211,7 @@ public class CreatePatientActivity extends BaseUserActivity implements OnGesture
 
 			if (requestCode == VERIFY_SIMILAR_CLIENTS) {
 				addClientToDb();
-				addFormToCollect();
+				addFormToAccessForms();
 
 			} else if (requestCode == REGISTRATION && intent != null) {
 				SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
@@ -388,13 +388,13 @@ public class CreatePatientActivity extends BaseUserActivity implements OnGesture
 		return false;
 	}
 
-	private void addFormToCollect() {
+	private void addFormToAccessForms() {
 		if (mPatient == null)
 			Log.e(TAG, "Mpatient is null!?");
 		int instanceId = XformUtils.createRegistrationFormInstance(mPatient);
 		if (instanceId != -1) {
 			Intent intent = new Intent();
-			intent.setComponent(new ComponentName("org.odk.collect.android", "org.odk.collect.android.activities.FormEntryActivity"));
+			intent.setComponent(new ComponentName("com.alphabetbloc.accessforms", "org.odk.collect.android.activities.FormEntryActivity"));
 			intent.setAction(Intent.ACTION_EDIT);
 			intent.setData(Uri.parse(InstanceColumns.CONTENT_URI + "/" + instanceId));
 			intent.putExtra("Client_Registration", true);
