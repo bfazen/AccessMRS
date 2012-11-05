@@ -55,11 +55,13 @@ public class SyncManager {
 	public static final String TOAST_MESSAGE = "toast_message";
 	public static final String TOAST_ERROR = "toast_error";
 	public static final String START_NEW_SYNC = "start_new_sync";
+	public static final String REQUEST_NEW_SYNC = "request_new_sync";
 	public static final int UPLOAD_FORMS = 1;
 	public static final int DOWNLOAD_FORMS = 2;
 	public static final int DOWNLOAD_OBS = 3;
 	public static final int SYNC_COMPLETE = 4;
 	public static final String MANUAL_SYNC = "manual_sync";
+	
 
 	private String mSyncResultString;
 	private Context mContext;
@@ -105,9 +107,11 @@ public class SyncManager {
 
 	public void addSyncStep(String title, boolean increment) {
 
-		if (increment)
+		if (increment){
 			sSyncStep++;
-		else if (sLoopCount > 0) {
+			sLoopProgress = 0;
+			sLoopCount = 0;
+		} else if (sLoopCount > 0) {
 			// If leaving loop, round up and reset counters
 			float loop = ((float) SyncManager.sLoopProgress / (float) SyncManager.sLoopCount);
 			sSyncStep = (int) ((float) sSyncStep + loop + 0.5F);

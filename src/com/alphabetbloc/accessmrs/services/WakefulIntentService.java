@@ -108,12 +108,12 @@ abstract public class WakefulIntentService extends IntentService {
 			Log.v(TAG, "AlarmManager update was not canceled. " + e.toString());
 			e.printStackTrace();
 		}
-		
-		if(PendingIntent.getBroadcast(App.getApp(), 0, i, PendingIntent.FLAG_NO_CREATE) != null)
-			Log.v(TAG, "Alarm successfully cancelled: " + i.getComponent());
-		else
+
+		if (PendingIntent.getBroadcast(App.getApp(), 0, i, PendingIntent.FLAG_NO_CREATE) != null)
 			Log.v(TAG, "Alarm was not successfully canceled and remains active: " + i.getComponent());
-		
+		else
+			Log.v(TAG, "Alarm successfully cancelled: " + i.getComponent());
+
 	}
 
 	public WakefulIntentService(String name) {

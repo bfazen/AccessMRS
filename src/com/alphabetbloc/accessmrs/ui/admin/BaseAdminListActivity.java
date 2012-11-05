@@ -130,8 +130,11 @@ public abstract class BaseAdminListActivity extends ListActivity implements Sync
 
 	protected BroadcastReceiver onSyncNotice = new BroadcastReceiver() {
 		public void onReceive(Context ctxt, Intent i) {
+			boolean requestSync = i.getBooleanExtra(SyncManager.REQUEST_NEW_SYNC, false);
 			boolean newSync = i.getBooleanExtra(SyncManager.START_NEW_SYNC, false);
-			if (newSync) {
+			if (requestSync) {
+				// should never happen
+			} else if (newSync) {
 				// we are starting a new sync automatically (Should never happen in Prefs)
 				 if (mSyncActiveDialog != null && mSyncActiveDialog.isShowing()) {
 					mSyncActiveDialog.dismiss();

@@ -122,7 +122,7 @@ public class WipeDataActivity extends BaseAdminActivity {
 			else
 				UiUtils.toastAlert(mContext, getString(R.string.wiping_data_error_title), getString(R.string.wiping_data_error));
 
-			Intent relaunch = new Intent(mContext, AccessMrsLauncherActivity.class);
+			Intent relaunch = new Intent(mContext, LauncherActivity.class);
 			relaunch.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 			relaunch.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 			startActivity(relaunch);

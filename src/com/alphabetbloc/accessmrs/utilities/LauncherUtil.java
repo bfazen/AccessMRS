@@ -31,9 +31,9 @@ import com.alphabetbloc.accessmrs.R;
  * @author Louis Fazen (louis.fazen@gmail.com)
  * 
  */
-public class AccessMrsLauncher {
+public class LauncherUtil {
 
-	public static final String TAG = AccessMrsLauncher.class.getSimpleName();
+	public static final String TAG = LauncherUtil.class.getSimpleName();
 	public static final String OLD_UNLOCK_ACTION = "android.credentials.UNLOCK";
 	public static final String UNLOCK_ACTION = "com.android.credentials.UNLOCK";
 	public static final String ACCESS_FORMS_NOT_INSTALLED = "com.alphabetbloc.accessforms.access_forms_not_installed";

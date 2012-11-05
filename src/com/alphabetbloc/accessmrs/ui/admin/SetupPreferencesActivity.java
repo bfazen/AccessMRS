@@ -392,7 +392,7 @@ public class SetupPreferencesActivity extends BaseAdminActivity {
 		if (configFile.exists()) {
 			// Read text from file
 			try {
-				String[] booleanPrefs = { getString(R.string.key_client_auth), getString(R.string.key_use_saved_searches), getString(R.string.key_enable_activity_log), getString(R.string.key_show_settings_menu) };
+//				String[] booleanPrefs = { getString(R.string.key_client_auth), getString(R.string.key_use_saved_searches), getString(R.string.key_enable_activity_log), getString(R.string.key_show_settings_menu) };
 				String password = getString(R.string.key_password);
 				BufferedReader br = new BufferedReader(new FileReader(configFile));
 				String line;
@@ -406,18 +406,20 @@ public class SetupPreferencesActivity extends BaseAdminActivity {
 					if (prefName.equalsIgnoreCase(password))
 						prefValue = EncryptionUtil.encryptString(prefValue);
 
-					boolean booleanPref = false;
-					for (String currentPref : booleanPrefs) {
-						if (currentPref.equals(prefName))
-							booleanPref = true;
-					}
+					PreferencesActivity.updatedPreference(prefName, prefValue);
+					
+//					boolean booleanPref = false;
+//					for (String currentPref : booleanPrefs) {
+//						if (currentPref.equals(prefName))
+//							booleanPref = true;
+//					}
+//
+//					if (booleanPref)
+//						settings.edit().putBoolean(prefName, Boolean.parseBoolean(prefValue)).commit();
+//					else
+//						settings.edit().putString(prefName, prefValue).commit();
 
-					if (booleanPref)
-						settings.edit().putBoolean(prefName, Boolean.parseBoolean(prefValue)).commit();
-					else
-						settings.edit().putString(prefName, prefValue).commit();
-
-					Log.v(TAG, "Imported Preference #" + line + " :" + prefName + " boolean=" + booleanPref);
+					Log.v(TAG, "Imported Preference #" + line + " :" + prefName);
 				}
 			} catch (IOException e) {
 				e.printStackTrace();

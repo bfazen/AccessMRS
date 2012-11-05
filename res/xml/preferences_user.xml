@@ -9,7 +9,7 @@
                 android:targetClass="com.alphabetbloc.accessmrs.ui.admin.SetupAccountActivity"
                 android:targetPackage="@string/app_package_name" />
         </Preference>
-
+        <!--
         <EditTextPreference
             android:id="@+id/program"
             android:defaultValue="@string/default_program"
@@ -32,6 +32,7 @@
             android:summaryOff="@string/pref_saved_search_off"
             android:summaryOn="@string/pref_saved_search_on"
             android:title="@string/pref_use_saved_search" />
+        -->
         <CheckBoxPreference
             android:id="@+id/show_form_prompt"
             android:defaultValue="@string/default_show_form_prompt"

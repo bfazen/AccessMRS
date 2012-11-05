@@ -77,8 +77,8 @@ public abstract class BaseUserListActivity extends ListActivity implements SyncS
 				if (!RefreshDataService.isSyncActive) {
 					// Sync is not yet active, so we must be starting a sync
 					Log.d(TAG, "SyncStatusChanged: starting a Sync");
-					if (!SyncManager.sStartSync)
-						showRequestSyncDialog();
+//					if (!SyncManager.sStartSync && !SyncManager.sCancelSync)
+//						showRequestSyncDialog();
 
 				} else {
 					// we are just completing a sync (whether success or not)
@@ -151,12 +151,18 @@ public abstract class BaseUserListActivity extends ListActivity implements SyncS
 		super.onCreateOptionsMenu(menu);
 		menu.add(0, MENU_REFRESH, MENU_REFRESH, getString(R.string.download_patients)).setIcon(R.drawable.ic_menu_refresh);
 		menu.add(0, MENU_USER_PREFERENCES, MENU_USER_PREFERENCES, getString(R.string.pref_settings)).setIcon(android.R.drawable.ic_menu_preferences);
+		menu.add(0, MENU_ADMIN_PREFERENCES, MENU_ADMIN_PREFERENCES, getString(R.string.pref_admin_settings)).setIcon(android.R.drawable.ic_lock_lock);
+		return true;
+	}
+	
+	@Override
+	public boolean onPrepareOptionsMenu(Menu menu) {
+		menu.removeItem(MENU_ADMIN_PREFERENCES);
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
 		boolean showMenu = prefs.getBoolean(getString(R.string.key_show_settings_menu), false);
 		if (showMenu)
 			menu.add(0, MENU_ADMIN_PREFERENCES, MENU_ADMIN_PREFERENCES, getString(R.string.pref_admin_settings)).setIcon(android.R.drawable.ic_lock_lock);
-
-		return true;
+		return super.onPrepareOptionsMenu(menu);
 	}
 
 	@Override
@@ -252,8 +258,12 @@ public abstract class BaseUserListActivity extends ListActivity implements SyncS
 	protected BroadcastReceiver onSyncNotice = new BroadcastReceiver() {
 		public void onReceive(Context ctxt, Intent i) {
 			savePosition();
+			boolean requestSync = i.getBooleanExtra(SyncManager.REQUEST_NEW_SYNC, false);
 			boolean newSync = i.getBooleanExtra(SyncManager.START_NEW_SYNC, false);
-			if (newSync) {
+			if (requestSync) {
+				showRequestSyncDialog();
+				
+			} else if (newSync) {
 				// we are starting a new sync automatically
 				if (mRequestSyncDialog != null) {
 					mRequestSyncDialog.dismiss();

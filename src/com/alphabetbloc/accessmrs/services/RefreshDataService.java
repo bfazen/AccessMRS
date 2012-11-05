@@ -8,13 +8,14 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.alphabetbloc.accessmrs.providers.Db;
-import com.alphabetbloc.accessmrs.ui.admin.AccessMrsLauncherActivity;
+import com.alphabetbloc.accessmrs.ui.admin.LauncherActivity;
 import com.alphabetbloc.accessmrs.ui.user.DashboardActivity;
 import com.alphabetbloc.accessmrs.utilities.App;
-import com.alphabetbloc.accessmrs.utilities.AccessMrsLauncher;
+import com.alphabetbloc.accessmrs.utilities.LauncherUtil;
 import com.alphabetbloc.accessmrs.R;
 
 /**
@@ -38,11 +39,11 @@ public class RefreshDataService extends Service {
 		Thread.currentThread().setName(TAG);
 
 		// Dont Sync if Setup is Incomplete
-		if (!AccessMrsLauncher.isSetupComplete()) {
-			if (!AccessMrsLauncherActivity.sLaunching) {
+		if (!LauncherUtil.isSetupComplete()) {
+			if (!LauncherActivity.sLaunching) {
 				Log.v(TAG, "AccessMRS is Not Setup... and not currently active... so RefreshDataService is requesting setup");
-				Intent i = new Intent(App.getApp(), AccessMrsLauncherActivity.class);
-				i.putExtra(AccessMrsLauncherActivity.LAUNCH_DASHBOARD, false);
+				Intent i = new Intent(App.getApp(), LauncherActivity.class);
+				i.putExtra(LauncherActivity.LAUNCH_DASHBOARD, false);
 				i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 				startActivity(i);
 			}
@@ -53,18 +54,21 @@ public class RefreshDataService extends Service {
 		} else if (!SyncManager.sStartSync) {
 			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(App.getApp());
 			String minRefresh = prefs.getString(getString(R.string.key_min_refresh_seconds), getString(R.string.default_min_refresh_seconds));
-			int minRefreshMs = Integer.valueOf(minRefresh) * 1000;
-			int delta = (int) (System.currentTimeMillis() - Db.open().fetchMostRecentDownload());
-			
+			long minRefreshMs = Long.valueOf(minRefresh) * 1000L;
+			long delta = (System.currentTimeMillis() - Db.open().fetchMostRecentDownload());
+			Log.v(TAG, "Sync History. minRefreshMs=" + minRefreshMs + " delta=" + delta);
 			if (delta < minRefreshMs) {
 				Log.v(TAG, "Sync was recently completed. Not performing sync at this time.");
 				SyncManager.sCancelSync = true;
 			}
 		}
 
-		if (!SyncManager.sCancelSync)
+		if (!SyncManager.sCancelSync){
 			showNotification();
-
+			Intent broadcast = new Intent(SyncManager.SYNC_MESSAGE);
+			broadcast.putExtra(SyncManager.REQUEST_NEW_SYNC, true);
+			LocalBroadcastManager.getInstance(this).sendBroadcast(broadcast);
+		}
 		isSyncActive = true;
 		synchronized (sSyncAdapterLock) {
 			if (sSyncAdapter == null) {

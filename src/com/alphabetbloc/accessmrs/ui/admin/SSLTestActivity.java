@@ -81,7 +81,7 @@ public class SSLTestActivity extends BaseAdminActivity implements SyncDataListen
 			resultText.setTextColor(getResources().getColor(R.color.completed));
 			resultText.setText(getString(R.string.ssl_test_success));
 		} else {
-			resultText.setText(getResources().getColor(R.color.priority));
+			resultText.setTextColor(getResources().getColor(R.color.priority));
 			resultText.setText(getString(R.string.ssl_test_failure));
 		}
 	}

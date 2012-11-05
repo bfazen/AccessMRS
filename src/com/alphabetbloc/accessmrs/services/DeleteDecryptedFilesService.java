@@ -17,9 +17,9 @@ import android.util.Log;
 
 import com.alphabetbloc.accessforms.provider.InstanceProviderAPI.InstanceColumns;
 import com.alphabetbloc.accessmrs.tasks.DecryptionTask;
-import com.alphabetbloc.accessmrs.ui.admin.AccessMrsLauncherActivity;
+import com.alphabetbloc.accessmrs.ui.admin.LauncherActivity;
 import com.alphabetbloc.accessmrs.utilities.App;
-import com.alphabetbloc.accessmrs.utilities.AccessMrsLauncher;
+import com.alphabetbloc.accessmrs.utilities.LauncherUtil;
 import com.alphabetbloc.accessmrs.utilities.FileUtils;
 
 /**
@@ -43,11 +43,11 @@ public class DeleteDecryptedFilesService extends WakefulIntentService {
 	@Override
 	protected void doWakefulWork(Intent intent) {
 		Log.v(TAG, "Service starting to find and delete any decrypted files.");
-		if (!AccessMrsLauncher.isSetupComplete()) {
-			if (!AccessMrsLauncherActivity.sLaunching) {
+		if (!LauncherUtil.isSetupComplete()) {
+			if (!LauncherActivity.sLaunching) {
 				Log.v(TAG, "AccessMRS is Not Setup... and not currently active... so DeleteDecryptedFilesService is requesting setup");
-				Intent i = new Intent(App.getApp(), AccessMrsLauncherActivity.class);
-				i.putExtra(AccessMrsLauncherActivity.LAUNCH_DASHBOARD, false);
+				Intent i = new Intent(App.getApp(), LauncherActivity.class);
+				i.putExtra(LauncherActivity.LAUNCH_DASHBOARD, false);
 				i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 				startActivity(i);
 			}

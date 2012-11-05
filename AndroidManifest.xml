@@ -67,7 +67,7 @@
         <!-- Activities -->
         <!-- User Activities -->
         <activity
-            android:name=".ui.admin.AccessMrsLauncherActivity"
+            android:name=".ui.admin.LauncherActivity"
             android:label="@string/app_name"
             android:launchMode="singleTop"
             android:screenOrientation="portrait" >
@@ -122,16 +122,6 @@
             android:name=".ui.admin.SSLClientAuthActivity"
             android:label="@string/app_name"
             android:screenOrientation="portrait" />
-        <activity
-            android:name=".ui.admin.DeviceAdminPreference"
-            android:label="@string/chw_menu_pref"
-            android:theme="@android:style/Theme.NoDisplay" >
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </activity>
         <activity
             android:name=".ui.admin.SetupPreferencesActivity"
             android:label="@string/app_name"
@@ -201,6 +191,11 @@
             <meta-data
                 android:name="com.commonsware.cwac.wakeful"
                 android:resource="@xml/wakeful_wipe_data" />
+        </receiver>
+        <receiver android:name=".receivers.AccessAdminPreferenceReceiver" >
+            <intent-filter>
+                <action android:name="com.alphabetbloc.accessmrs.SET_PREFERENCE" />
+            </intent-filter>
         </receiver>
 
         <!-- Services -->
