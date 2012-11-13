@@ -25,6 +25,7 @@ import javax.security.auth.x500.X500Principal;
 import com.alphabetbloc.accessmrs.adapters.CertificateAdapter;
 import com.alphabetbloc.accessmrs.adapters.MergeAdapter;
 import com.alphabetbloc.accessmrs.data.Certificate;
+import com.alphabetbloc.accessmrs.utilities.App;
 import com.alphabetbloc.accessmrs.utilities.EncryptionUtil;
 import com.alphabetbloc.accessmrs.utilities.FileUtils;
 import com.alphabetbloc.accessmrs.R;
@@ -58,7 +59,7 @@ public class SSLAddCertificatesActivity extends SSLBaseActivity {
 		requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 		setContentView(R.layout.add_certificates);
 		mContext = this;
-		
+
 		trustStorePropDefault = System.getProperty("javax.net.ssl.trustStore"); // System
 		mStorePassword = EncryptionUtil.getPassword();
 		mLocalStoreFileName = FileUtils.MY_TRUSTSTORE;
@@ -221,16 +222,20 @@ public class SSLAddCertificatesActivity extends SSLBaseActivity {
 			FileUtils.setupDefaultSslStore(mLocalStoreFileName);
 
 		try {
-			Log.v(TAG, "localStoreFilePath=" + mLocalStoreFile.getAbsolutePath());
+			if (App.DEBUG)
+				Log.v(TAG, "localStoreFilePath=" + mLocalStoreFile.getAbsolutePath());
 			KeyStore localTrustStore = KeyStore.getInstance("BKS");
 			InputStream in = new FileInputStream(mLocalStoreFile);
+			if (App.DEBUG) {
+				if (in != null)
+					if (App.DEBUG)
+						Log.v(TAG, "TrustStore is NOT NULL");
+				if (localTrustStore == null)
+					Log.e(TAG, "localTrustStore is NULL");
+				if (mStorePassword == null)
+					Log.e(TAG, "mStorePassword is NULL=");
+			}
 
-			if (in != null)
-				Log.v(TAG, "in is NOT NULL");
-			if (localTrustStore == null)
-				Log.e(TAG, "localTrustStore is NULL");
-			if (mStorePassword == null)
-				Log.e(TAG, "mStorePassword is NULL=");
 			try {
 				localTrustStore.load(in, mStorePassword.toCharArray());
 			} finally {
@@ -245,7 +250,7 @@ public class SSLAddCertificatesActivity extends SSLBaseActivity {
 
 	@Override
 	protected ArrayList<Certificate> getStoreFiles() {
-
+		//TODO! How is it possible to view certs from here without ever entering the password?
 		ArrayList<Certificate> androidCerts = new ArrayList<Certificate>();
 
 		try {
@@ -270,7 +275,6 @@ public class SSLAddCertificatesActivity extends SSLBaseActivity {
 
 				String certI = cert.getIssuerDN().getName();
 				c.setIO(getSubString(certI, "O="));
-
 				androidCerts.add(c);
 			}
 
@@ -377,7 +381,7 @@ public class SSLAddCertificatesActivity extends SSLBaseActivity {
 				if (result < 1) {
 					Toast.makeText(SSLAddCertificatesActivity.this, String.format(getAlertMessage(), storeString, storeString), Toast.LENGTH_LONG).show();
 				} else {
-					Toast.makeText(SSLAddCertificatesActivity.this, String.format(getSuccessMessage(), result, storeString,storeString), Toast.LENGTH_LONG).show();
+					Toast.makeText(SSLAddCertificatesActivity.this, String.format(getSuccessMessage(), result, storeString, storeString), Toast.LENGTH_LONG).show();
 				}
 			} else {
 				Toast.makeText(SSLAddCertificatesActivity.this, String.format(getString(R.string.ssl_error_message), storeString) + error.getMessage(), Toast.LENGTH_LONG).show();

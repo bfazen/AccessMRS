@@ -20,10 +20,10 @@ import android.content.SyncResult;
 import android.os.AsyncTask;
 import android.preference.PreferenceManager;
 
+import com.alphabetbloc.accessmrs.R;
 import com.alphabetbloc.accessmrs.listeners.SyncDataListener;
 import com.alphabetbloc.accessmrs.utilities.App;
 import com.alphabetbloc.accessmrs.utilities.NetworkUtils;
-import com.alphabetbloc.accessmrs.R;
 
 /**
  * 

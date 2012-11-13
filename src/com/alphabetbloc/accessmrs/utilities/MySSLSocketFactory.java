@@ -16,6 +16,8 @@ import org.apache.http.conn.ssl.X509HostnameVerifier;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 
+import android.util.Log;
+
 /**
  * 
  * @author Nikolay Nelenkov (I think... unattributed code from custom-certs
@@ -25,6 +27,7 @@ import org.apache.http.params.HttpParams;
  */
 public class MySSLSocketFactory implements LayeredSocketFactory {
 
+	private static final String TAG = MySSLSocketFactory.class.getSimpleName();
 	// private SSLContext sslCtx;
 	private SSLSocketFactory socketFactory;
 	private X509HostnameVerifier hostnameVerifier;
@@ -33,6 +36,7 @@ public class MySSLSocketFactory implements LayeredSocketFactory {
 		// this.sslCtx = sslCtx;
 		this.socketFactory = sslCtx.getSocketFactory();
 		this.hostnameVerifier = hostnameVerifier;
+
 	}
 
 	@Override
@@ -43,6 +47,8 @@ public class MySSLSocketFactory implements LayeredSocketFactory {
 		if (params == null) {
 			throw new IllegalArgumentException("Parameters may not be null.");
 		}
+
+		Log.e(TAG + "delete", "ConnectSocket with " + "\n\t host=" + host + "\n\t port=" + port + "\n\t localport=" + localPort);
 
 		SSLSocket sslsock = (SSLSocket) ((sock != null) ? sock : createSocket());
 
@@ -95,9 +101,7 @@ public class MySSLSocketFactory implements LayeredSocketFactory {
 		if (sock.isClosed()) {
 			throw new IllegalArgumentException("Socket is closed.");
 		}
-
 		return true;
-
 	}
 
 	@Override

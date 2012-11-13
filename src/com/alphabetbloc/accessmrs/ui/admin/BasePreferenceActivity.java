@@ -19,6 +19,7 @@ import android.util.Log;
 import com.alphabetbloc.accessmrs.services.RefreshDataService;
 import com.alphabetbloc.accessmrs.services.SyncManager;
 import com.alphabetbloc.accessmrs.ui.user.BaseUserActivity;
+import com.alphabetbloc.accessmrs.utilities.App;
 import com.alphabetbloc.accessmrs.utilities.FileUtils;
 import com.alphabetbloc.accessmrs.utilities.UiUtils;
 import com.alphabetbloc.accessmrs.R;
@@ -56,12 +57,12 @@ public abstract class BasePreferenceActivity extends PreferenceActivity implemen
 			public void run() {
 				if (!RefreshDataService.isSyncActive) {
 					// Sync is not yet active, so we must be starting a sync
-					Log.d(TAG, "SyncStatusChanged: Preferences does not request syncs");
+					if (App.DEBUG) Log.v(TAG, "SyncStatusChanged: Preferences does not request syncs");
 					SyncManager.sCancelSync = true;
 
 				} else {
 					// we are just completing a sync (whether success or not)
-					Log.d(TAG, "SyncStatusChanged: completing sync");
+					if (App.DEBUG) Log.v(TAG, "SyncStatusChanged: completing sync");
 					// dismiss dialog
 					if (mSyncActiveDialog != null) {
 						mSyncActiveDialog.dismiss();

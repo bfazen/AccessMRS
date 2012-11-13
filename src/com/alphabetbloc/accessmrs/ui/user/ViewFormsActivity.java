@@ -141,7 +141,7 @@ public abstract class ViewFormsActivity extends BasePatientActivity {
 		boolean logActivity = prefs.getBoolean(getString(R.string.key_enable_activity_log), true);
 		if (logActivity) {
 			SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
-			String providerId = settings.getString(getString(R.string.key_provider), "0");
+			String providerId = settings.getString(getString(R.string.key_provider), getString(R.string.default_provider));
 			mActivityLog = new ActivityLog();
 			mActivityLog.setProviderId(providerId);
 			mActivityLog.setFormId(formId);

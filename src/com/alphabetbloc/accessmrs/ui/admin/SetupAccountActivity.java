@@ -44,6 +44,7 @@ public class SetupAccountActivity extends BaseAdminActivity implements SyncDataL
 
 	// Intents
 	public static final String USE_CONFIG_FILE = "use_config_file_defaults";
+	public static final String INITIAL_SETUP = "initial_setup";
 	public static final String LAUNCHED_FROM_ACCT_MGR = "launched_from_account_manager";
 
 	// views
@@ -95,11 +96,10 @@ public class SetupAccountActivity extends BaseAdminActivity implements SyncDataL
 				removeOldAccounts();
 			}
 		});
-		
-		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-		boolean firstRun = prefs.getBoolean(getString(R.string.key_first_run), true);
+
+		boolean firstRun = getIntent().getBooleanExtra(INITIAL_SETUP, false);
 		mImportFromConfig = getIntent().getBooleanExtra(USE_CONFIG_FILE, false);
-		if (mImportFromConfig){
+		if (mImportFromConfig) {
 			createView(LOADING);
 			importFromConfigFile();
 			removeOldAccounts();
@@ -107,7 +107,7 @@ public class SetupAccountActivity extends BaseAdminActivity implements SyncDataL
 			createView(REQUEST_CREDENTIAL_SETUP);
 		else if (NetworkUtils.getServerUsername() != null)
 			createView(REQUEST_CREDENTIAL_CHANGE);
-		else { 
+		else {
 			// Launched from a Service that found no account
 			UiUtils.toastAlert(App.getApp().getString(R.string.installation_error), App.getApp().getString(R.string.auth_no_account));
 			createView(REQUEST_CREDENTIAL_SETUP);
@@ -162,8 +162,9 @@ public class SetupAccountActivity extends BaseAdminActivity implements SyncDataL
 			mStep = ASK_NEW_ENTRY;
 			mInstructionText.setText(getString(R.string.auth_server_error_login));
 			mUserText.setVisibility(View.VISIBLE);
-			mUserText.setText(mCurrentUser);
+			mUserText.setText(mNewUser);
 			mPwdText.setVisibility(View.VISIBLE);
+			mPwdText.setText(mNewPwd);
 			mSubmitButton.setVisibility(View.VISIBLE);
 			mSubmitButton.setText(R.string.auth_try_again);
 			mOfflineSetupButton.setVisibility(View.VISIBLE);
@@ -254,7 +255,8 @@ public class SetupAccountActivity extends BaseAdminActivity implements SyncDataL
 	// STEP 2:
 	@Override
 	public void syncComplete(String result, SyncResult syncResult) {
-		Log.v(TAG, "Sync with Server Complete with result=" + result);
+		if (App.DEBUG)
+			Log.v(TAG, "Sync with Server Complete with result=" + result);
 		if (Boolean.valueOf(result)) {
 			removeOldAccounts();
 		} else
@@ -272,13 +274,17 @@ public class SetupAccountActivity extends BaseAdminActivity implements SyncDataL
 	// STEP 3:
 	private void removeOldAccounts() {
 		createView(LOADING);
+		NetworkUtils.resetServerCredentials();
+
 		AccountManager am = AccountManager.get(this);
 		// STEP 1: if old account exists, delete and replace with new account
 		Account[] accounts = am.getAccountsByType(getString(R.string.app_account_type));
-		Log.v(TAG, "about to remove old accounts number=" + accounts.length);
+		if (App.DEBUG)
+			Log.v(TAG, "about to remove old accounts number=" + accounts.length);
 
 		if (accounts.length > 0) {
 			for (Account a : accounts) {
+				ContentResolver.removePeriodicSync(accounts[0], App.getApp().getString(R.string.app_provider_authority), new Bundle());
 				myFuture = am.removeAccount(a, myCallback, myHandler);
 			}
 		} else {
@@ -305,17 +311,18 @@ public class SetupAccountActivity extends BaseAdminActivity implements SyncDataL
 			if (removedAccount) {
 
 				if (addAccount(mNewUser, mNewPwd)) {
-					Log.i(TAG, "Account was successfully created with user: " + mNewUser);
+					if (App.DEBUG)
+						Log.v(TAG, "Account was successfully created with user: " + mNewUser);
 					setupAccountSync(mNewUser);
 					finishAccountSetup(mNewUser);
 				} else {
 					Log.e(TAG, "Account Setup Failed");
-					createView(REQUEST_CREDENTIAL_SETUP);
+					createView(CREDENTIAL_ENTRY_ERROR);
 				}
 			} else {
 
 				Log.e(TAG, "Error: Could not delete old account. Please setup new account manually.");
-				createView(REQUEST_CREDENTIAL_SETUP);
+				createView(CREDENTIAL_ENTRY_ERROR);
 			}
 		}
 	};
@@ -347,6 +354,7 @@ public class SetupAccountActivity extends BaseAdminActivity implements SyncDataL
 		ContentResolver.setSyncAutomatically(account, authority, true);
 		String interval = prefs.getString(getString(R.string.key_max_refresh_seconds), getString(R.string.default_max_refresh_seconds));
 		ContentResolver.addPeriodicSync(account, authority, new Bundle(), Integer.valueOf(interval));
+		if (App.DEBUG) Log.v(TAG, "New Account Sync interval is=" + interval);
 	}
 
 	// STEP 7:
@@ -356,7 +364,8 @@ public class SetupAccountActivity extends BaseAdminActivity implements SyncDataL
 		boolean launchedFromAccountMgr = getIntent().getBooleanExtra(LAUNCHED_FROM_ACCT_MGR, false);
 		if (extras != null && launchedFromAccountMgr) {
 
-			Log.v(TAG, "launched from the account manager...");
+			if (App.DEBUG)
+				Log.v(TAG, "launched from the account manager...");
 			AccountAuthenticatorResponse response = extras.getParcelable(AccountManager.KEY_ACCOUNT_AUTHENTICATOR_RESPONSE);
 			Bundle result = new Bundle();
 			result.putString(AccountManager.KEY_ACCOUNT_NAME, username);
@@ -364,7 +373,8 @@ public class SetupAccountActivity extends BaseAdminActivity implements SyncDataL
 			response.onResult(result);
 
 		} else {
-			Log.v(TAG, "not launched from the account manager");
+			if (App.DEBUG)
+				Log.v(TAG, "not launched from the account manager");
 			setResult(RESULT_OK);
 		}
 

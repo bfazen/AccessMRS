@@ -28,7 +28,6 @@ import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.conn.params.ConnManagerParams;
 import org.apache.http.conn.params.ConnPerRoute;
 import org.apache.http.conn.params.ConnPerRouteBean;
-import org.apache.http.conn.scheme.PlainSocketFactory;
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.conn.scheme.SocketFactory;
@@ -114,24 +113,29 @@ public class NetworkUtils {
 	public static String getServerUsername() {
 		if (mUsername == null)
 			getServerCredentials();
-
 		return mUsername;
 	}
 
 	public static String getServerPassword() {
 		if (mPassword == null)
 			getServerCredentials();
-
 		return mPassword;
+	}
+
+	public static void resetServerCredentials() {
+		mUsername = null;
+		mPassword = null;
 	}
 
 	private static void getServerCredentials() {
 		final AccountManager am = AccountManager.get(App.getApp());
 		Account[] accounts = am.getAccountsByType(App.getApp().getString(R.string.app_account_type));
 
-		Log.v(TAG, "accounts.length =" + accounts.length);
+		if (App.DEBUG)
+			Log.v(TAG, "accounts.length =" + accounts.length);
 		if (accounts.length <= 0) {
-			Log.v(TAG, "no accounts have been set up");
+			if (App.DEBUG)
+				Log.v(TAG, "no accounts have been set up");
 
 		} else {
 
@@ -146,11 +150,12 @@ public class NetworkUtils {
 		HttpClient client = null;
 		try {
 
-			Log.v(TAG, "httpClient is null, download is creating a new client");
+			if (App.DEBUG)
+				Log.v(TAG, "httpClient is null, download is creating a new client");
 			SSLContext sslContext = createSslContext();
 			MySSLSocketFactory socketFactory = new MySSLSocketFactory(sslContext, new BrowserCompatHostnameVerifier());
 			client = createHttpClient(socketFactory);
-
+			Log.e(TAG, "created the client and now returning it...");
 		} catch (GeneralSecurityException e) {
 			Log.e(TAG, "Could not load the trust manager");
 			e.printStackTrace();
@@ -168,7 +173,6 @@ public class NetworkUtils {
 		KeyStore trustStore = FileUtils.loadSslStore(FileUtils.MY_TRUSTSTORE);
 		if (trustStore == null)
 			throw new IOException("Access denied. Ensure credential storage is available.");
-
 		MyTrustManager myTrustManager = new MyTrustManager(trustStore);
 		TrustManager[] tms = new TrustManager[] { myTrustManager };
 
@@ -180,7 +184,6 @@ public class NetworkUtils {
 			KeyStore keyStore = FileUtils.loadSslStore(FileUtils.MY_KEYSTORE);
 			if (keyStore == null)
 				throw new IOException("Access denied. Ensure credential storage is available.");
-
 			KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
 			kmf.init(keyStore, EncryptionUtil.getPassword().toCharArray());
 			kms = kmf.getKeyManagers();
@@ -188,7 +191,6 @@ public class NetworkUtils {
 
 		SSLContext context = SSLContext.getInstance("TLS");
 		context.init(kms, tms, null);
-
 		return context;
 	}
 
@@ -205,14 +207,21 @@ public class NetworkUtils {
 		ConnPerRoute connPerRoute = new ConnPerRouteBean(MAX_CONN_PER_ROUTE);
 		ConnManagerParams.setMaxConnectionsPerRoute(params, connPerRoute);
 		ConnManagerParams.setMaxTotalConnections(params, MAX_CONNECTIONS);
-
 		SchemeRegistry schemeRegistry = new SchemeRegistry();
-		schemeRegistry.register(new Scheme("http", PlainSocketFactory.getSocketFactory(), 80));
+
 		SocketFactory sslSocketFactory = SSLSocketFactory.getSocketFactory();
 		if (socketFactory != null) {
 			sslSocketFactory = socketFactory;
 		}
-		schemeRegistry.register(new Scheme("https", sslSocketFactory, 8443));
+		try {
+			schemeRegistry.register(new Scheme("http", sslSocketFactory, 80));
+			schemeRegistry.register(new Scheme("https", sslSocketFactory, 443));
+			schemeRegistry.register(new Scheme("https", sslSocketFactory, 8443));
+		} catch (Exception e) {
+			Log.e(TAG, "Caught an EXCEPTION. could not register the scheme?");
+			e.printStackTrace();
+			// TODO: handle exception
+		}
 		ClientConnectionManager cm = new ThreadSafeClientConnManager(params, schemeRegistry);
 		DefaultHttpClient httpClient = new DefaultHttpClient(cm, params);
 
@@ -224,7 +233,8 @@ public class NetworkUtils {
 		// find all files in parent directory
 		File file = new File(path);
 		File[] files = file.getParentFile().listFiles();
-		System.out.println(file.getAbsolutePath());
+		if (App.DEBUG)
+			Log.v(TAG, file.getAbsolutePath());
 
 		// mime post
 		MultipartEntity entity = null;
@@ -236,58 +246,71 @@ public class NetworkUtils {
 				if (f.getName().endsWith(".xml")) {
 					fb = new FileBody(f, "text/xml");
 					entity.addPart("xml_submission_file", fb);
-					Log.i(TAG, "added xml file " + f.getName());
+					if (App.DEBUG)
+						Log.v(TAG, "added xml file " + f.getName());
 				} else if (f.getName().endsWith(".jpg")) {
 					fb = new FileBody(f, "image/jpeg");
 					entity.addPart(f.getName(), fb);
-					Log.i(TAG, "added image file " + f.getName());
+					if (App.DEBUG)
+						Log.v(TAG, "added image file " + f.getName());
 				} else if (f.getName().endsWith(".3gpp")) {
 					fb = new FileBody(f, "audio/3gpp");
 					entity.addPart(f.getName(), fb);
-					Log.i(TAG, "added audio file " + f.getName());
+					if (App.DEBUG)
+						Log.v(TAG, "added audio file " + f.getName());
 				} else if (f.getName().endsWith(".3gp")) {
 					fb = new FileBody(f, "video/3gpp");
 					entity.addPart(f.getName(), fb);
-					Log.i(TAG, "added video file " + f.getName());
+					if (App.DEBUG)
+						Log.v(TAG, "added video file " + f.getName());
 				} else if (f.getName().endsWith(".mp4")) {
 					fb = new FileBody(f, "video/mp4");
 					entity.addPart(f.getName(), fb);
-					Log.i(TAG, "added video file " + f.getName());
+					if (App.DEBUG)
+						Log.v(TAG, "added video file " + f.getName());
 				} else {
 					Log.w(TAG, "unsupported file type, not adding file: " + f.getName());
 				}
 			}
 		} else {
-			Log.v(TAG, "no files to upload in instance");
+			if (App.DEBUG)
+				Log.v(TAG, "no files to upload in instance");
 		}
 
 		return entity;
 	}
 
+	// TODO! This should not have to check trusted at every single time...
+	// (maybe need to go into MyTrustManager to fix this?)
 	public static void postEntity(HttpClient client, String url, MultipartEntity entity) throws IOException {
-
 		HttpPost httppost = new HttpPost(url);
 		httppost.setEntity(entity);
 		HttpResponse response = client.execute(httppost);
-
 		// verify response is okay
 		int responseCode = response.getStatusLine().getStatusCode();
-		Log.d(TAG, "httppost response=" + responseCode);
+		if (App.DEBUG)
+			Log.v(TAG, "httppost response=" + responseCode);
 		if (responseCode != HttpURLConnection.HTTP_OK)
 			throw new IOException(App.getApp().getString(R.string.error_connection));
 	}
 
 	public static InputStream getStream(HttpClient client, String url) throws Exception {
+		HttpResponse response = null;
+		try {
+			HttpGet get = new HttpGet(url);
+			response = client.execute(get);
+		} catch (Exception e) {
+			Log.e(TAG, "Caught Error getStream from Server! ");
+			e.printStackTrace();
 
-		HttpGet get = new HttpGet(url);
-		HttpResponse response = client.execute(get);
-
+		}
 		// verify response is okay
 		if (response.getStatusLine().getStatusCode() != 200) {
 			Log.e(TAG, "Error: " + response.getStatusLine());
 			throw new IOException(App.getApp().getString(R.string.error_connection));
 		} else {
-			Log.v(TAG, "NO Error!: " + response.getStatusLine());
+			if (App.DEBUG)
+				Log.v(TAG, "NO Error!: " + response.getStatusLine());
 		}
 
 		// Get hold of the response entity
@@ -354,11 +377,10 @@ public class NetworkUtils {
 			SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(App.getApp());
 			Boolean savedSearch = settings.getBoolean(App.getApp().getString(R.string.key_use_saved_searches), false);
 			Integer cohort = Integer.valueOf(settings.getString(App.getApp().getString(R.string.key_saved_search), "0"));
-			// Integer program =
-			// Integer.valueOf(settings.getString(App.getApp().getString(R.string.key_program),
-			// "0"));
-			Integer program = 1;
+			Integer program = Integer.valueOf(settings.getString(App.getApp().getString(R.string.key_program), "0"));
 
+			if (App.DEBUG)
+				Log.v(TAG, "Writing variables to stream \n  cohort=" + cohort + "\n  program=" + program + "\n  savedSearch=" + savedSearch);
 			dos.writeBoolean(savedSearch);
 			if (cohort > 0)
 				dos.writeInt(cohort);

@@ -69,7 +69,7 @@ public class DecryptionTask extends AsyncTask<Object, Void, Boolean> {
 			decrypted = decryptFormInstance(id, inPath, outPath);
 		
 		if (decrypted)
-			Log.v(TAG, "Decryption Sucessful!");
+			if (App.DEBUG) Log.v(TAG, "Decryption Sucessful!");
 		else
 			Log.e(TAG, "Decryption Error with AccessForms Instance Id: " + String.valueOf(id) + " at path=" + inPath);
 
@@ -102,7 +102,7 @@ public class DecryptionTask extends AsyncTask<Object, Void, Boolean> {
 		for (File f : filesToDecrypt) {
 			try {
 				anydone = decryptFile(f.getAbsolutePath(), outPath, c, key);
-				Log.v(TAG, "after decrypting... anydone=" + anydone);
+				if (App.DEBUG) Log.v(TAG, "after decrypting... anydone=" + anydone);
 				alldone = alldone & anydone;
 			} catch (Exception e) {
 				Log.e(TAG, "Error decrypting: " + f.getName());
@@ -176,7 +176,7 @@ public class DecryptionTask extends AsyncTask<Object, Void, Boolean> {
 			if (updatedrows > 1) {
 				Log.w(TAG, "Updated more than one entry, something is wrong with query of :" + String.valueOf(id));
 			} else if (updatedrows == 1) {
-				Log.i(TAG, "Instance successfully updated with decryption time");
+				if (App.DEBUG) Log.v(TAG, "Instance successfully updated with decryption time");
 				updated = true;
 			} else {
 				Log.e(TAG, "Instance doesn't exist with id: " + String.valueOf(id));
@@ -202,7 +202,7 @@ public class DecryptionTask extends AsyncTask<Object, Void, Boolean> {
 		File outFile = new File(outDir.getAbsolutePath(), outName);
 		if (outFile.exists()) {
 			outFile = new File(outDir.getAbsolutePath(), outName + "-" + String.valueOf(System.currentTimeMillis()) + FileUtils.ENC_EXT);
-			System.out.println("File already exists. File has been renamed to " + outFile.getName());
+			Log.w(TAG, "File already exists. File has been renamed to " + outFile.getName());
 		}
 
 
@@ -228,7 +228,7 @@ public class DecryptionTask extends AsyncTask<Object, Void, Boolean> {
 			in.close();
 			out.flush();
 			out.close();
-			Log.i(TAG, "Decrpyted:" + inFile.getName() + " -> " + outFile.getName());
+			if (App.DEBUG) Log.v(TAG, "Decrpyted:" + inFile.getName() + " -> " + outFile.getName());
 			decrypted = true;
 		} catch (IOException e) {
 			Log.e(TAG, "Error encrypting: " + inFile.getName() + " -> " + outFile.getName());
@@ -248,7 +248,7 @@ public class DecryptionTask extends AsyncTask<Object, Void, Boolean> {
 	protected void onPostExecute(Boolean alldone) {
 		super.onPostExecute(alldone);
 		if (mListener != null) {
-			Log.v(TAG, "about to send to listener anydone =" + anydone);
+			if (App.DEBUG) Log.v(TAG, "about to send to listener anydone =" + anydone);
 			mListener.setDeleteDecryptedFilesAlarm(anydone);
 			mListener.decryptComplete(alldone);
 		}

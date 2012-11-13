@@ -11,6 +11,20 @@
         </Preference>
 
         <EditTextPreference
+            android:id="@+id/provider_id"
+            android:defaultValue="@string/default_provider"
+            android:dialogTitle="@string/pref_change_provider"
+            android:inputType="phone"
+            android:key="@string/key_provider"
+            android:title="@string/pref_provider" />
+        <EditTextPreference
+            android:id="@+id/location_id"
+            android:defaultValue="@string/default_location"
+            android:dialogTitle="@string/pref_change_location"
+            android:inputType="phone"
+            android:key="@string/key_location"
+            android:title="@string/pref_location" />
+        <EditTextPreference
             android:id="@+id/program"
             android:defaultValue="@string/default_program"
             android:dialogTitle="@string/pref_change_program"

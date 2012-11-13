@@ -29,6 +29,7 @@ import android.util.Log;
 import com.alphabetbloc.accessmrs.services.WakefulIntentService;
 import com.alphabetbloc.accessmrs.services.WipeDataService;
 import com.alphabetbloc.accessmrs.services.WakefulIntentService.AlarmListener;
+import com.alphabetbloc.accessmrs.utilities.App;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -46,18 +47,19 @@ public class WipeDataReceiver extends BroadcastReceiver {
 	private static final String TAG = WipeDataReceiver.class.getSimpleName();
 	private static final String WIPE_DATA_FROM_ADMIN_SMS_REQUEST = "com.alphabetbloc.accessmrs.WIPE_DATA_FROM_ADMIN_SMS_REQUEST";
 	public static final String WIPE_DATA_SERVICE = "com.alphabetbloc.accessmrs.WIPE_DATA_SERVICE";
-	
+
 	@Override
 	public void onReceive(Context ctxt, Intent intent) {
 		AlarmListener listener = getListener(ctxt);
 		String action = intent.getAction();
-		
+
 		if (listener != null) {
 			if (action == null || action.equalsIgnoreCase(WIPE_DATA_SERVICE)) {
-		
-				//Stared from ALARM MANAGER (action == null) OR Specific Broadcast
+
+				// Stared from ALARM MANAGER (action == null) OR Specific
+				// Broadcast
 				SharedPreferences prefs = ctxt.getSharedPreferences(WakefulIntentService.NAME, 0);
-				
+
 				// check for intent
 				boolean wipeData = intent.getBooleanExtra(WIPE_DATA_FROM_ADMIN_SMS_REQUEST, false);
 				if (wipeData)
@@ -68,11 +70,14 @@ public class WipeDataReceiver extends BroadcastReceiver {
 					prefs.edit().putLong(WakefulIntentService.WIPE_DATA, System.currentTimeMillis()).commit();
 					listener.sendWakefulWork(ctxt);
 				} else {
-					Log.d(TAG, "Not wiping data...");
+					if (App.DEBUG)
+						Log.v(TAG, "No need to wipe data... So will also cancel the alarm.");
+					WakefulIntentService.cancelAlarms(WakefulIntentService.WIPE_DATA, ctxt.getApplicationContext());
 				}
 				// otherwise, do nothing
 			} else {
-				//Stared from a BOOT_COMPLETED broadcast
+
+				// Stared from a BOOT_COMPLETED broadcast
 				WakefulIntentService.scheduleAlarms(listener, WakefulIntentService.WIPE_DATA, ctxt, true);
 			}
 		}

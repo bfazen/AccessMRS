@@ -59,7 +59,7 @@ public class FileUtils {
 	public static final String VALID_FILENAME = "[ _\\-A-Za-z0-9]*.x[ht]*ml";
 
 	// Storage paths
-	public static final String SD_ROOT_DIR = "clinic";
+	public static final String SD_ROOT_DIR = "AccessMRS";
 	public static final String INSTANCES = "instances";
 	public static final String FORMS = "forms";
 	public static final String XML_EXT = ".xml";
@@ -95,13 +95,15 @@ public class FileUtils {
 					File[] files = folder.listFiles();
 					for (File file : files) {
 						if (!file.delete()) {
-							Log.i(TAG, "Failed to delete " + file);
-						} else
+							if (App.DEBUG)
+								Log.v(TAG, "Failed to delete " + file);
+						} else if (App.DEBUG)
 							Log.v(TAG, "successfully deleted a file from:" + path);
 					}
 				}
 				return folder.delete();
-			}
+			} else
+				return true;
 		}
 		return false;
 	}
@@ -198,9 +200,9 @@ public class FileUtils {
 						if (file.isDirectory())
 							deleteAllFiles(file.getAbsolutePath());
 						else if (!file.delete())
-							Log.i(TAG, "Failed to delete " + file);
+							if (App.DEBUG) Log.v(TAG, "Failed to delete " + file);
 						else
-							Log.v(TAG, "successfully deleted a file from:" + path);
+							if (App.DEBUG) Log.v(TAG, "successfully deleted a file from:" + path);
 					}
 
 				}

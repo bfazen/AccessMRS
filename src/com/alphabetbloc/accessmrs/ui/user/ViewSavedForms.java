@@ -40,7 +40,7 @@ public class ViewSavedForms extends ViewFormsActivity {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.example_cw_main);
+		setContentView(R.layout.view_forms);
 
 		String patientIdString = getIntent().getStringExtra(KEY_PATIENT_ID);
 		mPatientId = Integer.valueOf(patientIdString);

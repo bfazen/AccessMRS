@@ -16,6 +16,7 @@
     <string name="key_saved_search">saved_search</string>
     <string name="key_program">program</string>
     <string name="key_provider">provider</string>
+    <string name="key_location">location</string>
     <string name="key_first_run">first_run</string>
     <string name="key_use_saved_searches">use_saved_searches</string>
     <string name="key_client_auth">client_authentication</string>
@@ -39,6 +40,7 @@
     <string name="default_use_client_auth">false</string>
     <string name="default_min_refresh_seconds">60</string>
     <string name="default_max_refresh_seconds">620</string>
+    <string name="default_location">1</string>
 
     <!-- UI STRINGS -->
     <!-- PREFERENCES -->
@@ -74,7 +76,13 @@
     <string name="pref_min_refresh_seconds">Don\'t sync if data was updated in last (seconds)</string>
     <string name="pref_max_refresh_seconds">Sync with server if data is older than (seconds)</string>
     <string name="pref_min_refresh">Don\'t Sync Before</string>
+    <string name="pref_location">Location</string>
+    <string name="pref_change_location">Change Location</string>
+    <string name="pref_location_prefix">Current Location ID:  </string>
     <string name="pref_max_refresh">Sync Data After</string>
+    <string name="pref_provider">Provider</string>
+    <string name="pref_change_provider">Change Provider</string>
+    <string name="pref_provider_prefix">Current Provider ID:  </string>
     <string name="pref_program_prefix">Current Program ID:  </string>
     <string name="pref_savedsearch_prefix">Current Cohort ID:  </string>
     <string name="pref_not_a_positive_int">This entry must be a positive integer. Please try again.</string>
@@ -159,12 +167,12 @@
 
 
     <!-- AccountAuthenticator OpenMRS username/password -->
-    <string name="auth_server_account_setup">Please setup a new account with Username and Password.</string>
+    <string name="auth_server_account_setup">Please enter Username and Password for a new OpenMRS account.</string>
     <string name="auth_server_username">Username</string>
     <string name="auth_server_user">User</string>
     <string name="auth_server_password">Password</string>
     <string name="auth_server_error_login">Unable to login. Please ensure all preferences are correct.</string>
-    <string name="auth_server_verify_account">You can only use one account with this device. Please verify your current login information.</string>
+    <string name="auth_server_verify_account">Please verify your current login information.</string>
     <string name="auth_server_verify_error">Password is incorrect. Please try again.</string>
     <string name="auth_verifying_server_account">Verifying account with OpenMRS server. Please wait.</string>
     <string name="auth_server_setup_complete">Congratulations, you have now setup an account with OpenMRS.</string>
@@ -325,7 +333,7 @@
     <string name="error_connection">Connection Error. Please Check Your Service and Try Again</string>
     <string name="error_filesystem">File Error</string>
     <string name="error_opening_file">Sorry, there has been an error opening this file. The file may be corrupt or missing from storage.</string>
-    
+
     <!-- Misc Resources -->
     <string name="female">Female</string>
     <string name="male">Male</string>

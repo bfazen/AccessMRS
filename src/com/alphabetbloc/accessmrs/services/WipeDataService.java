@@ -3,7 +3,6 @@ package com.alphabetbloc.accessmrs.services;
 import java.io.File;
 import java.util.List;
 
-
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.accounts.AccountManagerCallback;
@@ -11,6 +10,8 @@ import android.accounts.AccountManagerFuture;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Handler;
@@ -24,6 +25,7 @@ import com.alphabetbloc.accessmrs.providers.DbProvider;
 import com.alphabetbloc.accessmrs.utilities.App;
 import com.alphabetbloc.accessmrs.utilities.EncryptionUtil;
 import com.alphabetbloc.accessmrs.utilities.FileUtils;
+import com.alphabetbloc.accessmrs.utilities.UiUtils;
 import com.alphabetbloc.accessmrs.R;
 
 /**
@@ -59,32 +61,37 @@ public class WipeDataService extends WakefulIntentService {
 		boolean allDeleted = true;
 		int attempts = 0;
 		boolean wipeAccessMrs = intent.getBooleanExtra(WIPE_ACCESS_MRS_DATA, true);
-		Log.w(TAG, "Wiping Data AccessForms = true and AccessMRS = " + wipeAccessMrs);
+		boolean wipeAccessForms = isAccessFormsInstalled();
+		Log.w(TAG, "Wiping Data! \n\t AccessForms = " + wipeAccessForms + "\n\t AccessMRS = " + wipeAccessMrs);
 
 		do {
 
 			// ACCESS-FORMS
-			try {
-				// delete most insecure files first:
-				File internalInstancesDir = FileUtils.getInternalInstanceDirectory();
-				allDeleted = allDeleted & deleteDirectory(internalInstancesDir);
+			if (wipeAccessForms) {
+				try {
+					// delete most insecure files first:
+					File internalInstancesDir = FileUtils.getInternalInstanceDirectory();
+					allDeleted = allDeleted & deleteDirectory(internalInstancesDir);
 
-				// get context
-				mAccessFormsCtx = App.getApp().createPackageContext("com.alphabetbloc.accessforms", Context.CONTEXT_RESTRICTED);
-				if (mAccessFormsCtx == null)
+					// get context
+					mAccessFormsCtx = App.getApp().createPackageContext("com.alphabetbloc.accessforms", Context.CONTEXT_RESTRICTED);
+					if (mAccessFormsCtx == null)
+						allDeleted = false;
+
+					// delete cache
+					File AccessFormsInternalCache = mAccessFormsCtx.getCacheDir();
+					File AccessFormsExternalCache = mAccessFormsCtx.getExternalCacheDir();
+					allDeleted = allDeleted & deleteDirectory(AccessFormsExternalCache);
+					allDeleted = allDeleted & deleteDirectory(AccessFormsInternalCache);
+
+					// delete instances db
+					allDeleted = allDeleted & deleteAccessFormsInstancesDb();
+
+				} catch (Exception e) {
 					allDeleted = false;
-
-				// delete cache
-				File AccessFormsInternalCache = mAccessFormsCtx.getCacheDir();
-				File AccessFormsExternalCache = mAccessFormsCtx.getExternalCacheDir();
-				allDeleted = allDeleted & deleteDirectory(AccessFormsExternalCache);
-				allDeleted = allDeleted & deleteDirectory(AccessFormsInternalCache);
-
-				// delete instances db
-				allDeleted = allDeleted & deleteAccessFormsInstancesDb();
-
-			} catch (Exception e) {
-				e.printStackTrace();
+					Log.e(TAG, "Error wiping AccessForms data!");
+					e.printStackTrace();
+				}
 			}
 
 			// ACCESS-MRS
@@ -97,8 +104,8 @@ public class WipeDataService extends WakefulIntentService {
 					allDeleted = allDeleted & deleteDirectory(accessMrsInternalCache);
 
 					// close the db to prevent errors
-					DbProvider.lock();
-					
+					closeClinicDb();
+
 					// delete db keys and pwds
 					allDeleted = allDeleted & deleteSqlCipherDbKeys();
 
@@ -115,9 +122,9 @@ public class WipeDataService extends WakefulIntentService {
 
 					// Delete the local trust and key store
 					File trustStore = new File(App.getApp().getFilesDir(), FileUtils.MY_TRUSTSTORE);
-					allDeleted = allDeleted & trustStore.delete();
+					allDeleted = allDeleted & FileUtils.deleteFile(trustStore.getAbsolutePath());
 					File keyStore = new File(App.getApp().getFilesDir(), FileUtils.MY_KEYSTORE);
-					allDeleted = allDeleted & keyStore.delete();
+					allDeleted = allDeleted & FileUtils.deleteFile(keyStore.getAbsolutePath());
 
 					// reset helper to null
 					App.resetDb();
@@ -135,23 +142,45 @@ public class WipeDataService extends WakefulIntentService {
 
 					allDeleted = allDeleted & removedAccount;
 				} catch (Exception e) {
+					allDeleted = false;
+					Log.e(TAG, "Error wiping AccessMRS data!");
 					e.printStackTrace();
 				}
 			}
 			attempts++;
-
+			if(!allDeleted)
+				Log.e(TAG, "Error wiping data! Have now tried to wipe data on " + attempts + " attempts.");
 		} while (!allDeleted && (attempts < 4));
 
 		if (allDeleted) {
-			Log.v(TAG, "Successfully wiped all sensitive data.  Ending service and canceling alarms.");
+			if (App.DEBUG)
+				Log.v(TAG, "Successfully wiped all sensitive data.  Ending service and canceling alarms.");
+			UiUtils.toastAlert("Databases Reset", "All Databases have been successfully reset to default values");
 			prefs.edit().putBoolean(WIPE_DATA_REQUESTED, false).commit();
 			cancelAlarms(WakefulIntentService.WIPE_DATA, getApplicationContext());
 		} else {
 			Log.w(TAG, "There was an error wiping data. Alarm is set to try again at a later time.");
 		}
-		
+
 		Intent i = new Intent(WIPE_DATA_COMPLETE);
 		sendBroadcast(i);
+	}
+
+	private void closeClinicDb() {
+		try {
+			DbProvider.lock();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	private static boolean isAccessFormsInstalled() {
+		try {
+			App.getApp().getPackageManager().getPackageInfo("com.alphabetbloc.accessforms", PackageManager.GET_META_DATA);
+		} catch (NameNotFoundException e) {
+			return false;
+		}
+		return true;
 	}
 
 	private boolean deleteDirectory(File dir) {
@@ -160,31 +189,33 @@ public class WipeDataService extends WakefulIntentService {
 
 		boolean success = false;
 
+		// first try
 		try {
-			// first try
 			success = FileUtils.deleteAllFiles(dir.getAbsolutePath());
 
-			// second try (if e.g. memory runs out on recursive looping, try
-			// again)
-			if (!success) {
-				List<File> allFiles = FileUtils.findAllFiles(dir.getAbsolutePath());
-				if (allFiles.isEmpty())
-					return true;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
-				for (File f : allFiles) {
-					if (f.exists()) {
-						try {
-							success = success & FileUtils.deleteFile(f.getAbsolutePath());
-						} catch (Exception e) {
-							e.printStackTrace();
-						}
+		if (success)
+			return success;
+
+		// second try (if e.g. memory runs out on recursive looping, try
+		// again)
+		try {
+			List<File> allFiles = FileUtils.findAllFiles(dir.getAbsolutePath());
+			if (allFiles.isEmpty())
+				return true;
+
+			for (File f : allFiles) {
+				if (f.exists()) {
+					try {
+						success = success & FileUtils.deleteFile(f.getAbsolutePath());
+					} catch (Exception e) {
+						e.printStackTrace();
 					}
 				}
-
 			}
-
-			if (success)
-				Log.i(TAG, "All insecure files have been deleted!");
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -195,26 +226,30 @@ public class WipeDataService extends WakefulIntentService {
 
 	private boolean deleteSqlCipherDbKeys() {
 		boolean success = false;
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(App.getApp());
 
 		try {
 			// first try
-			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(App.getApp());
 			prefs.edit().putString(EncryptionUtil.SQLCIPHER_KEY_NAME, null).commit();
 			prefs.edit().putString(getString(R.string.key_password), null).commit();
 			prefs.edit().putString(getString(R.string.key_username), null).commit();
 			success = checkSqlCipherPref(prefs);
 
-			// second try
-			if (!success) {
-				prefs.edit().clear();
-				success = checkSqlCipherPref(prefs);
-			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 
-		return success;
+		// second try
+		if (!success) {
+			try {
+				prefs.edit().clear();
+				success = checkSqlCipherPref(prefs);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
 
+		return success;
 	}
 
 	private boolean checkSqlCipherPref(SharedPreferences prefs) {
@@ -233,13 +268,21 @@ public class WipeDataService extends WakefulIntentService {
 			// first try
 			success = this.deleteDatabase(DataModel.DATABASE_NAME);
 
-			// second try
-			if (!success) {
-				File db = this.getDatabasePath(DataModel.DATABASE_NAME);
-				success = db.delete();
-			}
 		} catch (Exception e) {
 			e.printStackTrace();
+		}
+
+		// second try
+		if (!success) {
+			try {
+				File db = this.getDatabasePath(DataModel.DATABASE_NAME);
+				if (!db.exists())
+					success = true;
+				else
+					success = db.delete();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 		return success;
 	}
@@ -250,17 +293,31 @@ public class WipeDataService extends WakefulIntentService {
 			Cursor c = App.getApp().getContentResolver().query(Uri.parse(InstanceColumns.CONTENT_URI + "/close"), null, null, null, null);
 			if (c != null)
 				c.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		try {
+			Cursor c = App.getApp().getContentResolver().query(Uri.parse(InstanceColumns.CONTENT_URI + "/close"), null, null, null, null);
+			if (c != null)
+				c.close();
 
 			// first try
 			success = mAccessFormsCtx.deleteDatabase(InstanceProviderAPI.DATABASE_NAME);
 
-			// second try
-			if (!success) {
-				File db = mAccessFormsCtx.getDatabasePath(InstanceProviderAPI.DATABASE_NAME);
-				success = db.delete();
-			}
 		} catch (Exception e) {
 			e.printStackTrace();
+		}
+
+		// second try
+		if (!success) {
+			try {
+				File db = mAccessFormsCtx.getDatabasePath(InstanceProviderAPI.DATABASE_NAME);
+				success = db.delete();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+
 		}
 
 		return success;
@@ -275,6 +332,7 @@ public class WipeDataService extends WakefulIntentService {
 				myFuture = am.removeAccount(a, myCallback, myHandler);
 			}
 		} else {
+			if(App.DEBUG) Log.v(TAG, "No current AccessMRS user accounts.");
 			removedAccount = true;
 		}
 	}
@@ -287,6 +345,7 @@ public class WipeDataService extends WakefulIntentService {
 				try {
 					removedAccount = myFuture.getResult();
 					removingComplete = true;
+					if(App.DEBUG) Log.v(TAG, "Successfully wiped the AccessMRS user account!");
 				} catch (Exception e) {
 					e.printStackTrace();
 				}

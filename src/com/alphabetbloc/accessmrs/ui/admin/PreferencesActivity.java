@@ -73,7 +73,7 @@ public class PreferencesActivity extends BasePreferenceActivity implements OnSha
 		}
 
 		if (!matchingKey) {
-			Log.i(TAG, "Could not find a matching key to " + key);
+			if (App.DEBUG) Log.v(TAG, "Could not find a matching key to " + key);
 			return;
 		}
 
@@ -114,13 +114,13 @@ public class PreferencesActivity extends BasePreferenceActivity implements OnSha
 		if (foundKey) {
 			String currentValue = mCurrentAdminPrefs.get(key);
 			if (currentValue != originalValue)
-				Log.i(TAG, "Updated Preference " + key + " to a new value");
+				if (App.DEBUG) Log.v(TAG, "Updated Preference " + key + " to a new value");
 			else if (mValueError)
-				Log.i(TAG, "Preference Not Updated: Value not allowed for Preference " + key);
+				if (App.DEBUG) Log.v(TAG, "Preference Not Updated: Value not allowed for Preference " + key);
 			else
-				Log.i(TAG, "No Change Required for Current Preference " + key);
+				if (App.DEBUG) Log.v(TAG, "No Change Required for Current Preference " + key);
 		} else {
-			Log.i(TAG, "Preference " + key + " was not found, and could not be updated.");
+			if (App.DEBUG) Log.v(TAG, "Preference " + key + " was not found, and could not be updated.");
 		}
 	}
 
@@ -143,7 +143,7 @@ public class PreferencesActivity extends BasePreferenceActivity implements OnSha
 
 		if (keys != null) {
 			for (int i = 0; i < keys.length; i++) {
-				Log.v(TAG, "key i=" + i + " key=" + keys[i]);
+				if (App.DEBUG) Log.v(TAG, "key i=" + i + " key=" + keys[i]);
 				Preference changedPref = findPreference(keys[i]);
 				setSummary(changedPref, keys[i]);
 			}
@@ -175,7 +175,6 @@ public class PreferencesActivity extends BasePreferenceActivity implements OnSha
 			updateSyncMinimum(prefs, key, prefs.getString(key, mCurrentAdminPrefs.get(key)));
 			break;
 		case SYNC_INTERVAL_TIME:
-			Log.e(TAG, "calling update sync interval?!");
 			updateSyncInterval(prefs, key, prefs.getString(key, mCurrentAdminPrefs.get(key)));
 			break;
 
@@ -201,6 +200,10 @@ public class PreferencesActivity extends BasePreferenceActivity implements OnSha
 				summary = App.getApp().getString(R.string.pref_program_prefix) + " " + mCurrentAdminPrefs.get(key);
 			else if (key.equalsIgnoreCase(App.getApp().getString(R.string.key_saved_search)))
 				summary = App.getApp().getString(R.string.pref_savedsearch_prefix) + " " + mCurrentAdminPrefs.get(key);
+			else if (key.equalsIgnoreCase(App.getApp().getString(R.string.key_provider)))
+				summary = App.getApp().getString(R.string.pref_provider_prefix) + " " + mCurrentAdminPrefs.get(key);
+			else if (key.equalsIgnoreCase(App.getApp().getString(R.string.key_location)))
+				summary = App.getApp().getString(R.string.pref_location_prefix) + " " + mCurrentAdminPrefs.get(key);
 			else if (key.equalsIgnoreCase(App.getApp().getString(R.string.key_min_refresh_seconds)))
 				summary = getDuration(Integer.valueOf(mCurrentAdminPrefs.get(key)));
 			else if (key.equalsIgnoreCase(App.getApp().getString(R.string.key_max_refresh_seconds)))
@@ -216,7 +219,7 @@ public class PreferencesActivity extends BasePreferenceActivity implements OnSha
 
 		if (!isPositiveInteger(newValue)) {
 			prefs.edit().putString(key, mCurrentAdminPrefs.get(key)).commit();
-			Log.e(TAG, "New Value was not an Integer, so adding back in value of=" + mCurrentAdminPrefs.get(key));
+			if(App.DEBUG) Log.w(TAG, "New Value was not an Integer, so adding back in value of=" + mCurrentAdminPrefs.get(key));
 			return;
 		}
 
@@ -239,7 +242,7 @@ public class PreferencesActivity extends BasePreferenceActivity implements OnSha
 
 		if (!isPositiveInteger(newValue)) {
 			prefs.edit().putString(key, mCurrentAdminPrefs.get(key)).commit();
-			Log.e(TAG, "New Value was not an Integer, so adding back in value of=" + mCurrentAdminPrefs.get(key));
+			if(App.DEBUG) Log.w(TAG, "New Value was not an Integer, so adding back in value of=" + mCurrentAdminPrefs.get(key));
 			return;
 		}
 
@@ -271,7 +274,7 @@ public class PreferencesActivity extends BasePreferenceActivity implements OnSha
 			if (intValue >= 0)
 				isPositiveInt = true;
 		} catch (NumberFormatException nfe) {
-			System.out.println("Could not parse " + nfe);
+			Log.w(TAG, "Could not parse " + nfe);
 		}
 
 		if (!isPositiveInt && mShowToast)
@@ -285,7 +288,7 @@ public class PreferencesActivity extends BasePreferenceActivity implements OnSha
 		String falseString = "false";
 		if (newValue.equalsIgnoreCase(trueString) || newValue.equalsIgnoreCase(falseString))
 			isBoolean = true;
-		Log.e(TAG, "isBooleanValue=" + isBoolean + " for value=" + newValue + "=");
+		if(App.DEBUG) Log.v(TAG, "isBooleanValue=" + isBoolean + " for value=" + newValue + "=");
 		return isBoolean;
 	}
 
@@ -350,6 +353,7 @@ public class PreferencesActivity extends BasePreferenceActivity implements OnSha
 		map.put(c.getString(R.string.key_min_refresh_seconds), prefs.getString(c.getString(R.string.key_min_refresh_seconds), c.getString(R.string.default_min_refresh_seconds)));
 		map.put(c.getString(R.string.key_program), prefs.getString(c.getString(R.string.key_program), c.getString(R.string.default_program)));
 		map.put(c.getString(R.string.key_provider), prefs.getString(c.getString(R.string.key_provider), c.getString(R.string.default_provider)));
+		map.put(c.getString(R.string.key_location), prefs.getString(c.getString(R.string.key_location), c.getString(R.string.default_location)));
 		map.put(c.getString(R.string.key_server), prefs.getString(c.getString(R.string.key_server), c.getString(R.string.default_server)));
 		map.put(c.getString(R.string.key_username), prefs.getString(c.getString(R.string.key_username), c.getString(R.string.default_username)));
 		map.put(c.getString(R.string.key_password), prefs.getString(c.getString(R.string.key_password), c.getString(R.string.default_password)));
@@ -379,6 +383,7 @@ public class PreferencesActivity extends BasePreferenceActivity implements OnSha
 		map.put(c.getString(R.string.key_min_refresh_seconds), SYNC_MIN_REFRESH_TIME);
 		map.put(c.getString(R.string.key_program), POSITIVE_INTEGER);
 		map.put(c.getString(R.string.key_provider), POSITIVE_INTEGER);
+		map.put(c.getString(R.string.key_location), POSITIVE_INTEGER);
 		map.put(c.getString(R.string.key_server), FREE_TEXT);
 		map.put(c.getString(R.string.key_username), FREE_TEXT);
 		map.put(c.getString(R.string.key_password), FREE_TEXT);
@@ -396,6 +401,7 @@ public class PreferencesActivity extends BasePreferenceActivity implements OnSha
 		Context c = App.getApp();
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(c);
 //		map.put(c.getString(R.string.key_provider), prefs.getString(c.getString(R.string.key_provider), c.getString(R.string.default_provider)));
+//		map.put(c.getString(R.string.key_location), prefs.getString(c.getString(R.string.key_location), c.getString(R.string.default_location)));
 //		map.put(c.getString(R.string.key_program), prefs.getString(c.getString(R.string.key_program), c.getString(R.string.default_program)));
 //		map.put(c.getString(R.string.key_saved_search), prefs.getString(c.getString(R.string.key_saved_search), c.getString(R.string.default_saved_search)));
 //		map.put(c.getString(R.string.key_use_saved_searches), String.valueOf(prefs.getBoolean(c.getString(R.string.key_use_saved_searches), Boolean.parseBoolean(c.getString(R.string.default_use_saved_searches)))));

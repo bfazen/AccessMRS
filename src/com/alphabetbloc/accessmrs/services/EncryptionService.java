@@ -80,16 +80,16 @@ public class EncryptionService extends WakefulIntentService {
 	@Override
 	protected void doWakefulWork(Intent intent) {
 		mContext = this;
-		Log.v(TAG, "Starting service to encrypt all submitted files.");
+		if (App.DEBUG) Log.v(TAG, "Starting service to encrypt all submitted files.");
 		if (!LauncherUtil.isSetupComplete()) {
 			if (!LauncherActivity.sLaunching) {
-				Log.v(TAG, "AccessMRS is Not Setup... and not currently active... so EncryptionService is requesting setup");
+				if (App.DEBUG) Log.v(TAG, "AccessMRS is Not Setup... and not currently active... so EncryptionService is requesting setup");
 				Intent i = new Intent(App.getApp(), LauncherActivity.class);
 				i.putExtra(LauncherActivity.LAUNCH_DASHBOARD, false);
 				i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 				startActivity(i);
 			}
-			Log.v(TAG, "AccessMRS is Not Setup... so EncryptionService is ending");
+			if (App.DEBUG) Log.v(TAG, "AccessMRS is Not Setup... so EncryptionService is ending");
 			stopSelf();
 			return;
 		}
@@ -97,7 +97,7 @@ public class EncryptionService extends WakefulIntentService {
 		ArrayList<Map<String, Object>> submittedFiles = findSubmittedFiles();
 		if (submittedFiles.isEmpty()){
 			cancelAlarms(WakefulIntentService.ENCRYPT_DATA, mContext);
-			Log.v(TAG, "No Files Found to Encrypt. Ending service and canceling future alarms.");
+			if (App.DEBUG) Log.v(TAG, "No Files Found to Encrypt. Ending service and canceling future alarms.");
 			stopSelf();
 			return;
 		}
@@ -126,7 +126,7 @@ public class EncryptionService extends WakefulIntentService {
 		// performance, and have user complain as we want to know about this ...
 		if (allEncrypted) {
 			cancelAlarms(WakefulIntentService.ENCRYPT_DATA, mContext);
-			Log.v(TAG, count + " files successfully encrypted. Ending service and canceling future alarms.");
+			if (App.DEBUG) Log.v(TAG, count + " files successfully encrypted. Ending service and canceling future alarms.");
 		} else {
 			Log.e(TAG, "An error occurred while attempting to encrypt a recently submitted file!");
 		}
@@ -142,9 +142,9 @@ public class EncryptionService extends WakefulIntentService {
 	 */
 	private static ArrayList<Map<String, Object>> findSubmittedFiles() {
 
-		// Find any recently submitted files
+		// Find any recently submitted files from collect db
 		String selection = InstanceColumns.STATUS + "=?";
-		String[] selectionArgs = new String[] { InstanceProviderAPI.STATUS_COMPLETE };
+		String[] selectionArgs = new String[] { InstanceProviderAPI.STATUS_SUBMITTED };
 		String[] projection = new String[] { InstanceColumns._ID, InstanceColumns.INSTANCE_FILE_PATH };
 		Cursor c = App.getApp().getContentResolver().query(InstanceColumns.CONTENT_URI, projection, selection, selectionArgs, null);
 
@@ -157,7 +157,7 @@ public class EncryptionService extends WakefulIntentService {
 				int idIndex = c.getColumnIndex(InstanceColumns._ID);
 				int pathIndex = c.getColumnIndex(InstanceColumns.INSTANCE_FILE_PATH);
 
-				Log.v(TAG, "path index is= " + String.valueOf(pathIndex) + " idindex = " + String.valueOf(idIndex));
+				if (App.DEBUG) Log.v(TAG, "path index is= " + String.valueOf(pathIndex) + " idindex = " + String.valueOf(idIndex));
 				if (c.moveToFirst()) {
 					do {
 						instanceDbPath = c.getString(pathIndex);
@@ -188,7 +188,7 @@ public class EncryptionService extends WakefulIntentService {
 	public static boolean encryptFormInstance(Integer id, String inPath, String outPath) {
 		File file = new File(inPath);
 		if (!file.exists()) {
-			System.out.println("No file found to encrypt at: " + file.getName());
+			Log.w(TAG, "No file found to encrypt at: " + file.getName());
 			return false;
 		}
 		File parentDir = file.getParentFile();
@@ -276,7 +276,7 @@ public class EncryptionService extends WakefulIntentService {
 			if (updatedrows > 1) {
 				Log.w(TAG, "Updated more than one entry, that's not good: id=" + id);
 			} else if (updatedrows == 1) {
-				Log.i(TAG, "Instance successfully updated");
+				if (App.DEBUG) Log.v(TAG, "Instance successfully updated");
 				updated = true;
 			} else {
 				Log.e(TAG, "Instance doesn't exist but we have its path!!: id= " + id);
@@ -302,7 +302,7 @@ public class EncryptionService extends WakefulIntentService {
 		File outFile = new File(outDir.getAbsolutePath(), inName + FileUtils.ENC_EXT);
 		if (outFile.exists()) {
 			outFile = new File(outDir.getAbsolutePath(), inName + "-" + String.valueOf(System.currentTimeMillis()) + FileUtils.ENC_EXT);
-			System.out.println("File already exists. File has been renamed to " + outFile.getName());
+			Log.w(TAG, "File already exists. File has been renamed to " + outFile.getName());
 		}
 
 		try {
@@ -332,7 +332,7 @@ public class EncryptionService extends WakefulIntentService {
 			in.close();
 			out.flush();
 			out.close();
-			Log.i(TAG, "Encrpyted:" + inFile.getName() + " -> " + outFile.getName());
+			if (App.DEBUG) Log.v(TAG, "Encrpyted:" + inFile.getName() + " -> " + outFile.getName());
 			encrypted = true;
 		} catch (IOException e) {
 			Log.e(TAG, "Error encrypting: " + inFile.getName() + " -> " + outFile.getName());

@@ -3,7 +3,6 @@ package com.alphabetbloc.accessmrs.ui.user;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
@@ -17,6 +16,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -78,7 +78,7 @@ public class ViewAllForms extends ViewFormsActivity {
 		super.onCreate(savedInstanceState);
 		mContext = this;
 		res = this.getResources();
-		setContentView(R.layout.example_cw_main);
+		setContentView(R.layout.view_forms);
 
 		if (!FileUtils.storageReady()) {
 			UiUtils.toastAlert(this, getString(R.string.error_storage_title), getString(R.string.error_storage));
@@ -147,7 +147,8 @@ public class ViewAllForms extends ViewFormsActivity {
 	@Override
 	protected void onResume() {
 		super.onResume();
-		mSelectedFormIds = getPriorityForms(mPatient.getPatientId());
+		// TODO! Change this too!
+		// mSelectedFormIds = getPriorityForms(mPatient.getPatientId());
 		createPatientHeader(mPatient.getPatientId());
 		refreshView();
 	}
@@ -391,10 +392,10 @@ public class ViewAllForms extends ViewFormsActivity {
 		} else {
 			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 			boolean promptUser = prefs.getBoolean(getString(R.string.key_show_form_prompt), true);
-			if (promptUser){
+			if (promptUser) {
 				mFormDialog = createAskDialog(f.getFormId().toString(), f.getName(), formType);
 				mFormDialog.show();
-			}else
+			} else
 				launchFormEntry(f.getFormId().toString(), f.getName(), formType);
 
 			type = "New Form";
@@ -488,7 +489,6 @@ public class ViewAllForms extends ViewFormsActivity {
 				int dbid = mCursor.getInt(mCursor.getColumnIndex(FormsColumns._ID));
 				String dbjrFormId = mCursor.getString(mCursor.getColumnIndex(FormsColumns.JR_FORM_ID));
 				formPath = mCursor.getString(mCursor.getColumnIndex(FormsColumns.FORM_FILE_PATH));
-
 				if (jrFormId.equalsIgnoreCase(dbjrFormId)) {
 					id = dbid;
 					break;
@@ -522,5 +522,4 @@ public class ViewAllForms extends ViewFormsActivity {
 			UiUtils.toastAlert(this, getString(R.string.installation_error), getString(R.string.error, getString(R.string.access_forms_error)));
 		}
 	}
-
 }

@@ -6,6 +6,7 @@ import android.util.Log;
 
 import com.alphabetbloc.accessmrs.data.ActivityLog;
 import com.alphabetbloc.accessmrs.providers.Db;
+import com.alphabetbloc.accessmrs.utilities.App;
 
 /**
  * 
@@ -35,7 +36,7 @@ public class ActivityLogTask extends AsyncTask<Void, Void, Void> {
 			catch (Exception e) {
 			}
 		}
-		Log.d("ActivityLogTask", "newactivity added to db!");
+		if (App.DEBUG) Log.v("ActivityLogTask", "newactivity added to db!");
 		
 		return null;
 		

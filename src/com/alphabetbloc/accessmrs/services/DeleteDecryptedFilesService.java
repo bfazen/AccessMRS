@@ -42,16 +42,16 @@ public class DeleteDecryptedFilesService extends WakefulIntentService {
 
 	@Override
 	protected void doWakefulWork(Intent intent) {
-		Log.v(TAG, "Service starting to find and delete any decrypted files.");
+		if (App.DEBUG) Log.v(TAG, "Service starting to find and delete any decrypted files.");
 		if (!LauncherUtil.isSetupComplete()) {
 			if (!LauncherActivity.sLaunching) {
-				Log.v(TAG, "AccessMRS is Not Setup... and not currently active... so DeleteDecryptedFilesService is requesting setup");
+				if (App.DEBUG) Log.v(TAG, "AccessMRS is Not Setup... and not currently active... so DeleteDecryptedFilesService is requesting setup");
 				Intent i = new Intent(App.getApp(), LauncherActivity.class);
 				i.putExtra(LauncherActivity.LAUNCH_DASHBOARD, false);
 				i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 				startActivity(i);
 			}
-			Log.v(TAG, "AccessMRS is Not Setup... so DeleteDecryptedFilesService is ending");
+			if (App.DEBUG) Log.v(TAG, "AccessMRS is Not Setup... so DeleteDecryptedFilesService is ending");
 			stopSelf();
 			return;
 		}
@@ -62,9 +62,9 @@ public class DeleteDecryptedFilesService extends WakefulIntentService {
 		if (decryptedInstances.isEmpty()) {
 			if (!decryptedFilesExist()) {
 				cancelAlarms(WakefulIntentService.DELETE_DECRYPTED_DATA, mContext);
-				Log.v(TAG, "No decrypted files found. Service is now ending and canceling future alarms.");
+				if (App.DEBUG) Log.v(TAG, "No decrypted files found. Service is now ending and canceling future alarms.");
 			} else {
-				Log.v(TAG, "No files require deletion at the time. Service is now ending.");
+				if (App.DEBUG) Log.v(TAG, "No files require deletion at the time. Service is now ending.");
 			}
 			stopSelf();
 			return;
@@ -96,7 +96,7 @@ public class DeleteDecryptedFilesService extends WakefulIntentService {
 		// Cancel this service IF there are no more decrypted instances on disk
 		if (allDeleted && !decryptedFilesExist()) {
 			cancelAlarms(WakefulIntentService.DELETE_DECRYPTED_DATA, mContext);
-			Log.v(TAG, "Successfully deleted all decrypted files. Service is now ending and canceling future alarms.");
+			if (App.DEBUG) Log.v(TAG, "Successfully deleted all decrypted files. Service is now ending and canceling future alarms.");
 		}
 	}
 
@@ -137,7 +137,7 @@ public class DeleteDecryptedFilesService extends WakefulIntentService {
 					do {
 						dbPath = c.getString(pathIndex);
 						instanceId = c.getInt(idIndex);
-						Log.v(TAG, "DeleteDecrypted files found id=" + instanceId + " path=" + dbPath);
+						if (App.DEBUG) Log.v(TAG, "DeleteDecrypted files found id=" + instanceId + " path=" + dbPath);
 						Map<String, Object> temp = new HashMap<String, Object>();
 						temp.put(INSTANCE_ID, instanceId);
 						temp.put(INSTANCE_PATH, dbPath);
@@ -189,7 +189,7 @@ public class DeleteDecryptedFilesService extends WakefulIntentService {
 			if (updatedrows > 1) {
 				Log.e(TAG, "Updated more than one entry, something is wrong with query of :" + String.valueOf(id));
 			} else if (updatedrows == 1) {
-				Log.i(TAG, "Instance successfully updated with decryption time");
+				if (App.DEBUG) Log.v(TAG, "Instance successfully updated with decryption time");
 				updated = true;
 			} else {
 				Log.e(TAG, "Instance doesn't exist with id: " + String.valueOf(id));

@@ -26,13 +26,13 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SyncResult;
-import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.alphabetbloc.accessforms.provider.InstanceProviderAPI;
 import com.alphabetbloc.accessforms.provider.InstanceProviderAPI.InstanceColumns;
+import com.alphabetbloc.accessmrs.R;
 import com.alphabetbloc.accessmrs.data.Form;
 import com.alphabetbloc.accessmrs.providers.DataModel;
 import com.alphabetbloc.accessmrs.providers.Db;
@@ -40,7 +40,6 @@ import com.alphabetbloc.accessmrs.providers.DbProvider;
 import com.alphabetbloc.accessmrs.utilities.App;
 import com.alphabetbloc.accessmrs.utilities.UiUtils;
 import com.alphabetbloc.accessmrs.utilities.XformUtils;
-import com.alphabetbloc.accessmrs.R;
 
 /**
  * A Class to help with all Database interaction during a Sync.
@@ -61,7 +60,6 @@ public class SyncManager {
 	public static final int DOWNLOAD_OBS = 3;
 	public static final int SYNC_COMPLETE = 4;
 	public static final String MANUAL_SYNC = "manual_sync";
-	
 
 	private String mSyncResultString;
 	private Context mContext;
@@ -81,12 +79,12 @@ public class SyncManager {
 		sLoopProgress = 0;
 		sLoopCount = 0;
 		sEndSync = false;
-		Log.i(TAG, "New SyncManager with: Step=" + sSyncStep + " Progress=" + sLoopProgress + " Count=" + sLoopCount);
+		if (App.DEBUG) Log.v(TAG, "New SyncManager with: Step=" + sSyncStep + " Progress=" + sLoopProgress + " Count=" + sLoopCount);
 	}
 
 	// REQUEST MANUAL SYNC
 	public static void syncData() {
-		Log.i(TAG, "SyncData is Requested");
+		if (App.DEBUG) Log.v(TAG, "SyncData is Requested");
 		AccountManager accountManager = AccountManager.get(App.getApp());
 		Account[] accounts = accountManager.getAccountsByType(App.getApp().getString(R.string.app_account_type));
 		if (accounts.length > 0) {
@@ -107,7 +105,7 @@ public class SyncManager {
 
 	public void addSyncStep(String title, boolean increment) {
 
-		if (increment){
+		if (increment) {
 			sSyncStep++;
 			sLoopProgress = 0;
 			sLoopCount = 0;
@@ -122,7 +120,8 @@ public class SyncManager {
 		// Or else just update the title
 		sSyncTitle = title;
 
-		Log.i(TAG, "addSyncStep: Step=" + sSyncStep + " Progress=" + sLoopProgress + " Count=" + sLoopCount);
+		if (App.DEBUG)
+			if (App.DEBUG) Log.v(TAG, "addSyncStep: Step=" + sSyncStep + " Progress=" + sLoopProgress + " Count=" + sLoopCount);
 		// if (sSyncStep == 0)
 		// sSyncStep++;
 		// int roundLoopUp = (int) (syncStepAndLoop + 0.5);
@@ -136,19 +135,20 @@ public class SyncManager {
 	public String[] getInstancesToUpload() {
 
 		ArrayList<String> selectedInstances = new ArrayList<String>();
-
-		Cursor c = Db.open().fetchFormInstancesByStatus(DataModel.STATUS_UNSUBMITTED);
-		if (c != null) {
-			if (c.moveToFirst()) {
-				do {
-					String dbPath = c.getString(c.getColumnIndex(DataModel.KEY_PATH));
-					selectedInstances.add(dbPath);
-				} while (c.moveToNext());
-			}
-			c.close();
-		}
-
-		return selectedInstances.toArray(new String[selectedInstances.size()]);
+		return selectedInstances.toArray(new String[0]);
+		
+//		Cursor c = Db.open().fetchFormInstancesByStatus(DataModel.STATUS_UNSUBMITTED);
+//		if (c != null) {
+//			if (c.moveToFirst()) {
+//				do {
+//					String dbPath = c.getString(c.getColumnIndex(DataModel.KEY_PATH));
+//					selectedInstances.add(dbPath);
+//				} while (c.moveToNext());
+//			}
+//			c.close();
+//		}
+//
+//		return selectedInstances.toArray(new String[selectedInstances.size()]);
 	}
 
 	public String updateUploadedForms(String[] uploaded, SyncResult syncResult) {
@@ -165,7 +165,7 @@ public class SyncManager {
 			for (int i = 0; i < uploaded.length; i++) {
 
 				path = uploaded[i];
-				Log.v(TAG, "Updating the uploaded instance in db " + path);
+				if (App.DEBUG) Log.v(TAG, "Updating the uploaded instance in db " + path);
 				// update AccessMRS
 				e = updateAccessMrsInstances(path, syncResult);
 				if (e != null)
@@ -178,7 +178,10 @@ public class SyncManager {
 
 				sLoopProgress++;
 			}
-
+			
+			//TODO! check this!
+			Db.open().clearSubmittedForms();
+			
 			// Encrypt the uploaded data with wakelock to ensure it happens!
 			WakefulIntentService.sendWakefulWork(mContext, EncryptionService.class);
 		}
@@ -196,7 +199,9 @@ public class SyncManager {
 			// TODO! Make sure we are deleting the submitted instances from
 			// Db
 			// after encryption!
+			
 			Db.open().updateFormInstance(path, DataModel.STATUS_SUBMITTED);
+			
 			// c.close();
 			// }
 
@@ -222,7 +227,7 @@ public class SyncManager {
 				++syncResult.stats.numIoExceptions;
 				Log.e(TAG, "Error! updated more than one entry when tyring to update: " + path.toString());
 			} else if (updatedrows == 1) {
-				Log.i(TAG, "Instance successfully updated to Submitted Status");
+				if (App.DEBUG) Log.v(TAG, "Instance successfully updated to Submitted Status");
 			} else {
 				++syncResult.stats.numIoExceptions;
 				Log.e(TAG, "Error, Instance doesn't exist but we have its path!! " + path.toString());
@@ -336,11 +341,16 @@ public class SyncManager {
 				insertObservations(dis);
 
 				try {
-					addSyncStep(mContext.getString(R.string.sync_updating_data), false); // 90% (doubled due to slow speed)
+					addSyncStep(mContext.getString(R.string.sync_updating_data), false); // 90%
+																							// (doubled
+																							// due
+																							// to
+																							// slow
+																							// speed)
 					insertPatientForms(dis);
 				} catch (EOFException e) {
 					// do nothing for EOFExceptions in this case
-					Log.i(TAG, "No SmartForms available on server");
+					if (App.DEBUG) Log.v(TAG, "No SmartForms available on server");
 				}
 
 				dis.close();
@@ -348,7 +358,7 @@ public class SyncManager {
 
 			updateAccessMrsObs();
 			addSyncStep(mContext.getString(R.string.sync_updating_data), false); // 100%
-			
+
 		} catch (Exception e) {
 			e.printStackTrace();
 			++syncResult.stats.numIoExceptions;
@@ -361,10 +371,11 @@ public class SyncManager {
 	public void updateAccessMrsObs() {
 		// sync db
 
-		Db.open().updatePriorityFormNumbers();
-		Db.open().updatePriorityFormList();
-		Db.open().updateSavedFormNumbers();
-		Db.open().updateSavedFormsList();
+		//TODO! CHANGE THIS
+//		Db.open().updatePriorityFormNumbers();
+//		Db.open().updatePriorityFormList();
+//		Db.open().updateSavedFormNumbers();
+//		Db.open().updateSavedFormsList();
 
 		// log the event
 		Db.open().createDownloadLog();
@@ -391,7 +402,7 @@ public class SyncManager {
 		sLoopProgress = 0;
 		try {
 			sLoopCount = zdis.readInt();
-			Log.i(TAG, "insertPatients icount: " + sLoopCount);
+			if (App.DEBUG) Log.v(TAG, "insertPatients icount: " + sLoopCount);
 			for (int i = 1; i < sLoopCount + 1; i++) {
 
 				ih.prepareForInsert();
@@ -413,7 +424,7 @@ public class SyncManager {
 		}
 
 		long end = System.currentTimeMillis();
-		Log.i("END InsertPts", String.format("InsertPts Speed: %d ms, Records per second: %.2f", (int) (end - start), 1000 * (double) sLoopCount / (double) (end - start)));
+		if (App.DEBUG) Log.v("END InsertPts", String.format("InsertPts Speed: %d ms, Records per second: %.2f", (int) (end - start), 1000 * (double) sLoopCount / (double) (end - start)));
 
 	}
 
@@ -439,7 +450,7 @@ public class SyncManager {
 		int count = 0;
 		try {
 			sLoopCount = zdis.readInt();
-			Log.i(TAG, "insertObservations icount: " + sLoopCount);
+			if (App.DEBUG) Log.v(TAG, "insertObservations icount: " + sLoopCount);
 			for (int i = 1; i < sLoopCount + 1; i++) {
 
 				ih.prepareForInsert();
@@ -459,7 +470,7 @@ public class SyncManager {
 				ih.bind(obsTypeIndex, dataType);
 				ih.bind(obsEncDateIndex, parseDate(input, output, zdis.readUTF()));
 				ih.execute();
-				
+
 				count++;
 				sLoopProgress = count * 2;
 			}
@@ -472,7 +483,7 @@ public class SyncManager {
 		}
 
 		long end = System.currentTimeMillis();
-		Log.i("END InsertObs", String.format("InsertObs Speed: %d ms, Records per second: %.2f", (int) (end - start), 1000 * (double) sLoopCount / (double) (end - start)));
+		if (App.DEBUG) Log.v("END InsertObs", String.format("InsertObs Speed: %d ms, Records per second: %.2f", (int) (end - start), 1000 * (double) sLoopCount / (double) (end - start)));
 
 	}
 
@@ -497,8 +508,8 @@ public class SyncManager {
 		db.beginTransaction();
 		sLoopProgress = 0;
 		try {
-			sLoopProgress = zdis.readInt();
-			Log.i(TAG, "insertPatientForms icount: " + sLoopCount);
+			sLoopCount = zdis.readInt();
+			if (App.DEBUG) Log.v(TAG, "insertPatientForms icount: " + sLoopCount);
 			for (int i = 1; i < sLoopCount + 1; i++) {
 
 				ih.prepareForInsert();
@@ -527,7 +538,7 @@ public class SyncManager {
 		}
 
 		long end = System.currentTimeMillis();
-		Log.i("END InsertPtsForms", String.format("InsertPtsForms Speed: %d ms, Records per second: %.2f", (int) (end - start), 1000 * (double) sLoopCount / (double) (end - start)));
+		if (App.DEBUG) Log.v("END InsertPtsForms", String.format("InsertPtsForms Speed: %d ms, Records per second: %.2f", (int) (end - start), 1000 * (double) sLoopCount / (double) (end - start)));
 
 	}
 
@@ -560,7 +571,7 @@ public class SyncManager {
 	}
 
 	public void toastSyncUpdate(int syncType, int success, int total, int currentErrors, String dbError) {
-		Log.v(TAG, "toasting a sync message with parameters=" + syncType + ", " + success + ", " + total + ", " + currentErrors + ", " + dbError);
+		if (App.DEBUG) Log.v(TAG, "toasting a sync message with parameters=" + syncType + ", " + success + ", " + total + ", " + currentErrors + ", " + dbError);
 		String currentToast = createToastString(syncType, success, total, currentErrors);
 		if (currentToast != null) {
 
@@ -654,7 +665,7 @@ public class SyncManager {
 // current = (int) Math.round(((float) i / (float) icount) *
 // 2.0);
 // if (current != progress) {
-// Log.i(TAG, "i=" + i + " current=" + current + " /progress=" +
+// if (App.DEBUG) Log.v(TAG, "i=" + i + " current=" + current + " /progress=" +
 // progress + " icount=" + icount + " mProgress" +
 // sSyncProgress);
 // progress = current;

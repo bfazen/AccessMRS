@@ -1,10 +1,10 @@
 package com.alphabetbloc.accessmrs.providers;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import net.sqlcipher.SQLException;
 import net.sqlcipher.database.SQLiteQueryBuilder;
-
 
 import android.content.ContentValues;
 import android.database.Cursor;
@@ -22,9 +22,7 @@ import com.alphabetbloc.accessmrs.ui.user.DashboardActivity;
 import com.alphabetbloc.accessmrs.utilities.App;
 
 /**
- * 
  * @author Louis Fazen (louis.fazen@gmail.com)
- * @author Yaw Anokwa (I think the only one... but could be Sam Mbugua?)
  */
 public class Db {
 
@@ -102,6 +100,12 @@ public class Db {
 		cv.put(DataModel.FORM_STOP_TIME, activitylog.getActivityStopTime());
 		cv.put(DataModel.FORM_LAUNCH_TYPE, activitylog.getFormType());
 		return DbProvider.openDb().insert(DataModel.FORM_LOG_TABLE, cv);
+	}
+
+	public boolean clearSubmittedForms() throws SQLException {
+		String selection = InstanceColumns.STATUS + "=?";
+		String selectionArgs[] = { InstanceProviderAPI.STATUS_SUBMITTED };
+		return DbProvider.openDb().delete(DataModel.FORMINSTANCES_TABLE, selection, selectionArgs);
 	}
 
 	// QUERY SECTION
@@ -185,9 +189,10 @@ public class Db {
 	}
 
 	public Cursor fetchPatientObservations(Integer patientId) throws SQLException {
-		String selection = DataModel.KEY_PATIENT_ID + "=" + patientId;
+		String selection = DataModel.KEY_PATIENT_ID + "=? AND " + DataModel.KEY_FIELD_NAME + " != " + DataModel.KEY_FIELD_FORM_VALUE;
+		String[] selectionArgs = new String[] { String.valueOf(patientId) };
 		String sortOrder = DataModel.KEY_FIELD_NAME + "," + DataModel.KEY_ENCOUNTER_DATE + " desc";
-		return DbProvider.openDb().query(DataModel.OBSERVATIONS_TABLE, null, selection, null, sortOrder);
+		return DbProvider.openDb().query(DataModel.OBSERVATIONS_TABLE, null, selection, selectionArgs, sortOrder);
 	}
 
 	public Cursor fetchPatientObservation(Integer patientId, String fieldName) throws SQLException {
@@ -263,7 +268,8 @@ public class Db {
 				selection.append(" AND ").append(listSelection);
 			listSelection = selection.toString();
 		}
-		Log.v(TAG, "SELECT " + projection + " FROM " + table + " WHERE " + listSelection + " GROUP BY " + groupBy + " ORDER BY " + listOrder);
+		if (App.DEBUG)
+			Log.v(TAG, "SELECT " + projection + " FROM " + table + " WHERE " + listSelection + " GROUP BY " + groupBy + " ORDER BY " + listOrder);
 		return DbProvider.openDb().query(true, table, projection, listSelection, null, groupBy, null, listOrder, null);
 	}
 
@@ -445,10 +451,10 @@ public class Db {
 		String[] projection = new String[] { "count(*) AS " + DataModel.KEY_PRIORITY_FORM_NUMBER };
 		String selection = DataModel.KEY_PRIORITY_FORM_NUMBER + " IS NOT NULL";
 		c = DbProvider.openDb().query(DataModel.PATIENTS_TABLE, projection, selection, null, null);
-
 		if (c != null) {
-			if (c.moveToFirst())
+			if (c.moveToFirst()) {
 				count = c.getInt(c.getColumnIndex(DataModel.KEY_PRIORITY_FORM_NUMBER));
+			}
 			c.close();
 		}
 		return count;
@@ -529,29 +535,45 @@ public class Db {
 	public void deleteTemporaryPatients() throws SQLException {
 
 		Cursor c = null;
-		String query = "SELECT " + DataModel.PATIENTS_TABLE + "." + DataModel.KEY_PATIENT_ID + " AS " + DataModel.KEY_PATIENT_ID + 
-				" FROM " + DataModel.PATIENTS_TABLE + " LEFT OUTER JOIN " + DataModel.FORMINSTANCES_TABLE + 
-				" ON " + DataModel.PATIENTS_TABLE + "." + DataModel.KEY_PATIENT_ID + " = " + DataModel.FORMINSTANCES_TABLE + "." + DataModel.KEY_PATIENT_ID + 
-				" WHERE " + DataModel.KEY_CLIENT_CREATED + "= 2" + " AND " + DataModel.FORMINSTANCES_TABLE + "." + DataModel.KEY_PATIENT_ID + " IS NULL";
-		
+		String query = "SELECT " + DataModel.PATIENTS_TABLE + "." + DataModel.KEY_PATIENT_ID + " AS " + DataModel.KEY_PATIENT_ID + " FROM " + DataModel.PATIENTS_TABLE + " LEFT OUTER JOIN " + DataModel.FORMINSTANCES_TABLE + " ON " + DataModel.PATIENTS_TABLE + "."
+				+ DataModel.KEY_PATIENT_ID + " = " + DataModel.FORMINSTANCES_TABLE + "." + DataModel.KEY_PATIENT_ID + " WHERE " + DataModel.KEY_CLIENT_CREATED + "= 2" + " AND " + DataModel.FORMINSTANCES_TABLE + "." + DataModel.KEY_PATIENT_ID + " IS NULL";
+
 		c = DbProvider.openDb().rawQuery(query, null);
 		if (c != null) {
 			if (c.moveToFirst()) {
 				do {
 					String patientId = c.getString(c.getColumnIndex(DataModel.KEY_PATIENT_ID));
 					DbProvider.openDb().delete(DataModel.PATIENTS_TABLE, DataModel.KEY_PATIENT_ID + "=?", new String[] { patientId });
-					
+
 				} while (c.moveToNext());
 			}
 			c.close();
 		}
 
 	}
+
+	public void updatePriorityFormNumbers2(){
+		DbProvider.openDb();
+		Cursor c = null;
+		String subquery = SQLiteQueryBuilder.buildQueryString(
+		// include distinct
+				true,
+				// FROM tables
+				DataModel.FORMS_TABLE + "," + DataModel.OBSERVATIONS_TABLE,
+				// two columns (one of which is a group_concat()
+				new String[] { DataModel.OBSERVATIONS_TABLE + "." + DataModel.KEY_PATIENT_ID + ", group_concat(" + DataModel.FORMS_TABLE + "." + DataModel.KEY_FORM_NAME + ",\", \") AS " + DataModel.KEY_PRIORITY_FORM_NAMES },
+				// where
+				DataModel.OBSERVATIONS_TABLE + "." + DataModel.KEY_FIELD_NAME + "=" + DataModel.KEY_FIELD_FORM_VALUE + " AND " + DataModel.FORMS_TABLE + "." + DataModel.KEY_FORM_ID + "=" + DataModel.OBSERVATIONS_TABLE + "." + DataModel.KEY_VALUE_INT,
+				// group by
+				DataModel.OBSERVATIONS_TABLE + "." + DataModel.KEY_PATIENT_ID, null, null, null);
+
+		c = DbProvider.openDb().rawQuery(subquery, null);
+	}
 	
 	public void updatePriorityFormNumbers() throws SQLException {
 
 		Cursor c = null;
-		String projection[] = new String[] { DataModel.KEY_PATIENT_ID, "count(*) as " + DataModel.KEY_PRIORITY_FORM_NUMBER };
+		String[] projection = new String[] { DataModel.KEY_PATIENT_ID, "count(*) as " + DataModel.KEY_PRIORITY_FORM_NUMBER };
 		String selection = DataModel.KEY_FIELD_NAME + "=" + DataModel.KEY_FIELD_FORM_VALUE;
 		String groupBy = DataModel.KEY_PATIENT_ID;
 		c = DbProvider.openDb().query(DataModel.OBSERVATIONS_TABLE, projection, selection, null, groupBy, null, null);
@@ -723,7 +745,7 @@ public class Db {
 
 	// TODO! Verify that this is ever called (if moveToFirst is null?) I think
 	// the logic is wrong here!
-	// saved forms are kept in the AccessForms (i.e. ODK Collect)  database...
+	// saved forms are kept in the AccessForms (i.e. ODK Collect) database...
 	public void updateSavedFormNumbersByPatientId(String updatePatientId) throws SQLException {
 		DbProvider.openDb();
 		Cursor c = null;

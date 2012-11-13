@@ -8,8 +8,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -18,8 +16,6 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.entity.mime.MultipartEntity;
 
 import android.accounts.Account;
-import android.app.ActivityManager;
-import android.app.ActivityManager.RunningAppProcessInfo;
 import android.content.AbstractThreadedSyncAdapter;
 import android.content.ContentProviderClient;
 import android.content.Context;
@@ -32,6 +28,7 @@ import android.util.Log;
 import com.alphabetbloc.accessmrs.R;
 import com.alphabetbloc.accessmrs.data.Form;
 import com.alphabetbloc.accessmrs.ui.admin.LauncherActivity;
+import com.alphabetbloc.accessmrs.utilities.App;
 import com.alphabetbloc.accessmrs.utilities.FileUtils;
 import com.alphabetbloc.accessmrs.utilities.NetworkUtils;
 import com.alphabetbloc.accessmrs.utilities.UiUtils;
@@ -58,27 +55,22 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 
 	@Override
 	public void onPerformSync(Account account, Bundle extras, String authority, ContentProviderClient provider, final SyncResult syncResult) {
-		Log.i(TAG, "Sync Requested... asking user.");
+		if (App.DEBUG) Log.v(TAG, "Sync Requested... asking user.");
 		Thread.currentThread().setName(TAG);
 
 		mSyncManager = new SyncManager(mContext);
 
-		// check user activity
-		if (isUserEnteringData()) {
-			Log.v(TAG, "User is entering data, so canceling the sync");
-			SyncManager.sCancelSync = true;
-		}
 		// ask user to sync
 		int count = 0;
 		while (!SyncManager.sStartSync && !SyncManager.sCancelSync && count < 20) {
 			android.os.SystemClock.sleep(1000);
 			count++;
-			Log.v(TAG, "Waiting for User with count=" + count);
+			if (App.DEBUG) Log.v(TAG, "Waiting for User with count=" + count);
 		}
 
 		// sync
 		if (!SyncManager.sCancelSync) {
-			Log.i(TAG, "Starting an actual sync");
+			if (App.DEBUG) Log.v(TAG, "Starting an actual sync");
 			// Inform Activity
 			Intent broadcast = new Intent(SyncManager.SYNC_MESSAGE);
 			broadcast.putExtra(SyncManager.START_NEW_SYNC, true);
@@ -87,35 +79,14 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 			// Start the Sync
 			performSync(syncResult);
 		} else {
-			Log.i(TAG, "User cancelled the sync");
+			if (App.DEBUG) Log.v(TAG, "User cancelled the sync");
 		}
 
 		SyncManager.sEndSync = true;
 		SyncManager.sStartSync = false;
 		SyncManager.sCancelSync = false;
 
-		Log.i(TAG, "sync is now ending");
-	}
-
-	private boolean isUserEnteringData() {
-		RunningAppProcessInfo currentApp = null;
-		String accessFormsPackage = "com.alphabetbloc.accessforms";
-
-		ActivityManager am = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
-		List<RunningAppProcessInfo> l = am.getRunningAppProcesses();
-		Iterator<RunningAppProcessInfo> i = l.iterator();
-
-		while (i.hasNext()) {
-			currentApp = i.next();
-			if (currentApp.importance == RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
-				if (currentApp.processName.equalsIgnoreCase(accessFormsPackage))
-					return true;
-				else
-					return false;
-			}
-		}
-
-		return false;
+		if (App.DEBUG) Log.v(TAG, "sync is now ending");
 	}
 
 	private void performSync(SyncResult syncResult) {
@@ -131,7 +102,6 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 			UiUtils.toastAlert(mContext.getString(R.string.sync_error), mContext.getString(R.string.no_connection));
 			return;
 		}
-
 		// UPLOAD FORMS
 		mSyncManager.addSyncStep(mContext.getString(R.string.sync_uploading_forms), false); // 0%
 		String[] instancesToUpload = mSyncManager.getInstancesToUpload();
@@ -141,7 +111,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 		mSyncManager.addSyncStep(mContext.getString(R.string.sync_uploading_forms), (instancesUploaded.length < 1) ? true : false); // 20%
 		int uploadErrors = (int) syncResult.stats.numIoExceptions;
 		mSyncManager.toastSyncUpdate(SyncManager.UPLOAD_FORMS, instancesUploaded.length, instancesToUpload.length, uploadErrors, dbError);
-		Log.v(TAG, "End of Upload ConnectionTimeOutException=" + mTimeoutException);
+		if (App.DEBUG) Log.v(TAG, "End of Upload ConnectionTimeOutException=" + mTimeoutException);
 		if (mTimeoutException != null) {
 			mSyncManager.toastSyncResult((int) syncResult.stats.numIoExceptions, mTimeoutException);
 			return;
@@ -160,7 +130,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 		mSyncManager.addSyncStep(mContext.getString(R.string.sync_downloading_forms), (formsDownloaded.length < 1) ? true : false); // 40%
 		dbError = mSyncManager.updateDownloadedForms(formsDownloaded, syncResult);
 		mSyncManager.addSyncStep(mContext.getString(R.string.sync_downloading_forms), (formsDownloaded.length < 1) ? true : false); // 50%
-		Log.v(TAG, "Downloaded New Forms with result errors=" + syncResult.stats.numIoExceptions);
+		if (App.DEBUG) Log.v(TAG, "Downloaded New Forms with result errors=" + syncResult.stats.numIoExceptions);
 		int downloadErrors = ((int) syncResult.stats.numIoExceptions) - uploadErrors;
 		mSyncManager.toastSyncUpdate(SyncManager.DOWNLOAD_FORMS, formsDownloaded.length, formsToDownload.length, downloadErrors, dbError);
 		if (mTimeoutException != null) {
@@ -179,7 +149,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 		}
 		int downloadObsErrors = ((int) syncResult.stats.numIoExceptions) - (uploadErrors + downloadErrors);
 		mSyncManager.toastSyncUpdate(SyncManager.DOWNLOAD_OBS, -1, -1, downloadObsErrors, dbError);
-		Log.v(TAG, "Downloaded New Obs with result errors=" + syncResult.stats.numIoExceptions);
+		if (App.DEBUG) Log.v(TAG, "Downloaded New Obs with result errors=" + syncResult.stats.numIoExceptions);
 
 		// TOAST RESULT
 		mSyncManager.toastSyncResult((int) syncResult.stats.numIoExceptions, null);
@@ -202,7 +172,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 					continue;
 
 				NetworkUtils.postEntity(client, NetworkUtils.getFormUploadUrl(), entity);
-				Log.v(TAG, "everything okay! added an instance...");
+				if (App.DEBUG) Log.v(TAG, "everything okay! added an instance...");
 				uploadedInstances.add(instancePaths[i]);
 
 			} catch (IOException e) {
@@ -280,7 +250,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 			try {
 				// download
 				StringBuilder url = (new StringBuilder(NetworkUtils.getFormDownloadUrl())).append("&formId=").append(formId);
-				Log.i(TAG, "Will try to download form " + formId + " url=" + url);
+				if (App.DEBUG) Log.v(TAG, "Will try to download form " + formId + " url=" + url);
 				InputStream is = NetworkUtils.getStream(client, url.toString());
 
 				File f = new File(FileUtils.getExternalFormsPath(), formId + FileUtils.XML_EXT);

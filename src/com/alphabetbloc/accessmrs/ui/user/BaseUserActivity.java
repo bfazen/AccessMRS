@@ -25,6 +25,7 @@ import android.view.MenuItem;
 import com.alphabetbloc.accessmrs.services.RefreshDataService;
 import com.alphabetbloc.accessmrs.services.SyncManager;
 import com.alphabetbloc.accessmrs.ui.admin.PreferencesActivity;
+import com.alphabetbloc.accessmrs.utilities.App;
 import com.alphabetbloc.accessmrs.utilities.FileUtils;
 import com.alphabetbloc.accessmrs.utilities.UiUtils;
 import com.alphabetbloc.accessmrs.R;
@@ -66,11 +67,11 @@ public abstract class BaseUserActivity extends Activity implements SyncStatusObs
 			public void run() {
 				if (!RefreshDataService.isSyncActive) {
 					// Sync is not yet active, so we must be starting a sync
-					Log.d(TAG, "SyncStatusChanged: starting a Sync");
+					if (App.DEBUG) Log.v(TAG, "SyncStatusChanged: starting a Sync");
 
 				} else {
 					// we are just completing a sync (whether success or not)
-					Log.d(TAG, "SyncStatusChanged: completing sync");
+					if (App.DEBUG) Log.v(TAG, "SyncStatusChanged: completing sync");
 					// dismiss dialog
 					if (mSyncActiveDialog != null) {
 						mSyncActiveDialog.dismiss();
@@ -112,9 +113,9 @@ public abstract class BaseUserActivity extends Activity implements SyncStatusObs
 			public void onClick(DialogInterface dialog, int which) {
 				switch (which) {
 				case DialogInterface.BUTTON_POSITIVE:
-					dialog.dismiss();
 					SyncManager.sStartSync = true;
 					updateSyncProgress();
+					dialog.dismiss();
 					break;
 
 				case DialogInterface.BUTTON_NEGATIVE:
@@ -186,6 +187,12 @@ public abstract class BaseUserActivity extends Activity implements SyncStatusObs
 
 		if (RefreshDataService.isSyncActive)
 			updateSyncProgress();
+		else {
+			if (mSyncActiveDialog != null) {
+				mSyncActiveDialog.dismiss();
+				mSyncActiveDialog = null;
+			}
+		}
 	}
 
 	private void updateSyncProgress() {
@@ -223,12 +230,12 @@ public abstract class BaseUserActivity extends Activity implements SyncStatusObs
 				showRequestSyncDialog();
 				
 			} else if (newSync) {
+				updateSyncProgress();
 				// we are starting a new sync automatically
 				if (mRequestSyncDialog != null) {
 					mRequestSyncDialog.dismiss();
 					mRequestSyncDialog = null;
 				}
-				updateSyncProgress();
 			} else {
 				// we have ongoing sync, with new sync message
 				boolean error = i.getBooleanExtra(SyncManager.TOAST_ERROR, false);

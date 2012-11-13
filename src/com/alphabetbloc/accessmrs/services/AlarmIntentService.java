@@ -9,6 +9,7 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.alphabetbloc.accessmrs.providers.Db;
+import com.alphabetbloc.accessmrs.utilities.App;
 import com.alphabetbloc.accessmrs.R;
 
 /**
@@ -34,16 +35,16 @@ public class AlarmIntentService extends WakefulIntentService {
 	@Override
 	protected void doWakefulWork(Intent intent) {
 		mContext = this;
-		Log.v(TAG, "alarmintent service is now running");
+		if (App.DEBUG) Log.v(TAG, "alarmintent service is now running");
 		// Find the most recent download time
 		long recentDownload = Db.open().fetchMostRecentDownload();
 		long timeSinceRefresh = System.currentTimeMillis() - recentDownload;
-		Log.v(TAG, "Minutes since last refresh: " + timeSinceRefresh / (1000 * 60));
+		if (App.DEBUG) Log.v(TAG, "Minutes since last refresh: " + timeSinceRefresh / (1000 * 60));
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
 		String minRefreshSeconds = prefs.getString(getString(R.string.key_min_refresh_seconds), getString(R.string.default_min_refresh_seconds));
 		long minRefreshMs = 1000L * Long.valueOf(minRefreshSeconds);
 		if (timeSinceRefresh > minRefreshMs) {
-			Log.v(TAG, "RefreshClientService about to start SS service");
+			if (App.DEBUG) Log.v(TAG, "RefreshClientService about to start SS service");
 			ComponentName comp = new ComponentName(mContext.getPackageName(), RefreshDataService.class.getName());
 			Intent i = new Intent();
 			i.setComponent(comp);
@@ -63,7 +64,7 @@ public class AlarmIntentService extends WakefulIntentService {
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
-		Log.v(TAG, "RefreshClientService OnDestroy is called");
+		if (App.DEBUG) Log.v(TAG, "RefreshClientService OnDestroy is called");
 	}
 
 }

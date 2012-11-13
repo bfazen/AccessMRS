@@ -37,6 +37,7 @@ public class LauncherActivity extends Activity {
 	@Override
 	protected void onResume() {
 		super.onResume();
+		sLaunching = true;
 		refreshView();
 	}
 
@@ -47,51 +48,52 @@ public class LauncherActivity extends Activity {
 			protected Boolean doInBackground(Void... params) {
 
 				boolean foregroundApp = getIntent().getBooleanExtra(LAUNCH_DASHBOARD, true);
-				sLaunching = true;
+				boolean closeLauncher = true;
 				Intent i = LauncherUtil.getLaunchIntent();
 
 				// Error
 				if (i == null)
-					sLaunching = false;
-				
+					return closeLauncher;
+
 				// Don't Launch if AccessForms Not Installed
 				else if (i.getAction() != null && i.getAction().equalsIgnoreCase(LauncherUtil.ACCESS_FORMS_NOT_INSTALLED)) {
 					if (foregroundApp)
 						UiUtils.toastAlert(App.getApp().getString(R.string.installation_error), App.getApp().getString(R.string.access_forms_not_installed));
-					sLaunching = false;
 				}
 
 				// If launched in foreground, launch any intent
 				else if (foregroundApp) {
 					startActivity(i);
 
-					if (i.filterEquals(mDashboardIntent))
-						sLaunching = false;
+					if (!i.filterEquals(mDashboardIntent))
+						closeLauncher = false;
 				}
-				
-				// If launched from service, only launch setup intents
+
+				// If launched from service (!foreground), only launch one setup
+				// intent (one at a time... always closing launcher)
 				else if (!i.filterEquals(mDashboardIntent))
 					startActivity(i);
 
-				return sLaunching;
+				return closeLauncher;
 			}
 
 			@Override
-			protected void onPostExecute(Boolean launching) {
-				super.onPostExecute(launching);
-				if(!launching)
+			protected void onPostExecute(Boolean finish) {
+				super.onPostExecute(finish);
+				if (finish)
 					finish();
 			}
-			
+
 		}.execute();
 
 	}
 
 	@Override
 	protected void onDestroy() {
-		Log.i(TAG, "Exiting AccessMRS Activity");
+		if (App.DEBUG)
+			Log.v(TAG, "Exiting AccessMRS Activity");
+		sLaunching = false;
 		super.onDestroy();
 	}
-	
-	
+
 }

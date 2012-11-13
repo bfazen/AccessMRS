@@ -10,6 +10,20 @@
                 android:targetPackage="@string/app_package_name" />
         </Preference>
         <!--
+         <EditTextPreference
+            android:id="@+id/provider_id"
+            android:defaultValue="@string/default_provider"
+            android:dialogTitle="@string/pref_change_provider"
+            android:inputType="phone"
+            android:key="@string/key_provider"
+            android:title="@string/pref_provider" />
+            <EditTextPreference
+            android:id="@+id/provider_id"
+            android:defaultValue="@string/default_provider"
+            android:dialogTitle="@string/pref_change_provider"
+            android:inputType="phone"
+            android:key="@string/key_provider"
+            android:title="@string/pref_provider" />
         <EditTextPreference
             android:id="@+id/program"
             android:defaultValue="@string/default_program"

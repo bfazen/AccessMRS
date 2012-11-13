@@ -140,7 +140,7 @@ public class LauncherUtil {
 					sLaunchIntent = new Intent(UNLOCK_ACTION);
 				}
 			} catch (ActivityNotFoundException e) {
-				Log.e(TAG, "No UNLOCK activity: " + e.getMessage(), e);
+				Log.e(TAG, "No UNLOCK activity Found: " + e.getMessage(), e);
 				Toast.makeText(App.getApp(), "No keystore unlock activity found.", Toast.LENGTH_SHORT).show();
 			}
 			return false;
@@ -155,7 +155,7 @@ public class LauncherUtil {
 			// already setup
 			return true;
 		} else {
-			Log.w(TAG, "it is considered the first run now!");
+			Log.w(TAG, "Running AccessMRS for the first time.");
 			Intent i = new Intent(App.getApp(), SetupPreferencesActivity.class);
 			i.putExtra(SetupPreferencesActivity.SETUP_INTENT, SetupPreferencesActivity.FIRST_RUN);
 			sLaunchIntent = i;
@@ -191,7 +191,7 @@ public class LauncherUtil {
 		Account[] accounts = accountManager.getAccountsByType(App.getApp().getString(R.string.app_account_type));
 		if (accounts.length > 0) {
 			// already setup
-			Log.v(TAG, "there is an account numer=" + accounts.length + "username=" + accounts[0].name);
+			if (App.DEBUG) Log.v(TAG, "there is an account numer=" + accounts.length + "username=" + accounts[0].name);
 			return true;
 		} else {
 			Intent i = new Intent(App.getApp(), SetupAccountActivity.class);
@@ -212,7 +212,7 @@ public class LauncherUtil {
 
 			}
 		} catch (Exception e) {
-			Log.w(TAG, "AccessForms db does not exist?!");
+			Log.w(TAG, "AccessForms db does not exist!");
 			return false;
 		}
 

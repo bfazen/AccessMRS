@@ -28,6 +28,7 @@ import android.view.Window;
 import com.alphabetbloc.accessmrs.services.RefreshDataService;
 import com.alphabetbloc.accessmrs.services.SyncManager;
 import com.alphabetbloc.accessmrs.ui.admin.PreferencesActivity;
+import com.alphabetbloc.accessmrs.utilities.App;
 import com.alphabetbloc.accessmrs.utilities.FileUtils;
 import com.alphabetbloc.accessmrs.utilities.UiUtils;
 import com.alphabetbloc.accessmrs.R;
@@ -76,13 +77,15 @@ public abstract class BaseUserListActivity extends ListActivity implements SyncS
 			public void run() {
 				if (!RefreshDataService.isSyncActive) {
 					// Sync is not yet active, so we must be starting a sync
-					Log.d(TAG, "SyncStatusChanged: starting a Sync");
-//					if (!SyncManager.sStartSync && !SyncManager.sCancelSync)
-//						showRequestSyncDialog();
+					if (App.DEBUG)
+						Log.v(TAG, "SyncStatusChanged: starting a Sync");
+					// if (!SyncManager.sStartSync && !SyncManager.sCancelSync)
+					// showRequestSyncDialog();
 
 				} else {
 					// we are just completing a sync (whether success or not)
-					Log.d(TAG, "SyncStatusChanged: completing sync");
+					if (App.DEBUG)
+						Log.v(TAG, "SyncStatusChanged: completing sync");
 					// dismiss dialog
 					if (mSyncActiveDialog != null) {
 						mSyncActiveDialog.dismiss();
@@ -124,9 +127,9 @@ public abstract class BaseUserListActivity extends ListActivity implements SyncS
 			public void onClick(DialogInterface dialog, int which) {
 				switch (which) {
 				case DialogInterface.BUTTON_POSITIVE:
-					dialog.dismiss();
 					SyncManager.sStartSync = true;
 					updateSyncProgress();
+					dialog.dismiss();
 					break;
 
 				case DialogInterface.BUTTON_NEGATIVE:
@@ -154,7 +157,7 @@ public abstract class BaseUserListActivity extends ListActivity implements SyncS
 		menu.add(0, MENU_ADMIN_PREFERENCES, MENU_ADMIN_PREFERENCES, getString(R.string.pref_admin_settings)).setIcon(android.R.drawable.ic_lock_lock);
 		return true;
 	}
-	
+
 	@Override
 	public boolean onPrepareOptionsMenu(Menu menu) {
 		menu.removeItem(MENU_ADMIN_PREFERENCES);
@@ -198,6 +201,12 @@ public abstract class BaseUserListActivity extends ListActivity implements SyncS
 
 		if (RefreshDataService.isSyncActive)
 			updateSyncProgress();
+		else {
+			if (mSyncActiveDialog != null) {
+				mSyncActiveDialog.dismiss();
+				mSyncActiveDialog = null;
+			}
+		}
 	}
 
 	private void updateSyncProgress() {
@@ -252,7 +261,6 @@ public abstract class BaseUserListActivity extends ListActivity implements SyncS
 		public boolean onDown(MotionEvent e) {
 			return false;
 		}
-
 	}
 
 	protected BroadcastReceiver onSyncNotice = new BroadcastReceiver() {
@@ -262,14 +270,14 @@ public abstract class BaseUserListActivity extends ListActivity implements SyncS
 			boolean newSync = i.getBooleanExtra(SyncManager.START_NEW_SYNC, false);
 			if (requestSync) {
 				showRequestSyncDialog();
-				
+
 			} else if (newSync) {
+				updateSyncProgress();
 				// we are starting a new sync automatically
 				if (mRequestSyncDialog != null) {
 					mRequestSyncDialog.dismiss();
 					mRequestSyncDialog = null;
 				}
-				updateSyncProgress();
 			} else {
 				// we have ongoing sync, with new sync message
 				boolean error = i.getBooleanExtra(SyncManager.TOAST_ERROR, false);

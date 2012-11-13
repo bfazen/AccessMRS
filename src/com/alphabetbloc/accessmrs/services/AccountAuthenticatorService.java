@@ -16,6 +16,7 @@
 package com.alphabetbloc.accessmrs.services;
 
 import com.alphabetbloc.accessmrs.ui.admin.SetupAccountActivity;
+import com.alphabetbloc.accessmrs.utilities.App;
 
 import android.accounts.AbstractAccountAuthenticator;
 import android.accounts.Account;
@@ -95,7 +96,7 @@ public class AccountAuthenticatorService extends Service {
 		@Override
 		public Bundle confirmCredentials(AccountAuthenticatorResponse response, Account account, Bundle options) {
 			// TODO Auto-generated method stub
-			Log.i(TAG, "confirmCredentials");
+			if (App.DEBUG) Log.v(TAG, "confirmCredentials");
 			return null;
 		}
 
@@ -109,7 +110,7 @@ public class AccountAuthenticatorService extends Service {
 		@Override
 		public Bundle editProperties(AccountAuthenticatorResponse response, String accountType) {
 			// TODO Auto-generated method stub
-			Log.i(TAG, "editProperties");
+			if (App.DEBUG) Log.v(TAG, "editProperties");
 			return null;
 		}
 
@@ -124,7 +125,7 @@ public class AccountAuthenticatorService extends Service {
 		@Override
 		public Bundle getAuthToken(AccountAuthenticatorResponse response, Account account, String authTokenType, Bundle options) throws NetworkErrorException {
 			// TODO Auto-generated method stub
-			Log.i(TAG, "getAuthToken");
+			if (App.DEBUG) Log.v(TAG, "getAuthToken");
 			return null;
 		}
 
@@ -138,7 +139,7 @@ public class AccountAuthenticatorService extends Service {
 		@Override
 		public String getAuthTokenLabel(String authTokenType) {
 			// TODO Auto-generated method stub
-			Log.i(TAG, "getAuthTokenLabel");
+			if (App.DEBUG) Log.v(TAG, "getAuthTokenLabel");
 			return null;
 		}
 
@@ -153,7 +154,7 @@ public class AccountAuthenticatorService extends Service {
 		@Override
 		public Bundle hasFeatures(AccountAuthenticatorResponse response, Account account, String[] features) throws NetworkErrorException {
 			// TODO Auto-generated method stub
-			Log.i(TAG, "hasFeatures: " + features);
+			if (App.DEBUG) Log.v(TAG, "hasFeatures: " + features);
 			return null;
 		}
 
@@ -168,7 +169,7 @@ public class AccountAuthenticatorService extends Service {
 		@Override
 		public Bundle updateCredentials(AccountAuthenticatorResponse response, Account account, String authTokenType, Bundle options) {
 			// TODO Auto-generated method stub
-			Log.i(TAG, "updateCredentials");
+			if (App.DEBUG) Log.v(TAG, "updateCredentials");
 			return null;
 		}
 	}

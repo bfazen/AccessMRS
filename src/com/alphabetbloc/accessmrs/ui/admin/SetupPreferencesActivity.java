@@ -7,7 +7,6 @@ import java.io.IOException;
 
 import javax.crypto.SecretKey;
 
-
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -28,6 +27,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.alphabetbloc.accessforms.provider.InstanceProviderAPI.InstanceColumns;
+import com.alphabetbloc.accessmrs.R;
 import com.alphabetbloc.accessmrs.providers.DataModel;
 import com.alphabetbloc.accessmrs.providers.DbProvider;
 import com.alphabetbloc.accessmrs.services.WakefulIntentService;
@@ -38,7 +38,6 @@ import com.alphabetbloc.accessmrs.utilities.EncryptionUtil;
 import com.alphabetbloc.accessmrs.utilities.FileUtils;
 import com.alphabetbloc.accessmrs.utilities.KeyStoreUtil;
 import com.alphabetbloc.accessmrs.utilities.UiUtils;
-import com.alphabetbloc.accessmrs.R;
 
 /**
  * 
@@ -101,7 +100,7 @@ public class SetupPreferencesActivity extends BaseAdminActivity {
 	}
 
 	private void refreshView() {
-		Log.v(TAG, "Refreshing view with mSetupType=" + mSetupType);
+		if (App.DEBUG) Log.v(TAG, "Refreshing view with mSetupType=" + mSetupType);
 		switch (mSetupType) {
 
 		case FIRST_RUN:
@@ -283,7 +282,7 @@ public class SetupPreferencesActivity extends BaseAdminActivity {
 					SecretKey key = Crypto.generateKey();
 					KeyStoreUtil ks = KeyStoreUtil.getInstance();
 					boolean success = ks.put(SQLCIPHER_KEY_NAME, key.getEncoded());
-					Log.d(TAG, "Adding new key to keystore... success: " + success);
+					if (App.DEBUG) Log.v(TAG, "Adding new key to keystore... success: " + success);
 
 					// encrypt the userEntry
 					String encryptedPwd = Crypto.encrypt(userEntry, key);
@@ -348,7 +347,7 @@ public class SetupPreferencesActivity extends BaseAdminActivity {
 		}
 
 		if (isAccessFormsSetup) {
-			Log.d(TAG, "Successfully encrypted AccessForms db with new password.");
+			if (App.DEBUG) Log.v(TAG, "Successfully encrypted AccessForms db with new password.");
 			setupPreferences();
 		} else {
 			mSetupType = RESET_ACCESS_FORMS;
@@ -369,20 +368,21 @@ public class SetupPreferencesActivity extends BaseAdminActivity {
 	
 	// STEP 5: Setup Android Account
 	private void launcAccountSetup(boolean useConfigFile) {
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
+		
 		// launch AccountSetupActivity
 		Intent i = new Intent(mContext, SetupAccountActivity.class);
 		i.putExtra(SetupAccountActivity.LAUNCHED_FROM_ACCT_MGR, false);
 		i.putExtra(SetupAccountActivity.USE_CONFIG_FILE, useConfigFile);
+		i.putExtra(SetupAccountActivity.INITIAL_SETUP, prefs.getBoolean(getString(R.string.key_first_run), true));
 		startActivity(i);
 
 		// Finished First Run Db and Preferences Setup
-		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
 		prefs.edit().putBoolean(getString(R.string.key_first_run), false).commit();
 		finish();
 	}
 
 	private boolean importConfigFile() {
-		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(mContext);
 		File configFile = new File(FileUtils.getExternalRootDirectory(), CONFIG_FILE);
 		File hiddenConfigFile = new File(FileUtils.getExternalRootDirectory(), HIDDEN_CONFIG_FILE);
 		if (!configFile.exists())
@@ -419,7 +419,7 @@ public class SetupPreferencesActivity extends BaseAdminActivity {
 //					else
 //						settings.edit().putString(prefName, prefValue).commit();
 
-					Log.v(TAG, "Imported Preference #" + line + " :" + prefName);
+					if (App.DEBUG) Log.v(TAG, "Imported Preference #" + line + " :" + prefName);
 				}
 			} catch (IOException e) {
 				e.printStackTrace();

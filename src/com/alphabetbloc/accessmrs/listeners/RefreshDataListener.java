@@ -60,7 +60,7 @@ public class RefreshDataListener implements WakefulIntentService.AlarmListener {
 		// the alarms...
 		long recentDownload = Db.open().fetchMostRecentDownload();
 		long timeSinceRefresh = System.currentTimeMillis() - recentDownload;
-		Log.i("louis.fazen", "Minutes since last refresh: " + timeSinceRefresh / (1000 * 60));
+		if (App.DEBUG) Log.v("louis.fazen", "Minutes since last refresh: " + timeSinceRefresh / (1000 * 60));
 
 		long days = 1000 * 60 * 60 * 24;
 		// establishes threshold for Setting Alarm Frequency
@@ -79,7 +79,7 @@ public class RefreshDataListener implements WakefulIntentService.AlarmListener {
 
 	public void sendWakefulWork(Context ctxt) {
 		// to run the business logic in a background thread, call service
-		Log.i("louis.fazen", "sendWakefulWork is called");
+		if (App.DEBUG) Log.v("louis.fazen", "sendWakefulWork is called");
 		WakefulIntentService.sendWakefulWork(ctxt, AlarmIntentService.class);
 	}
 

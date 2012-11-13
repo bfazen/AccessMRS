@@ -34,7 +34,7 @@ public class DbProvider extends ContentProvider {
 
 		@Override
 		public void onCreate(SQLiteDatabase db) {
-			Log.v(TAG, "creating tables");
+			if (App.DEBUG) Log.v(TAG, "creating tables");
 			db.execSQL(DataModel.CREATE_PATIENTS_TABLE);
 			db.execSQL(DataModel.CREATE_OBSERVATIONS_TABLE);
 			db.execSQL(DataModel.CREATE_FORMS_TABLE);
@@ -71,7 +71,7 @@ public class DbProvider extends ContentProvider {
 
 	public static DbProvider openDb() {
 		if (!isOpen()) {
-			Log.w(TAG, "Database is not open! Opening Now!");
+			if(App.DEBUG) Log.v(TAG, "Database is not open! Opening Now!");
 			createDb();
 		}
 
@@ -197,7 +197,7 @@ public class DbProvider extends ContentProvider {
 	}
 
 	public boolean delete(String table, String selection, String[] selectionArgs) {
-		Log.v(TAG, "DB Delete FROM " + table + " WHERE " + selection + " = " + selectionArgs);
+		if (App.DEBUG) Log.v(TAG, "DB Delete FROM " + table + " WHERE " + selection + " = " + selectionArgs);
 		return sDb.delete(table, selection, selectionArgs) > 0;
 	}
 

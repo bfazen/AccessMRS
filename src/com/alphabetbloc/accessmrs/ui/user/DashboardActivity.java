@@ -69,7 +69,7 @@ public class DashboardActivity extends BaseUserActivity {
 
 		TextView providerNumber = (TextView) findViewById(R.id.provider_number);
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(mContext);
-		mProviderId = settings.getString(getString(R.string.key_provider), "0");
+		mProviderId = settings.getString(getString(R.string.key_provider), getString(R.string.default_provider));
 		providerNumber.setText(mProviderId);
 
 		if (getIntent().getBooleanExtra(FIRST_RUN, false))
@@ -259,7 +259,7 @@ public class DashboardActivity extends BaseUserActivity {
 			vg.addView(patientsButton);
 		}
 		
-		Log.v(TAG, "total patients=" + patients);
+		if (App.DEBUG) Log.v(TAG, "total patients=" + patients);
 	}
 
 	private void setAddClientUi(ViewGroup vg) {

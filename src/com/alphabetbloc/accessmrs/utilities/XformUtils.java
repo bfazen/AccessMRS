@@ -152,7 +152,8 @@ public class XformUtils {
 		}
 
 		if (sdFile.exists())
-			Log.i(TAG, "File has been successfully moved: " + assetPath + " -> " + sdPath);
+			if (App.DEBUG)
+				Log.v(TAG, "File has been successfully moved: " + assetPath + " -> " + sdPath);
 
 		return sdFile;
 	}
@@ -237,7 +238,7 @@ public class XformUtils {
 			}
 
 			if (mCursor == null) {
-				System.out.println("Something bad happened");
+				Log.e(TAG, "Error in inserting a form into the forms.db");
 				DbProvider.openDb().delete(DataModel.FORMS_TABLE, null, null);
 				return false;
 			}
@@ -290,7 +291,7 @@ public class XformUtils {
 					} while (c.moveToNext());
 				}
 			}
-			
+
 			c.close();
 		}
 		return formName;
@@ -305,7 +306,8 @@ public class XformUtils {
 	public static int createFormInstance(Patient mPatient, String formPath, String jrFormId, String formname) {
 
 		if (mPatient == null)
-			Log.e(TAG, "lost a patient!");
+			if (App.DEBUG)
+				Log.e(TAG, "lost a patient when trying to create an Xform!");
 
 		// reading the form
 		// TODO! is this the right document type?!
@@ -415,6 +417,7 @@ public class XformUtils {
 			if (childElement != null) {
 
 				String childName = childElement.getName();
+				SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(App.getApp());
 
 				// patient id
 				if (childName.equalsIgnoreCase("patient.patient_id")) {
@@ -462,22 +465,25 @@ public class XformUtils {
 
 				// provider id
 				if (childName.equalsIgnoreCase("encounter.provider_id")) {
-					SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(App.getApp());
-					String providerId = settings.getString(App.getApp().getString(R.string.key_provider), "0");
 					childElement.clear();
+					String providerId = settings.getString(App.getApp().getString(R.string.key_provider), App.getApp().getString(R.string.default_provider));
 					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, providerId);
 				}
 
 				if (childName.equalsIgnoreCase("encounter.location_id")) {
 					childElement.clear();
-					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, "CHV Mobile Form Entry");
+					String locationId = settings.getString(App.getApp().getString(R.string.key_location), App.getApp().getString(R.string.default_location));
+					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, locationId);
 				}
 
 				if (childName.equalsIgnoreCase("encounter.encounter_datetime")) {
 					childElement.clear();
 					Date date = new Date();
 					date.setTime(System.currentTimeMillis());
-					String dateString = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(date);
+					// SimpleDateFormat sdf = new
+					// SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+					SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+					String dateString = sdf.format(date);
 					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, dateString);
 				}
 

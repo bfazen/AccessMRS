@@ -35,7 +35,7 @@ public class MyTrustManager implements X509TrustManager {
 				trustManager = findX509TrustManager(tmf);
 				if (trustManager == null) {
 					throw new IllegalStateException("Couldn't find X509TrustManager");
-				}
+				} 
 			} catch (GeneralSecurityException e) {
 				throw new RuntimeException(e);
 			}
@@ -64,7 +64,7 @@ public class MyTrustManager implements X509TrustManager {
 		for (int i = 0; i < tms.length; i++) {
 			if (tms[i] instanceof X509TrustManager) {
 				return (X509TrustManager) tms[i];
-			}
+			} 
 		}
 
 		return null;
@@ -76,6 +76,7 @@ public class MyTrustManager implements X509TrustManager {
 
 	//combines localManager (above) and defaultManagers into one manager
 	public MyTrustManager(KeyStore localKeyStore) {
+		
 		try {
 			TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
 			tmf.init((KeyStore) null);
@@ -88,14 +89,16 @@ public class MyTrustManager implements X509TrustManager {
 			localTrustManager = new LocalStoreX509TrustManager(localKeyStore);
 
 			List<X509Certificate> allIssuers = new ArrayList<X509Certificate>();
-			for (X509Certificate cert : defaultTrustManager.getAcceptedIssuers()) {
+			
+			for (X509Certificate cert : localTrustManager.getAcceptedIssuers()) {
 				allIssuers.add(cert);
 			}
-			for (X509Certificate cert : localTrustManager.getAcceptedIssuers()) {
+			for (X509Certificate cert : defaultTrustManager.getAcceptedIssuers()) {
 				allIssuers.add(cert);
 			}
 			acceptedIssuers = allIssuers.toArray(new X509Certificate[allIssuers.size()]);
 		} catch (GeneralSecurityException e) {
+			Log.e(TAG, "We have caught an exception in creating a trust manager!");
 			throw new RuntimeException(e);
 		}
 
@@ -103,20 +106,20 @@ public class MyTrustManager implements X509TrustManager {
 
 	public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
 		try {
-			Log.d(TAG, "checkClientTrusted () with default trust manager...");
+			if (App.DEBUG) Log.v(TAG, "checkClientTrusted () with default trust manager...");
 			defaultTrustManager.checkClientTrusted(chain, authType);
 		} catch (CertificateException ce) {
-			Log.d(TAG, "checkClientTrusted () with local trust manager...");
+			if (App.DEBUG) Log.v(TAG, "checkClientTrusted () with local trust manager...");
 			localTrustManager.checkClientTrusted(chain, authType);
 		}
 	}
 
 	public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
 		try {
-			Log.d(TAG, "checkServerTrusted () with local trust manager...");
+			if (App.DEBUG) Log.v(TAG, "checkServerTrusted () with local trust manager...");
 			localTrustManager.checkServerTrusted(chain, authType);
 		} catch (CertificateException ce) {
-			Log.d(TAG, "checkServerTrusted () with default trust manager...");
+			if (App.DEBUG) Log.v(TAG, "checkServerTrusted () with default trust manager...");
 			defaultTrustManager.checkServerTrusted(chain, authType);
 		}
 	}

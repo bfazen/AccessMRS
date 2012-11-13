@@ -28,6 +28,7 @@ import com.alphabetbloc.accessmrs.listeners.DecryptionListener;
 import com.alphabetbloc.accessmrs.listeners.DeleteDecryptedDataListener;
 import com.alphabetbloc.accessmrs.services.WakefulIntentService;
 import com.alphabetbloc.accessmrs.tasks.DecryptionTask;
+import com.alphabetbloc.accessmrs.utilities.App;
 import com.alphabetbloc.accessmrs.utilities.FileUtils;
 import com.alphabetbloc.accessmrs.utilities.UiUtils;
 import com.alphabetbloc.accessmrs.R;
@@ -60,7 +61,7 @@ public class ViewCompletedForms extends ViewFormsActivity implements DecryptionL
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.example_cw_main);
+		setContentView(R.layout.view_forms);
 
 		mContext = this;
 		String patientIdString = getIntent().getStringExtra(KEY_PATIENT_ID);
@@ -85,7 +86,7 @@ public class ViewCompletedForms extends ViewFormsActivity implements DecryptionL
 		refreshView();
 
 		if (mDecryptDialog != null && !mDecryptDialog.isShowing()) {
-			Log.v(TAG, "mDecryptDialog is SHOWING FROM ON RESUME!");
+			if (App.DEBUG) Log.v(TAG, "mDecryptDialog is SHOWING FROM ON RESUME!");
 			mDecryptDialog.show();
 		}
 
@@ -164,7 +165,7 @@ public class ViewCompletedForms extends ViewFormsActivity implements DecryptionL
 		File encFile = new File(encPath);
 		if (encFile.exists())
 			encrypted = true;
-		Log.v(TAG, "File is Encrypted=" + encrypted);
+		if (App.DEBUG) Log.v(TAG, "File is Encrypted=" + encrypted);
 		return encrypted;
 	}
 
@@ -182,7 +183,7 @@ public class ViewCompletedForms extends ViewFormsActivity implements DecryptionL
 		File decFile = new File(decPath);
 
 		if (decFile.exists() && ((System.currentTimeMillis() - decFile.lastModified()) < maxDecrypt)) {
-			Log.v(TAG, "File is already decrytped!");
+			if (App.DEBUG) Log.v(TAG, "File is already decrytped!");
 			return true;
 
 		} else if (decFile.exists()) {
@@ -197,7 +198,7 @@ public class ViewCompletedForms extends ViewFormsActivity implements DecryptionL
 		if (mDecryptDialog != null) {
 			mDecryptDialog.cancel();
 			mDecryptDialog = null;
-			Log.v(TAG, "mDecryptDialog is CANCELLED!");
+			if (App.DEBUG) Log.v(TAG, "mDecryptDialog is CANCELLED!");
 		}
 		if (mDecryptionTask != null) {
 			mDecryptionTask.setDecryptionListener(null);
@@ -207,7 +208,7 @@ public class ViewCompletedForms extends ViewFormsActivity implements DecryptionL
 			launchFormView(mClickedForm);
 		else {
 			UiUtils.toastAlert(mContext, getString(R.string.error_filesystem), getString(R.string.error_opening_file));
-			Log.v(TAG, "Error in Decrypting the file: " + mClickedForm.getPath());
+			if (App.DEBUG) Log.v(TAG, "Error in Decrypting the file: " + mClickedForm.getPath());
 		}
 	}
 

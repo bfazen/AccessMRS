@@ -38,7 +38,7 @@ public class DataModel {
 	public static final String KEY_DATA_TYPE = "data_type";
 
 	// observation values
-	public static final String KEY_FIELD_FORM_VALUE = "\"odkconnector.property.form\"";
+	public static final String KEY_FIELD_FORM_VALUE = "\'odkconnector.property.form\'";
 
 	// observation types
 	public static final int TYPE_STRING = 1;

@@ -42,7 +42,7 @@ public class Crypto {
         for (Provider p : providers) {
             String providerStr = String.format("%s/%s/%f\n", p.getName(),
                     p.getInfo(), p.getVersion());
-            Log.d(TAG, providerStr);
+            if (App.DEBUG) Log.v(TAG, providerStr);
             Set<Service> services = p.getServices();
             List<String> algs = new ArrayList<String>();
             for (Service s : services) {
@@ -61,9 +61,9 @@ public class Crypto {
 
             Collections.sort(algs);
             for (String alg : algs) {
-                Log.d(TAG, "\t" + alg);
+                if (App.DEBUG) Log.v(TAG, "\t" + alg);
             }
-            Log.d(TAG, "");
+            if (App.DEBUG) Log.v(TAG, "");
         }
     }
 
@@ -92,10 +92,10 @@ public class Crypto {
             Cipher cipher = Cipher.getInstance(CIPHER_ALGORITHM);
 
             byte[] iv = generateIv(cipher.getBlockSize());
-            Log.d(TAG, "IV: " + toHex(iv));
+            if (App.DEBUG) Log.v(TAG, "IV: " + toHex(iv));
             IvParameterSpec ivParams = new IvParameterSpec(iv);
             cipher.init(Cipher.ENCRYPT_MODE, key, ivParams);
-            Log.d(TAG, "Cipher IV: "
+            if (App.DEBUG) Log.v(TAG, "Cipher IV: "
                     + (cipher.getIV() == null ? null : toHex(cipher.getIV())));
             byte[] cipherText = cipher.doFinal(plaintext.getBytes("UTF-8"));
 
@@ -138,7 +138,7 @@ public class Crypto {
             Cipher cipher = Cipher.getInstance(CIPHER_ALGORITHM);
             IvParameterSpec ivParams = new IvParameterSpec(iv);
             cipher.init(Cipher.DECRYPT_MODE, key, ivParams);
-            Log.d(TAG, "Cipher IV: " + toHex(cipher.getIV()));
+            if (App.DEBUG) Log.v(TAG, "Cipher IV: " + toHex(cipher.getIV()));
             byte[] plaintext = cipher.doFinal(cipherBytes);
             String plainrStr = new String(plaintext, "UTF-8");
 

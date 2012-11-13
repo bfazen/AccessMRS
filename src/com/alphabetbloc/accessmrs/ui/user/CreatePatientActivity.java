@@ -105,7 +105,7 @@ public class CreatePatientActivity extends BaseUserActivity implements OnGesture
 			XformUtils.insertRegistrationForm();
 
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
-		mProviderId = settings.getString(getString(R.string.key_provider), "0");
+		mProviderId = settings.getString(getString(R.string.key_provider), getString(R.string.default_provider));
 
 		// get Birthday
 		mBirthDatePicker = (DatePicker) findViewById(R.id.birthdate_widget);
@@ -137,7 +137,7 @@ public class CreatePatientActivity extends BaseUserActivity implements OnGesture
 				} else if (mCreateCode == null) {
 					Toast.makeText(CreatePatientActivity.this, "Please specify whether you wish to receive updates on this client in the future.", Toast.LENGTH_SHORT).show();
 				} else if (similarClientCheck()) {
-					Log.d(TAG, "client is similar");
+					if (App.DEBUG) Log.v(TAG, "client is similar");
 					// ask provider for verification
 					Intent i = new Intent(mContext, ListPatientActivity.class);
 					i.putExtra(DashboardActivity.LIST_TYPE, DashboardActivity.LIST_SIMILAR_CLIENTS);
@@ -288,7 +288,7 @@ public class CreatePatientActivity extends BaseUserActivity implements OnGesture
 		int sexRadioId = sexRadioGroup.getCheckedRadioButtonId();
 		RadioButton radioSexButton = (RadioButton) findViewById(sexRadioId);
 		if (radioSexButton != null) {
-			Log.v(TAG, "radiosexButton.getText()=" + radioSexButton.getText());
+			if (App.DEBUG) Log.v(TAG, "radiosexButton.getText()=" + radioSexButton.getText());
 			if (radioSexButton.getText().equals(femaleRadio)) {
 				mSex = "F";
 			} else if (radioSexButton.getText().equals(maleRadio)) {
@@ -338,7 +338,7 @@ public class CreatePatientActivity extends BaseUserActivity implements OnGesture
 		RadioButton tempPermButton = (RadioButton) findViewById(tempPermId);
 
 		if (tempPermButton != null) {
-			Log.v(TAG, "radiosexButton.getText()=" + tempPermButton.getText());
+			if (App.DEBUG) Log.v(TAG, "radiosexButton.getText()=" + tempPermButton.getText());
 			if (tempPermButton.getText().equals(permRadio)) {
 				mCreateCode = PERMANENT_NEW_CLIENT;
 			} else if (tempPermButton.getText().equals(tempRadio)) {
@@ -390,7 +390,7 @@ public class CreatePatientActivity extends BaseUserActivity implements OnGesture
 
 	private void addFormToAccessForms() {
 		if (mPatient == null)
-			Log.e(TAG, "Mpatient is null!?");
+			if(App.DEBUG) Log.e(TAG, "Mpatient is null!?");
 		int instanceId = XformUtils.createRegistrationFormInstance(mPatient);
 		if (instanceId != -1) {
 			Intent intent = new Intent();
