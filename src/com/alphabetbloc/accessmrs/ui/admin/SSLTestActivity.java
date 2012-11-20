@@ -59,7 +59,7 @@ public class SSLTestActivity extends BaseAdminActivity implements SyncDataListen
 	}
 
 	private void testSslConnection() {
-		
+		resultText.setVisibility(View.GONE);
 		mProgress.setVisibility(View.VISIBLE);
 		String server = serverText.getText().toString() + NetworkUtils.PATIENT_DOWNLOAD_URL;
 		String username = userText.getText().toString();
@@ -74,7 +74,7 @@ public class SSLTestActivity extends BaseAdminActivity implements SyncDataListen
 
 	@Override
 	public void syncComplete(String result, SyncResult syncResult) {
-
+		resultText.setVisibility(View.VISIBLE);
 		mProgress.setVisibility(View.GONE);
 		
 		if (Boolean.valueOf(result)) {

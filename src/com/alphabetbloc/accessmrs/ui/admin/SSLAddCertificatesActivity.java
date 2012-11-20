@@ -22,14 +22,6 @@ import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 import javax.security.auth.x500.X500Principal;
 
-import com.alphabetbloc.accessmrs.adapters.CertificateAdapter;
-import com.alphabetbloc.accessmrs.adapters.MergeAdapter;
-import com.alphabetbloc.accessmrs.data.Certificate;
-import com.alphabetbloc.accessmrs.utilities.App;
-import com.alphabetbloc.accessmrs.utilities.EncryptionUtil;
-import com.alphabetbloc.accessmrs.utilities.FileUtils;
-import com.alphabetbloc.accessmrs.R;
-
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -38,6 +30,14 @@ import android.util.Log;
 import android.view.Window;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.alphabetbloc.accessmrs.R;
+import com.alphabetbloc.accessmrs.adapters.CertificateAdapter;
+import com.alphabetbloc.accessmrs.adapters.MergeAdapter;
+import com.alphabetbloc.accessmrs.data.Certificate;
+import com.alphabetbloc.accessmrs.utilities.App;
+import com.alphabetbloc.accessmrs.utilities.EncryptionUtil;
+import com.alphabetbloc.accessmrs.utilities.FileUtils;
 
 /**
  * @author Louis Fazen (louis.fazen@gmail.com)
@@ -197,11 +197,11 @@ public class SSLAddCertificatesActivity extends SSLBaseActivity {
 			@Override
 			protected int manipulate() throws GeneralSecurityException, IOException {
 				KeyStore localTrustStore = loadTrustStore();
-				int certsRemoved = 0;
+				int initial = localTrustStore.size();
 				localTrustStore.deleteEntry(alias);
-				certsRemoved++;
+				int current = localTrustStore.size();
 				saveTrustStore(localTrustStore);
-				return certsRemoved;
+				return initial - current;
 			}
 
 			@Override
@@ -250,19 +250,23 @@ public class SSLAddCertificatesActivity extends SSLBaseActivity {
 
 	@Override
 	protected ArrayList<Certificate> getStoreFiles() {
-		//TODO! How is it possible to view certs from here without ever entering the password?
 		ArrayList<Certificate> androidCerts = new ArrayList<Certificate>();
 
 		try {
 			TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
 			tmf.init((KeyStore) null);
 			X509TrustManager xtm = (X509TrustManager) tmf.getTrustManagers()[0];
+			KeyStore localTrustStore = loadTrustStore();
 
 			Certificate c;
 			for (X509Certificate cert : xtm.getAcceptedIssuers()) {
 				c = new Certificate();
 
-				c.setAlias(hashName(cert.getSubjectX500Principal()));
+				// Nelenkov's version (recreating the alias) was unreliable
+				// here...
+				// c.setAlias(hashName(cert.getSubjectX500Principal()));
+				String alias = localTrustStore.getCertificateAlias(cert);
+				c.setAlias(alias);
 
 				String certS = cert.getSubjectDN().getName();
 				c.setO(getSubString(certS, "O="));
@@ -276,6 +280,10 @@ public class SSLAddCertificatesActivity extends SSLBaseActivity {
 				String certI = cert.getIssuerDN().getName();
 				c.setIO(getSubString(certI, "O="));
 				androidCerts.add(c);
+
+				if (App.DEBUG)
+					Log.e(TAG, " adding certificate getSubject= " + cert.getSubjectX500Principal() + "\n\tAlias=" + c.getAlias() + "\n\tC=" + c.getC() + "\n\tCN=" + c.getCN() + "\n\tST=" + c.getST() + "\n\tL=" + c.getL() + "\n\tE=" + c.getE() + "\n\tOU=" + c.getOU() + "\n\tO="
+							+ c.getO() + "\n\tC=" + cert.getIssuerDN().getName());
 			}
 
 		} catch (GeneralSecurityException e) {

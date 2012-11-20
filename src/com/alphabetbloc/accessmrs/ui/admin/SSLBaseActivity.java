@@ -13,8 +13,8 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.alphabetbloc.accessmrs.data.Certificate;
 import com.alphabetbloc.accessmrs.R;
+import com.alphabetbloc.accessmrs.data.Certificate;
 
 /**
  * 
