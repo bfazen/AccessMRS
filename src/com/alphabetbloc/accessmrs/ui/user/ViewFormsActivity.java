@@ -265,7 +265,7 @@ public abstract class ViewFormsActivity extends BasePatientActivity {
 
 		if (patientId > 0) {
 			Db.open().updateSavedFormNumbersByPatientId(patientId.toString());
-			Db.open().updateSavedFormsListByPatientId(patientId.toString());
+//			Db.open().updateSavedFormsListByPatientId(patientId.toString());
 		}
 
 		// 3. Add to AccessMRS Db if complete, even without ID

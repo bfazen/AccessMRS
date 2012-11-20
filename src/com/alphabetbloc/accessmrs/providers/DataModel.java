@@ -23,9 +23,9 @@ public class DataModel {
 	public static final String KEY_GENDER = "gender";
 	public static final String KEY_CLIENT_CREATED = "client_created";
 	public static final String KEY_UUID = "uuid";
-	public static final String KEY_PRIORITY_FORM_NAMES = "priority_forms";
+//	public static final String KEY_PRIORITY_FORM_NAMES = "priority_forms";
 	public static final String KEY_PRIORITY_FORM_NUMBER = "priority_number";
-	public static final String KEY_SAVED_FORM_NAMES = "saved_forms";
+//	public static final String KEY_SAVED_FORM_NAMES = "saved_forms";
 	public static final String KEY_SAVED_FORM_NUMBER = "saved_number";
 
 	// observation columns
@@ -102,9 +102,9 @@ public class DataModel {
 			KEY_CLIENT_CREATED + " integer, " + 
 			KEY_UUID + " text, " + 
 			KEY_PRIORITY_FORM_NUMBER + " integer, " + 
-			KEY_PRIORITY_FORM_NAMES + " text, " + 
-			KEY_SAVED_FORM_NUMBER + " integer, " + 
-			KEY_SAVED_FORM_NAMES + " text);";
+//			KEY_PRIORITY_FORM_NAMES + " text, " + 
+			KEY_SAVED_FORM_NUMBER + " integer);"; 
+//			KEY_SAVED_FORM_NAMES + " text);";
 
 	public static final String CREATE_OBSERVATIONS_TABLE = "create table " + 
 			OBSERVATIONS_TABLE + " (_id integer primary key autoincrement, " + 

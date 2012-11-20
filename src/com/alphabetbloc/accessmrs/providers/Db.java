@@ -1,11 +1,9 @@
 package com.alphabetbloc.accessmrs.providers;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 
 import net.sqlcipher.SQLException;
 import net.sqlcipher.database.SQLiteQueryBuilder;
-
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
@@ -18,6 +16,7 @@ import com.alphabetbloc.accessmrs.data.Form;
 import com.alphabetbloc.accessmrs.data.FormInstance;
 import com.alphabetbloc.accessmrs.data.Observation;
 import com.alphabetbloc.accessmrs.data.Patient;
+import com.alphabetbloc.accessmrs.ui.user.CreatePatientActivity;
 import com.alphabetbloc.accessmrs.ui.user.DashboardActivity;
 import com.alphabetbloc.accessmrs.utilities.App;
 
@@ -64,7 +63,7 @@ public class Db {
 		return DbProvider.openDb().insert(DataModel.OBSERVATIONS_TABLE, cv);
 	}
 
-	public long createForm(Form form) {
+	public long addDownloadedForm(Form form) {
 		ContentValues cv = new ContentValues();
 		cv.put(DataModel.KEY_FORM_ID, form.getFormId());
 		cv.put(DataModel.KEY_NAME, form.getName());
@@ -239,8 +238,7 @@ public class Db {
 		case DashboardActivity.LIST_COMPLETE:
 			table = DataModel.PATIENTS_TABLE + ", " + DataModel.FORMINSTANCES_TABLE;
 			projection = new String[] { DataModel.PATIENTS_TABLE + "." + DataModel.KEY_ID, DataModel.PATIENTS_TABLE + "." + DataModel.KEY_PATIENT_ID, DataModel.KEY_IDENTIFIER, DataModel.KEY_GIVEN_NAME, DataModel.KEY_FAMILY_NAME, DataModel.KEY_MIDDLE_NAME,
-					DataModel.KEY_BIRTH_DATE, DataModel.KEY_GENDER, DataModel.KEY_PRIORITY_FORM_NAMES, DataModel.KEY_PRIORITY_FORM_NUMBER, DataModel.KEY_SAVED_FORM_NUMBER, DataModel.KEY_SAVED_FORM_NAMES, DataModel.KEY_FORMINSTANCE_SUBTEXT, DataModel.KEY_CLIENT_CREATED,
-					DataModel.KEY_UUID };
+					DataModel.KEY_BIRTH_DATE, DataModel.KEY_GENDER, DataModel.KEY_PRIORITY_FORM_NUMBER, DataModel.KEY_SAVED_FORM_NUMBER, DataModel.KEY_FORMINSTANCE_SUBTEXT, DataModel.KEY_CLIENT_CREATED, DataModel.KEY_UUID };
 			groupBy = DataModel.PATIENTS_TABLE + "." + DataModel.KEY_PATIENT_ID;
 			listSelection = DataModel.PATIENTS_TABLE + "." + DataModel.KEY_PATIENT_ID + "=" + DataModel.FORMINSTANCES_TABLE + "." + DataModel.KEY_PATIENT_ID;
 			break;
@@ -398,12 +396,14 @@ public class Db {
 		// distinct
 				true,
 				// tables
-				DataModel.FORMS_TABLE + ", " + DataModel.FORMINSTANCES_TABLE,
+				DataModel.FORMS_TABLE + ", " + DataModel.FORMINSTANCES_TABLE +
+				// join
+						" ON " + DataModel.FORMS_TABLE + "." + DataModel.KEY_FORM_ID + "=" + DataModel.FORMINSTANCES_TABLE + "." + DataModel.KEY_FORM_ID,
 				// columns
 				new String[] { DataModel.FORMINSTANCES_TABLE + "." + DataModel.KEY_ID + ", " + DataModel.FORMINSTANCES_TABLE + "." + DataModel.KEY_FORM_ID + ", " + DataModel.FORMINSTANCES_TABLE + "." + DataModel.KEY_FORMINSTANCE_DISPLAY + ", " + DataModel.FORMINSTANCES_TABLE
 						+ "." + DataModel.KEY_PATH + ", " + DataModel.FORMS_TABLE + "." + DataModel.KEY_FORM_NAME + ", " + DataModel.FORMINSTANCES_TABLE + "." + DataModel.KEY_FORMINSTANCE_SUBTEXT },
 				// where
-				DataModel.FORMINSTANCES_TABLE + "." + DataModel.KEY_PATIENT_ID + "=" + patientId + " AND " + DataModel.FORMS_TABLE + "." + DataModel.KEY_FORM_ID + "=" + DataModel.FORMINSTANCES_TABLE + "." + DataModel.KEY_FORM_ID,
+				DataModel.FORMINSTANCES_TABLE + "." + DataModel.KEY_PATIENT_ID + "=" + patientId,
 				// group by, having
 				null, null,
 				// order by
@@ -429,7 +429,6 @@ public class Db {
 		return lowestNegativeId;
 	}
 
-	// TODO! Verify this!
 	public long fetchMostRecentDownload() {
 		Cursor c = null;
 		long datetime = 0;
@@ -500,43 +499,61 @@ public class Db {
 	}
 
 	// UPDATE SECTION
-	public void updatePriorityFormList() throws SQLException {
-		DbProvider.openDb();
-		Cursor c = null;
-		String subquery = SQLiteQueryBuilder.buildQueryString(
-		// include distinct
-				true,
-				// FROM tables
-				DataModel.FORMS_TABLE + "," + DataModel.OBSERVATIONS_TABLE,
-				// two columns (one of which is a group_concat()
-				new String[] { DataModel.OBSERVATIONS_TABLE + "." + DataModel.KEY_PATIENT_ID + ", group_concat(" + DataModel.FORMS_TABLE + "." + DataModel.KEY_FORM_NAME + ",\", \") AS " + DataModel.KEY_PRIORITY_FORM_NAMES },
-				// where
-				DataModel.OBSERVATIONS_TABLE + "." + DataModel.KEY_FIELD_NAME + "=" + DataModel.KEY_FIELD_FORM_VALUE + " AND " + DataModel.FORMS_TABLE + "." + DataModel.KEY_FORM_ID + "=" + DataModel.OBSERVATIONS_TABLE + "." + DataModel.KEY_VALUE_INT,
-				// group by
-				DataModel.OBSERVATIONS_TABLE + "." + DataModel.KEY_PATIENT_ID, null, null, null);
+	// public void updatePriorityFormList() throws SQLException {
+	// DbProvider.openDb();
+	// Cursor c = null;
+	// String subquery = SQLiteQueryBuilder.buildQueryString(
+	// // include distinct
+	// true,
+	// // FROM tables
+	// DataModel.FORMS_TABLE + "," + DataModel.OBSERVATIONS_TABLE,
+	// // two columns (one of which is a group_concat()
+	// new String[] { DataModel.OBSERVATIONS_TABLE + "." +
+	// DataModel.KEY_PATIENT_ID +
+	// ", group_concat(" + DataModel.FORMS_TABLE + "." + DataModel.KEY_FORM_NAME
+	// + ",\", \") AS " + DataModel.KEY_PRIORITY_FORM_NAMES },
+	// // where
+	// DataModel.OBSERVATIONS_TABLE + "." + DataModel.KEY_FIELD_NAME + "=" +
+	// DataModel.KEY_FIELD_FORM_VALUE + " AND " + DataModel.FORMS_TABLE + "." +
+	// DataModel.KEY_FORM_ID + "=" + DataModel.OBSERVATIONS_TABLE + "." +
+	// DataModel.KEY_VALUE_INT,
+	// // group by
+	// DataModel.OBSERVATIONS_TABLE + "." + DataModel.KEY_PATIENT_ID, null,
+	// null, null);
+	//
+	// c = DbProvider.openDb().rawQuery(subquery, null);
+	// if (c != null) {
+	// if (c.moveToFirst()) {
+	// do {
+	// String patientId =
+	// c.getString(c.getColumnIndex(DataModel.KEY_PATIENT_ID));
+	// String formName =
+	// c.getString(c.getColumnIndex(DataModel.KEY_PRIORITY_FORM_NAMES));
+	// ContentValues cv = new ContentValues();
+	// cv.put(DataModel.KEY_PRIORITY_FORM_NAMES, formName);
+	//
+	// DbProvider.openDb().update(DataModel.PATIENTS_TABLE, cv,
+	// DataModel.KEY_PATIENT_ID + "=" + patientId, null);
+	// } while (c.moveToNext());
+	// }
+	// c.close();
+	// }
+	//
+	// }
 
-		c = DbProvider.openDb().rawQuery(subquery, null);
-		if (c != null) {
-			if (c.moveToFirst()) {
-				do {
-					String patientId = c.getString(c.getColumnIndex(DataModel.KEY_PATIENT_ID));
-					String formName = c.getString(c.getColumnIndex(DataModel.KEY_PRIORITY_FORM_NAMES));
-					ContentValues cv = new ContentValues();
-					cv.put(DataModel.KEY_PRIORITY_FORM_NAMES, formName);
-
-					DbProvider.openDb().update(DataModel.PATIENTS_TABLE, cv, DataModel.KEY_PATIENT_ID + "=" + patientId, null);
-				} while (c.moveToNext());
-			}
-			c.close();
-		}
-
-	}
-
+	// TODO! Verify this works to delete old patients...
 	public void deleteTemporaryPatients() throws SQLException {
 
 		Cursor c = null;
-		String query = "SELECT " + DataModel.PATIENTS_TABLE + "." + DataModel.KEY_PATIENT_ID + " AS " + DataModel.KEY_PATIENT_ID + " FROM " + DataModel.PATIENTS_TABLE + " LEFT OUTER JOIN " + DataModel.FORMINSTANCES_TABLE + " ON " + DataModel.PATIENTS_TABLE + "."
-				+ DataModel.KEY_PATIENT_ID + " = " + DataModel.FORMINSTANCES_TABLE + "." + DataModel.KEY_PATIENT_ID + " WHERE " + DataModel.KEY_CLIENT_CREATED + "= 2" + " AND " + DataModel.FORMINSTANCES_TABLE + "." + DataModel.KEY_PATIENT_ID + " IS NULL";
+		String query =
+		// projection
+		"SELECT " + DataModel.PATIENTS_TABLE + "." + DataModel.KEY_PATIENT_ID + " AS " + DataModel.KEY_PATIENT_ID +
+		// table
+				" FROM " + DataModel.PATIENTS_TABLE + " LEFT OUTER JOIN " + DataModel.FORMINSTANCES_TABLE +
+				// join
+				" ON " + DataModel.PATIENTS_TABLE + "." + DataModel.KEY_PATIENT_ID + " = " + DataModel.FORMINSTANCES_TABLE + "." + DataModel.KEY_PATIENT_ID +
+				// where (temporary clients)
+				" WHERE " + DataModel.KEY_CLIENT_CREATED + "=" + CreatePatientActivity.TEMPORARY_NEW_CLIENT + " AND " + DataModel.FORMINSTANCES_TABLE + "." + DataModel.KEY_PATIENT_ID + " IS NULL";
 
 		c = DbProvider.openDb().rawQuery(query, null);
 		if (c != null) {
@@ -544,6 +561,53 @@ public class Db {
 				do {
 					String patientId = c.getString(c.getColumnIndex(DataModel.KEY_PATIENT_ID));
 					DbProvider.openDb().delete(DataModel.PATIENTS_TABLE, DataModel.KEY_PATIENT_ID + "=?", new String[] { patientId });
+					App.getApp().getContentResolver().delete(InstanceColumns.CONTENT_URI, InstanceColumns.PATIENT_ID + "=?", new String[] { patientId });
+				} while (c.moveToNext());
+			}
+			c.close();
+		}
+
+	}
+
+	public void resolveTemporaryPatients() throws SQLException {
+		String tempId = "TempId";
+		String openMrsId = "OpenMrsId";
+		Cursor c = null;
+		String query =
+		// projection
+		"SELECT " + DataModel.PATIENTS_TABLE + "." + DataModel.KEY_PATIENT_ID + " AS " + tempId + ", " + DataModel.OBSERVATIONS_TABLE + "." + DataModel.KEY_PATIENT_ID + " AS " + openMrsId +
+		// table
+				" FROM " + DataModel.PATIENTS_TABLE + " INNER JOIN " + DataModel.OBSERVATIONS_TABLE +
+				// join
+				" ON " + DataModel.PATIENTS_TABLE + "." + DataModel.KEY_UUID + " = " + DataModel.OBSERVATIONS_TABLE + "." + DataModel.KEY_VALUE_TEXT +
+				// where (temporary clients)
+				" WHERE " + DataModel.KEY_CLIENT_CREATED + "=" + CreatePatientActivity.PERMANENT_NEW_CLIENT;
+
+		c = DbProvider.openDb().rawQuery(query, null);
+		if (c != null) {
+			if (c.moveToFirst()) {
+				do {
+					String tempPatientId = c.getString(c.getColumnIndex(tempId));
+					String openMrsPatientId = c.getString(c.getColumnIndex(openMrsId));
+
+					// Delete AccessMrs Temporary Patients
+					DbProvider.openDb().delete(DataModel.PATIENTS_TABLE, DataModel.KEY_PATIENT_ID + "=?", new String[] { tempPatientId });
+
+					// Update AccessMrs Instances That Have Not Yet Sent
+					ContentValues cvMrs = new ContentValues();
+					cvMrs.put(DataModel.KEY_PATIENT_ID, openMrsPatientId);
+					String whereMrs = DataModel.KEY_PATIENT_ID + "=?";
+					String[] whereArgsMrs = { tempPatientId };
+					int updatedMrs = DbProvider.openDb().update(DataModel.FORMINSTANCES_TABLE, cvMrs, whereMrs, whereArgsMrs);
+					
+					// Update AccessForms Instances
+					ContentValues cvForms = new ContentValues();
+					cvForms.put(InstanceColumns.PATIENT_ID, openMrsPatientId);
+					String whereForms = InstanceColumns.PATIENT_ID + "=?";
+					String[] whereArgsForms = { tempPatientId };
+					int updatedForms = App.getApp().getContentResolver().update(InstanceColumns.CONTENT_URI, cvForms, whereForms, whereArgsForms);
+					if(App.DEBUG)
+						Log.v(TAG, "Resolved a patient created on the phone.  Updated a total of " + updatedForms + " Instances in AccessForms and " + updatedMrs + " Unsent Instances in AccessMRS");
 
 				} while (c.moveToNext());
 			}
@@ -552,26 +616,13 @@ public class Db {
 
 	}
 
-	public void updatePriorityFormNumbers2(){
-		DbProvider.openDb();
-		Cursor c = null;
-		String subquery = SQLiteQueryBuilder.buildQueryString(
-		// include distinct
-				true,
-				// FROM tables
-				DataModel.FORMS_TABLE + "," + DataModel.OBSERVATIONS_TABLE,
-				// two columns (one of which is a group_concat()
-				new String[] { DataModel.OBSERVATIONS_TABLE + "." + DataModel.KEY_PATIENT_ID + ", group_concat(" + DataModel.FORMS_TABLE + "." + DataModel.KEY_FORM_NAME + ",\", \") AS " + DataModel.KEY_PRIORITY_FORM_NAMES },
-				// where
-				DataModel.OBSERVATIONS_TABLE + "." + DataModel.KEY_FIELD_NAME + "=" + DataModel.KEY_FIELD_FORM_VALUE + " AND " + DataModel.FORMS_TABLE + "." + DataModel.KEY_FORM_ID + "=" + DataModel.OBSERVATIONS_TABLE + "." + DataModel.KEY_VALUE_INT,
-				// group by
-				DataModel.OBSERVATIONS_TABLE + "." + DataModel.KEY_PATIENT_ID, null, null, null);
-
-		c = DbProvider.openDb().rawQuery(subquery, null);
-	}
-	
 	public void updatePriorityFormNumbers() throws SQLException {
+		// There should not be anything to update to null...
+		ContentValues cvNull = new ContentValues();
+		cvNull.putNull(DataModel.KEY_PRIORITY_FORM_NUMBER);
+		DbProvider.openDb().update(DataModel.PATIENTS_TABLE, cvNull, null, null);
 
+		//Update the table
 		Cursor c = null;
 		String[] projection = new String[] { DataModel.KEY_PATIENT_ID, "count(*) as " + DataModel.KEY_PRIORITY_FORM_NUMBER };
 		String selection = DataModel.KEY_FIELD_NAME + "=" + DataModel.KEY_FIELD_FORM_VALUE;
@@ -629,65 +680,86 @@ public class Db {
 			}
 
 			// 2. Update the PriorityFormNames
-			Cursor cname = null;
-			String subquery = SQLiteQueryBuilder.buildQueryString(
-			// include distinct
-					true,
-					// FROM tables
-					DataModel.FORMS_TABLE + "," + DataModel.OBSERVATIONS_TABLE,
-					// two columns (one of which is a group_concat()
-					new String[] { DataModel.OBSERVATIONS_TABLE + "." + DataModel.KEY_PATIENT_ID + ", group_concat(" + DataModel.FORMS_TABLE + "." + DataModel.KEY_FORM_NAME + ",\", \") AS " + DataModel.KEY_PRIORITY_FORM_NAMES },
-					// where
-					DataModel.OBSERVATIONS_TABLE + "." + DataModel.KEY_FIELD_NAME + "=" + DataModel.KEY_FIELD_FORM_VALUE + " AND " + DataModel.FORMS_TABLE + "." + DataModel.KEY_FORM_ID + "=" + DataModel.OBSERVATIONS_TABLE + "." + DataModel.KEY_VALUE_INT + " AND "
-							+ DataModel.OBSERVATIONS_TABLE + "." + DataModel.KEY_PATIENT_ID + "=" + updatePatientId,
-					// group by
-					DataModel.OBSERVATIONS_TABLE + "." + DataModel.KEY_PATIENT_ID, null, null, null);
-
-			cname = DbProvider.openDb().rawQuery(subquery, null);
-			ContentValues cvname = new ContentValues();
-			if (cname != null) {
-				if (cname.moveToFirst()) {
-					do {
-						String patientId = cname.getString(c.getColumnIndex(DataModel.KEY_PATIENT_ID));
-						String formName = cname.getString(c.getColumnIndex(DataModel.KEY_PRIORITY_FORM_NAMES));
-
-						cvname.put(DataModel.KEY_PRIORITY_FORM_NAMES, formName);
-						DbProvider.openDb().update(DataModel.PATIENTS_TABLE, cvname, DataModel.KEY_PATIENT_ID + "=" + patientId, null);
-					} while (cname.moveToNext());
-				} else {
-					// } else if
-					// (cname.isNull(c.getColumnIndex(InstanceColumns.PATIENT_ID))){
-					cvname.putNull(DataModel.KEY_PRIORITY_FORM_NAMES);
-					DbProvider.openDb().update(DataModel.PATIENTS_TABLE, cvname, DataModel.KEY_PATIENT_ID + "=" + updatePatientId, null);
-
-				}
-
-				cname.close();
-			}
+			// Cursor cname = null;
+			// String subquery = SQLiteQueryBuilder.buildQueryString(
+			// // include distinct
+			// true,
+			// // FROM tables
+			// DataModel.FORMS_TABLE + "," + DataModel.OBSERVATIONS_TABLE,
+			// // two columns (one of which is a group_concat()
+			// new String[] { DataModel.OBSERVATIONS_TABLE + "." +
+			// DataModel.KEY_PATIENT_ID + ", group_concat(" +
+			// DataModel.FORMS_TABLE + "." + DataModel.KEY_FORM_NAME +
+			// ",\", \") AS " + DataModel.KEY_PRIORITY_FORM_NAMES },
+			// // where
+			// DataModel.OBSERVATIONS_TABLE + "." + DataModel.KEY_FIELD_NAME +
+			// "=" + DataModel.KEY_FIELD_FORM_VALUE + " AND " +
+			// DataModel.FORMS_TABLE + "." + DataModel.KEY_FORM_ID + "=" +
+			// DataModel.OBSERVATIONS_TABLE + "." + DataModel.KEY_VALUE_INT +
+			// " AND "
+			// + DataModel.OBSERVATIONS_TABLE + "." + DataModel.KEY_PATIENT_ID +
+			// "=" + updatePatientId,
+			// // group by
+			// DataModel.OBSERVATIONS_TABLE + "." + DataModel.KEY_PATIENT_ID,
+			// null, null, null);
+			//
+			// cname = DbProvider.openDb().rawQuery(subquery, null);
+			// ContentValues cvname = new ContentValues();
+			// if (cname != null) {
+			// if (cname.moveToFirst()) {
+			// do {
+			// String patientId =
+			// cname.getString(c.getColumnIndex(DataModel.KEY_PATIENT_ID));
+			// String formName =
+			// cname.getString(c.getColumnIndex(DataModel.KEY_PRIORITY_FORM_NAMES));
+			//
+			// cvname.put(DataModel.KEY_PRIORITY_FORM_NAMES, formName);
+			// DbProvider.openDb().update(DataModel.PATIENTS_TABLE, cvname,
+			// DataModel.KEY_PATIENT_ID + "=" + patientId, null);
+			// } while (cname.moveToNext());
+			// } else {
+			// // } else if
+			// // (cname.isNull(c.getColumnIndex(InstanceColumns.PATIENT_ID))){
+			// cvname.putNull(DataModel.KEY_PRIORITY_FORM_NAMES);
+			// DbProvider.openDb().update(DataModel.PATIENTS_TABLE, cvname,
+			// DataModel.KEY_PATIENT_ID + "=" + updatePatientId, null);
+			//
+			// }
+			//
+			// cname.close();
+			// }
 		}
 	}
 
-	public void updateSavedFormsList() throws SQLException {
-		DbProvider.openDb();
-		Cursor c = null;
-		String selection = InstanceColumns.STATUS + "=? and " + InstanceColumns.PATIENT_ID + " IS NOT NULL";
-		String selectionArgs[] = { InstanceProviderAPI.STATUS_INCOMPLETE };
-		c = App.getApp().getContentResolver().query(Uri.parse(InstanceColumns.CONTENT_URI + "/groupbypatientid"), new String[] { InstanceColumns.PATIENT_ID, "group_concat( " + InstanceColumns.FORM_NAME + ") AS " + DataModel.KEY_SAVED_FORM_NAMES }, selection, selectionArgs, null);
-		ContentValues cv = new ContentValues();
-		if (c != null) {
-			if (c.moveToFirst()) {
-				do {
-					String patientId = c.getString(c.getColumnIndex(InstanceColumns.PATIENT_ID));
-					String formName = c.getString(c.getColumnIndex(DataModel.KEY_SAVED_FORM_NAMES));
-					cv.put(DataModel.KEY_SAVED_FORM_NAMES, formName);
-
-					DbProvider.openDb().update(DataModel.PATIENTS_TABLE, cv, DataModel.KEY_PATIENT_ID + "=" + patientId, null);
-				} while (c.moveToNext());
-			}
-			c.close();
-		}
-
-	}
+	// public void updateSavedFormsList() throws SQLException {
+	// DbProvider.openDb();
+	// Cursor c = null;
+	// String selection = InstanceColumns.STATUS + "=? and " +
+	// InstanceColumns.PATIENT_ID + " IS NOT NULL";
+	// String selectionArgs[] = { InstanceProviderAPI.STATUS_INCOMPLETE };
+	// c =
+	// App.getApp().getContentResolver().query(Uri.parse(InstanceColumns.CONTENT_URI
+	// + "/groupbypatientid"), new String[] { InstanceColumns.PATIENT_ID,
+	// "group_concat( " + InstanceColumns.FORM_NAME + ") AS " +
+	// DataModel.KEY_SAVED_FORM_NAMES }, selection, selectionArgs, null);
+	// ContentValues cv = new ContentValues();
+	// if (c != null) {
+	// if (c.moveToFirst()) {
+	// do {
+	// String patientId =
+	// c.getString(c.getColumnIndex(InstanceColumns.PATIENT_ID));
+	// String formName =
+	// c.getString(c.getColumnIndex(DataModel.KEY_SAVED_FORM_NAMES));
+	// cv.put(DataModel.KEY_SAVED_FORM_NAMES, formName);
+	//
+	// DbProvider.openDb().update(DataModel.PATIENTS_TABLE, cv,
+	// DataModel.KEY_PATIENT_ID + "=" + patientId, null);
+	// } while (c.moveToNext());
+	// }
+	// c.close();
+	// }
+	//
+	// }
 
 	// saved forms are kept in the AccessForms (i.e. ODK Collect) database...
 	public void updateSavedFormNumbers() throws SQLException {
@@ -711,37 +783,47 @@ public class Db {
 		}
 	}
 
-	public void updateSavedFormsListByPatientId(String updatePatientId) throws SQLException {
-		DbProvider.openDb();
-		Cursor c = null;
-		String selection = InstanceColumns.STATUS + "=? and " + InstanceColumns.PATIENT_ID + "=?";
-		String selectionArgs[] = { InstanceProviderAPI.STATUS_INCOMPLETE, updatePatientId };
-		c = App.getApp().getContentResolver()
-				.query(Uri.parse(InstanceColumns.CONTENT_URI + "/groupbypatientid"), new String[] { InstanceColumns.PATIENT_ID, "group_concat( " + InstanceColumns.FORM_NAME + ",\", \") AS " + DataModel.KEY_SAVED_FORM_NAMES }, selection, selectionArgs, null);
-
-		ContentValues cv = new ContentValues();
-		if (c != null) {
-			if (c.moveToFirst()) {
-				do {
-					String patientId = c.getString(c.getColumnIndex(InstanceColumns.PATIENT_ID));
-					String formName = c.getString(c.getColumnIndex(DataModel.KEY_SAVED_FORM_NAMES));
-
-					cv.put(DataModel.KEY_SAVED_FORM_NAMES, formName);
-
-					DbProvider.openDb().update(DataModel.PATIENTS_TABLE, cv, DataModel.KEY_PATIENT_ID + "=" + patientId, null);
-				} while (c.moveToNext());
-			} else {
-				// } else if
-				// (c.isNull(c.getColumnIndex(InstanceColumns.PATIENT_ID))){
-				cv.putNull(DataModel.KEY_SAVED_FORM_NAMES);
-				DbProvider.openDb().update(DataModel.PATIENTS_TABLE, cv, DataModel.KEY_PATIENT_ID + "=" + updatePatientId, null);
-
-			}
-
-			c.close();
-		}
-
-	}
+	// public void updateSavedFormsListByPatientId(String updatePatientId)
+	// throws SQLException {
+	// DbProvider.openDb();
+	// Cursor c = null;
+	// String selection = InstanceColumns.STATUS + "=? and " +
+	// InstanceColumns.PATIENT_ID + "=?";
+	// String selectionArgs[] = { InstanceProviderAPI.STATUS_INCOMPLETE,
+	// updatePatientId };
+	// c = App.getApp().getContentResolver()
+	// .query(Uri.parse(InstanceColumns.CONTENT_URI + "/groupbypatientid"), new
+	// String[] { InstanceColumns.PATIENT_ID, "group_concat( " +
+	// InstanceColumns.FORM_NAME + ",\", \") AS " +
+	// DataModel.KEY_SAVED_FORM_NAMES }, selection, selectionArgs, null);
+	//
+	// ContentValues cv = new ContentValues();
+	// if (c != null) {
+	// if (c.moveToFirst()) {
+	// do {
+	// String patientId =
+	// c.getString(c.getColumnIndex(InstanceColumns.PATIENT_ID));
+	// String formName =
+	// c.getString(c.getColumnIndex(DataModel.KEY_SAVED_FORM_NAMES));
+	//
+	// cv.put(DataModel.KEY_SAVED_FORM_NAMES, formName);
+	//
+	// DbProvider.openDb().update(DataModel.PATIENTS_TABLE, cv,
+	// DataModel.KEY_PATIENT_ID + "=" + patientId, null);
+	// } while (c.moveToNext());
+	// } else {
+	// // } else if
+	// // (c.isNull(c.getColumnIndex(InstanceColumns.PATIENT_ID))){
+	// cv.putNull(DataModel.KEY_SAVED_FORM_NAMES);
+	// DbProvider.openDb().update(DataModel.PATIENTS_TABLE, cv,
+	// DataModel.KEY_PATIENT_ID + "=" + updatePatientId, null);
+	//
+	// }
+	//
+	// c.close();
+	// }
+	//
+	// }
 
 	// TODO! Verify that this is ever called (if moveToFirst is null?) I think
 	// the logic is wrong here!
@@ -779,7 +861,7 @@ public class Db {
 		DbProvider.openDb();
 		ContentValues cv = new ContentValues();
 		cv.put(DataModel.KEY_FORMINSTANCE_STATUS, status);
-		return DbProvider.openDb().update(DataModel.FORMINSTANCES_TABLE, cv, DataModel.KEY_PATH + "='" + path + "'", null);
+		return DbProvider.openDb().update(DataModel.FORMINSTANCES_TABLE, cv, DataModel.KEY_PATH + "='" + path + "'", null) > 0;
 	}
 
 	public boolean updateFormPath(Integer formId, String path) {
@@ -787,7 +869,7 @@ public class Db {
 		ContentValues cv = new ContentValues();
 		cv.put(DataModel.KEY_FORM_ID, formId);
 		cv.put(DataModel.KEY_PATH, path);
-		return DbProvider.openDb().update(DataModel.FORMS_TABLE, cv, DataModel.KEY_FORM_ID + "='" + formId.toString() + "'", null);
+		return DbProvider.openDb().update(DataModel.FORMS_TABLE, cv, DataModel.KEY_FORM_ID + "='" + formId.toString() + "'", null) > 0;
 	}
 
 }

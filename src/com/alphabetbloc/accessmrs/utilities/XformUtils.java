@@ -51,16 +51,16 @@ import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
-import com.alphabetbloc.accessforms.provider.InstanceProviderAPI;
 import com.alphabetbloc.accessforms.provider.FormsProviderAPI.FormsColumns;
+import com.alphabetbloc.accessforms.provider.InstanceProviderAPI;
 import com.alphabetbloc.accessforms.provider.InstanceProviderAPI.InstanceColumns;
+import com.alphabetbloc.accessmrs.R;
 import com.alphabetbloc.accessmrs.data.Observation;
 import com.alphabetbloc.accessmrs.data.Patient;
 import com.alphabetbloc.accessmrs.providers.DataModel;
 import com.alphabetbloc.accessmrs.providers.Db;
 import com.alphabetbloc.accessmrs.providers.DbProvider;
 import com.alphabetbloc.accessmrs.ui.user.CreatePatientActivity;
-import com.alphabetbloc.accessmrs.R;
 
 /**
  * 
@@ -74,8 +74,8 @@ import com.alphabetbloc.accessmrs.R;
 public class XformUtils {
 
 	private static final String REGISTRATION_FORM_ID = "-99";
-	public static final String REGISTRATION_FORM_XML = "patient_registration.xml";
-	private static final String REGISTRATION_FORM_NAME = "PatientRegistrationForm";
+	public static final String REGISTRATION_FORM_XML = "default_client_registration.xml";
+	public static final String CLIENT_REGISTRATION_FORM_NAME = "Client Registration Form";
 
 	private static final DateFormat ACCESS_FORMS_INSTANCE_NAME_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
 	private static final String TAG = XformUtils.class.getSimpleName();
@@ -238,7 +238,7 @@ public class XformUtils {
 			}
 
 			if (mCursor == null) {
-				Log.e(TAG, "Error in inserting a form into the forms.db");
+				Log.e(TAG, "Error in inserting a form into the AccessForms Db. Check if AccessForms is installed.");
 				DbProvider.openDb().delete(DataModel.FORMS_TABLE, null, null);
 				return false;
 			}
@@ -257,8 +257,10 @@ public class XformUtils {
 			}
 
 			if (!alreadyExists) {
-				App.getApp().getContentResolver().delete(FormsColumns.CONTENT_URI, "md5Hash=?", new String[] { md5 });
-				App.getApp().getContentResolver().delete(FormsColumns.CONTENT_URI, "jrFormId=?", new String[] { id + "" });
+				if (name.equalsIgnoreCase(CLIENT_REGISTRATION_FORM_NAME))
+					App.getApp().getContentResolver().delete(FormsColumns.CONTENT_URI, FormsColumns.DISPLAY_NAME + "=?", new String[] { name });
+				App.getApp().getContentResolver().delete(FormsColumns.CONTENT_URI, FormsColumns.MD5_HASH + "=?", new String[] { md5 });
+				App.getApp().getContentResolver().delete(FormsColumns.CONTENT_URI, FormsColumns.JR_FORM_ID + "=?", new String[] { id + "" });
 				App.getApp().getContentResolver().insert(FormsColumns.CONTENT_URI, values);
 			}
 
@@ -299,8 +301,31 @@ public class XformUtils {
 
 	// PARSE FORM AND INJECT WITH OBS
 	public static int createRegistrationFormInstance(Patient mPatient) {
-		File registrationForm = new File(FileUtils.getExternalFormsPath(), REGISTRATION_FORM_XML);
-		return createFormInstance(mPatient, registrationForm.getAbsolutePath(), REGISTRATION_FORM_ID, REGISTRATION_FORM_NAME);
+
+		String[] projection = new String[] { FormsColumns.FORM_FILE_PATH, FormsColumns.JR_FORM_ID, FormsColumns.DISPLAY_NAME };
+		String selection = FormsColumns.DISPLAY_NAME + "=?";
+		String[] selectionArgs = new String[] { XformUtils.CLIENT_REGISTRATION_FORM_NAME };
+		Cursor c = App.getApp().getContentResolver().query(FormsColumns.CONTENT_URI, projection, selection, selectionArgs, null);
+
+		String jrFormName = null;
+		String jrFormId = null;
+		String formPath = null;
+		if (c != null) {
+			if (c.moveToFirst()) {
+				do {
+					jrFormName = c.getString(c.getColumnIndex(FormsColumns.DISPLAY_NAME));
+					jrFormId = c.getString(c.getColumnIndex(FormsColumns.JR_FORM_ID));
+					formPath = c.getString(c.getColumnIndex(FormsColumns.FORM_FILE_PATH));
+				} while (c.moveToNext());
+			}
+			c.close();
+		}
+
+		File registrationForm = new File(formPath);
+		if(!registrationForm.exists())
+			insertRegistrationForm();
+
+		return createFormInstance(mPatient, formPath, jrFormId, jrFormName);
 	}
 
 	public static int createFormInstance(Patient mPatient, String formPath, String jrFormId, String formname) {
@@ -310,7 +335,6 @@ public class XformUtils {
 				Log.e(TAG, "lost a patient when trying to create an Xform!");
 
 		// reading the form
-		// TODO! is this the right document type?!
 		org.kxml2.kdom.Document doc = new org.kxml2.kdom.Document();
 		KXmlParser formParser = new KXmlParser();
 		try {

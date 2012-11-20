@@ -5,7 +5,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.UUID;
 
-
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -53,13 +52,14 @@ import com.alphabetbloc.accessmrs.R;
 public class CreatePatientActivity extends BaseUserActivity implements OnGestureListener {
 	public static final Integer PERMANENT_NEW_CLIENT = 1;
 	public static final Integer TEMPORARY_NEW_CLIENT = 2;
+	public static final String MOST_RECENT_NEW_CLIENT_ID = "most_recent_new_client_id";
 	private static final String TAG = CreatePatientActivity.class.getSimpleName();
 
 	private Context mContext;
 	private String mFirstName;
 	private String mMiddleName;
 	private String mLastName;
-	private String mPatientID;
+	private String mPatientIdentifier;
 	private String mSex;
 	private String mEstimatedDob;
 
@@ -87,23 +87,8 @@ public class CreatePatientActivity extends BaseUserActivity implements OnGesture
 		mGestureDetector = new GestureDetector(this);
 		mContext = this;
 
-		// check to see if form exists in AccessForms Db
-		String dbjrFormId = "no_registration_form";
-		String registrationFormId = "-1";
-		Cursor cursor = App.getApp().getContentResolver().query(FormsColumns.CONTENT_URI, new String[] { FormsColumns.JR_FORM_ID }, FormsColumns.JR_FORM_ID + "=?", new String[] { registrationFormId }, null);
-		if (cursor.moveToFirst()) {
-			do {
-				dbjrFormId = cursor.getString(cursor.getColumnIndex(FormsColumns.JR_FORM_ID));
-			} while (cursor.moveToNext());
-
-			if (cursor != null) {
-				cursor.close();
-			}
-		}
-
-		if (!dbjrFormId.equals(registrationFormId))
-			XformUtils.insertRegistrationForm();
-
+		getRegistrationForm();
+		
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
 		mProviderId = settings.getString(getString(R.string.key_provider), getString(R.string.default_provider));
 
@@ -137,16 +122,17 @@ public class CreatePatientActivity extends BaseUserActivity implements OnGesture
 				} else if (mCreateCode == null) {
 					Toast.makeText(CreatePatientActivity.this, "Please specify whether you wish to receive updates on this client in the future.", Toast.LENGTH_SHORT).show();
 				} else if (similarClientCheck()) {
-					if (App.DEBUG) Log.v(TAG, "client is similar");
+					if (App.DEBUG)
+						Log.v(TAG, "client is similar");
 					// ask provider for verification
 					Intent i = new Intent(mContext, ListPatientActivity.class);
 					i.putExtra(DashboardActivity.LIST_TYPE, DashboardActivity.LIST_SIMILAR_CLIENTS);
 					i.putExtra("search_name_string", mFirstName + " " + mLastName);
-					i.putExtra("search_id_string", mPatientID);
+					i.putExtra("search_id_string", mPatientIdentifier);
 					startActivityForResult(i, VERIFY_SIMILAR_CLIENTS);
 				} else {
 					// Add client to db, create & save form to AccessForms
-					addClientToDb();
+					addClientToAccessMrs();
 					addFormToAccessForms();
 				}
 
@@ -161,6 +147,24 @@ public class CreatePatientActivity extends BaseUserActivity implements OnGesture
 		// do nothing
 	}
 
+	private void getRegistrationForm(){
+		// check to see if form exists in AccessForms Db
+		String dbjrFormName = "no_registration_form";
+		Cursor cursor = App.getApp().getContentResolver().query(FormsColumns.CONTENT_URI, new String[] { FormsColumns.DISPLAY_NAME }, FormsColumns.DISPLAY_NAME + "=?", new String[] { XformUtils.CLIENT_REGISTRATION_FORM_NAME }, null);
+		if (cursor.moveToFirst()) {
+			do {
+				dbjrFormName = cursor.getString(cursor.getColumnIndex(FormsColumns.DISPLAY_NAME));
+			} while (cursor.moveToNext());
+
+			if (cursor != null) {
+				cursor.close();
+			}
+		}
+
+		if (!dbjrFormName.equals(XformUtils.CLIENT_REGISTRATION_FORM_NAME))
+			XformUtils.insertRegistrationForm();
+	}
+	
 	private boolean similarClientCheck() {
 		// Verify the client against the db
 		boolean similarFound = false;
@@ -171,8 +175,8 @@ public class CreatePatientActivity extends BaseUserActivity implements OnGesture
 			similarFound = true;
 		}
 
-		if (!similarFound && mPatientID != null && mPatientID.length() > 3) {
-			c = Db.open().searchPatients(null, mPatientID, DashboardActivity.LIST_SIMILAR_CLIENTS);
+		if (!similarFound && mPatientIdentifier != null && mPatientIdentifier.length() > 3) {
+			c = Db.open().searchPatients(null, mPatientIdentifier, DashboardActivity.LIST_SIMILAR_CLIENTS);
 			if (c != null && c.getCount() > 0) {
 				similarFound = true;
 			}
@@ -202,62 +206,64 @@ public class CreatePatientActivity extends BaseUserActivity implements OnGesture
 	protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
 
 		if (resultCode == RESULT_CANCELED) {
-			if (requestCode == VERIFY_SIMILAR_CLIENTS) {
+			if (requestCode == VERIFY_SIMILAR_CLIENTS)
 				finish();
-			} else {
+			else
 				return;
-			}
+
 		} else if (resultCode == RESULT_OK) {
 
 			if (requestCode == VERIFY_SIMILAR_CLIENTS) {
-				addClientToDb();
+				addClientToAccessMrs();
 				addFormToAccessForms();
 
 			} else if (requestCode == REGISTRATION && intent != null) {
-				SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
-				boolean logActivity = prefs.getBoolean(getString(R.string.key_enable_activity_log), true);
-				if (logActivity) {
-					new ActivityLogTask(mActivityLog).execute();
-				}
-
-				Uri u = intent.getData();
-				String dbjrFormId = null;
-				String displayName = null;
-				String fileDbPath = null;
-				String status = null;
-
-				Cursor mCursor = App.getApp().getContentResolver().query(u, null, null, null, null);
-				mCursor.moveToPosition(-1);
-				while (mCursor.moveToNext()) {
-					status = mCursor.getString(mCursor.getColumnIndex(InstanceColumns.STATUS));
-					dbjrFormId = mCursor.getString(mCursor.getColumnIndex(InstanceColumns.JR_FORM_ID));
-					displayName = mCursor.getString(mCursor.getColumnIndex(InstanceColumns.DISPLAY_NAME));
-					fileDbPath = mCursor.getString(mCursor.getColumnIndex(InstanceColumns.INSTANCE_FILE_PATH));
-				}
-				if (mCursor != null) {
-					mCursor.close();
-				}
-
-				if (status.equalsIgnoreCase(InstanceProviderAPI.STATUS_COMPLETE)) {
-					FormInstance fi = new FormInstance();
-					fi.setPatientId(mPatient.getPatientId());
-					fi.setFormId(Integer.parseInt(dbjrFormId));
-					fi.setPath(fileDbPath);
-					fi.setStatus(DataModel.STATUS_UNSUBMITTED);
-					Date date = new Date();
-					date.setTime(System.currentTimeMillis());
-					String dateString = "Completed: " + (new SimpleDateFormat("EEE, MMM dd, yyyy 'at' HH:mm").format(date));
-					fi.setCompletionSubtext(dateString);
-
-					Db.open().createFormInstance(fi, displayName);
-				}
-
+				addInstanceToAccessMrs(intent.getData());
 				loadNewClientView();
-
 			}
 			return;
 		}
 		super.onActivityResult(requestCode, resultCode, intent);
+	}
+
+	private void addInstanceToAccessMrs(Uri u) {
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
+		boolean logActivity = prefs.getBoolean(getString(R.string.key_enable_activity_log), true);
+		if (logActivity) {
+			new ActivityLogTask(mActivityLog).execute();
+		}
+
+		String dbjrFormId = null;
+		String displayName = null;
+		String fileDbPath = null;
+		String status = null;
+
+		Cursor mCursor = App.getApp().getContentResolver().query(u, null, null, null, null);
+		mCursor.moveToPosition(-1);
+		while (mCursor.moveToNext()) {
+			status = mCursor.getString(mCursor.getColumnIndex(InstanceColumns.STATUS));
+			dbjrFormId = mCursor.getString(mCursor.getColumnIndex(InstanceColumns.JR_FORM_ID));
+			displayName = mCursor.getString(mCursor.getColumnIndex(InstanceColumns.DISPLAY_NAME));
+			fileDbPath = mCursor.getString(mCursor.getColumnIndex(InstanceColumns.INSTANCE_FILE_PATH));
+		}
+		if (mCursor != null) {
+			mCursor.close();
+		}
+
+		if (status.equalsIgnoreCase(InstanceProviderAPI.STATUS_COMPLETE)) {
+			FormInstance fi = new FormInstance();
+			fi.setPatientId(mPatient.getPatientId());
+			fi.setFormId(Integer.parseInt(dbjrFormId));
+			fi.setPath(fileDbPath);
+			fi.setStatus(DataModel.STATUS_UNSUBMITTED);
+			Date date = new Date();
+			date.setTime(System.currentTimeMillis());
+			String dateString = "Completed: " + (new SimpleDateFormat("EEE, MMM dd, yyyy 'at' HH:mm").format(date));
+			fi.setCompletionSubtext(dateString);
+
+			Db.open().createFormInstance(fi, displayName);
+		}
+
 	}
 
 	private void loadNewClientView() {
@@ -275,7 +281,7 @@ public class CreatePatientActivity extends BaseUserActivity implements OnGesture
 		mFirstName = ((EditText) findViewById(R.id.first_edit)).getText().toString();
 		mMiddleName = ((EditText) findViewById(R.id.middle_edit)).getText().toString();
 		mLastName = ((EditText) findViewById(R.id.last_edit)).getText().toString();
-		mPatientID = ((EditText) findViewById(R.id.id_edit)).getText().toString();
+		mPatientIdentifier = ((EditText) findViewById(R.id.id_edit)).getText().toString();
 
 	}
 
@@ -288,7 +294,8 @@ public class CreatePatientActivity extends BaseUserActivity implements OnGesture
 		int sexRadioId = sexRadioGroup.getCheckedRadioButtonId();
 		RadioButton radioSexButton = (RadioButton) findViewById(sexRadioId);
 		if (radioSexButton != null) {
-			if (App.DEBUG) Log.v(TAG, "radiosexButton.getText()=" + radioSexButton.getText());
+			if (App.DEBUG)
+				Log.v(TAG, "radiosexButton.getText()=" + radioSexButton.getText());
 			if (radioSexButton.getText().equals(femaleRadio)) {
 				mSex = "F";
 			} else if (radioSexButton.getText().equals(maleRadio)) {
@@ -338,7 +345,8 @@ public class CreatePatientActivity extends BaseUserActivity implements OnGesture
 		RadioButton tempPermButton = (RadioButton) findViewById(tempPermId);
 
 		if (tempPermButton != null) {
-			if (App.DEBUG) Log.v(TAG, "radiosexButton.getText()=" + tempPermButton.getText());
+			if (App.DEBUG)
+				Log.v(TAG, "radiosexButton.getText()=" + tempPermButton.getText());
 			if (tempPermButton.getText().equals(permRadio)) {
 				mCreateCode = PERMANENT_NEW_CLIENT;
 			} else if (tempPermButton.getText().equals(tempRadio)) {
@@ -347,14 +355,16 @@ public class CreatePatientActivity extends BaseUserActivity implements OnGesture
 		}
 	}
 
-	private void addClientToDb() {
-		mPatient = new Patient();
+	private void addClientToAccessMrs() {
 
-		int minPatientId = Db.open().findLastClientCreatedId();
-		if (minPatientId < 0)
-			mPatient.setPatientId(Integer.valueOf(minPatientId - 1));
-		else
-			mPatient.setPatientId(Integer.valueOf(-1));
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
+		int lastNewPatientId = prefs.getInt(MOST_RECENT_NEW_CLIENT_ID, -1);
+		int currentMinPatientId = Db.open().findLastClientCreatedId();
+		Integer newPatientId = ((lastNewPatientId <= currentMinPatientId) ? lastNewPatientId : currentMinPatientId) - 1;
+		prefs.edit().putInt(MOST_RECENT_NEW_CLIENT_ID, newPatientId).commit();
+
+		mPatient = new Patient();
+		mPatient.setPatientId(newPatientId);
 		mPatient.setFamilyName(mLastName);
 		mPatient.setMiddleName(mMiddleName);
 		mPatient.setGivenName(mFirstName);
@@ -363,8 +373,8 @@ public class CreatePatientActivity extends BaseUserActivity implements OnGesture
 		mPatient.setbirthEstimated(mEstimatedDob);
 		mPatient.setDbBirthDate(mDbBirthString); // does not go into db
 
-		if (mPatientID != null) {
-			mPatient.setIdentifier(mPatientID);
+		if (mPatientIdentifier != null) {
+			mPatient.setIdentifier(mPatientIdentifier);
 		} else {
 			mPatient.setIdentifier("Unknown");
 		}
@@ -390,7 +400,7 @@ public class CreatePatientActivity extends BaseUserActivity implements OnGesture
 
 	private void addFormToAccessForms() {
 		if (mPatient == null)
-			if(App.DEBUG) Log.e(TAG, "Mpatient is null!?");
+			if (App.DEBUG) Log.e(TAG, "Lost a patient after adding them to AccessForms");
 		int instanceId = XformUtils.createRegistrationFormInstance(mPatient);
 		if (instanceId != -1) {
 			Intent intent = new Intent();

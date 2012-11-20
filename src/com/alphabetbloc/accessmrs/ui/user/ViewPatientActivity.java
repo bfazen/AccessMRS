@@ -170,14 +170,10 @@ public class ViewPatientActivity extends BasePatientActivity {
 			if (c.moveToFirst()) {
 
 				int priorityIndex = c.getColumnIndexOrThrow(DataModel.KEY_PRIORITY_FORM_NUMBER);
-				int priorityFormIndex = c.getColumnIndexOrThrow(DataModel.KEY_PRIORITY_FORM_NAMES);
 				int savedNumberIndex = c.getColumnIndexOrThrow(DataModel.KEY_SAVED_FORM_NUMBER);
-				int savedFormIndex = c.getColumnIndexOrThrow(DataModel.KEY_SAVED_FORM_NAMES);
 
 				mPatient.setPriorityNumber(c.getInt(priorityIndex));
-				mPatient.setPriorityForms(c.getString(priorityFormIndex));
 				mPatient.setSavedNumber(c.getInt(savedNumberIndex));
-				mPatient.setSavedForms(c.getString(savedFormIndex));
 
 				if (c.getInt(priorityIndex) > 0) {
 					mPatient.setPriority(true);

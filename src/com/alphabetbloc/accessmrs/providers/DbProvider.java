@@ -186,8 +186,8 @@ public class DbProvider extends ContentProvider {
 		return 0;
 	}
 
-	public boolean update(String table, ContentValues values, String selection, String[] selectionArgs) {
-		return sDb.update(table, values, selection, selectionArgs) > 0;
+	public int update(String table, ContentValues values, String selection, String[] selectionArgs) {
+		return sDb.update(table, values, selection, selectionArgs);
 	}
 
 	@Override

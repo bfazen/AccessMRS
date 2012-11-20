@@ -23,10 +23,10 @@ public class Patient {
 	private String age = null;
 	private Boolean priorityStatus = false;
 	private Integer priorityFormNumber = null;
-	private String priorityForms = null;
+//	private String priorityForms = null;
 	private Boolean savedStatus = false;
 	private Integer savedFormNumber = null;
-	private String savedForms = null;
+//	private String savedForms = null;
 	private Integer totalCompletedForms = null;
 
 	// For Client Registration Forms:
@@ -89,17 +89,17 @@ public class Patient {
 		return priorityFormNumber;
 	}
 
-	public String getPriorityForms() {
-		return priorityForms;
-	}
+//	public String getPriorityForms() {
+//		return priorityForms;
+//	}
 
 	public Integer getSavedNumber() {
 		return savedFormNumber;
 	}
 
-	public String getSavedForms() {
-		return savedForms;
-	}
+//	public String getSavedForms() {
+//		return savedForms;
+//	}
 
 	public void setPatientId(Integer pid) {
 		patientId = pid;
@@ -137,9 +137,9 @@ public class Patient {
 		priorityFormNumber = formNumber;
 	}
 
-	public void setPriorityForms(String forms) {
-		priorityForms = forms;
-	}
+//	public void setPriorityForms(String forms) {
+//		priorityForms = forms;
+//	}
 
 	public void setSaved(Boolean saved) {
 		savedStatus = saved;
@@ -149,9 +149,9 @@ public class Patient {
 		savedFormNumber = formNumber;
 	}
 
-	public void setSavedForms(String forms) {
-		savedForms = forms;
-	}
+//	public void setSavedForms(String forms) {
+//		savedForms = forms;
+//	}
 
 	public void setUuid(String n) {
 		uuid = n;

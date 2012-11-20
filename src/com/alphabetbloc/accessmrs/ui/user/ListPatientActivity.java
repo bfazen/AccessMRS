@@ -257,10 +257,9 @@ public class ListPatientActivity extends BaseUserListActivity implements SyncSta
 						int birthDateIndex = c.getColumnIndex(DataModel.KEY_BIRTH_DATE);
 						int genderIndex = c.getColumnIndex(DataModel.KEY_GENDER);
 						int priorityIndex = c.getColumnIndexOrThrow(DataModel.KEY_PRIORITY_FORM_NUMBER);
-						int priorityFormIndex = c.getColumnIndexOrThrow(DataModel.KEY_PRIORITY_FORM_NAMES);
 						int savedIndex = c.getColumnIndexOrThrow(DataModel.KEY_SAVED_FORM_NUMBER);
-						int savedFormIndex = c.getColumnIndexOrThrow(DataModel.KEY_SAVED_FORM_NAMES);
-
+						int uuidIndex = c.getColumnIndexOrThrow(DataModel.KEY_UUID);
+						
 						if (c.getCount() > 0) {
 
 							Patient p;
@@ -274,10 +273,8 @@ public class ListPatientActivity extends BaseUserListActivity implements SyncSta
 								p.setBirthDate(c.getString(birthDateIndex));
 								p.setGender(c.getString(genderIndex));
 								p.setPriorityNumber(c.getInt(priorityIndex));
-								p.setPriorityForms(c.getString(priorityFormIndex));
 								p.setSavedNumber(c.getInt(savedIndex));
-								p.setSavedForms(c.getString(savedFormIndex));
-								p.setUuid(c.getString(savedFormIndex));
+								p.setUuid(c.getString(uuidIndex));
 
 								if (c.getInt(priorityIndex) > 0) {
 									p.setPriority(true);
