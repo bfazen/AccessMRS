@@ -152,10 +152,11 @@ public class NetworkUtils {
 
 			if (App.DEBUG)
 				Log.v(TAG, "httpClient is null, download is creating a new client");
+			
 			SSLContext sslContext = createSslContext();
 			MySSLSocketFactory socketFactory = new MySSLSocketFactory(sslContext, new BrowserCompatHostnameVerifier());
 			client = createHttpClient(socketFactory);
-			Log.e(TAG, "created the client and now returning it...");
+			
 		} catch (GeneralSecurityException e) {
 			Log.e(TAG, "Could not load the trust manager");
 			e.printStackTrace();
@@ -200,7 +201,7 @@ public class NetworkUtils {
 		HttpProtocolParams.setContentCharset(params, HTTP.UTF_8); // yaw
 		HttpProtocolParams.setUseExpectContinue(params, false); // yaw
 		HttpConnectionParams.setConnectionTimeout(params, CONNECTION_TIMEOUT);
-		HttpConnectionParams.setSoTimeout(params, CONNECTION_TIMEOUT); // yaw
+//		HttpConnectionParams.setSoTimeout(params, CONNECTION_TIMEOUT); // yaw
 		HttpClientParams.setRedirecting(params, false); // yaw
 
 		ConnManagerParams.setTimeout(params, CONNECTION_TIMEOUT); // yaw
@@ -333,7 +334,7 @@ public class NetworkUtils {
 		HttpResponse response = client.execute(request);
 		response.getStatusLine().getStatusCode();
 		HttpEntity responseEntity = response.getEntity();
-		responseEntity.getContentLength();
+//		responseEntity.getContentLength();  // TODO! does not work! delete this...
 
 		DataInputStream zdis = new DataInputStream(new GZIPInputStream(responseEntity.getContent()));
 
