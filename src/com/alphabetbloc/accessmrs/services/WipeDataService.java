@@ -230,7 +230,7 @@ public class WipeDataService extends WakefulIntentService {
 
 		try {
 			// first try
-			prefs.edit().putString(EncryptionUtil.SQLCIPHER_KEY_NAME, null).commit();
+			prefs.edit().putString(getString(R.string.key_encryption_password), null).commit();
 			prefs.edit().putString(getString(R.string.key_password), null).commit();
 			prefs.edit().putString(getString(R.string.key_username), null).commit();
 			success = checkSqlCipherPref(prefs);
@@ -253,7 +253,7 @@ public class WipeDataService extends WakefulIntentService {
 	}
 
 	private boolean checkSqlCipherPref(SharedPreferences prefs) {
-		String testKey = prefs.getString(EncryptionUtil.SQLCIPHER_KEY_NAME, null);
+		String testKey = prefs.getString(getString(R.string.key_encryption_password), null);
 		String testPwd = prefs.getString(getString(R.string.key_password), null);
 		String testUser = prefs.getString(getString(R.string.key_username), null);
 		if (testKey == null && testPwd == null && testUser == null)

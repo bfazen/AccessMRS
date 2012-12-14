@@ -166,10 +166,10 @@ public class LauncherUtil {
 
 	private static boolean setupDatabases() {
 		// Step 3: check Db exists, has a key and pwd -> reset AccessMrs if missing
-		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(App.getApp());
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(App.getApp());
 		File db = App.getApp().getDatabasePath(DataModel.DATABASE_NAME);
-		String pwd = settings.getString(EncryptionUtil.SQLCIPHER_KEY_NAME, "");
-		SecretKeySpec key = EncryptionUtil.getKey(EncryptionUtil.SQLCIPHER_KEY_NAME);
+		String pwd = prefs.getString(App.getApp().getString(R.string.key_encryption_password), "");
+		SecretKeySpec key = EncryptionUtil.getKey(App.getApp().getString(R.string.key_encryption_key));
 
 		// TODO! Fix this...
 		if (db != null && db.exists() && !pwd.equals("") && key != null) {
@@ -182,7 +182,6 @@ public class LauncherUtil {
 			sLaunchIntent = i;
 			return false;
 		}
-
 	}
 
 	private static boolean setupAccount() {

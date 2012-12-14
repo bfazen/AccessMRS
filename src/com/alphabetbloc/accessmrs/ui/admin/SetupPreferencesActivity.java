@@ -48,7 +48,6 @@ public class SetupPreferencesActivity extends BaseAdminActivity {
 
 	private Context mContext;
 	public static final String TAG = SetupPreferencesActivity.class.getSimpleName();
-	public static final String SQLCIPHER_KEY_NAME = "sqlCipherDbKey";
 	private static final String CONFIG_FILE = "config.txt";
 	private static final String HIDDEN_CONFIG_FILE = ".config.txt";
 
@@ -82,6 +81,8 @@ public class SetupPreferencesActivity extends BaseAdminActivity {
 	private String mDecryptedPwd;
 	private boolean isFreshInstall = true;
 	private int mSetupType;
+	private String mEncryptionPassword = null;
+	private String mUserPassword = null;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -100,17 +101,26 @@ public class SetupPreferencesActivity extends BaseAdminActivity {
 	}
 
 	private void refreshView() {
-		if (App.DEBUG) Log.v(TAG, "Refreshing view with mSetupType=" + mSetupType);
+		if (App.DEBUG)
+			Log.v(TAG, "Refreshing view with mSetupType=" + mSetupType);
 		switch (mSetupType) {
 
 		case FIRST_RUN:
+			createView(LOADING);
 			if (!FileUtils.isDataWiped()) {
 				mSetupType = RESET_ACCESS_MRS;
 				refreshView();
+				break;
 			}
-			FileUtils.setupDefaultSslStore(FileUtils.MY_KEYSTORE);
-			FileUtils.setupDefaultSslStore(FileUtils.MY_TRUSTSTORE);
-			createView(REQUEST_DB_SETUP);
+
+			setupDefaultPreferences();
+			if (mEncryptionPassword != null){
+				//Skip Step 1, Use the Imported Password
+				encryptAccessMrsDb(mEncryptionPassword);
+				mEncryptionPassword = null;
+				
+			} else
+				createView(REQUEST_DB_SETUP);
 			break;
 
 		case RESET_ACCESS_MRS:
@@ -149,6 +159,50 @@ public class SetupPreferencesActivity extends BaseAdminActivity {
 			finish();
 		}
 	};
+
+	// Setup Preferences
+	private void setupDefaultPreferences() {
+		// Setup Default Prefs
+		PreferenceManager.setDefaultValues(this, R.xml.preferences_admin, false);
+		FileUtils.setupDefaultSslStore(FileUtils.MY_KEYSTORE);
+		FileUtils.setupDefaultSslStore(FileUtils.MY_TRUSTSTORE);
+
+		// Overwrite default prefs from any config files
+		File configFile = new File(FileUtils.getExternalRootDirectory(), CONFIG_FILE);
+		if (!configFile.exists())
+			configFile = new File(FileUtils.getExternalRootDirectory(), HIDDEN_CONFIG_FILE);
+
+		if (configFile.exists()) {
+			// Read text from file
+			try {
+				BufferedReader br = new BufferedReader(new FileReader(configFile));
+				String line;
+
+				while ((line = br.readLine()) != null) {
+
+					int equal = line.indexOf("=");
+					String prefName = line.substring(0, equal);
+					String prefValue = line.substring(equal + 1);
+
+					if (prefName.equalsIgnoreCase(getString(R.string.key_encryption_password)))
+						mEncryptionPassword = prefValue;
+					else if (prefName.equalsIgnoreCase(getString(R.string.key_password)))
+						mUserPassword = prefValue;
+					else
+						PreferencesActivity.updatedPreference(prefName, prefValue);
+
+					if (App.DEBUG)
+						Log.v(TAG, "Imported Preference #" + line + " :" + prefName);
+				}
+
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+
+			configFile.delete();
+
+		}
+	}
 
 	private void createView(int view) {
 		setContentView(R.layout.pwd_setup);
@@ -281,15 +335,16 @@ public class SetupPreferencesActivity extends BaseAdminActivity {
 					// create new key
 					SecretKey key = Crypto.generateKey();
 					KeyStoreUtil ks = KeyStoreUtil.getInstance();
-					boolean success = ks.put(SQLCIPHER_KEY_NAME, key.getEncoded());
-					if (App.DEBUG) Log.v(TAG, "Adding new key to keystore... success: " + success);
+					boolean success = ks.put(getString(R.string.key_encryption_key), key.getEncoded());
+					if (App.DEBUG)
+						Log.v(TAG, "Adding new key to keystore... success: " + success);
 
 					// encrypt the userEntry
 					String encryptedPwd = Crypto.encrypt(userEntry, key);
 
 					// save the encryptedPwd to AccessMRS
 					SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
-					prefs.edit().putString(SQLCIPHER_KEY_NAME, encryptedPwd).commit();
+					prefs.edit().putString(getString(R.string.key_encryption_password), encryptedPwd).commit();
 
 					if (isFreshInstall) {
 						// encrypt a new AccessMRS Db
@@ -347,87 +402,35 @@ public class SetupPreferencesActivity extends BaseAdminActivity {
 		}
 
 		if (isAccessFormsSetup) {
-			if (App.DEBUG) Log.v(TAG, "Successfully encrypted AccessForms db with new password.");
-			setupPreferences();
+			if (App.DEBUG)
+				Log.v(TAG, "Successfully encrypted AccessForms db with new password.");
+			launcAccountSetup();
 		} else {
 			mSetupType = RESET_ACCESS_FORMS;
 			refreshView();
 		}
 	}
 
-	// STEP 4: Setup Preferences
-	private void setupPreferences() {
-		// Setup Default Prefs
-		PreferenceManager.setDefaultValues(this, R.xml.preferences_admin, false);
+	// STEP 4: Setup Android Account
+	private void launcAccountSetup() {
 
-		// Overwrite default prefs from config file
-		boolean imported = importConfigFile();
-
-		launcAccountSetup(imported);
-	}
-	
-	// STEP 5: Setup Android Account
-	private void launcAccountSetup(boolean useConfigFile) {
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
 		
 		// launch AccountSetupActivity
 		Intent i = new Intent(mContext, SetupAccountActivity.class);
 		i.putExtra(SetupAccountActivity.LAUNCHED_FROM_ACCT_MGR, false);
-		i.putExtra(SetupAccountActivity.USE_CONFIG_FILE, useConfigFile);
 		i.putExtra(SetupAccountActivity.INITIAL_SETUP, prefs.getBoolean(getString(R.string.key_first_run), true));
-		startActivity(i);
-
+		if (mUserPassword != null){
+			prefs.edit().putString(getString(R.string.key_password), EncryptionUtil.encryptString(mUserPassword)).commit();
+			i.putExtra(SetupAccountActivity.USE_CONFIG_FILE, true);
+			mUserPassword = null;
+		}
+		
 		// Finished First Run Db and Preferences Setup
 		prefs.edit().putBoolean(getString(R.string.key_first_run), false).commit();
+		
+		startActivity(i);
 		finish();
-	}
-
-	private boolean importConfigFile() {
-		File configFile = new File(FileUtils.getExternalRootDirectory(), CONFIG_FILE);
-		File hiddenConfigFile = new File(FileUtils.getExternalRootDirectory(), HIDDEN_CONFIG_FILE);
-		if (!configFile.exists())
-			configFile = hiddenConfigFile;
-
-		boolean success = false;
-		if (configFile.exists()) {
-			// Read text from file
-			try {
-//				String[] booleanPrefs = { getString(R.string.key_client_auth), getString(R.string.key_use_saved_searches), getString(R.string.key_enable_activity_log), getString(R.string.key_show_settings_menu) };
-				String password = getString(R.string.key_password);
-				BufferedReader br = new BufferedReader(new FileReader(configFile));
-				String line;
-
-				while ((line = br.readLine()) != null) {
-
-					int equal = line.indexOf("=");
-					String prefName = line.substring(0, equal);
-					String prefValue = line.substring(equal + 1);
-
-					if (prefName.equalsIgnoreCase(password))
-						prefValue = EncryptionUtil.encryptString(prefValue);
-
-					PreferencesActivity.updatedPreference(prefName, prefValue);
-					
-//					boolean booleanPref = false;
-//					for (String currentPref : booleanPrefs) {
-//						if (currentPref.equals(prefName))
-//							booleanPref = true;
-//					}
-//
-//					if (booleanPref)
-//						settings.edit().putBoolean(prefName, Boolean.parseBoolean(prefValue)).commit();
-//					else
-//						settings.edit().putString(prefName, prefValue).commit();
-
-					if (App.DEBUG) Log.v(TAG, "Imported Preference #" + line + " :" + prefName);
-				}
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			success = configFile.delete();
-		}
-
-		return success;
 	}
 
 }

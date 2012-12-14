@@ -2,6 +2,8 @@ package com.alphabetbloc.accessmrs.utilities;
 
 import javax.crypto.spec.SecretKeySpec;
 
+import com.alphabetbloc.accessmrs.R;
+
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -15,44 +17,43 @@ import android.util.Log;
  */
 public class EncryptionUtil {
 
-
 	private static final String TAG = EncryptionUtil.class.getSimpleName();
 	private static KeyStoreUtil keyStoreUtil;
-	public static final String SQLCIPHER_KEY_NAME = "sqlCipherDbKey";
 
 	/**
-	 * We are using one universal password for this application. This holds for
-	 * SqlCipherDb in both AccessMRS and AccessForms, as well as for both the keystore
-	 * and the trustore for SSL Server and Client Authentication.
+	 * We are using one universal password for this application to keep things
+	 * simpler. This holds for SqlCipherDb in both AccessMRS and AccessForms
+	 * (which pulls in the same password), as well as for both the keystore and
+	 * the trustore for SSL Server and Client Authentication.
 	 * 
 	 * @return The common password for keystore and truststore.
 	 */
 	public static String getPassword() {
-		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(App.getApp());
-		String encryptedPwd = settings.getString(SQLCIPHER_KEY_NAME, null);
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(App.getApp());
+		String encryptedPwd = prefs.getString(App.getApp().getString(R.string.key_encryption_password), null);
 		String decryptedPwd = decryptString(encryptedPwd);
 		return decryptedPwd;
 	}
-	
+
 	public static String encryptString(String string) {
-		SecretKeySpec key = getKey(SQLCIPHER_KEY_NAME);
+		SecretKeySpec key = getKey(App.getApp().getString(R.string.key_encryption_key));
 		String encryptedString = null;
 		if (string != null && key != null) {
 			encryptedString = Crypto.encrypt(string, key);
 		} else {
-			Log.w(TAG, "Encryption key not found in keystore: " + SQLCIPHER_KEY_NAME);
+			Log.w(TAG, "Encryption key not found in keystore: " + App.getApp().getString(R.string.key_encryption_key));
 		}
 
 		return encryptedString;
 	}
 
 	public static String decryptString(String string) {
-		SecretKeySpec key = getKey(SQLCIPHER_KEY_NAME);
+		SecretKeySpec key = getKey(App.getApp().getString(R.string.key_encryption_key));
 		String decryptedString = null;
 		if (string != null && key != null) {
 			decryptedString = Crypto.decrypt(string, key);
 		} else {
-			Log.w(TAG, "Encryption key not found in keystore: " + SQLCIPHER_KEY_NAME);
+			Log.w(TAG, "Encryption key not found in keystore: " + App.getApp().getString(R.string.key_encryption_key));
 		}
 		return decryptedString;
 	}

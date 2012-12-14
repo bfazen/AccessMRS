@@ -13,6 +13,8 @@
     <string name="key_server">server</string>
     <string name="key_username">username</string>
     <string name="key_password">password</string>
+    <string name="key_encryption_key">encryption_key</string>
+    <string name="key_encryption_password">encryption_password</string>
     <string name="key_saved_search">saved_search</string>
     <string name="key_program">program</string>
     <string name="key_provider">provider</string>
