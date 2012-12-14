@@ -123,7 +123,8 @@ public abstract class BasePatientActivity extends BaseUserListActivity implement
 				int birthDateIndex = c.getColumnIndex(DataModel.KEY_BIRTH_DATE);
 				int genderIndex = c.getColumnIndex(DataModel.KEY_GENDER);
 				int priorityIndex = c.getColumnIndexOrThrow(DataModel.KEY_PRIORITY_FORM_NUMBER);
-
+				int uuidIndex = c.getColumnIndex(DataModel.KEY_UUID);
+				
 				p = new Patient();
 				p.setPatientId(c.getInt(patientIdIndex));
 				p.setIdentifier(c.getString(identifierIndex));
@@ -133,7 +134,8 @@ public abstract class BasePatientActivity extends BaseUserListActivity implement
 				p.setBirthDate(c.getString(birthDateIndex));
 				p.setGender(c.getString(genderIndex));
 				p.setPriorityNumber(c.getInt(priorityIndex));
-
+				p.setUuid(c.getString(uuidIndex));
+				
 				if (c.getInt(priorityIndex) > 0) {
 					p.setPriority(true);
 				}

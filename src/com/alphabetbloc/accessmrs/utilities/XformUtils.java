@@ -322,10 +322,11 @@ public class XformUtils {
 		}
 
 		File registrationForm = new File(formPath);
-		if(!registrationForm.exists())
+		if (!registrationForm.exists()) {
 			insertRegistrationForm();
-
-		return createFormInstance(mPatient, formPath, jrFormId, jrFormName);
+			return createRegistrationFormInstance(mPatient);
+		} else
+			return createFormInstance(mPatient, formPath, jrFormId, jrFormName);
 	}
 
 	public static int createFormInstance(Patient mPatient, String formPath, String jrFormId, String formname) {
@@ -477,9 +478,11 @@ public class XformUtils {
 					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mPatient.getGender());
 
 				}
-				if (childName.equalsIgnoreCase("patient.uuid")) {
+				if (childName.equalsIgnoreCase("temporary.registration.uuid")) {
 					childElement.clear();
-					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mPatient.getUuid());
+					String tempUuid = mPatient.getUuid();
+					if (tempUuid != null)
+						childElement.addChild(0, org.kxml2.kdom.Node.TEXT, mPatient.getUuid());
 
 				}
 				if (childName.equalsIgnoreCase("patient.medical_record_number")) {
