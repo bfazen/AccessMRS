@@ -58,7 +58,7 @@ public abstract class BaseAdminListActivity extends ListActivity implements Sync
 				if (!RefreshDataService.isSyncActive) {
 					// Sync is not yet active, so we must be starting a sync
 					if (App.DEBUG) Log.v(TAG, "SyncStatusChanged: Preferences does not request syncs");
-					SyncManager.sCancelSync = true;
+					SyncManager.sCancelSync.set(true);
 
 				} else {
 					// we are just completing a sync (whether success or not)
@@ -77,9 +77,9 @@ public abstract class BaseAdminListActivity extends ListActivity implements Sync
 	}
 
 	private void showProgressDialog() {
-		SyncManager.sSyncStep = 0;
-		SyncManager.sLoopProgress = 0;
-		SyncManager.sLoopCount = 0;
+		SyncManager.sSyncStep.set(0);
+		SyncManager.sLoopProgress.set(0);
+		SyncManager.sLoopCount.set(0);
 		mSyncActiveDialog = new ProgressDialog(this);
 		mSyncActiveDialog.setIcon(android.R.drawable.ic_dialog_info);
 		mSyncActiveDialog.setTitle(getString(R.string.sync_in_progress_title));
@@ -103,7 +103,7 @@ public abstract class BaseAdminListActivity extends ListActivity implements Sync
 	}
 
 	private void updateSyncProgress() {
-		SyncManager.sEndSync = false;
+		SyncManager.sEndSync.set(false);
 
 		if (mSyncActiveDialog == null)
 			showProgressDialog();
@@ -111,14 +111,14 @@ public abstract class BaseAdminListActivity extends ListActivity implements Sync
 		mExecutor.schedule(new Runnable() {
 			public void run() {
 
-				if (!SyncManager.sEndSync && !mPaused) {
+				if (!SyncManager.sEndSync.get() && !mPaused) {
 					mExecutor.schedule(this, 800, TimeUnit.MILLISECONDS);
 					BaseAdminListActivity.this.runOnUiThread(new Runnable() {
 
 						@Override
 						public void run() {
-							int loop = (SyncManager.sLoopProgress == SyncManager.sLoopCount) ? 0 : ((int) Math.round(((float) SyncManager.sLoopProgress / (float) SyncManager.sLoopCount) * 10F));
-							mSyncActiveDialog.setProgress((SyncManager.sSyncStep * 10) + loop);
+							int loop = (SyncManager.sLoopProgress == SyncManager.sLoopCount) ? 0 : ((int) Math.round(((float) SyncManager.sLoopProgress.get() / (float) SyncManager.sLoopCount.get()) * 10F));
+							mSyncActiveDialog.setProgress((SyncManager.sSyncStep.get() * 10) + loop);
 							mSyncActiveDialog.setMessage(SyncManager.sSyncTitle);
 						}
 					});

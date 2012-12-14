@@ -7,7 +7,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -47,6 +49,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 	private SyncManager mSyncManager;
 	private String mTimeoutException;
 	private ScheduledExecutorService mExecutor = Executors.newScheduledThreadPool(5);
+	private SimpleDateFormat sTimeLog = new SimpleDateFormat("mm:ss.SSS");
 
 	public SyncAdapter(Context context, boolean autoInitialize) {
 		super(context, autoInitialize);
@@ -55,22 +58,27 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 
 	@Override
 	public void onPerformSync(Account account, Bundle extras, String authority, ContentProviderClient provider, final SyncResult syncResult) {
-		if (App.DEBUG) Log.v(TAG, "Sync Requested... asking user.");
+
+		long before = System.currentTimeMillis();
+		if (App.DEBUG)
+			Log.v(TAG, "Sync Requested... asking user.");
 		Thread.currentThread().setName(TAG);
 
 		mSyncManager = new SyncManager(mContext);
 
 		// ask user to sync
 		int count = 0;
-		while (!SyncManager.sStartSync && !SyncManager.sCancelSync && count < 20) {
+		while (!SyncManager.sStartSync.get() && !SyncManager.sCancelSync.get() && count < 20) {
 			android.os.SystemClock.sleep(1000);
 			count++;
-			if (App.DEBUG) Log.v(TAG, "Waiting for User with count=" + count);
+			if (App.DEBUG)
+				Log.v(TAG, "Waiting for User with count=" + count);
 		}
 
 		// sync
-		if (!SyncManager.sCancelSync) {
-			if (App.DEBUG) Log.v(TAG, "Starting an actual sync");
+		if (!SyncManager.sCancelSync.get()) {
+			if (App.DEBUG)
+				Log.v(TAG, "Starting an actual sync");
 			// Inform Activity
 			Intent broadcast = new Intent(SyncManager.SYNC_MESSAGE);
 			broadcast.putExtra(SyncManager.START_NEW_SYNC, true);
@@ -79,14 +87,18 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 			// Start the Sync
 			performSync(syncResult);
 		} else {
-			if (App.DEBUG) Log.v(TAG, "User cancelled the sync");
+			if (App.DEBUG)
+				Log.v(TAG, "User cancelled the sync");
 		}
 
-		SyncManager.sEndSync = true;
-		SyncManager.sStartSync = false;
-		SyncManager.sCancelSync = false;
+		SyncManager.sEndSync.set(true);
+		SyncManager.sStartSync.set(false); 
+		SyncManager.sCancelSync.set(false);
 
-		if (App.DEBUG) Log.v(TAG, "sync is now ending");
+		if (App.DEBUG)
+			Log.v(TAG, "sync is now ending");
+		if (App.DEBUG)
+			Log.v("SYNC BENCHMARK", "Total Sync Time: \n" + sTimeLog.format(new Date(System.currentTimeMillis() - before)));
 	}
 
 	private void performSync(SyncResult syncResult) {
@@ -111,7 +123,8 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 		mSyncManager.addSyncStep(mContext.getString(R.string.sync_uploading_forms), (instancesUploaded.length < 1) ? true : false); // 20%
 		int uploadErrors = (int) syncResult.stats.numIoExceptions;
 		mSyncManager.toastSyncUpdate(SyncManager.UPLOAD_FORMS, instancesUploaded.length, instancesToUpload.length, uploadErrors, dbError);
-		if (App.DEBUG) Log.v(TAG, "End of Upload ConnectionTimeOutException=" + mTimeoutException);
+		if (App.DEBUG)
+			Log.v(TAG, "End of Upload ConnectionTimeOutException=" + mTimeoutException);
 		if (mTimeoutException != null) {
 			mSyncManager.toastSyncResult((int) syncResult.stats.numIoExceptions, mTimeoutException);
 			return;
@@ -130,7 +143,8 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 		mSyncManager.addSyncStep(mContext.getString(R.string.sync_downloading_forms), (formsDownloaded.length < 1) ? true : false); // 40%
 		dbError = mSyncManager.updateDownloadedForms(formsDownloaded, syncResult);
 		mSyncManager.addSyncStep(mContext.getString(R.string.sync_downloading_forms), (formsDownloaded.length < 1) ? true : false); // 50%
-		if (App.DEBUG) Log.v(TAG, "Downloaded New Forms with result errors=" + syncResult.stats.numIoExceptions);
+		if (App.DEBUG)
+			Log.v(TAG, "Downloaded New Forms with result errors=" + syncResult.stats.numIoExceptions);
 		int downloadErrors = ((int) syncResult.stats.numIoExceptions) - uploadErrors;
 		mSyncManager.toastSyncUpdate(SyncManager.DOWNLOAD_FORMS, formsDownloaded.length, formsToDownload.length, downloadErrors, dbError);
 		if (mTimeoutException != null) {
@@ -141,15 +155,19 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 		// DOWNLOAD NEW OBS
 		mSyncManager.addSyncStep(mContext.getString(R.string.sync_downloading_data), false); // No
 																								// Change
+		long before = System.currentTimeMillis();
 		File temp = downloadObsStream(client, syncResult);
+		if (App.DEBUG)
+			Log.v("SYNC BENCHMARK", "Download Time: \n" + sTimeLog.format(new Date(System.currentTimeMillis() - before)));
 		mSyncManager.addSyncStep(mContext.getString(R.string.sync_updating_data), true); // 60%
 		if (temp != null) {
 			dbError = mSyncManager.readObsFile(temp, syncResult); // 70-100%
-			FileUtils.deleteFile(temp.getAbsolutePath());
+			// FileUtils.deleteFile(temp.getAbsolutePath()); TODO! Change this
 		}
 		int downloadObsErrors = ((int) syncResult.stats.numIoExceptions) - (uploadErrors + downloadErrors);
 		mSyncManager.toastSyncUpdate(SyncManager.DOWNLOAD_OBS, -1, -1, downloadObsErrors, dbError);
-		if (App.DEBUG) Log.v(TAG, "Downloaded New Obs with result errors=" + syncResult.stats.numIoExceptions);
+		if (App.DEBUG)
+			Log.v(TAG, "Downloaded New Obs with result errors=" + syncResult.stats.numIoExceptions);
 
 		// TOAST RESULT
 		mSyncManager.toastSyncResult((int) syncResult.stats.numIoExceptions, null);
@@ -157,8 +175,8 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 	}
 
 	public String[] uploadInstances(HttpClient client, String[] instancePaths, SyncResult syncResult) {
-		SyncManager.sLoopProgress = 0;
-		SyncManager.sLoopCount = instancePaths.length;
+		SyncManager.sLoopProgress.set(0);
+		SyncManager.sLoopCount.set(instancePaths.length);
 		ArrayList<String> uploadedInstances = new ArrayList<String>();
 		for (int i = 0; i < instancePaths.length; i++) {
 
@@ -172,7 +190,8 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 					continue;
 
 				NetworkUtils.postEntity(client, NetworkUtils.getFormUploadUrl(), entity);
-				if (App.DEBUG) Log.v(TAG, "everything okay! added an instance...");
+				if (App.DEBUG)
+					Log.v(TAG, "everything okay! added an instance...");
 				uploadedInstances.add(instancePaths[i]);
 
 			} catch (IOException e) {
@@ -186,7 +205,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 				++syncResult.stats.numIoExceptions;
 			}
 
-			SyncManager.sLoopProgress++;
+			SyncManager.sLoopProgress.getAndIncrement();
 		}
 
 		return uploadedInstances.toArray(new String[uploadedInstances.size()]);
@@ -238,8 +257,8 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 	 */
 	private Form[] downloadNewForms(HttpClient client, Form[] newForms, SyncResult syncResult) {
 
-		SyncManager.sLoopProgress = 0;
-		SyncManager.sLoopCount = newForms.length;
+		SyncManager.sLoopProgress.set(0);
+		SyncManager.sLoopCount.set(newForms.length);
 		ArrayList<Form> downloadedForms = new ArrayList<Form>();
 		FileUtils.createFolder(FileUtils.getExternalFormsPath());
 
@@ -250,7 +269,8 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 			try {
 				// download
 				StringBuilder url = (new StringBuilder(NetworkUtils.getFormDownloadUrl())).append("&formId=").append(formId);
-				if (App.DEBUG) Log.v(TAG, "Will try to download form " + formId + " url=" + url);
+				if (App.DEBUG)
+					Log.v(TAG, "Will try to download form " + formId + " url=" + url);
 				InputStream is = NetworkUtils.getStream(client, url.toString());
 
 				File f = new File(FileUtils.getExternalFormsPath(), formId + FileUtils.XML_EXT);
@@ -279,7 +299,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 				e.printStackTrace();
 			}
 
-			SyncManager.sLoopProgress++;
+			SyncManager.sLoopProgress.getAndIncrement();
 		}
 
 		return downloadedForms.toArray(new Form[downloadedForms.size()]);
@@ -297,13 +317,13 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 	private File downloadObsStream(HttpClient client, SyncResult syncResult) {
 
 		// No accurate download size on stream, so hack periodic update
-		SyncManager.sLoopCount = 10;
-		SyncManager.sLoopProgress = 0;
+		SyncManager.sLoopCount.set(10);
+		SyncManager.sLoopProgress.set(0);
 		mExecutor.schedule(new Runnable() {
 			public void run() {
 				// increase 1%/7s (i.e. slower than 1min timeout)
-				SyncManager.sLoopProgress++;
-				if (SyncManager.sLoopProgress < 9)
+				SyncManager.sLoopProgress.getAndIncrement();
+				if (SyncManager.sLoopProgress.get() < 9)
 					mExecutor.schedule(this, 7000, TimeUnit.MILLISECONDS);
 			}
 		}, 1000, TimeUnit.MILLISECONDS);
@@ -311,14 +331,17 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 		// Download File
 		File tempFile = null;
 		try {
-			// showProgress("Downloading Clients");
+			// showProgress("Downloading Clients"); //TODO! CHANGE THIS
 			tempFile = File.createTempFile(".omrs", "-stream", mContext.getFilesDir());
 			BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(tempFile));
 			DataInputStream dis = NetworkUtils.getOdkStream(client, NetworkUtils.getPatientDownloadUrl());
 
+			if (App.DEBUG)
+				Log.v("SYNC BENCHMARK", "Download with buffer size=\n" + 8192);
 			if (dis != null) {
 
-				byte[] buffer = new byte[4096];
+				byte[] buffer = new byte[8192]; // increasing this from 4096 to
+												// improve performance (testing)
 				int count = 0;
 				while ((count = dis.read(buffer)) > 0) {
 					bos.write(buffer, 0, count);
@@ -337,5 +360,4 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 
 		return tempFile;
 	}
-
 }

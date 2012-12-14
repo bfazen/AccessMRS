@@ -16,11 +16,15 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.SyncStatusObserver;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.ProgressBar;
 
 import com.alphabetbloc.accessmrs.services.RefreshDataService;
 import com.alphabetbloc.accessmrs.services.SyncManager;
@@ -49,6 +53,11 @@ public abstract class BaseUserActivity extends Activity implements SyncStatusObs
 	private static boolean mPaused;
 	private ScheduledExecutorService mExecutor = Executors.newScheduledThreadPool(5);
 
+	// TESTING OUT HANDLER
+//	ProgressBar bar1;
+//	int globalIntTest;
+//	boolean isRunning;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -58,7 +67,48 @@ public abstract class BaseUserActivity extends Activity implements SyncStatusObs
 			finish();
 		}
 		mToastCtx = this;
+
+//		setupHandler();
 	}
+
+//	private void setupHandler() {
+////		bar1 = (ProgressBar) findViewById(R.id.progress1);
+////		bar1.setProgress(0);
+////		bar1.setMax(100);
+//		// msgReturned = (TextView)findViewById(R.id.txtReturnedValues);
+//		// //globalStrTest += "XXX"; // slightly change the global string
+//		globalIntTest = 1;
+//	}
+//
+//	Handler handler = new Handler() {
+//
+//		@Override
+//		public void handleMessage(Message msg) {
+//			String returnedValue = (String) msg.obj;
+//			
+//			mSyncActiveDialog.incrementProgressBy(2);
+////			mSyncActiveDialog.setProgress((SyncManager.sSyncStep * 10) + loop);
+//			mSyncActiveDialog.setMessage(returnedValue);
+//			
+////			msgReturned.append("\n returned value: " + returnedValue);
+////			bar1.incrementProgressBy(2);
+////
+////			if (bar1.getProgress() == 100) {
+////				msgReturned.append(" \nDone \n back thread has been stopped");
+////				isRunning = false;
+////			}
+////			if (bar1.getProgress() == bar1.getMax()) {
+////				msgWorking.setText("Done");
+////				bar1.setVisibility(View.INVISIBLE);
+////				bar2.setVisibility(View.INVISIBLE);
+////			} else {
+////				msgWorking.setText("Working..." + bar1.getProgress());
+////			}
+//
+//			super.handleMessage(msg);
+//		}
+//
+//	};
 
 	@Override
 	public void onStatusChanged(int which) {
@@ -67,11 +117,13 @@ public abstract class BaseUserActivity extends Activity implements SyncStatusObs
 			public void run() {
 				if (!RefreshDataService.isSyncActive) {
 					// Sync is not yet active, so we must be starting a sync
-					if (App.DEBUG) Log.v(TAG, "SyncStatusChanged: starting a Sync");
+					if (App.DEBUG)
+						Log.v(TAG, "SyncStatusChanged: starting a Sync");
 
 				} else {
 					// we are just completing a sync (whether success or not)
-					if (App.DEBUG) Log.v(TAG, "SyncStatusChanged: completing sync");
+					if (App.DEBUG)
+						Log.v(TAG, "SyncStatusChanged: completing sync");
 					// dismiss dialog
 					if (mSyncActiveDialog != null) {
 						mSyncActiveDialog.dismiss();
@@ -94,9 +146,9 @@ public abstract class BaseUserActivity extends Activity implements SyncStatusObs
 	protected abstract void refreshView();
 
 	private void showProgressDialog() {
-		SyncManager.sSyncStep = 0;
-		SyncManager.sLoopProgress = 0;
-		SyncManager.sLoopCount = 0;
+		SyncManager.sSyncStep.set(0);
+		SyncManager.sLoopProgress.set(0);
+		SyncManager.sLoopCount.set(0);
 		mSyncActiveDialog = new ProgressDialog(this);
 		mSyncActiveDialog.setIcon(android.R.drawable.ic_dialog_info);
 		mSyncActiveDialog.setTitle(getString(R.string.sync_in_progress_title));
@@ -113,13 +165,13 @@ public abstract class BaseUserActivity extends Activity implements SyncStatusObs
 			public void onClick(DialogInterface dialog, int which) {
 				switch (which) {
 				case DialogInterface.BUTTON_POSITIVE:
-					SyncManager.sStartSync = true;
+					SyncManager.sStartSync.set(true);
 					updateSyncProgress();
 					dialog.dismiss();
 					break;
 
 				case DialogInterface.BUTTON_NEGATIVE:
-					SyncManager.sCancelSync = true;
+					SyncManager.sCancelSync.set(true);
 					break;
 				}
 			}
@@ -135,8 +187,6 @@ public abstract class BaseUserActivity extends Activity implements SyncStatusObs
 		mRequestSyncDialog.show();
 	}
 
-	
-	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		super.onCreateOptionsMenu(menu);
@@ -196,7 +246,7 @@ public abstract class BaseUserActivity extends Activity implements SyncStatusObs
 	}
 
 	private void updateSyncProgress() {
-		SyncManager.sEndSync = false;
+		SyncManager.sEndSync.set(false);
 
 		if (mSyncActiveDialog == null)
 			showProgressDialog();
@@ -204,14 +254,14 @@ public abstract class BaseUserActivity extends Activity implements SyncStatusObs
 		mExecutor.schedule(new Runnable() {
 			public void run() {
 
-				if (!SyncManager.sEndSync && !mPaused) {
+				if (!SyncManager.sEndSync.get() && !mPaused) {
 					mExecutor.schedule(this, 800, TimeUnit.MILLISECONDS);
 					BaseUserActivity.this.runOnUiThread(new Runnable() {
 
 						@Override
 						public void run() {
-							int loop = (SyncManager.sLoopProgress == SyncManager.sLoopCount) ? 0 : ((int) Math.round(((float) SyncManager.sLoopProgress / (float) SyncManager.sLoopCount) * 10F));
-							mSyncActiveDialog.setProgress((SyncManager.sSyncStep * 10) + loop);
+							int loop = (SyncManager.sLoopProgress == SyncManager.sLoopCount) ? 0 : ((int) Math.round(((float) SyncManager.sLoopProgress.get() / (float) SyncManager.sLoopCount.get()) * 10F));
+							mSyncActiveDialog.setProgress((SyncManager.sSyncStep.get() * 10) + loop);
 							mSyncActiveDialog.setMessage(SyncManager.sSyncTitle);
 						}
 					});
@@ -228,7 +278,7 @@ public abstract class BaseUserActivity extends Activity implements SyncStatusObs
 			boolean newSync = i.getBooleanExtra(SyncManager.START_NEW_SYNC, false);
 			if (requestSync) {
 				showRequestSyncDialog();
-				
+
 			} else if (newSync) {
 				updateSyncProgress();
 				// we are starting a new sync automatically
