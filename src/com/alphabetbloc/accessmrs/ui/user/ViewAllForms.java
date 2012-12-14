@@ -28,9 +28,10 @@ import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import com.alphabetbloc.accessforms.provider.InstanceProviderAPI;
 import com.alphabetbloc.accessforms.provider.FormsProviderAPI.FormsColumns;
+import com.alphabetbloc.accessforms.provider.InstanceProviderAPI;
 import com.alphabetbloc.accessforms.provider.InstanceProviderAPI.InstanceColumns;
+import com.alphabetbloc.accessmrs.R;
 import com.alphabetbloc.accessmrs.adapters.FormAdapter;
 import com.alphabetbloc.accessmrs.adapters.MergeAdapter;
 import com.alphabetbloc.accessmrs.data.Form;
@@ -41,7 +42,6 @@ import com.alphabetbloc.accessmrs.utilities.App;
 import com.alphabetbloc.accessmrs.utilities.FileUtils;
 import com.alphabetbloc.accessmrs.utilities.UiUtils;
 import com.alphabetbloc.accessmrs.utilities.XformUtils;
-import com.alphabetbloc.accessmrs.R;
 
 /**
  * @author Louis Fazen (louis.fazen@gmail.com) (All Methods except where noted
@@ -148,7 +148,8 @@ public class ViewAllForms extends ViewFormsActivity {
 	protected void onResume() {
 		super.onResume();
 		// TODO! Change this too!
-		// mSelectedFormIds = getPriorityForms(mPatient.getPatientId());
+		 mSelectedFormIds = getPriorityForms(mPatient.getPatientId());
+		 Log.e("ViewAllForms", "mSelectedFormIds= " +  mSelectedFormIds.size()); 
 		createPatientHeader(mPatient.getPatientId());
 		refreshView();
 	}
@@ -222,6 +223,13 @@ public class ViewAllForms extends ViewFormsActivity {
 		// end of gathering data... add everything to the view:
 		adapter = new MergeAdapter();
 
+		//TODO: DELETE:
+		Log.e("ViewAllForms", "\n\t PRIORITY FORMS= " + starItems.length + 
+				"\n\t SAVED FORMS= " + savedForms.size() + 
+				"\n\t COMPLETE FORMS= " + completedForms.size() + 
+				"\n\t NON-PRIORITY FORMS= " + nonStarItems.length + 
+				"\n\t ALL FORMS= " + allItems.length);
+		
 		// priority...
 		if (starItems.length > 0) {
 			adapter.addView(buildSectionLabel(getString(R.string.priority_form_section), true));
