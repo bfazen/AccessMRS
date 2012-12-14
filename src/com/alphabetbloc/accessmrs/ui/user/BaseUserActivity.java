@@ -53,10 +53,6 @@ public abstract class BaseUserActivity extends Activity implements SyncStatusObs
 	private static boolean mPaused;
 	private ScheduledExecutorService mExecutor = Executors.newScheduledThreadPool(5);
 
-	// TESTING OUT HANDLER
-//	ProgressBar bar1;
-//	int globalIntTest;
-//	boolean isRunning;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -68,47 +64,8 @@ public abstract class BaseUserActivity extends Activity implements SyncStatusObs
 		}
 		mToastCtx = this;
 
-//		setupHandler();
 	}
 
-//	private void setupHandler() {
-////		bar1 = (ProgressBar) findViewById(R.id.progress1);
-////		bar1.setProgress(0);
-////		bar1.setMax(100);
-//		// msgReturned = (TextView)findViewById(R.id.txtReturnedValues);
-//		// //globalStrTest += "XXX"; // slightly change the global string
-//		globalIntTest = 1;
-//	}
-//
-//	Handler handler = new Handler() {
-//
-//		@Override
-//		public void handleMessage(Message msg) {
-//			String returnedValue = (String) msg.obj;
-//			
-//			mSyncActiveDialog.incrementProgressBy(2);
-////			mSyncActiveDialog.setProgress((SyncManager.sSyncStep * 10) + loop);
-//			mSyncActiveDialog.setMessage(returnedValue);
-//			
-////			msgReturned.append("\n returned value: " + returnedValue);
-////			bar1.incrementProgressBy(2);
-////
-////			if (bar1.getProgress() == 100) {
-////				msgReturned.append(" \nDone \n back thread has been stopped");
-////				isRunning = false;
-////			}
-////			if (bar1.getProgress() == bar1.getMax()) {
-////				msgWorking.setText("Done");
-////				bar1.setVisibility(View.INVISIBLE);
-////				bar2.setVisibility(View.INVISIBLE);
-////			} else {
-////				msgWorking.setText("Working..." + bar1.getProgress());
-////			}
-//
-//			super.handleMessage(msg);
-//		}
-//
-//	};
 
 	@Override
 	public void onStatusChanged(int which) {
