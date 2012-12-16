@@ -60,10 +60,6 @@ public class DashboardActivity extends BaseUserActivity {
 		super.onCreate(savedInstanceState);
 		mContext = this;
 
-		// Establish background service for downloading clients TODO! VERIFY
-		// WakefulIntentService.scheduleAlarms(new RefreshDataListener(),
-		// WakefulIntentService.REFRESH_DATA, mContext, true);
-
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.dashboard);
 
