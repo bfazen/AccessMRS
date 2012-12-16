@@ -116,13 +116,10 @@ public class ViewPatientActivity extends BasePatientListActivity {
 				Intent i = new Intent(getApplicationContext(), PatientConsentActivity.class);
 				i.putExtra(KEY_PATIENT_ID, patientIdStr);
 				startActivityForResult(i, OBTAIN_CONSENT);
-
-			} else if (mConsent == DataModel.CONSENT_OBTAINED) {
-				// TODO Performance: Improve SQL query to get only latest obs
-				getAllObservations(mPatient.getPatientId());
-				getPatientForms(mPatient.getPatientId());
 			}
-
+			
+			getAllObservations(mPatient.getPatientId());
+			getPatientForms(mPatient.getPatientId());
 			mPatient.setTotalCompletedForms(findPreviousEncounters());
 			createPatientHeader(mPatient.getPatientId());
 			refreshView();
@@ -138,7 +135,6 @@ public class ViewPatientActivity extends BasePatientListActivity {
 			if (resultCode == RESULT_OK) {
 				mPatient = Db.open().getPatient(Integer.valueOf(patientIdStr));
 				mConsent = mPatient.getConsent();
-				// refreshView();
 			} else {
 				mConsent = DataModel.CONSENT_DECLINED;
 			}
@@ -147,7 +143,6 @@ public class ViewPatientActivity extends BasePatientListActivity {
 			if (resultCode == RESULT_OK) {
 				mPatient = Db.open().getPatient(Integer.valueOf(patientIdStr));
 				mConsent = mPatient.getConsent();
-				// refreshView();
 			}
 		default:
 			break;
@@ -221,32 +216,39 @@ public class ViewPatientActivity extends BasePatientListActivity {
 
 		if (c != null) {
 			if (c.moveToFirst()) {
-
-				int priorityIndex = c.getColumnIndexOrThrow(DataModel.KEY_PRIORITY_FORM_NUMBER);
 				int savedNumberIndex = c.getColumnIndexOrThrow(DataModel.KEY_SAVED_FORM_NUMBER);
-
-				mPatient.setPriorityNumber(c.getInt(priorityIndex));
 				mPatient.setSavedNumber(c.getInt(savedNumberIndex));
-
-				if (c.getInt(priorityIndex) > 0) {
-					mPatient.setPriority(true);
+				if (c.getInt(savedNumberIndex) > 0)
+					mPatient.setSaved(true);
+				else
+					mPatient.setSaved(false);
+				if(App.DEBUG)
+					Log.v(TAG, "Setting Saved Form Number to = " + c.getInt(savedNumberIndex));
+				
+				int priorityIndex = c.getColumnIndexOrThrow(DataModel.KEY_PRIORITY_FORM_NUMBER);
+				if (mConsent != null && mConsent == DataModel.CONSENT_OBTAINED) {
+					mPatient.setPriorityNumber(c.getInt(priorityIndex));
+					if (c.getInt(priorityIndex) > 0)
+						mPatient.setPriority(true);
+					else
+						mPatient.setPriority(false);
 				} else {
+					mPatient.setPriorityNumber(0);
 					mPatient.setPriority(false);
 				}
-
-				if (c.getInt(savedNumberIndex) > 0) {
-					mPatient.setSaved(true);
-				} else {
-					mPatient.setSaved(false);
-				}
+					
 			}
 
 			c.close();
 		}
 	}
 
+	// TODO Performance: Improve SQL query to get only latest obs
 	private void getAllObservations(Integer patientId) {
-		mObservations = Db.open().fetchPatientObservationList(patientId);
+		if (mConsent != null && mConsent == DataModel.CONSENT_OBTAINED)
+			mObservations = Db.open().fetchPatientObservationList(patientId);
+		else
+			mObservations.clear();
 	}
 
 	protected void refreshView() {

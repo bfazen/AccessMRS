@@ -52,6 +52,7 @@ import com.alphabetbloc.accessmrs.utilities.XformUtils;
 
 public class ViewAllForms extends ViewFormsActivity {
 
+	private static final String TAG = ViewAllForms.class.getSimpleName();
 	// private static final int FORM_DIALOG = 1;
 	private ArrayList<Form> mTotalForms = new ArrayList<Form>();
 	private static Patient mPatient;
@@ -147,7 +148,10 @@ public class ViewAllForms extends ViewFormsActivity {
 	@Override
 	protected void onResume() {
 		super.onResume();
-		mSelectedFormIds = getPriorityForms(mPatient.getPatientId());
+		Integer consent = mPatient.getConsent();
+		if (consent != null && consent == DataModel.CONSENT_OBTAINED) {
+			mSelectedFormIds = getPriorityForms(mPatient.getPatientId());
+		}
 		if (App.DEBUG)
 			Log.e("ViewAllForms", "mSelectedFormIds= " + mSelectedFormIds.size());
 		createPatientHeader(mPatient.getPatientId());
@@ -465,15 +469,12 @@ public class ViewAllForms extends ViewFormsActivity {
 		startActivityForResult(intent, priority);
 	}
 
-	// NB: RESULT_OK based on:
-	// AccessForms FormEntryActivity.finishReturnInstance() line1654
-	// Uri instance = Uri.withAppendedPath(InstanceColumns.CONTENT_URI, id);
-	// setResult(RESULT_OK, new Intent().setData(instance));
-	// BUT ListPatientActivity does not include it
+
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
 		super.onActivityResult(requestCode, resultCode, intent);
-
+		if (App.DEBUG)
+			Log.v(TAG,"requestCode=" + requestCode + "\nresultCode=" + resultCode + "\nintent=" + intent);
 		if (resultCode == RESULT_OK && (requestCode == FILL_FORM || requestCode == FILL_PRIORITY_FORM) && intent != null)
 			updateDatabases(requestCode, intent, mPatient.getPatientId());
 
