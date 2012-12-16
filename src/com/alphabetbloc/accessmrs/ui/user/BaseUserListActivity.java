@@ -296,9 +296,10 @@ public abstract class BaseUserListActivity extends ListActivity implements SyncS
 		LocalBroadcastManager.getInstance(this).unregisterReceiver(onSyncNotice);
 	}
 
-	protected void savePosition() {
-		// TODO Fill in method if you want to save the position of the item
-		// in the scroll list..
-	}
+	/**
+	 * Implement this method if you want to save the position of the item in the scroll
+	 * list..
+	 */
+	protected void savePosition() {}
 
 }

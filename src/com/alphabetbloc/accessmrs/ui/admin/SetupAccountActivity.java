@@ -224,7 +224,6 @@ public class SetupAccountActivity extends BaseAdminActivity implements SyncDataL
 				if (isAcceptable(userEntry))
 					checkServerCredentials(userEntry, pwdEntry);
 				else
-					// TODO! does this work, or do you need String.format()?
 					UiUtils.toastAlert(mContext, getString(R.string.auth_error_title), getString((R.string.auth_invalid_username), mUserText.getText().toString()));
 				break;
 			case FINISHED:
@@ -335,7 +334,7 @@ public class SetupAccountActivity extends BaseAdminActivity implements SyncDataL
 		AccountManager am = AccountManager.get(this);
 		boolean accountCreated = am.addAccountExplicitly(account, encPwd, null);
 
-		// TODO? is this necessary... does Android ever delete credentials?
+		// TODO ?Check? is this necessary... does Android ever delete credentials?
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(App.getApp());
 		prefs.edit().putString(getString(R.string.key_username), username).commit();
 		prefs.edit().putString(getString(R.string.key_password), encPwd).commit();

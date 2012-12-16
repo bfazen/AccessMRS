@@ -30,8 +30,7 @@ public class DeleteDecryptedDataListener implements WakefulIntentService.AlarmLi
 
 	public void scheduleAlarms(AlarmManager mgr, PendingIntent pi, Context ctxt) {
 		
-		//TODO! CHANGE ALARM INTERVAL!!
-		mgr.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + 60000, AlarmManager.INTERVAL_FIFTEEN_MINUTES/8, pi);
+		mgr.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + 60000, AlarmManager.INTERVAL_FIFTEEN_MINUTES/3, pi);
 	}
 
 	public void sendWakefulWork(Context ctxt) {
@@ -39,6 +38,6 @@ public class DeleteDecryptedDataListener implements WakefulIntentService.AlarmLi
 	}
 
 	public long getMaxAge() {
-		return (AlarmManager.INTERVAL_HALF_HOUR * 2);
+		return (AlarmManager.INTERVAL_FIFTEEN_MINUTES);
 	}
 }

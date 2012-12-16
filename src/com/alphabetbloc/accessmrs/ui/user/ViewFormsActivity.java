@@ -33,7 +33,7 @@ import com.alphabetbloc.accessmrs.R;
  * 
  */
 
-public abstract class ViewFormsActivity extends BasePatientActivity {
+public abstract class ViewFormsActivity extends BasePatientListActivity {
 
 	public static final String EDIT_FORM = "edit_form";
 	public static final int FILL_FORM = 3;
@@ -263,10 +263,8 @@ public abstract class ViewFormsActivity extends BasePatientActivity {
 		// otherwise, for patient list, need: patients, instances, and obs
 		// tables
 
-		if (patientId > 0) {
+		if (patientId > 0)
 			Db.open().updateSavedFormNumbersByPatientId(patientId.toString());
-//			Db.open().updateSavedFormsListByPatientId(patientId.toString());
-		}
 
 		// 3. Add to AccessMRS Db if complete, even without ID
 		if (status.equalsIgnoreCase(InstanceProviderAPI.STATUS_COMPLETE)) {

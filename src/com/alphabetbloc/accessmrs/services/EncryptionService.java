@@ -121,7 +121,7 @@ public class EncryptionService extends WakefulIntentService {
 		}
 
 		Db.open().deleteTemporaryPatients();
-		// TODO? add cancel threshold to prevent looping unsuccessful alarms?
+		// TODO ?Security? add cancel threshold to prevent looping unsuccessful alarms?
 		// BUT if not encrypting, better to keep trying, negatively effect
 		// performance, and have user complain as we want to know about this ...
 		if (allEncrypted) {

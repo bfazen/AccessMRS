@@ -197,14 +197,14 @@ public class NetworkUtils {
 
 	public static HttpClient createHttpClient(SocketFactory socketFactory) {
 		HttpParams params = new BasicHttpParams();
-		HttpProtocolParams.setVersion(params, HttpVersion.HTTP_1_1); // yaw
-		HttpProtocolParams.setContentCharset(params, HTTP.UTF_8); // yaw
-		HttpProtocolParams.setUseExpectContinue(params, false); // yaw
+		HttpProtocolParams.setVersion(params, HttpVersion.HTTP_1_1); 
+		HttpProtocolParams.setContentCharset(params, HTTP.UTF_8);
+		HttpProtocolParams.setUseExpectContinue(params, false);
 		HttpConnectionParams.setConnectionTimeout(params, CONNECTION_TIMEOUT);
-//		HttpConnectionParams.setSoTimeout(params, CONNECTION_TIMEOUT); // yaw
-		HttpClientParams.setRedirecting(params, false); // yaw
+//		HttpConnectionParams.setSoTimeout(params, CONNECTION_TIMEOUT); // Times out Active Connection
+		HttpClientParams.setRedirecting(params, false);
 
-		ConnManagerParams.setTimeout(params, CONNECTION_TIMEOUT); // yaw
+		ConnManagerParams.setTimeout(params, CONNECTION_TIMEOUT); 
 		ConnPerRoute connPerRoute = new ConnPerRouteBean(MAX_CONN_PER_ROUTE);
 		ConnManagerParams.setMaxConnectionsPerRoute(params, connPerRoute);
 		ConnManagerParams.setMaxTotalConnections(params, MAX_CONNECTIONS);
@@ -221,7 +221,6 @@ public class NetworkUtils {
 		} catch (Exception e) {
 			Log.e(TAG, "Caught an EXCEPTION. could not register the scheme?");
 			e.printStackTrace();
-			// TODO: handle exception
 		}
 		ClientConnectionManager cm = new ThreadSafeClientConnManager(params, schemeRegistry);
 		DefaultHttpClient httpClient = new DefaultHttpClient(cm, params);
@@ -281,7 +280,7 @@ public class NetworkUtils {
 		return entity;
 	}
 
-	// TODO! This should not have to check trusted at every single time...
+	// TODO Performance: This should not have to check trusted at every single time...
 	// (maybe need to go into MyTrustManager to fix this?)
 	public static void postEntity(HttpClient client, String url, MultipartEntity entity) throws IOException {
 		HttpPost httppost = new HttpPost(url);
@@ -334,7 +333,6 @@ public class NetworkUtils {
 		HttpResponse response = client.execute(request);
 		response.getStatusLine().getStatusCode();
 		HttpEntity responseEntity = response.getEntity();
-//		responseEntity.getContentLength();  // TODO! does not work! delete this...
 
 		DataInputStream zdis = new DataInputStream(new GZIPInputStream(responseEntity.getContent()));
 

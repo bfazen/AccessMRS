@@ -92,7 +92,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 		}
 
 		SyncManager.sEndSync.set(true);
-		SyncManager.sStartSync.set(false); 
+		SyncManager.sStartSync.set(false);
 		SyncManager.sCancelSync.set(false);
 
 		if (App.DEBUG)
@@ -162,7 +162,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 		mSyncManager.addSyncStep(mContext.getString(R.string.sync_updating_data), true); // 60%
 		if (temp != null) {
 			dbError = mSyncManager.readObsFile(temp, syncResult); // 70-100%
-			// FileUtils.deleteFile(temp.getAbsolutePath()); TODO! Change this
+			FileUtils.deleteFile(temp.getAbsolutePath());
 		}
 		int downloadObsErrors = ((int) syncResult.stats.numIoExceptions) - (uploadErrors + downloadErrors);
 		mSyncManager.toastSyncUpdate(SyncManager.DOWNLOAD_OBS, -1, -1, downloadObsErrors, dbError);
@@ -331,7 +331,6 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
 		// Download File
 		File tempFile = null;
 		try {
-			// showProgress("Downloading Clients"); //TODO! CHANGE THIS
 			tempFile = File.createTempFile(".omrs", "-stream", mContext.getFilesDir());
 			BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(tempFile));
 			DataInputStream dis = NetworkUtils.getOdkStream(client, NetworkUtils.getPatientDownloadUrl());

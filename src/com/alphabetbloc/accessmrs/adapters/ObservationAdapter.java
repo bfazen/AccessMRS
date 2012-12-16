@@ -13,13 +13,35 @@ import com.alphabetbloc.accessmrs.data.Observation;
 import com.alphabetbloc.accessmrs.providers.DataModel;
 import com.alphabetbloc.accessmrs.R;
 
-//TODO!  This is a remnant from ODK Clinic and needs to be changed significantly to work...
-// TODO! Add the ability to click into obs when there are many observations of the same type..
-// TODO! redo the observation_list_item to make it thinner to allow for more obs to be veiwed at one time
+// TODO Feature: rewrite this to view observation details.  originally from ODK Clinic and needs to be changed significantly to work...
+// 1. Add the ability to click into obs when there are many observations of the same type..
+// 2. Redo the observation_list_item to make it thinner to allow for more obs to be veiwed at one time
 // if many obs, should change the view, as was done with saved forms etc. 
+
+/* Loading Obs Code From ViewPatientActivity
+ * 3. Obs Graph on long press, unless only one value
+ * 
+ * @Override protected void onListItemClick(ListView listView, View view,
+ * int position, long id) {
+ * 
+ * if (mPatient != null) { // Get selected observation Observation obs =
+ * (Observation) getListAdapter().getItem(position);
+ * 
+ * Intent ip; int dataType = obs.getDataType(); if (dataType ==
+ * DbProvider.TYPE_INT || dataType == DbProvider.TYPE_DOUBLE) { ip = new
+ * Intent(getApplicationContext(), ObservationChartActivity.class);
+ * ip.putExtra(KEY_PATIENT_ID, mPatient.getPatientId() .toString());
+ * ip.putExtra(KEY_OBSERVATION_FIELD_NAME, obs.getFieldName());
+ * startActivity(ip); } else { ip = new Intent(getApplicationContext(),
+ * ObservationTimelineActivity.class); ip.putExtra(KEY_PATIENT_ID,
+ * mPatient.getPatientId() .toString());
+ * ip.putExtra(KEY_OBSERVATION_FIELD_NAME, obs.getFieldName());
+ * startActivity(ip); } } }
+ */
+
 /**
  * @author Yaw Anokwa (starting version was from ODK Clinic)
- *
+ * 
  */
 public class ObservationAdapter extends ArrayAdapter<Observation> {
 

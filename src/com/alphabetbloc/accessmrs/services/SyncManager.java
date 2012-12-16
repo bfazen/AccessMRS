@@ -66,8 +66,8 @@ public class SyncManager {
 	private String mSyncResultString;
 	private Context mContext;
 	public static AtomicInteger sSyncStep = new AtomicInteger(0);
-	public static AtomicInteger sLoopCount= new AtomicInteger(0);
-	public static AtomicInteger sLoopProgress= new AtomicInteger(0);
+	public static AtomicInteger sLoopCount = new AtomicInteger(0);
+	public static AtomicInteger sLoopProgress = new AtomicInteger(0);
 	public static String sSyncTitle = "";
 	public static AtomicBoolean sEndSync = new AtomicBoolean(false);
 	public static AtomicBoolean sStartSync = new AtomicBoolean(false);
@@ -85,49 +85,6 @@ public class SyncManager {
 			Log.v(TAG, "New SyncManager with: Step=" + sSyncStep + " Progress=" + sLoopProgress + " Count=" + sLoopCount);
 	}
 
-//	Thread background = new Thread(new Runnable() {
-//		public void run() {
-//			try {
-//				for (int i = 0; i < MAX_SEC && isRunning; i++) { // try a Toast
-//																	// method
-//																	// here (it
-//																	// will not
-//																	// work!)
-//																	// //fake
-//																	// busy busy
-//																	// work here
-//																	// Thread.sleep(1000);
-//																	// //one
-//																	// second at
-//																	// a time
-//					// this is a locally generated value between 0-100
-//					Random rnd = new Random();
-//					int localData = (int) rnd.nextInt(101);
-//					// we can see and change (global) class variables
-//					String data = "Data-" + globalIntTest + "-" + localData;
-//					globalIntTest++;
-//					// request a message token and put some data in it Message
-//					// msg = handler.obtainMessage(1, (String)data);
-//					// if thread is still alive send the message
-//					if (isRunning) {
-//						handler.sendMessage(msg);
-//					}
-//				}
-//			} catch (Throwable t) {
-//				// just end the background thread
-//				isRunning = false;
-//			}
-//		}
-//	});
-//
-//	isRunning = true;
-//	background.start();
-//	
-//	public void onStop() { 
-//		super.onStop(); 
-//		isRunning = false;
-//	}//onStop
-	
 	// REQUEST MANUAL SYNC
 	public static void syncData() {
 		if (App.DEBUG)
@@ -138,7 +95,6 @@ public class SyncManager {
 
 			sStartSync.set(true);
 
-			// TODO! Not sure if this is the best way to do it?
 			Bundle bundle = new Bundle();
 			bundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
 			bundle.putBoolean(ContentResolver.SYNC_EXTRAS_FORCE, true);
@@ -183,9 +139,6 @@ public class SyncManager {
 	public String[] getInstancesToUpload() {
 
 		ArrayList<String> selectedInstances = new ArrayList<String>();
-		// return selectedInstances.toArray(new String[0]);
-
-		// TODO! Change this back after testing!
 		Cursor c = Db.open().fetchFormInstancesByStatus(DataModel.STATUS_UNSUBMITTED);
 		if (c != null) {
 			if (c.moveToFirst()) {
@@ -229,7 +182,6 @@ public class SyncManager {
 				sLoopProgress.getAndIncrement();
 			}
 
-			// TODO! check this!
 			Db.open().clearSubmittedForms();
 
 			// Encrypt the uploaded data with wakelock to ensure it happens!
@@ -245,11 +197,6 @@ public class SyncManager {
 		try {
 			// Cursor c = Db.open().fetchFormInstancesByPath(path);
 			// if (c != null) {
-
-			// TODO! Make sure we are deleting the submitted instances from
-			// Db
-			// after encryption!
-
 			Db.open().updateFormInstance(path, DataModel.STATUS_SUBMITTED);
 
 			// c.close();
@@ -423,11 +370,8 @@ public class SyncManager {
 	public void updateAccessMrsObs() {
 		// sync db
 		Db.open().resolveTemporaryPatients();
-		// TODO! CHANGE THIS
 		Db.open().updatePriorityFormNumbers();
-		// Db.open().updatePriorityFormList();
 		Db.open().updateSavedFormNumbers();
-		// Db.open().updateSavedFormsList();
 
 		// log the event
 		Db.open().createDownloadLog();
@@ -458,21 +402,15 @@ public class SyncManager {
 				Log.v(TAG, "insertPatients icount: " + sLoopCount);
 			for (int i = 1; i < sLoopCount.get() + 1; i++) {
 
-				ih.prepareForInsert();
-				int bogusid = zdis.readInt();
-				ih.bind(ptIdIndex, bogusid);
-				String bogusperson = zdis.readUTF();
-				ih.bind(ptFamilyIndex, bogusperson);
+				ih.prepareForInsert();				
+				ih.bind(ptIdIndex, zdis.readInt());
+				ih.bind(ptFamilyIndex, zdis.readUTF());
 				ih.bind(ptMiddleIndex, zdis.readUTF());
 				ih.bind(ptGivenIndex, zdis.readUTF());
 				ih.bind(ptGenderIndex, zdis.readUTF());
 				ih.bind(ptBirthIndex, parseDate(input, output, zdis.readUTF()));
+				ih.bind(ptIdentifierIndex, zdis.readUTF());
 
-				String identifier = zdis.readUTF();
-				ih.bind(ptIdentifierIndex, identifier);
-				// TODO! Change this back!
-				// Log.i(TAG, "Adding Patient Number " + i + " identifier=" +
-				// identifier + " ID=" + bogusid + " FamlyName=" + bogusperson);
 				ih.execute();
 
 				sLoopProgress.getAndIncrement();
@@ -714,6 +652,16 @@ public class SyncManager {
 		return toast;
 	}
 }
+
+
+// TESTING DOWNLOADS LOGGING FOR INSERTPATIENTS:
+// int logid = zdis.readInt();
+// ih.bind(ptIdIndex, logid);
+// String logperson = zdis.readUTF();
+// ih.bind(ptFamilyIndex, logperson);
+// Log.i(TAG, "Adding Patient Number " + i + " ID=" + logid +
+// " FamlyName=" + logperson);
+
 
 // private boolean isSyncActiveOrPending() {
 // AccountManager accountManager = AccountManager.get(mContext);
