@@ -317,7 +317,7 @@ public class EncryptionService extends WakefulIntentService {
 			r.nextBytes(iv);
 			out.write(iv);
 			out.flush();
-			// Log.e(TAG, "block size =" + blockSize + " iv=" +
+			// if(App.DEBUG) Log.e(TAG, "block size =" + blockSize + " iv=" +
 			// Arrays.toString(iv));
 			final IvParameterSpec ivSpec = new IvParameterSpec(iv);
 

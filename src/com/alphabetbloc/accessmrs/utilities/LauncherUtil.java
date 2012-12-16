@@ -203,30 +203,30 @@ public class LauncherUtil {
 
 	// Step 3: Open or create the AccessForms db -> reset ACCESS_FORMS db if fail
 	private static boolean isAccessFormsSetup() {
-		Log.w(TAG, "IS AccessForms Setup?");
+		if(App.DEBUG) Log.w(TAG, "IS AccessForms Setup?");
 		try {
 			// If there is no db, then further setup is not needed
 			Context mAccessFormsCtx = App.getApp().createPackageContext("com.alphabetbloc.accessforms", Context.CONTEXT_RESTRICTED);
 			File db = mAccessFormsCtx.getDatabasePath(InstanceProviderAPI.DATABASE_NAME);
 			if(!db.exists()){
-				Log.w(TAG, "AccessForms does NOT have an existing db");
+				if(App.DEBUG) Log.w(TAG, "AccessForms does NOT have an existing db");
 				return true;
 			} else 
-				Log.w(TAG, "AccessForms has an existing db");
+				if(App.DEBUG) 	Log.w(TAG, "AccessForms has an existing db");
 		} catch (NameNotFoundException e1) {
-			Log.w(TAG, "AccessForms has no context... must be new install, so no need to reinstall");
+			if(App.DEBUG) Log.w(TAG, "AccessForms has no context... must be new install, so no need to reinstall");
 			e1.printStackTrace();
 			return true;
 		}
 		
 		//If db exists, then make sure we have a key and can open it
-		Log.w(TAG, "AccessForms has db, so lets see if we can open it?");
+		if(App.DEBUG) Log.w(TAG, "AccessForms has db, so lets see if we can open it?");
 		try {
 			Cursor c = App.getApp().getContentResolver().query(InstanceColumns.CONTENT_URI, null, null, null, null);
 			if (c != null)
 				c.close();
 		} catch (Exception e) {
-			Log.w(TAG, "AccessForms db key has been lost");
+			if(App.DEBUG) Log.w(TAG, "AccessForms db key has been lost");
 			return false;
 		}
 
@@ -234,7 +234,7 @@ public class LauncherUtil {
 	}
 
 	private static void setupAccessForms() {
-		Log.w(TAG, "setup AccessForms is called... because the db key has been lost");
+		if(App.DEBUG) Log.w(TAG, "setup AccessForms is called... because the db key has been lost");
 		// Lost key! (AccessMrs reinstalled?) CATASTROPHE... SO RESET AccessForms
 		Intent i = new Intent(App.getApp(), SetupPreferencesActivity.class);
 		i.putExtra(SetupPreferencesActivity.SETUP_INTENT, SetupPreferencesActivity.RESET_ACCESS_FORMS);

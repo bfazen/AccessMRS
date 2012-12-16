@@ -48,7 +48,7 @@ public class MySSLSocketFactory implements LayeredSocketFactory {
 			throw new IllegalArgumentException("Parameters may not be null.");
 		}
 
-		Log.e(TAG + "delete", "ConnectSocket with " + "\n\t host=" + host + "\n\t port=" + port + "\n\t localport=" + localPort);
+		if(App.DEBUG) Log.e(TAG + "delete", "ConnectSocket with " + "\n\t host=" + host + "\n\t port=" + port + "\n\t localport=" + localPort);
 
 		SSLSocket sslsock = (SSLSocket) ((sock != null) ? sock : createSocket());
 

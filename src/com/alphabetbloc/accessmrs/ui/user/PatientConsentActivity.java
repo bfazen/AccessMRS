@@ -105,7 +105,7 @@ public class PatientConsentActivity extends BaseUserActivity {
 	}
 
 	private void showConsentForm() {
-		Log.e(TAG, "adding consent view");
+		if(App.DEBUG) Log.e(TAG, "adding consent view");
 		mViewGroup.addView(View.inflate(this, R.layout.consent, null));
 		try {
 			WebView webView = (WebView) findViewById(R.id.webView1);
@@ -169,7 +169,7 @@ public class PatientConsentActivity extends BaseUserActivity {
 	}
 
 	private void showSignatureBox() {
-		Log.e(TAG, "adding signature view");
+		if(App.DEBUG) Log.e(TAG, "adding signature view");
 		mViewGroup.addView(View.inflate(this, R.layout.signature, null));
 		mContent = (LinearLayout) findViewById(R.id.signature_box);
 		mSignature = new Signature(this, null);

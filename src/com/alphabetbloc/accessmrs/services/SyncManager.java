@@ -659,7 +659,7 @@ public class SyncManager {
 // ih.bind(ptIdIndex, logid);
 // String logperson = zdis.readUTF();
 // ih.bind(ptFamilyIndex, logperson);
-// Log.i(TAG, "Adding Patient Number " + i + " ID=" + logid +
+// if(App.DEBUG) Log.i(TAG, "Adding Patient Number " + i + " ID=" + logid +
 // " FamlyName=" + logperson);
 
 
