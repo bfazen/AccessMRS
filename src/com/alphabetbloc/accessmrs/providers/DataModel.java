@@ -79,6 +79,7 @@ public class DataModel {
 	
 	//consent table
 	public static final String CONSENT_DATE = "date";
+	public static final String CONSENT_EXPIRATION_DATE = "expiration_date";
 	public static final String CONSENT_SIGNATURE = "signature";
 	public static final String PATIENT_PHOTO = "photo";
 	public static final String CONSENT_VALUE = "consent";
@@ -100,7 +101,7 @@ public class DataModel {
 	
 	// database
 	public static final String DATABASE_NAME = "accessmrs.sqlite3";
-	public static final int DATABASE_VERSION = 10;
+	public static final int DATABASE_VERSION = 11;
 
 	// table create statements
 	public static final String CREATE_PATIENTS_TABLE = "create table " + 
@@ -173,6 +174,7 @@ public class DataModel {
 			PATIENT_PHOTO + " blob, " + 
 			CONSENT_SIGNATURE + " blob, " + 
 			CONSENT_VALUE + " integer, " +
+			CONSENT_EXPIRATION_DATE + " integer, " +
 			CONSENT_VOIDED + " integer, " +
 			CONSENT_VOIDED_DATE + " integer);";
 	

@@ -6,11 +6,9 @@ import java.util.Date;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
@@ -425,17 +423,17 @@ public class ViewPatientActivity extends BasePatientListActivity {
 					consentDate.setTime(consentTime);
 					String consentString = new SimpleDateFormat("MMM dd, yyyy").format(consentDate) + " ";
 					consentDateView.setText(consentString);
+				}
 
-					// Set Consent Expiration Date (TODO! this should stored and be taken from the DB!)
-					SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
-					String consentSeconds = prefs.getString(getString(R.string.key_max_consent_time), getString(R.string.default_max_consent_time));
-					Long expiryPeriod = Integer.valueOf(consentSeconds) * 1000L;
-					Long expiryTime = consentTime + expiryPeriod;
+				Long expiryTime = mPatient.getConsentExpirationDate();
+				if (expiryTime != null) {
+					// Set Consent Expiration Date
 					Date expiryDate = new Date();
 					expiryDate.setTime(expiryTime);
 					String expiryString = new SimpleDateFormat("MMM dd, yyyy").format(expiryDate) + " ";
 					expiryDateView.setText(expiryString);
 				}
+
 			}
 		}
 

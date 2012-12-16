@@ -35,6 +35,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import com.alphabetbloc.accessmrs.R;
 import com.alphabetbloc.accessmrs.data.Patient;
@@ -123,6 +124,19 @@ public class PatientConsentActivity extends BaseUserActivity {
 			finish();
 		}
 
+		TextView validity = (TextView) findViewById(R.id.validity_period);
+		final Date date = new Date();
+		date.setTime(System.currentTimeMillis());
+		String dateString = new SimpleDateFormat("MMM dd, yyyy").format(date) + " ";
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
+		String consentSeconds = prefs.getString(getString(R.string.key_max_consent_time), getString(R.string.default_max_consent_time));
+		Long expiryPeriod = Integer.valueOf(consentSeconds) * 1000L;
+		Long expiryTime = System.currentTimeMillis() + expiryPeriod;
+		Date expiryDate = new Date();
+		expiryDate.setTime(expiryTime);
+		String expiryString = new SimpleDateFormat("MMM dd, yyyy").format(expiryDate) + " ";
+		validity.setText(getString(R.string.consent_validity_period, dateString, expiryString));
+		
 		Button cancel = (Button) findViewById(R.id.consent_cancel);
 		cancel.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
@@ -262,7 +276,7 @@ public class PatientConsentActivity extends BaseUserActivity {
 				stamp.setTextSize(12);
 
 				// Name and Date
-				String clientName = mPatient.getGivenName() + "  " + mPatient.getFamilyName();
+				String clientName = mPatient.getGivenName() + "  " + mPatient.getFamilyName() + " (ID:" + mPatient.getPatientId() + ")";
 				canvas.drawText(clientName, 10, mContent.getHeight() + 12, stamp);
 
 				// Provider ID and Period
@@ -270,15 +284,17 @@ public class PatientConsentActivity extends BaseUserActivity {
 				date.setTime(System.currentTimeMillis());
 				String dateString = new SimpleDateFormat("MMM dd, yyyy").format(date) + " ";
 				SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
-				String providerId = prefs.getString(getString(R.string.key_provider), getString(R.string.default_provider));
+				// String providerId =
+				// prefs.getString(getString(R.string.key_provider),
+				// getString(R.string.default_provider));
 				String consentSeconds = prefs.getString(getString(R.string.key_max_consent_time), getString(R.string.default_max_consent_time));
 				Long expiryPeriod = Integer.valueOf(consentSeconds) * 1000L;
-				Long expiryTime =  System.currentTimeMillis() + expiryPeriod;
+				Long expiryTime = System.currentTimeMillis() + expiryPeriod;
 				Date expiryDate = new Date();
 				expiryDate.setTime(expiryTime);
 				String expiryString = new SimpleDateFormat("MMM dd, yyyy").format(expiryDate) + " ";
-				
-				canvas.drawText(mContext.getString(R.string.consent_signature_addendum_line1, mPatient.getPatientId() + "  ", dateString), 10, mContent.getHeight() + 24, stamp);
+
+				canvas.drawText(mContext.getString(R.string.consent_signature_addendum_line1, dateString), 10, mContent.getHeight() + 24, stamp);
 				canvas.drawText(mContext.getString(R.string.consent_signature_addendum_line2, expiryString), 10, mContent.getHeight() + 36, stamp);
 
 				// Save Bitmap To Db

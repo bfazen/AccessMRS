@@ -30,6 +30,7 @@ public class Patient {
 	private Integer totalCompletedForms = null;
 	private Integer consentStatus = null;
 	private Long consentDate = null;
+	private Long consentExpirationDate = null;
 
 	// For Client Registration Forms:
 	private String uuid = null;
@@ -159,6 +160,14 @@ public class Patient {
 	
 	public Long getConsentDate() {
 		return consentDate;
+	}
+	
+	public void setConsentExpirationDate(Long expirationDate) {
+		consentExpirationDate = expirationDate;
+	}
+	
+	public Long getConsentExpirationDate() {
+		return consentExpirationDate;
 	}
 	
 	public void setSaved(Boolean saved) {

@@ -3,7 +3,7 @@
     android:id="@+id/scroll"
     android:layout_width="match_parent"
     android:layout_height="match_parent" >
-  
+
     <LinearLayout
         android:id="@+id/rl"
         android:layout_width="match_parent"
@@ -28,6 +28,17 @@
             android:layout_marginRight="0dp"
             android:layout_marginTop="0dp"
             android:scrollbars="none" />
+
+        <TextView
+            android:id="@+id/validity_period"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:padding="10dip"
+            android:paddingBottom="2dip"
+            android:paddingLeft="3dip"
+            android:paddingRight="3dip"
+            android:paddingTop="2dip"
+            android:textSize="18sp" />
 
         <RelativeLayout
             android:id="@+id/button_row"
@@ -67,5 +78,6 @@
                 android:text="@string/consent_decline"
                 android:textSize="18sp" />
         </RelativeLayout>
-</LinearLayout>
+    </LinearLayout>
+
 </ScrollView>

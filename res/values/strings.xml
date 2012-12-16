@@ -229,13 +229,14 @@
     <string name="consent_request_signature">Ask client to sign name here:</string>
     <string name="consent_expired_title">Client Consent Expired</string>
     <string name="consent_expired_body">The previous consent for this client on %s has now expired.  Please obtain a new consent from this client to see clinical data.</string>
-    <string name="consent_signature_addendum_line1">(ID %1$s) Consented on %2$s</string>
+    <string name="consent_signature_addendum_line1">Consented on %s</string>
     <string name="consent_signature_addendum_line2">Consent Valid Until %s</string>
     <string name="consent_obtained">Obtained:</string>
     <string name="consent_expiration">Expiration:</string>
     <string name="consent_expired">Previous consent expired.\nClick to consent.</string>
     <string name="consent_deferred">Consent deferred.\nClick to consent.</string>
     <string name="consent_declined">Consent declined by client.\nClick to consent.</string>
+    <string name="consent_validity_period">Consent is valid from today (%1$s) and will expire on %2$s. After the expiration date, current provider may only access data from forms he/she has previously filled out.</string>
 
     <!-- Add New Client -->
     <string name="add_new_client">Add New Client</string>

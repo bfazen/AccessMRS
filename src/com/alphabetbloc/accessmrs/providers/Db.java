@@ -1,6 +1,7 @@
 package com.alphabetbloc.accessmrs.providers;
 
 import java.util.ArrayList;
+import java.util.Date;
 
 import net.sqlcipher.SQLException;
 import net.sqlcipher.database.SQLiteQueryBuilder;
@@ -130,56 +131,27 @@ public class Db {
 	private Cursor fetchPriorConsent(Integer patientId) throws SQLException {
 		String selection = DataModel.KEY_PATIENT_ID + "=? AND " + DataModel.CONSENT_DATE + "= (SELECT MAX(date) AS date FROM consent)";
 		String[] selectionArgs = new String[] { String.valueOf(patientId) };
-		
-//		String[] selectionArgs = new String[] { String.valueOf(patientId), " (SELECT MAX(" + DataModel.CONSENT_DATE + ") AS " + DataModel.CONSENT_DATE + " FROM " + DataModel.CONSENT_TABLE + ")" };
-//		String selection = DataModel.KEY_PATIENT_ID + "=? AND " + DataModel.CONSENT_DATE + "=? ";
-		//		return DbProvider.openDb().rawQuery("SELECT * FROM consent WHERE patient_id = ? AND date = (SELECT MAX(date) AS date FROM consent)", new String[] {String.valueOf(patientId)});
+
+		// String[] selectionArgs = new String[] { String.valueOf(patientId),
+		// " (SELECT MAX(" + DataModel.CONSENT_DATE + ") AS " +
+		// DataModel.CONSENT_DATE + " FROM " + DataModel.CONSENT_TABLE + ")" };
+		// String selection = DataModel.KEY_PATIENT_ID + "=? AND " +
+		// DataModel.CONSENT_DATE + "=? ";
+		// return
+		// DbProvider.openDb().rawQuery("SELECT * FROM consent WHERE patient_id = ? AND date = (SELECT MAX(date) AS date FROM consent)",
+		// new String[] {String.valueOf(patientId)});
 		return DbProvider.openDb().query(DataModel.CONSENT_TABLE, null, selection, selectionArgs, null);
-	}
-
-	public Integer getPatientConsent(Integer patientId) throws SQLException {
-		Cursor c = fetchPriorConsent(patientId);
-		Integer consent = null;
-		if(App.DEBUG) Log.v(TAG, "getPatientConsentCalled");
-		
-		if (c != null) {
-			if (c.moveToFirst()) {
-				consent = c.getInt(c.getColumnIndex(DataModel.CONSENT_VALUE));
-				long consentDate = c.getLong(c.getColumnIndex(DataModel.CONSENT_DATE));
-				Integer voided = c.getInt(c.getColumnIndex(DataModel.CONSENT_VOIDED));
-
-				if(App.DEBUG) Log.v(TAG, c.getCount() + "Prior Consents Found.  First Row has values: \n\tValue=" + consent + "\n\tVoided=" + voided +  "\n\tDate=" + consentDate);
-
-				if (consent != null && consent == DataModel.CONSENT_OBTAINED) {
-
-					// Dont evaluate voided consent statements
-					if (voided != null && voided == DataModel.CONSENT_IS_VOIDED)
-						consent = null;
-
-					// Evaluate the consent date for all positive consents
-					long timeSinceConsent = System.currentTimeMillis() - consentDate;
-					SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(App.getApp());
-					String maxConsentSeconds = prefs.getString(App.getApp().getString(R.string.key_max_consent_time), App.getApp().getString(R.string.default_max_consent_time));
-					long maxConsentMs = 1000L * Long.valueOf(maxConsentSeconds);
-					if (timeSinceConsent > maxConsentMs) {
-						if(App.DEBUG) Log.v(TAG, "Consent is Now Expired, TimeSinceConsent < maxConsentMs: \n\t" + timeSinceConsent + "  is less than: \n\t" + maxConsentMs);
-						consent = null;
-						voidPriorConsent(patientId);
-					}
-				}
-			}
-			c.close();
-		}
-
-		return consent;
 	}
 
 	public byte[] getPriorConsentImage(Integer patientId) throws SQLException {
 		String[] projection = new String[] { DataModel.CONSENT_SIGNATURE };
 		String selection = DataModel.KEY_PATIENT_ID + "=? AND " + DataModel.CONSENT_DATE + "= (SELECT MAX(date) AS date FROM consent)";
 		String[] selectionArgs = new String[] { String.valueOf(patientId) };
-//		String selection = DataModel.KEY_PATIENT_ID + "=? AND " + DataModel.CONSENT_DATE + "=? ";
-//		String[] selectionArgs = new String[] { String.valueOf(patientId), " (SELECT MAX(" + DataModel.CONSENT_DATE + ") AS " + DataModel.CONSENT_DATE + " FROM " + DataModel.CONSENT_TABLE + ")" };
+		// String selection = DataModel.KEY_PATIENT_ID + "=? AND " +
+		// DataModel.CONSENT_DATE + "=? ";
+		// String[] selectionArgs = new String[] { String.valueOf(patientId),
+		// " (SELECT MAX(" + DataModel.CONSENT_DATE + ") AS " +
+		// DataModel.CONSENT_DATE + " FROM " + DataModel.CONSENT_TABLE + ")" };
 		Cursor c = DbProvider.openDb().query(DataModel.CONSENT_TABLE, projection, selection, selectionArgs, null);
 
 		byte[] blob = null;
@@ -419,7 +391,8 @@ public class Db {
 		return expr;
 	}
 
-	// TODO Performance: better resource management if Patient were Parceable object?
+	// TODO Performance: better resource management if Patient were Parceable
+	// object?
 	public Patient getPatient(Integer patientId) {
 
 		Patient p = null;
@@ -445,14 +418,49 @@ public class Db {
 		// Get Patient Consent
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(App.getApp());
 		boolean requestConsent = prefs.getBoolean(App.getApp().getString(R.string.key_request_consent), true);
+		Integer consent = null;
+		Long consentDate = null;
+		Long consentExpirationDate = null;
+
 		if (requestConsent) {
-			Integer consent = getPatientConsent(patientId);
+			Cursor cursor = fetchPriorConsent(patientId);
+			
+			if (cursor != null) {
+				if (cursor.moveToFirst()) {
+					
+					consent = cursor.getInt(cursor.getColumnIndex(DataModel.CONSENT_VALUE));
+					consentDate = cursor.getLong(cursor.getColumnIndex(DataModel.CONSENT_DATE));
+					consentExpirationDate = cursor.getLong(cursor.getColumnIndex(DataModel.CONSENT_EXPIRATION_DATE));
+					Integer voided = cursor.getInt(cursor.getColumnIndex(DataModel.CONSENT_VOIDED));
+
+					if (consent != null && consent == DataModel.CONSENT_OBTAINED) {
+						// Dont evaluate voided consent statements
+						if (voided != null && voided == DataModel.CONSENT_IS_VOIDED)
+							consent = null;
+
+						// Check Expiration Date
+						if (System.currentTimeMillis() > consentExpirationDate) {
+							consent = null;
+							voidPriorConsent(patientId);
+							if (App.DEBUG)
+								Log.v(TAG, "Consent is Now Expired");
+						}
+					}
+					
+					if (App.DEBUG)
+						Log.v(TAG, cursor.getCount() + "Prior Consents Found.  First Row has values: \n\tValue=" + consent + "\n\tVoided=" + voided + "\n\tDate=" + consentDate);
+				}
+
+				cursor.close();
+			}
+
 			p.setConsent(consent);
-			
-			Long consentDate = getLastConsentDate(patientId);
 			p.setConsentDate(consentDate);
-			
-			if(App.DEBUG) Log.v(TAG, "Setting Patient Consent=" + consent + "\nConsent Date=");
+			p.setConsentExpirationDate(consentExpirationDate);
+
+			if (App.DEBUG)
+				Log.v(TAG, "Setting Patient Consent=" + consent + "\nConsent Date=" + consentDate);
+
 		} else {
 			p.setConsent(DataModel.CONSENT_OBTAINED);
 		}
@@ -754,6 +762,13 @@ public class Db {
 			cv.put(DataModel.KEY_PATIENT_ID, patientId);
 			cv.put(DataModel.CONSENT_VALUE, consent);
 			cv.put(DataModel.CONSENT_DATE, System.currentTimeMillis());
+
+			SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(App.getApp());
+			String consentSeconds = prefs.getString(App.getApp().getString(R.string.key_max_consent_time), App.getApp().getString(R.string.default_max_consent_time));
+			Long expiryPeriod = Integer.valueOf(consentSeconds) * 1000L;
+			Long expiryTime = System.currentTimeMillis() + expiryPeriod;
+			cv.put(DataModel.CONSENT_EXPIRATION_DATE, expiryTime);
+
 			if (blob != null)
 				cv.put(DataModel.CONSENT_SIGNATURE, blob);
 			cv.put(DataModel.CONSENT_VOIDED, DataModel.CONSENT_NOT_VOIDED);
