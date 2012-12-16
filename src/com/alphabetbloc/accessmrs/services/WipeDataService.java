@@ -20,13 +20,12 @@ import android.util.Log;
 
 import com.alphabetbloc.accessforms.provider.InstanceProviderAPI;
 import com.alphabetbloc.accessforms.provider.InstanceProviderAPI.InstanceColumns;
+import com.alphabetbloc.accessmrs.R;
 import com.alphabetbloc.accessmrs.providers.DataModel;
 import com.alphabetbloc.accessmrs.providers.DbProvider;
 import com.alphabetbloc.accessmrs.utilities.App;
-import com.alphabetbloc.accessmrs.utilities.EncryptionUtil;
 import com.alphabetbloc.accessmrs.utilities.FileUtils;
 import com.alphabetbloc.accessmrs.utilities.UiUtils;
-import com.alphabetbloc.accessmrs.R;
 
 /**
  * @author Louis.Fazen@gmail.com
@@ -148,7 +147,7 @@ public class WipeDataService extends WakefulIntentService {
 				}
 			}
 			attempts++;
-			if(!allDeleted)
+			if (!allDeleted)
 				Log.e(TAG, "Error wiping data! Have now tried to wipe data on " + attempts + " attempts.");
 		} while (!allDeleted && (attempts < 4));
 
@@ -294,18 +293,22 @@ public class WipeDataService extends WakefulIntentService {
 			if (c != null)
 				c.close();
 		} catch (Exception e) {
-			e.printStackTrace();
+			Log.w(TAG, "Could not close the AccessForms Db.  Key May be lost.");
+			// e.printStackTrace();
 		}
 
 		try {
-			Cursor c = App.getApp().getContentResolver().query(Uri.parse(InstanceColumns.CONTENT_URI + "/close"), null, null, null, null);
-			if (c != null)
-				c.close();
+			// Cursor c =
+			// App.getApp().getContentResolver().query(Uri.parse(InstanceColumns.CONTENT_URI
+			// + "/close"), null, null, null, null);
+			// if (c != null)
+			// c.close();
 
 			// first try
 			success = mAccessFormsCtx.deleteDatabase(InstanceProviderAPI.DATABASE_NAME);
 
 		} catch (Exception e) {
+			Log.w(TAG, "Could not delete the AccessForms Db through request.  AccessForms may not be setup.");
 			e.printStackTrace();
 		}
 
@@ -315,11 +318,14 @@ public class WipeDataService extends WakefulIntentService {
 				File db = mAccessFormsCtx.getDatabasePath(InstanceProviderAPI.DATABASE_NAME);
 				success = db.delete();
 			} catch (Exception e) {
+				Log.w(TAG, "Could not delete the AccessForms Db through manual file removal.  AccessForms may not be setup.");
 				e.printStackTrace();
 			}
 
 		}
 
+		if (App.DEBUG)
+			Log.i(TAG, "Tried to delete AccessForms InstancesDb with Success=" + success);
 		return success;
 	}
 
@@ -332,7 +338,8 @@ public class WipeDataService extends WakefulIntentService {
 				myFuture = am.removeAccount(a, myCallback, myHandler);
 			}
 		} else {
-			if(App.DEBUG) Log.v(TAG, "No current AccessMRS user accounts.");
+			if (App.DEBUG)
+				Log.v(TAG, "No current AccessMRS user accounts.");
 			removedAccount = true;
 		}
 	}
@@ -345,7 +352,8 @@ public class WipeDataService extends WakefulIntentService {
 				try {
 					removedAccount = myFuture.getResult();
 					removingComplete = true;
-					if(App.DEBUG) Log.v(TAG, "Successfully wiped the AccessMRS user account!");
+					if (App.DEBUG)
+						Log.v(TAG, "Successfully wiped the AccessMRS user account!");
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
