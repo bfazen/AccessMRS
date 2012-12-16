@@ -16,23 +16,19 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.SyncStatusObserver;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.ProgressBar;
 
+import com.alphabetbloc.accessmrs.R;
 import com.alphabetbloc.accessmrs.services.RefreshDataService;
 import com.alphabetbloc.accessmrs.services.SyncManager;
 import com.alphabetbloc.accessmrs.ui.admin.PreferencesActivity;
 import com.alphabetbloc.accessmrs.utilities.App;
 import com.alphabetbloc.accessmrs.utilities.FileUtils;
 import com.alphabetbloc.accessmrs.utilities.UiUtils;
-import com.alphabetbloc.accessmrs.R;
 
 /**
  * 
@@ -63,9 +59,7 @@ public abstract class BaseUserActivity extends Activity implements SyncStatusObs
 			finish();
 		}
 		mToastCtx = this;
-
 	}
-
 
 	@Override
 	public void onStatusChanged(int which) {

@@ -222,7 +222,7 @@ public class ListPatientActivity extends BaseUserListActivity implements SyncSta
 		refreshView();
 	}
 
-	//TODO! Change this to a SimpleCursorAdapter?
+	//TODO Performance: Can We Change this to a SimpleCursorAdapter to save Object Creation?
 	protected void refreshView() {
 
 		new AsyncTask<Void, Void, ArrayList<Patient>>() {
@@ -326,8 +326,7 @@ public class ListPatientActivity extends BaseUserListActivity implements SyncSta
 
 	}
 
-	// TODO!: consider changing this whole thing to a viewpager... may be much
-	// simpler, and also add animation
+	// TODO UI: Change Swipe to ViewPager with animation...
 	class onClientClick extends SimpleOnGestureListener {
 
 		@Override
@@ -352,7 +351,7 @@ public class ListPatientActivity extends BaseUserListActivity implements SyncSta
 				Patient p = (Patient) mPatientAdapter.getItem(pos);
 				String patientIdStr = p.getPatientId().toString();
 				Intent ip = new Intent(getApplicationContext(), ViewPatientActivity.class);
-				ip.putExtra(BasePatientActivity.KEY_PATIENT_ID, patientIdStr);
+				ip.putExtra(BasePatientListActivity.KEY_PATIENT_ID, patientIdStr);
 				startActivity(ip);
 			}
 			return false;

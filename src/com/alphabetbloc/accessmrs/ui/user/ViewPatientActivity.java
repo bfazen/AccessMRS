@@ -1,13 +1,17 @@
 package com.alphabetbloc.accessmrs.ui.user;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-
+import java.util.Date;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -23,6 +27,7 @@ import android.widget.TextView;
 
 import com.alphabetbloc.accessforms.provider.InstanceProviderAPI;
 import com.alphabetbloc.accessforms.provider.InstanceProviderAPI.InstanceColumns;
+import com.alphabetbloc.accessmrs.R;
 import com.alphabetbloc.accessmrs.adapters.MergeAdapter;
 import com.alphabetbloc.accessmrs.adapters.ObservationAdapter;
 import com.alphabetbloc.accessmrs.data.Observation;
@@ -31,20 +36,24 @@ import com.alphabetbloc.accessmrs.providers.DataModel;
 import com.alphabetbloc.accessmrs.providers.Db;
 import com.alphabetbloc.accessmrs.utilities.App;
 import com.alphabetbloc.accessmrs.utilities.UiUtils;
-import com.alphabetbloc.accessmrs.R;
 
 /**
  * 
  * @author Louis Fazen (louis.fazen@gmail.com)
  * 
  */
-public class ViewPatientActivity extends BasePatientActivity {
+public class ViewPatientActivity extends BasePatientListActivity {
 
+	private static final int OBTAIN_CONSENT = 1;
+	private static final int VIEW_CONSENT = 2;
+	private static final String TAG = ViewPatientActivity.class.getSimpleName();
 	private static Patient mPatient;
 	private static ArrayList<Observation> mObservations = new ArrayList<Observation>();
 	private String patientIdStr;
 	private Context mContext;
 	private Resources res;
+	private Integer mConsent;
+	private OnTouchListener mConsentListener;
 	private OnTouchListener mFormListener;
 	private OnTouchListener mFormHistoryListener;
 	private OnTouchListener mSwipeListener;
@@ -60,11 +69,15 @@ public class ViewPatientActivity extends BasePatientActivity {
 
 		patientIdStr = getIntent().getStringExtra(KEY_PATIENT_ID);
 		Integer patientId = Integer.valueOf(patientIdStr);
-		mPatient = getPatient(patientId);
+		mPatient = Db.open().getPatient(patientId);
 		if (mPatient == null) {
 			UiUtils.toastAlert(mContext, getString(R.string.error_db), getString(R.string.error, R.string.no_patient));
 			finish();
 		}
+		// TODO! SWAP THE NEXT 2 LINES AFTER TESTING:
+		// mConsent = (mPatient.getPatientId() < 0) ? -1 :
+		// mPatient.getConsent();
+		mConsent = mPatient.getConsent();
 
 		final GestureDetector mFormDetector = new GestureDetector(new onFormClick());
 		mFormListener = new OnTouchListener() {
@@ -80,6 +93,13 @@ public class ViewPatientActivity extends BasePatientActivity {
 			}
 		};
 
+		final GestureDetector mConsentDetector = new GestureDetector(new onConsentClick());
+		mConsentListener = new OnTouchListener() {
+			public boolean onTouch(View v, MotionEvent event) {
+				return mConsentDetector.onTouchEvent(event);
+			}
+		};
+
 		mSwipeDetector = new GestureDetector(new myGestureListener());
 		mSwipeListener = new OnTouchListener() {
 			@Override
@@ -87,7 +107,6 @@ public class ViewPatientActivity extends BasePatientActivity {
 				return mSwipeDetector.onTouchEvent(event);
 			}
 		};
-
 	}
 
 	@Override
@@ -95,15 +114,51 @@ public class ViewPatientActivity extends BasePatientActivity {
 		super.onResume();
 		if (mPatient != null) {
 
-			// TODO Create more efficient SQL query to get only latest obs
-			// values
+			if (mConsent == null) {
+				Intent i = new Intent(getApplicationContext(), PatientConsentActivity.class);
+				i.putExtra(KEY_PATIENT_ID, patientIdStr);
+				startActivityForResult(i, OBTAIN_CONSENT);
+
+			} else if (mConsent == DataModel.CONSENT_OBTAINED) {
+				// TODO Performance: Improve SQL query to get only latest obs
+				getAllObservations(mPatient.getPatientId());
+				getPatientForms(mPatient.getPatientId());
+			}
+
 			mPatient.setTotalCompletedForms(findPreviousEncounters());
 			createPatientHeader(mPatient.getPatientId());
-			getAllObservations(mPatient.getPatientId());
-			getPatientForms(mPatient.getPatientId());
 			refreshView();
 
 		}
+	}
+
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
+		switch (requestCode) {
+		case OBTAIN_CONSENT:
+			if (resultCode == RESULT_OK) {
+				mPatient = Db.open().getPatient(Integer.valueOf(patientIdStr));
+				mConsent = mPatient.getConsent();
+				// refreshView();
+			} else {
+				mConsent = DataModel.CONSENT_DECLINED;
+			}
+			break;
+		case VIEW_CONSENT:
+			if (resultCode == RESULT_OK) {
+				mPatient = Db.open().getPatient(Integer.valueOf(patientIdStr));
+				mConsent = mPatient.getConsent();
+				// refreshView();
+			}
+		default:
+			break;
+		}
+
+		// Bundle b = data.getExtras();
+		// int consent = b.getInt(DataModel.CONSENT_VALUE);
+		// if (App.DEBUG)
+		// Log.v(TAG, "Consent Result = " + consent);
 	}
 
 	private View formHistoryView() {
@@ -196,33 +251,12 @@ public class ViewPatientActivity extends BasePatientActivity {
 		mObservations = Db.open().fetchPatientObservationList(patientId);
 	}
 
-	/*
-	 * // TODO on long press, graph // TODO if you have only one value, don't
-	 * display next level
-	 * 
-	 * @Override protected void onListItemClick(ListView listView, View view,
-	 * int position, long id) {
-	 * 
-	 * if (mPatient != null) { // Get selected observation Observation obs =
-	 * (Observation) getListAdapter().getItem(position);
-	 * 
-	 * Intent ip; int dataType = obs.getDataType(); if (dataType ==
-	 * DbProvider.TYPE_INT || dataType == DbProvider.TYPE_DOUBLE) { ip = new
-	 * Intent(getApplicationContext(), ObservationChartActivity.class);
-	 * ip.putExtra(KEY_PATIENT_ID, mPatient.getPatientId() .toString());
-	 * ip.putExtra(KEY_OBSERVATION_FIELD_NAME, obs.getFieldName());
-	 * startActivity(ip); } else { ip = new Intent(getApplicationContext(),
-	 * ObservationTimelineActivity.class); ip.putExtra(KEY_PATIENT_ID,
-	 * mPatient.getPatientId() .toString());
-	 * ip.putExtra(KEY_OBSERVATION_FIELD_NAME, obs.getFieldName());
-	 * startActivity(ip); } } }
-	 */
-
 	protected void refreshView() {
 
 		View mFormView;
 		MergeAdapter adapter = new MergeAdapter();
 
+		// Forms Section
 		ArrayAdapter<Observation> obsAdapter = new ObservationAdapter(this, R.layout.observation_list_item, mObservations);
 		mFormView = formView();
 
@@ -230,16 +264,26 @@ public class ViewPatientActivity extends BasePatientActivity {
 		adapter.addView(mFormView);
 		mFormView.setOnTouchListener(mFormListener);
 
+		// Clinical Observations Section
 		if (!mObservations.isEmpty()) {
 			adapter.addView(buildSectionLabel(getString(R.string.clinical_data_section), true));
 			adapter.addAdapter(obsAdapter);
 		}
 
+		// Previous Encounters Section
 		if (mPatient.getTotalCompletedForms() > 0) {
 			adapter.addView(buildSectionLabel(getString(R.string.form_history_section), true));
 			View v = formHistoryView();
 			adapter.addView(v);
 			v.setOnTouchListener(mFormHistoryListener);
+		}
+
+		// Consent Section (don't add for patients who have no OpenMRS data)
+		if (mConsent == null || mConsent >= 0) {
+			adapter.addView(buildSectionLabel(getString(R.string.consent_section), true));
+			View cv = consentView();
+			adapter.addView(cv);
+			cv.setOnTouchListener(mConsentListener);
 		}
 
 		ListView lv = getListView();
@@ -325,6 +369,79 @@ public class ViewPatientActivity extends BasePatientActivity {
 		return completedForms;
 	}
 
+	private View consentView() {
+
+		View consentSummary;
+		LayoutInflater vi = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+		consentSummary = vi.inflate(R.layout.consent_summary, null);
+		consentSummary.setClickable(true);
+
+		ImageView arrow = (ImageView) consentSummary.findViewById(R.id.arrow_image);
+		RelativeLayout consentBlock = (RelativeLayout) consentSummary.findViewById(R.id.prior_consent_text);
+		TextView noConsent = (TextView) consentSummary.findViewById(R.id.no_prior_consent);
+		TextView consentDateView = (TextView) consentSummary.findViewById(R.id.consent_obtained_date);
+		TextView expiryDateView = (TextView) consentSummary.findViewById(R.id.consent_expiry_date);
+
+		if (arrow != null && consentBlock != null && noConsent != null) {
+
+			// default visibility
+			noConsent.setVisibility(View.VISIBLE);
+			consentBlock.setVisibility(View.GONE);
+
+			if (App.DEBUG)
+				Log.v(TAG, "\tPatient Consent =" + String.valueOf(mPatient.getConsent()) + "\n\tConsent Date=" + String.valueOf(mPatient.getConsentDate()));
+			if (mPatient.getConsent() == null) {
+
+				Long consentTime = mPatient.getConsentDate();
+				if (consentTime != null) {
+					// OPTION 1: Prior Consent Expired
+					noConsent.setTextColor(getResources().getColor(R.color.priority));
+					arrow.setImageResource(R.drawable.arrow_red);
+					noConsent.setText(getString(R.string.consent_expired));
+				} else {
+					// OPTION 2: Never Received and temporarily Deferred
+					noConsent.setTextColor(getResources().getColor(R.color.dark_gray));
+					arrow.setImageResource(R.drawable.arrow_gray);
+					noConsent.setText(getString(R.string.consent_deferred));
+				}
+
+			} else if (mPatient.getConsent() == DataModel.CONSENT_DECLINED) {
+				// OPTION 3: Prior Consent Declined
+				arrow.setImageResource(R.drawable.arrow_red);
+				noConsent.setText(getString(R.string.consent_declined));
+				noConsent.setTextColor(getResources().getColor(R.color.priority));
+
+			} else if (mPatient.getConsent() == DataModel.CONSENT_OBTAINED && consentDateView != null && expiryDateView != null) {
+				// OPTION 4: Consent is Active
+				arrow.setImageResource(R.drawable.arrow_gray);
+				noConsent.setVisibility(View.GONE);
+				consentBlock.setVisibility(View.VISIBLE);
+
+				// Set Obtained and Expiry Dates
+				Long consentTime = mPatient.getConsentDate();
+				if (consentTime != null) {
+					// Set Consent Obtained Date
+					Date consentDate = new Date();
+					consentDate.setTime(consentTime);
+					String consentString = new SimpleDateFormat("MMM dd, yyyy").format(consentDate) + " ";
+					consentDateView.setText(consentString);
+
+					// Set Consent Expiration Date (TODO! this should stored and be taken from the DB!)
+					SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
+					String consentSeconds = prefs.getString(getString(R.string.key_max_consent_time), getString(R.string.default_max_consent_time));
+					Long expiryPeriod = Integer.valueOf(consentSeconds) * 1000L;
+					Long expiryTime = consentTime + expiryPeriod;
+					Date expiryDate = new Date();
+					expiryDate.setTime(expiryTime);
+					String expiryString = new SimpleDateFormat("MMM dd, yyyy").format(expiryDate) + " ";
+					expiryDateView.setText(expiryString);
+				}
+			}
+		}
+
+		return (consentSummary);
+	}
+
 	protected class onFormClick extends myGestureListener {
 
 		@Override
@@ -347,6 +464,26 @@ public class ViewPatientActivity extends BasePatientActivity {
 			Intent i = new Intent(getApplicationContext(), ViewCompletedForms.class);
 			i.putExtra(KEY_PATIENT_ID, patientIdStr);
 			startActivity(i);
+			return false;
+		}
+
+	}
+
+	protected class onConsentClick extends myGestureListener {
+
+		@Override
+		public boolean onSingleTapUp(MotionEvent e) {
+
+			if (mConsent == DataModel.CONSENT_OBTAINED) {
+				Intent i = new Intent(getApplicationContext(), ViewConsentActivity.class);
+				i.putExtra(KEY_PATIENT_ID, patientIdStr);
+				startActivityForResult(i, VIEW_CONSENT);
+			} else {
+				Intent i = new Intent(getApplicationContext(), PatientConsentActivity.class);
+				i.putExtra(KEY_PATIENT_ID, patientIdStr);
+				startActivityForResult(i, OBTAIN_CONSENT);
+			}
+
 			return false;
 		}
 

@@ -1,11 +1,15 @@
 package com.alphabetbloc.accessmrs.ui.user;
 
 import android.content.Context;
+import android.content.SyncStatusObserver;
 import android.os.Bundle;
+import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.View.OnTouchListener;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -20,21 +24,34 @@ import com.alphabetbloc.accessmrs.providers.Db;
  * 
  */
 
-public abstract class BasePatientActivity extends BaseUserActivity  {
+public abstract class BasePatientListActivity extends BaseUserListActivity implements SyncStatusObserver {
 
 	// intent extras
 	public static final String KEY_PATIENT_ID = "PATIENT_ID";
 	public static final String KEY_OBSERVATION_FIELD_NAME = "KEY_OBSERVATION_FIELD_NAME";
+	private OnTouchListener mSwipeListener;
+	private GestureDetector mSwipeDetector;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-
+		mSwipeDetector = new GestureDetector(new myGestureListener());
+		mSwipeListener = new OnTouchListener() {
+			@Override
+			public boolean onTouch(View v, MotionEvent event) {
+				return mSwipeDetector.onTouchEvent(event);
+			}
+		};
 	}
 
 	protected void createPatientHeader(Integer patientId) {
 
 		Patient focusPt = Db.open().getPatient(patientId);
+
+		View v = (View) findViewById(R.id.client_header);
+		if (v != null) {
+			v.setOnTouchListener(mSwipeListener);
+		}
 
 		TextView textView = (TextView) findViewById(R.id.identifier_text);
 		if (textView != null) {
@@ -80,6 +97,7 @@ public abstract class BasePatientActivity extends BaseUserActivity  {
 		else
 			sectionImage.setVisibility(View.GONE);
 		textView.setText(section);
+		v.setOnTouchListener(mSwipeListener);
 		return (v);
 	}
 

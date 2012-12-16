@@ -77,6 +77,18 @@ public class DataModel {
 	public static final String SYNC_STATUS = "sync_status";
 	public static final String SYNC_RESULT = "sync_result";
 	
+	//consent table
+	public static final String CONSENT_DATE = "date";
+	public static final String CONSENT_SIGNATURE = "signature";
+	public static final String PATIENT_PHOTO = "photo";
+	public static final String CONSENT_VALUE = "consent";
+	public static final String CONSENT_VOIDED = "voided";
+	public static final String CONSENT_VOIDED_DATE = "voided_date";
+	public static final int CONSENT_OBTAINED = 1;
+	public static final int CONSENT_DECLINED = 0;
+	public static final int CONSENT_IS_VOIDED = 1;
+	public static final int CONSENT_NOT_VOIDED = 0;
+	
 	// tables
 	public static final String PATIENTS_TABLE = "patients";
 	public static final String OBSERVATIONS_TABLE = "observations";
@@ -84,10 +96,11 @@ public class DataModel {
 	public static final String FORMINSTANCES_TABLE = "instances";
 	public static final String DOWNLOAD_LOG_TABLE = "download_log";
 	public static final String SYNC_TABLE = "sync";
-
+	public static final String CONSENT_TABLE = "consent";
+	
 	// database
 	public static final String DATABASE_NAME = "accessmrs.sqlite3";
-	public static final int DATABASE_VERSION = 8;
+	public static final int DATABASE_VERSION = 10;
 
 	// table create statements
 	public static final String CREATE_PATIENTS_TABLE = "create table " + 
@@ -152,5 +165,15 @@ public class DataModel {
 			DOWNLOAD_TIME + " integer, " +
 			SYNC_STATUS + " integer, " + 
 			SYNC_RESULT + " integer);";
+	
+	public static final String CREATE_CONSENT_TABLE = "create table " + 
+			CONSENT_TABLE + " (_id integer primary key autoincrement, " + 
+			KEY_PATIENT_ID + " integer not null, " + 
+			CONSENT_DATE + " integer, " +
+			PATIENT_PHOTO + " blob, " + 
+			CONSENT_SIGNATURE + " blob, " + 
+			CONSENT_VALUE + " integer, " +
+			CONSENT_VOIDED + " integer, " +
+			CONSENT_VOIDED_DATE + " integer);";
 	
 }

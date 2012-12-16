@@ -270,7 +270,7 @@ public class CreatePatientActivity extends BaseUserActivity implements OnGesture
 
 		// load the newly created patient into ViewPatientActivity
 		Intent ip = new Intent(getApplicationContext(), ViewPatientActivity.class);
-		ip.putExtra(BasePatientActivity.KEY_PATIENT_ID, mPatient.getPatientId().toString());
+		ip.putExtra(BasePatientListActivity.KEY_PATIENT_ID, mPatient.getPatientId().toString());
 		startActivity(ip);
 
 		// and quit
@@ -420,7 +420,7 @@ public class CreatePatientActivity extends BaseUserActivity implements OnGesture
 
 	}
 
-	// TODO! delete this type of swipe action...
+	// TODO UI: Change Swipe to ViewPager with animation...
 	@Override
 	public boolean onTouchEvent(MotionEvent me) {
 		return mGestureDetector.onTouchEvent(me);
@@ -448,8 +448,6 @@ public class CreatePatientActivity extends BaseUserActivity implements OnGesture
 
 	@Override
 	public boolean onDown(MotionEvent e) {
-		// TODO Auto-generated method stub
-
 		// InputMethodManager inputMM = (InputMethodManager)
 		// mContext.getSystemService(Context.INPUT_METHOD_SERVICE);
 		// inputMM.hideSoftInputFromWindow(this.getCurrentFocus().getWindowToken(),
@@ -477,18 +475,17 @@ public class CreatePatientActivity extends BaseUserActivity implements OnGesture
 
 	@Override
 	public void onLongPress(MotionEvent e) {
-		// TODO Auto-generated method stub
+		// Do Nothing
 	}
 
 	@Override
 	public void onShowPress(MotionEvent e) {
-		// TODO Auto-generated method stub
-
+		// Do Nothing
 	}
 
 	@Override
 	public boolean onSingleTapUp(MotionEvent e) {
-		// TODO Auto-generated method stub
+		// Do Nothing
 		return false;
 	}
 

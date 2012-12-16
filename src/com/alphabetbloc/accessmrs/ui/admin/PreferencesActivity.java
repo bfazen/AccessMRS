@@ -205,9 +205,13 @@ public class PreferencesActivity extends BasePreferenceActivity implements OnSha
 			else if (key.equalsIgnoreCase(App.getApp().getString(R.string.key_location)))
 				summary = App.getApp().getString(R.string.pref_location_prefix) + " " + mCurrentAdminPrefs.get(key);
 			else if (key.equalsIgnoreCase(App.getApp().getString(R.string.key_min_refresh_seconds)))
-				summary = getDuration(Integer.valueOf(mCurrentAdminPrefs.get(key)));
+				summary = UiUtils.getTimeString(Integer.valueOf(mCurrentAdminPrefs.get(key)));
 			else if (key.equalsIgnoreCase(App.getApp().getString(R.string.key_max_refresh_seconds)))
-				summary = getDuration(Integer.valueOf(mCurrentAdminPrefs.get(key)));
+				summary = UiUtils.getTimeString(Integer.valueOf(mCurrentAdminPrefs.get(key)));
+			else if (key.equalsIgnoreCase(App.getApp().getString(R.string.key_max_consent_time)))
+				summary = UiUtils.getTimeString(Integer.valueOf(mCurrentAdminPrefs.get(key)));
+			else if (key.equalsIgnoreCase(App.getApp().getString(R.string.key_clear_consent_time)))
+				summary = UiUtils.getTimeString(Integer.valueOf(mCurrentAdminPrefs.get(key)));
 			else
 				summary = mCurrentAdminPrefs.get(key);
 
@@ -297,51 +301,7 @@ public class PreferencesActivity extends BasePreferenceActivity implements OnSha
 		verifyUpdatedPreference(prefs, changedPref, key);
 	}
 
-	/**
-	 * Convert a second duration to a string format
-	 * 
-	 * @param millis
-	 *            A duration to convert to a string form
-	 * @return A string of the form "X Days Y Hours Z Minutes A Seconds".
-	 */
-	private static String getDuration(long seconds) {
-		if (seconds < 0) {
-			// throw new
-			// IllegalArgumentException("Duration must be greater than zero!");
-			return "requested time is negative";
-		}
-
-		int years = (int) (seconds / (60 * 60 * 24 * 365.25));
-		seconds -= (years * (60 * 60 * 24 * 365.25));
-		int days = (int) ((seconds / (60 * 60 * 24)) % 365.25);
-		seconds -= (days * (60 * 60 * 24));
-		int hours = (int) ((seconds / (60 * 60)) % 24);
-		seconds -= (hours * (60 * 60));
-		int minutes = (int) ((seconds / 60) % 60);
-		seconds -= (minutes * (60));
-
-		StringBuilder sb = new StringBuilder(64);
-		if (years > 0) {
-			sb.append(years);
-			sb.append(" Years ");
-		}
-		if (days > 0 || years > 0) {
-			sb.append(days);
-			sb.append(" Days ");
-		}
-		if (hours > 0 || days > 0 || years > 0) {
-			sb.append(hours);
-			sb.append(" Hours ");
-		}
-		if (minutes > 0 || hours > 0 || days > 0 || years > 0) {
-			sb.append(minutes);
-			sb.append(" Min ");
-		}
-		sb.append(seconds);
-		sb.append(" Sec");
-
-		return (sb.toString());
-	}
+	
 
 	private static Map<String, String> createAdminPreferenceMap() {
 		Map<String, String> map = new HashMap<String, String>();
@@ -351,6 +311,8 @@ public class PreferencesActivity extends BasePreferenceActivity implements OnSha
 		// Set current key/value pairs:
 		map.put(c.getString(R.string.key_max_refresh_seconds), prefs.getString(c.getString(R.string.key_max_refresh_seconds), c.getString(R.string.default_max_refresh_seconds)));
 		map.put(c.getString(R.string.key_min_refresh_seconds), prefs.getString(c.getString(R.string.key_min_refresh_seconds), c.getString(R.string.default_min_refresh_seconds)));
+		map.put(c.getString(R.string.key_max_consent_time), prefs.getString(c.getString(R.string.key_max_consent_time), c.getString(R.string.default_max_consent_time)));
+		map.put(c.getString(R.string.key_clear_consent_time), prefs.getString(c.getString(R.string.key_clear_consent_time), c.getString(R.string.default_clear_consent_time)));
 		map.put(c.getString(R.string.key_program), prefs.getString(c.getString(R.string.key_program), c.getString(R.string.default_program)));
 		map.put(c.getString(R.string.key_provider), prefs.getString(c.getString(R.string.key_provider), c.getString(R.string.default_provider)));
 		map.put(c.getString(R.string.key_location), prefs.getString(c.getString(R.string.key_location), c.getString(R.string.default_location)));
@@ -364,6 +326,7 @@ public class PreferencesActivity extends BasePreferenceActivity implements OnSha
 		map.put(c.getString(R.string.key_show_settings_menu), String.valueOf(prefs.getBoolean(c.getString(R.string.key_show_settings_menu), Boolean.parseBoolean(c.getString(R.string.default_show_settings_menu)))));
 		map.put(c.getString(R.string.key_use_saved_searches), String.valueOf(prefs.getBoolean(c.getString(R.string.key_use_saved_searches), Boolean.parseBoolean(c.getString(R.string.default_use_saved_searches)))));
 		map.put(c.getString(R.string.key_show_form_prompt), String.valueOf(prefs.getBoolean(c.getString(R.string.key_show_form_prompt), Boolean.parseBoolean(c.getString(R.string.default_show_form_prompt)))));
+		map.put(c.getString(R.string.key_request_consent), String.valueOf(prefs.getBoolean(c.getString(R.string.key_request_consent), Boolean.parseBoolean(c.getString(R.string.default_request_consent)))));
 		return Collections.unmodifiableMap(map);
 	}
 
@@ -381,6 +344,8 @@ public class PreferencesActivity extends BasePreferenceActivity implements OnSha
 		// Strings with current values:
 		map.put(c.getString(R.string.key_max_refresh_seconds), SYNC_INTERVAL_TIME);
 		map.put(c.getString(R.string.key_min_refresh_seconds), SYNC_MIN_REFRESH_TIME);
+		map.put(c.getString(R.string.key_max_consent_time), POSITIVE_INTEGER);
+		map.put(c.getString(R.string.key_clear_consent_time), POSITIVE_INTEGER);
 		map.put(c.getString(R.string.key_program), POSITIVE_INTEGER);
 		map.put(c.getString(R.string.key_provider), POSITIVE_INTEGER);
 		map.put(c.getString(R.string.key_location), POSITIVE_INTEGER);
@@ -393,6 +358,7 @@ public class PreferencesActivity extends BasePreferenceActivity implements OnSha
 		map.put(c.getString(R.string.key_show_settings_menu), BOOLEAN);
 		map.put(c.getString(R.string.key_use_saved_searches), BOOLEAN);
 		map.put(c.getString(R.string.key_show_form_prompt), BOOLEAN);
+		map.put(c.getString(R.string.key_request_consent), BOOLEAN);
 		return Collections.unmodifiableMap(map);
 	}
 

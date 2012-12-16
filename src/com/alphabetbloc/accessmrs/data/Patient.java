@@ -28,6 +28,8 @@ public class Patient {
 	private Integer savedFormNumber = null;
 //	private String savedForms = null;
 	private Integer totalCompletedForms = null;
+	private Integer consentStatus = null;
+	private Long consentDate = null;
 
 	// For Client Registration Forms:
 	private String uuid = null;
@@ -135,12 +137,30 @@ public class Patient {
 
 	public void setPriorityNumber(Integer formNumber) {
 		priorityFormNumber = formNumber;
+		if (formNumber > 0) 
+			setPriority(true);
 	}
 
 //	public void setPriorityForms(String forms) {
 //		priorityForms = forms;
 //	}
 
+	public void setConsent(Integer consent) {
+		consentStatus = consent;
+	}
+	
+	public Integer getConsent() {
+		return consentStatus;
+	}
+	
+	public void setConsentDate(Long lastConsentDate) {
+		consentDate = lastConsentDate;
+	}
+	
+	public Long getConsentDate() {
+		return consentDate;
+	}
+	
 	public void setSaved(Boolean saved) {
 		savedStatus = saved;
 	}

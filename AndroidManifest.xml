@@ -92,6 +92,15 @@
             android:name=".ui.user.ListPatientActivity"
             android:label="@string/app_name"
             android:screenOrientation="portrait" />
+         <activity
+            android:name=".ui.user.PatientConsentActivity"
+            android:label="@string/app_name"
+             />
+         <activity
+            android:name=".ui.user.ViewConsentActivity"
+            android:label="@string/app_name"
+            android:screenOrientation="portrait"
+             />
         <activity
             android:name=".ui.user.ViewAllForms"
             android:label="@string/app_name"

@@ -5,12 +5,15 @@ import java.util.ArrayList;
 import net.sqlcipher.SQLException;
 import net.sqlcipher.database.SQLiteQueryBuilder;
 import android.content.ContentValues;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.alphabetbloc.accessforms.provider.InstanceProviderAPI;
 import com.alphabetbloc.accessforms.provider.InstanceProviderAPI.InstanceColumns;
+import com.alphabetbloc.accessmrs.R;
 import com.alphabetbloc.accessmrs.data.ActivityLog;
 import com.alphabetbloc.accessmrs.data.Form;
 import com.alphabetbloc.accessmrs.data.FormInstance;
@@ -101,6 +104,8 @@ public class Db {
 		return DbProvider.openDb().insert(DataModel.FORM_LOG_TABLE, cv);
 	}
 
+	// TODO! Verify this deletes any encrypted and submitted forms:
+	// if(App.DEBUG) Log.v(TAG, "clearSubmittedForms is called");
 	public boolean clearSubmittedForms() throws SQLException {
 		String selection = InstanceColumns.STATUS + "=?";
 		String selectionArgs[] = { InstanceProviderAPI.STATUS_SUBMITTED };
@@ -119,6 +124,89 @@ public class Db {
 		String selection = DataModel.KEY_UUID + "=" + uuidString;
 		String sortOrder = DataModel.KEY_PRIORITY_FORM_NUMBER + " DESC, " + DataModel.KEY_FAMILY_NAME + " COLLATE NOCASE ASC";
 		return DbProvider.openDb().queryDistinct(DataModel.PATIENTS_TABLE, null, selection, null, sortOrder);
+	}
+
+	// Consent
+	private Cursor fetchPriorConsent(Integer patientId) throws SQLException {
+		String selection = DataModel.KEY_PATIENT_ID + "=? AND " + DataModel.CONSENT_DATE + "= (SELECT MAX(date) AS date FROM consent)";
+		String[] selectionArgs = new String[] { String.valueOf(patientId) };
+		
+//		String[] selectionArgs = new String[] { String.valueOf(patientId), " (SELECT MAX(" + DataModel.CONSENT_DATE + ") AS " + DataModel.CONSENT_DATE + " FROM " + DataModel.CONSENT_TABLE + ")" };
+//		String selection = DataModel.KEY_PATIENT_ID + "=? AND " + DataModel.CONSENT_DATE + "=? ";
+		//		return DbProvider.openDb().rawQuery("SELECT * FROM consent WHERE patient_id = ? AND date = (SELECT MAX(date) AS date FROM consent)", new String[] {String.valueOf(patientId)});
+		return DbProvider.openDb().query(DataModel.CONSENT_TABLE, null, selection, selectionArgs, null);
+	}
+
+	public Integer getPatientConsent(Integer patientId) throws SQLException {
+		Cursor c = fetchPriorConsent(patientId);
+		Integer consent = null;
+		if(App.DEBUG) Log.v(TAG, "getPatientConsentCalled");
+		
+		if (c != null) {
+			if (c.moveToFirst()) {
+				consent = c.getInt(c.getColumnIndex(DataModel.CONSENT_VALUE));
+				long consentDate = c.getLong(c.getColumnIndex(DataModel.CONSENT_DATE));
+				Integer voided = c.getInt(c.getColumnIndex(DataModel.CONSENT_VOIDED));
+
+				if(App.DEBUG) Log.v(TAG, c.getCount() + "Prior Consents Found.  First Row has values: \n\tValue=" + consent + "\n\tVoided=" + voided +  "\n\tDate=" + consentDate);
+
+				if (consent != null && consent == DataModel.CONSENT_OBTAINED) {
+
+					// Dont evaluate voided consent statements
+					if (voided != null && voided == DataModel.CONSENT_IS_VOIDED)
+						consent = null;
+
+					// Evaluate the consent date for all positive consents
+					long timeSinceConsent = System.currentTimeMillis() - consentDate;
+					SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(App.getApp());
+					String maxConsentSeconds = prefs.getString(App.getApp().getString(R.string.key_max_consent_time), App.getApp().getString(R.string.default_max_consent_time));
+					long maxConsentMs = 1000L * Long.valueOf(maxConsentSeconds);
+					if (timeSinceConsent > maxConsentMs) {
+						if(App.DEBUG) Log.v(TAG, "Consent is Now Expired, TimeSinceConsent < maxConsentMs: \n\t" + timeSinceConsent + "  is less than: \n\t" + maxConsentMs);
+						consent = null;
+						voidPriorConsent(patientId);
+					}
+				}
+			}
+			c.close();
+		}
+
+		return consent;
+	}
+
+	public byte[] getPriorConsentImage(Integer patientId) throws SQLException {
+		String[] projection = new String[] { DataModel.CONSENT_SIGNATURE };
+		String selection = DataModel.KEY_PATIENT_ID + "=? AND " + DataModel.CONSENT_DATE + "= (SELECT MAX(date) AS date FROM consent)";
+		String[] selectionArgs = new String[] { String.valueOf(patientId) };
+//		String selection = DataModel.KEY_PATIENT_ID + "=? AND " + DataModel.CONSENT_DATE + "=? ";
+//		String[] selectionArgs = new String[] { String.valueOf(patientId), " (SELECT MAX(" + DataModel.CONSENT_DATE + ") AS " + DataModel.CONSENT_DATE + " FROM " + DataModel.CONSENT_TABLE + ")" };
+		Cursor c = DbProvider.openDb().query(DataModel.CONSENT_TABLE, projection, selection, selectionArgs, null);
+
+		byte[] blob = null;
+		if (c != null) {
+			if (c.moveToFirst())
+				blob = c.getBlob(c.getColumnIndex(DataModel.CONSENT_SIGNATURE));
+			c.close();
+		}
+
+		return blob;
+	}
+
+	public long getLastConsentDate(Integer patientId) {
+		Cursor c = null;
+		long datetime = 0;
+		String[] projection = new String[] { "MAX(" + DataModel.CONSENT_DATE + ") AS " + DataModel.CONSENT_DATE };
+		String selection = DataModel.KEY_PATIENT_ID + "=?";
+		String[] selectionArgs = new String[] { String.valueOf(patientId) };
+
+		c = DbProvider.openDb().query(DataModel.CONSENT_TABLE, projection, selection, selectionArgs, null);
+
+		if (c != null) {
+			if (c.moveToFirst())
+				datetime = c.getLong(c.getColumnIndex(DataModel.CONSENT_DATE));
+			c.close();
+		}
+		return datetime;
 	}
 
 	// Forms
@@ -329,6 +417,47 @@ public class Db {
 		expr.append(")");
 
 		return expr;
+	}
+
+	// TODO Performance: better resource management if Patient were Parceable object?
+	public Patient getPatient(Integer patientId) {
+
+		Patient p = null;
+
+		// Get Patient Demographics
+		Cursor c = fetchPatient(patientId);
+		if (c != null) {
+			if (c.moveToFirst()) {
+				p = new Patient();
+				p.setPatientId(c.getInt(c.getColumnIndex(DataModel.KEY_PATIENT_ID)));
+				p.setIdentifier(c.getString(c.getColumnIndex(DataModel.KEY_IDENTIFIER)));
+				p.setGivenName(c.getString(c.getColumnIndex(DataModel.KEY_GIVEN_NAME)));
+				p.setFamilyName(c.getString(c.getColumnIndex(DataModel.KEY_FAMILY_NAME)));
+				p.setMiddleName(c.getString(c.getColumnIndex(DataModel.KEY_MIDDLE_NAME)));
+				p.setBirthDate(c.getString(c.getColumnIndex(DataModel.KEY_BIRTH_DATE)));
+				p.setGender(c.getString(c.getColumnIndex(DataModel.KEY_GENDER)));
+				p.setPriorityNumber(c.getInt(c.getColumnIndex(DataModel.KEY_PRIORITY_FORM_NUMBER)));
+				p.setUuid(c.getString(c.getColumnIndex(DataModel.KEY_UUID)));
+			}
+			c.close();
+		}
+
+		// Get Patient Consent
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(App.getApp());
+		boolean requestConsent = prefs.getBoolean(App.getApp().getString(R.string.key_request_consent), true);
+		if (requestConsent) {
+			Integer consent = getPatientConsent(patientId);
+			p.setConsent(consent);
+			
+			Long consentDate = getLastConsentDate(patientId);
+			p.setConsentDate(consentDate);
+			
+			if(App.DEBUG) Log.v(TAG, "Setting Patient Consent=" + consent + "\nConsent Date=");
+		} else {
+			p.setConsent(DataModel.CONSENT_OBTAINED);
+		}
+
+		return p;
 	}
 
 	// moved this here, as wanted it in several places...!
@@ -599,14 +728,14 @@ public class Db {
 					String whereMrs = DataModel.KEY_PATIENT_ID + "=?";
 					String[] whereArgsMrs = { tempPatientId };
 					int updatedMrs = DbProvider.openDb().update(DataModel.FORMINSTANCES_TABLE, cvMrs, whereMrs, whereArgsMrs);
-					
+
 					// Update AccessForms Instances
 					ContentValues cvForms = new ContentValues();
 					cvForms.put(InstanceColumns.PATIENT_ID, openMrsPatientId);
 					String whereForms = InstanceColumns.PATIENT_ID + "=?";
 					String[] whereArgsForms = { tempPatientId };
 					int updatedForms = App.getApp().getContentResolver().update(InstanceColumns.CONTENT_URI, cvForms, whereForms, whereArgsForms);
-					if(App.DEBUG)
+					if (App.DEBUG)
 						Log.v(TAG, "Resolved a patient created on the phone.  Updated a total of " + updatedForms + " Instances in AccessForms and " + updatedMrs + " Unsent Instances in AccessMRS");
 
 				} while (c.moveToNext());
@@ -616,13 +745,67 @@ public class Db {
 
 	}
 
+	public void updateConsent(Integer patientId, Integer consent, byte[] blob) {
+		// void or delete old consents
+		voidPriorConsent(patientId);
+
+		if (patientId != null && consent != null) {
+			ContentValues cv = new ContentValues();
+			cv.put(DataModel.KEY_PATIENT_ID, patientId);
+			cv.put(DataModel.CONSENT_VALUE, consent);
+			cv.put(DataModel.CONSENT_DATE, System.currentTimeMillis());
+			if (blob != null)
+				cv.put(DataModel.CONSENT_SIGNATURE, blob);
+			cv.put(DataModel.CONSENT_VOIDED, DataModel.CONSENT_NOT_VOIDED);
+			DbProvider.openDb().insert(DataModel.CONSENT_TABLE, cv);
+			if (App.DEBUG)
+				Log.v(TAG, "Inserted new Consent with values" + cv.toString());
+		}
+	}
+
+	public void voidPriorConsent(Integer patientId) {
+
+		Cursor c = fetchPriorConsent(patientId);
+		if (c != null) {
+			if (c.moveToFirst()) {
+
+				// Evaluate the consent date
+				Integer consentId = c.getInt(c.getColumnIndex(DataModel.KEY_ID));
+				Long consentDate = c.getLong(c.getColumnIndex(DataModel.CONSENT_DATE));
+				if (consentId != null && consentDate != null) {
+					long timeSinceConsent = System.currentTimeMillis() - consentDate;
+					SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(App.getApp());
+					String maxConsentSeconds = prefs.getString(App.getApp().getString(R.string.key_clear_consent_time), App.getApp().getString(R.string.default_clear_consent_time));
+					long maxConsentMs = 1000L * Long.valueOf(maxConsentSeconds);
+
+					// Delete or void the consent based on time
+					String selection = DataModel.KEY_ID + "=?";
+					String[] selectionArgs = new String[] { String.valueOf(consentId) };
+					if (timeSinceConsent > maxConsentMs) {
+						DbProvider.openDb().delete(DataModel.CONSENT_TABLE, selection, selectionArgs);
+						if (App.DEBUG)
+							Log.v(TAG, "Deleted Prior Consent");
+					} else {
+						ContentValues cv = new ContentValues();
+						cv.put(DataModel.CONSENT_VOIDED, DataModel.CONSENT_IS_VOIDED);
+						cv.put(DataModel.CONSENT_VOIDED_DATE, System.currentTimeMillis());
+						DbProvider.openDb().update(DataModel.CONSENT_TABLE, cv, selection, selectionArgs);
+						if (App.DEBUG)
+							Log.v(TAG, "Updated Prior Consent to Voided");
+					}
+				}
+			}
+			c.close();
+		}
+	}
+
 	public void updatePriorityFormNumbers() throws SQLException {
 		// There should not be anything to update to null...
 		ContentValues cvNull = new ContentValues();
 		cvNull.putNull(DataModel.KEY_PRIORITY_FORM_NUMBER);
 		DbProvider.openDb().update(DataModel.PATIENTS_TABLE, cvNull, null, null);
 
-		//Update the table
+		// Update the table
 		Cursor c = null;
 		String[] projection = new String[] { DataModel.KEY_PATIENT_ID, "count(*) as " + DataModel.KEY_PRIORITY_FORM_NUMBER };
 		String selection = DataModel.KEY_FIELD_NAME + "=" + DataModel.KEY_FIELD_FORM_VALUE;

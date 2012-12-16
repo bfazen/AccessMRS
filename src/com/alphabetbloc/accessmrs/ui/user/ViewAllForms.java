@@ -90,7 +90,7 @@ public class ViewAllForms extends ViewFormsActivity {
 		// We should always have a patient here, so getPatient
 		String patientIdStr = getIntent().getStringExtra(KEY_PATIENT_ID);
 		Integer patientId = Integer.valueOf(patientIdStr);
-		mPatient = getPatient(patientId);
+		mPatient = Db.open().getPatient(patientId);
 
 		mFormDetector = new GestureDetector(new onFormClick());
 		mFormListener = new OnTouchListener() {
@@ -147,9 +147,9 @@ public class ViewAllForms extends ViewFormsActivity {
 	@Override
 	protected void onResume() {
 		super.onResume();
-		// TODO! Change this too!
-		 mSelectedFormIds = getPriorityForms(mPatient.getPatientId());
-		 Log.e("ViewAllForms", "mSelectedFormIds= " +  mSelectedFormIds.size()); 
+		mSelectedFormIds = getPriorityForms(mPatient.getPatientId());
+		if (App.DEBUG)
+			Log.e("ViewAllForms", "mSelectedFormIds= " + mSelectedFormIds.size());
 		createPatientHeader(mPatient.getPatientId());
 		refreshView();
 	}
@@ -223,13 +223,9 @@ public class ViewAllForms extends ViewFormsActivity {
 		// end of gathering data... add everything to the view:
 		adapter = new MergeAdapter();
 
-		//TODO: DELETE:
-		Log.e("ViewAllForms", "\n\t PRIORITY FORMS= " + starItems.length + 
-				"\n\t SAVED FORMS= " + savedForms.size() + 
-				"\n\t COMPLETE FORMS= " + completedForms.size() + 
-				"\n\t NON-PRIORITY FORMS= " + nonStarItems.length + 
-				"\n\t ALL FORMS= " + allItems.length);
-		
+		if (App.DEBUG)
+			Log.e("ViewAllForms", "\n\t PRIORITY FORMS= " + starItems.length + "\n\t SAVED FORMS= " + savedForms.size() + "\n\t COMPLETE FORMS= " + completedForms.size() + "\n\t NON-PRIORITY FORMS= " + nonStarItems.length + "\n\t ALL FORMS= " + allItems.length);
+
 		// priority...
 		if (starItems.length > 0) {
 			adapter.addView(buildSectionLabel(getString(R.string.priority_form_section), true));
@@ -484,12 +480,13 @@ public class ViewAllForms extends ViewFormsActivity {
 	}
 
 	// LAUNCH FORM ENTRY
-	// TODO All of the below should be made into an loadForm IntentService
+	// TODO Performance: Change to loadForm IntentService to put on background
+	// thread and reuse in Create Client
 	private void launchFormEntry(String jrFormId, String formname, int priority) {
 		String formPath = null;
 		int id = -1;
 		try {
-			// TODO! Fix Yaw's inefficient query--could just return one row
+			// TODO Performance: Improve SQL to just return one row
 			Cursor mCursor = App.getApp().getContentResolver().query(FormsColumns.CONTENT_URI, null, null, null, null);
 			mCursor.moveToPosition(-1);
 			while (mCursor.moveToNext()) {

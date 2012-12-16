@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/scroll"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+  
+    <LinearLayout
+        android:id="@+id/rl"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical" >
+
+        <Button
+            android:id="@+id/consent_cancel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="14dip"
+            android:text="@string/consent_cancel"
+            android:textSize="18sp" />
+
+        <WebView
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            android:id="@+id/webView1"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="0dp"
+            android:layout_marginLeft="0dp"
+            android:layout_marginRight="0dp"
+            android:layout_marginTop="0dp"
+            android:scrollbars="none" />
+
+        <RelativeLayout
+            android:id="@+id/button_row"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingBottom="2dip"
+            android:paddingLeft="3dip"
+            android:paddingRight="3dip"
+            android:paddingTop="2dip" >
+
+            <Button
+                android:id="@+id/consent_accept"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_toLeftOf="@+id/center_image"
+                android:padding="10dip"
+                android:text="@string/consent_accept"
+                android:textSize="18sp" />
+
+            <ImageView
+                android:id="@+id/center_image"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_centerVertical="true"
+                android:contentDescription="@string/icon" />
+
+            <Button
+                android:id="@+id/consent_decline"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_toRightOf="@+id/center_image"
+                android:padding="10dip"
+                android:text="@string/consent_decline"
+                android:textSize="18sp" />
+        </RelativeLayout>
+</LinearLayout>
+</ScrollView>

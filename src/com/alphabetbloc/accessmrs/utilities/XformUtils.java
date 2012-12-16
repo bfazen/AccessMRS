@@ -15,12 +15,9 @@ package com.alphabetbloc.accessmrs.utilities;
  */
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -120,43 +117,10 @@ public class XformUtils {
 		String sdPath = registrationForm.getAbsolutePath();
 
 		// move to working dir on sd
-		return copyAssetToSd(assetPath, sdPath);
+		return FileUtils.copyAssetToSd(assetPath, sdPath);
 	}
 
-	private static File copyAssetToSd(String assetPath, String sdPath) {
-
-		File sdFile = new File(sdPath);
-		if (sdFile.exists())
-			return sdFile;
-
-		AssetManager assetManager = App.getApp().getAssets();
-		try {
-
-			InputStream in = assetManager.open(assetPath);
-			OutputStream out = new FileOutputStream(sdPath);
-
-			byte[] buffer = new byte[1024];
-			int read;
-			while ((read = in.read(buffer)) != -1) {
-				out.write(buffer, 0, read);
-			}
-
-			in.close();
-			in = null;
-			out.flush();
-			out.close();
-			out = null;
-
-		} catch (Exception e) {
-			Log.e(TAG, e.getMessage());
-		}
-
-		if (sdFile.exists())
-			if (App.DEBUG)
-				Log.v(TAG, "File has been successfully moved: " + assetPath + " -> " + sdPath);
-
-		return sdFile;
-	}
+	
 
 	// PARSE AND INSERT NEW FORM TO FORMS DB
 	public static boolean insertSingleForm(String formPath) {
@@ -234,7 +198,7 @@ public class XformUtils {
 			} catch (SQLiteException e) {
 				Log.e("DownloadFormTask", e.getLocalizedMessage());
 				return false;
-				// TODO handle exception
+				// TODO ?Bug?  Not from ODK Clinic = handle exception
 			}
 
 			if (mCursor == null) {
@@ -274,7 +238,7 @@ public class XformUtils {
 
 	}
 
-	// TODO! change this to retrieve the one form you want!
+	// TODO Performance: Improve SQL to retrieve the one form you want!
 	private static String getNameFromId(Integer id) {
 		String formName = null;
 		Cursor c = Db.open().fetchAllForms();

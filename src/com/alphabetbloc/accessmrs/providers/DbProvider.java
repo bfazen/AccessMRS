@@ -42,6 +42,7 @@ public class DbProvider extends ContentProvider {
 			db.execSQL(DataModel.CREATE_FORM_LOG_TABLE);
 			db.execSQL(DataModel.CREATE_DOWNLOAD_LOG_TABLE);
 			db.execSQL(DataModel.CREATE_SYNC_TABLE);
+			db.execSQL(DataModel.CREATE_CONSENT_TABLE);
 		}
 
 		@Override
@@ -54,6 +55,7 @@ public class DbProvider extends ContentProvider {
 			db.execSQL("DROP TABLE IF EXISTS " + DataModel.FORM_LOG_TABLE);
 			db.execSQL("DROP TABLE IF EXISTS " + DataModel.DOWNLOAD_LOG_TABLE);
 			db.execSQL("DROP TABLE IF EXISTS " + DataModel.SYNC_TABLE);
+			db.execSQL("DROP TABLE IF EXISTS " + DataModel.CONSENT_TABLE);
 			onCreate(db);
 		}
 	}
@@ -121,7 +123,7 @@ public class DbProvider extends ContentProvider {
 		return sDb;
 	}
 
-	// TODO Remove the need to pass in Patient/Observation objects. Saves object
+	// TODO Performance: Remove the need to pass in Patient/Observation objects. Saves object
 	// creation
 	/**
 	 * Generate text for the first level of the row display.
@@ -152,13 +154,13 @@ public class DbProvider extends ContentProvider {
 	 */
 	@Override
 	public String getType(Uri uri) {
-		// TODO Auto-generated method stub
+		// TODO Finish ContentProvider Implementation
 		return null;
 	}
 
 	@Override
 	public Uri insert(Uri uri, ContentValues values) {
-		// TODO Auto-generated method stub
+		// TODO Finish ContentProvider Implementation
 		return null;
 	}
 
@@ -182,7 +184,7 @@ public class DbProvider extends ContentProvider {
 
 	@Override
 	public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
-		// TODO Auto-generated method stub
+		// TODO Finish ContentProvider Implementation
 		return 0;
 	}
 
@@ -192,7 +194,7 @@ public class DbProvider extends ContentProvider {
 
 	@Override
 	public int delete(Uri uri, String selection, String[] selectionArgs) {
-		// TODO Auto-generated method stub
+		// TODO Finish ContentProvider Implementation
 		return 0;
 	}
 
@@ -204,7 +206,7 @@ public class DbProvider extends ContentProvider {
 	// QUERY
 	@Override
 	public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
-		// TODO Auto-generated method stub
+		// TODO Finish ContentProvider Implementation
 		return null;
 	}
 

@@ -54,6 +54,31 @@
             android:summaryOn="@string/pref_form_prompt_on"
             android:title="@string/pref_form_prompt" />
     </PreferenceCategory>
+    <PreferenceCategory android:title="@string/pref_consent_settings" >
+        <CheckBoxPreference
+            android:id="@+id/request_consent"
+            android:defaultValue="@string/default_request_consent"
+            android:key="@string/key_request_consent"
+            android:summaryOff="@string/pref_request_consent_off"
+            android:summaryOn="@string/pref_request_consent_on"
+            android:title="@string/pref_request_consent" />
+
+        <EditTextPreference
+            android:id="@+id/max_consent_time"
+            android:defaultValue="@string/default_max_consent_time"
+            android:dialogTitle="@string/pref_max_consent_time"
+            android:inputType="phone"
+            android:key="@string/key_max_consent_time"
+            android:title="@string/pref_max_consent" />
+        
+        <EditTextPreference
+            android:id="@+id/clear_consent_time"
+            android:defaultValue="@string/default_clear_consent_time"
+            android:dialogTitle="@string/pref_clear_consent_time"
+            android:inputType="phone"
+            android:key="@string/key_clear_consent_time"
+            android:title="@string/pref_clear_consent" />
+    </PreferenceCategory>
     <PreferenceCategory android:title="@string/pref_manage_device_pref" >
         <CheckBoxPreference
             android:id="@+id/show_settings_menu"

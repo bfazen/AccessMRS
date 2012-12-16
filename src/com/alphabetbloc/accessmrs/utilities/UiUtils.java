@@ -165,4 +165,136 @@ public class UiUtils {
 
 	}
 
+	/**
+	 * Convert a second duration to a string format
+	 * 
+	 * @param millis
+	 *            A duration to convert to a string form
+	 * @return A string of the form "X Days Y Hours Z Minutes A Seconds".
+	 */
+	// public static String getTimeString(long seconds) {
+	// if (seconds < 0) {
+	// // throw new
+	// // IllegalArgumentException("Duration must be greater than zero!");
+	// return "requested time is negative";
+	// }
+	//
+	// int years = (int) (seconds / (60 * 60 * 24 * 365.25));
+	// seconds -= (years * (60 * 60 * 24 * 365.25));
+	// int days = (int) ((seconds / (60 * 60 * 24)) % 365.25);
+	// seconds -= (days * (60 * 60 * 24));
+	// int hours = (int) ((seconds / (60 * 60)) % 24);
+	// seconds -= (hours * (60 * 60));
+	// int minutes = (int) ((seconds / 60) % 60);
+	// seconds -= (minutes * (60));
+	//
+	// StringBuilder sb = new StringBuilder(64);
+	// if (years > 0) {
+	// sb.append(years);
+	// sb.append(" Years ");
+	// }
+	// if (days > 0 || years > 0) {
+	// sb.append(days);
+	// sb.append(" Days ");
+	// }
+	// if (hours > 0 || days > 0 || years > 0) {
+	// sb.append(hours);
+	// sb.append(" Hours ");
+	// }
+	// if (minutes > 0 || hours > 0 || days > 0 || years > 0) {
+	// sb.append(minutes);
+	// sb.append(" Min ");
+	// }
+	// sb.append(seconds);
+	// sb.append(" Sec");
+	//
+	// return (sb.toString());
+	// }
+	public static String getTimeString(long seconds) {
+		return getTimeString(seconds, 3, 0);
+	}
+
+	public static String getTimeString(long seconds, int periods, int remainderSecs) {
+		if (seconds < 0) {
+			// throw new
+			// IllegalArgumentException("Duration must be greater than zero!");
+			return "requested time is negative";
+		}
+
+		int yearSeconds = (int) (60 * 60 * 24 * 365.25);
+		int monthSeconds = (60 * 60 * 24 * 30);
+		int daySeconds = (60 * 60 * 24);
+		int hourSeconds = (60 * 60);
+		int minSeconds = 60;
+
+		int years = (int) (seconds / yearSeconds);
+		seconds -= (years * yearSeconds);
+		int months = (int) (seconds / monthSeconds);
+		seconds -= (months * monthSeconds);
+		int days = (int) ((seconds / daySeconds));
+		seconds -= (days * daySeconds);
+		int hours = (int) ((seconds / hourSeconds));
+		seconds -= (hours * hourSeconds);
+		int minutes = (int) ((seconds / minSeconds));
+		seconds -= (minutes * minSeconds);
+
+		// if number of s is specified, then don't use periods
+		if (remainderSecs > 0)
+			periods = 0;
+		// if only periods specified, dont use remainderMs logic
+		else if (periods > 0 && remainderSecs == 0)
+			remainderSecs = yearSeconds;
+
+		StringBuilder sb = new StringBuilder(64);
+		boolean add = false;
+		int count = 1;
+		if (years > 0) {
+			sb.append(years);
+			sb.append(" ");
+			sb.append(App.getApp().getResources().getQuantityString(R.plurals.time_years, years));
+			sb.append(" ");
+			add = true;
+			count++;
+		}
+		if ((periods >= count || remainderSecs < monthSeconds) && (months > 0 || add)) {
+			sb.append(months);
+			sb.append(" ");
+			sb.append(App.getApp().getResources().getQuantityString(R.plurals.time_months, months));
+			sb.append(" ");
+			add = true;
+			count++;
+		}
+		if ((periods >= count || remainderSecs < daySeconds) && (days > 0 || add)) {
+			sb.append(days);
+			sb.append(" ");
+			sb.append(App.getApp().getResources().getQuantityString(R.plurals.time_days, days));
+			sb.append(" ");
+			add = true;
+			count++;
+		}
+		if ((periods >= count || remainderSecs < hourSeconds) && (hours > 0 || add)) {
+			sb.append(hours);
+			sb.append(" ");
+			sb.append(App.getApp().getResources().getQuantityString(R.plurals.time_hours, hours));
+			sb.append(" ");
+			add = true;
+			count++;
+		}
+		if ((periods >= count || remainderSecs < minSeconds) && (minutes > 0 || add)) {
+			sb.append(minutes);
+			sb.append(" ");
+			sb.append(App.getApp().getResources().getQuantityString(R.plurals.time_mins, minutes));
+			sb.append(" ");
+			add = true;
+			count++;
+		}
+		if ((periods >= count || remainderSecs < seconds)) {
+			sb.append(seconds);
+			sb.append(" ");
+			sb.append(App.getApp().getResources().getQuantityString(R.plurals.time_secs, (int) seconds));
+		}
+
+		return (sb.toString());
+	}
+
 }

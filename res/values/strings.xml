@@ -27,6 +27,9 @@
     <string name="key_min_refresh_seconds">minimum_refresh_time</string>
     <string name="key_max_refresh_seconds">maximum_refresh_time</string>
     <string name="key_show_form_prompt">show_form_prompt</string>
+    <string name="key_max_consent_time">maximum_consent_time</string>
+    <string name="key_clear_consent_time">clear_consent_time</string>
+    <string name="key_request_consent">request_client_consent</string>
 
     <!-- Defaults -->
     <string name="default_server">https://41.57.100.6:8443/amrs</string>
@@ -43,6 +46,9 @@
     <string name="default_min_refresh_seconds">60</string>
     <string name="default_max_refresh_seconds">620</string>
     <string name="default_location">1</string>
+    <string name="default_max_consent_time">62000</string>
+    <string name="default_clear_consent_time">6200000</string>
+    <string name="default_request_consent">true</string>
 
     <!-- UI STRINGS -->
     <!-- PREFERENCES -->
@@ -77,6 +83,11 @@
     <string name="pref_change_program">Change Program</string>
     <string name="pref_min_refresh_seconds">Don\'t sync if data was updated in last (seconds)</string>
     <string name="pref_max_refresh_seconds">Sync with server if data is older than (seconds)</string>
+    <string name="pref_consent_settings">Client Informed Consent</string>
+    <string name="pref_max_consent_time">Renew consent if consent is older than (seconds):</string>
+    <string name="pref_max_consent">Renew Consent After</string>
+    <string name="pref_clear_consent">Delete Old Consents</string>
+    <string name="pref_clear_consent_time">Delete a recorded consent signature from database if consent is older than (seconds)</string>
     <string name="pref_min_refresh">Don\'t Sync Before</string>
     <string name="pref_location">Location</string>
     <string name="pref_change_location">Change Location</string>
@@ -95,6 +106,9 @@
     <string name="pref_form_prompt">Form Confirmation</string>
     <string name="pref_form_prompt_on">Ask for user confirmation before loading a new form.</string>
     <string name="pref_form_prompt_off">Load new forms directly.</string>
+    <string name="pref_request_consent">Request Client Consent</string>
+    <string name="pref_request_consent_on">Ask client for consent with signature before allowing provider access to client data.</string>
+    <string name="pref_request_consent_off">Do not require provider to obtain client consent to view client data.</string>
     <string name="pref_not_allowed">Value not allowed</string>
 
     <!-- PreferenceActivity -> WipeDataActivity Alerts -->
@@ -205,6 +219,24 @@
     <string name="icon_last_download_time">Last Download Time Icon</string>
 
     <!-- GENERAL UI STRINGS (By Activity) -->
+    <!-- Consent Client -->
+    <string name="consent_accept">Accept</string>
+    <string name="consent_decline">Decline</string>
+    <string name="consent_cancel">Ask Later</string>
+    <string name="consent_return">Return To Summary</string>
+    <string name="consent_revoke">Withdraw Consent</string>
+    <string name="consent_clear">Clear Signature</string>
+    <string name="consent_request_signature">Ask client to sign name here:</string>
+    <string name="consent_expired_title">Client Consent Expired</string>
+    <string name="consent_expired_body">The previous consent for this client on %s has now expired.  Please obtain a new consent from this client to see clinical data.</string>
+    <string name="consent_signature_addendum_line1">(ID %1$s) Consented on %2$s</string>
+    <string name="consent_signature_addendum_line2">Consent Valid Until %s</string>
+    <string name="consent_obtained">Obtained:</string>
+    <string name="consent_expiration">Expiration:</string>
+    <string name="consent_expired">Previous consent expired.\nClick to consent.</string>
+    <string name="consent_deferred">Consent deferred.\nClick to consent.</string>
+    <string name="consent_declined">Consent declined by client.\nClick to consent.</string>
+
     <!-- Add New Client -->
     <string name="add_new_client">Add New Client</string>
     <string name="add_id">ID Number from AMRS Card:</string>
@@ -252,6 +284,32 @@
     <plurals name="sync_download_forms_partial">
         <item quantity="one">Sorry, %s form failed to download.</item>
         <item quantity="other">Sorry, %s forms failed to download.</item>
+    </plurals>
+
+    <!-- Time Duration -->
+    <plurals name="time_years">
+        <item quantity="one"> Year </item>
+        <item quantity="other"> Years </item>
+    </plurals>
+    <plurals name="time_months">
+        <item quantity="one"> Month </item>
+        <item quantity="other"> Months </item>
+    </plurals>
+    <plurals name="time_days">
+        <item quantity="one"> Day </item>
+        <item quantity="other"> Days </item>
+    </plurals>
+    <plurals name="time_hours">
+        <item quantity="one"> Hour </item>
+        <item quantity="other"> Hours </item>
+    </plurals>
+    <plurals name="time_mins">
+        <item quantity="one"> Min </item>
+        <item quantity="other"> Mins </item>
+    </plurals>
+    <plurals name="time_secs">
+        <item quantity="one"> Sec </item>
+        <item quantity="other"> Secs </item>
     </plurals>
 
     <string name="sync_download_obs_failed">Could not download data. Please check connection.</string>
@@ -305,6 +363,7 @@
     <string name="to_do_forms">Suggested Forms To Fill</string>
     <string name="incomplete_forms">Incomplete Forms To Fill</string>
     <string name="note">Note:</string>
+    <string name="consent_section">Client Consent:</string>
 
     <!-- Previous Encounters -->
     <string name="instances_last_day">Visits in the past day:</string>

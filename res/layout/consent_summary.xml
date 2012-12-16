@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="@drawable/list_selector_background"
+    android:orientation="vertical"
+    android:paddingBottom="8dip"
+    android:paddingLeft="8dip"
+    android:paddingRight="8dip"
+    android:paddingTop="8dip" >
+
+    <RelativeLayout
+        android:id="@+id/prior_consent_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
+
+        <TextView
+            android:id="@+id/consent_obtained"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toLeftOf="@+id/center_image"
+            android:paddingLeft="3dip"
+            android:text="@string/consent_obtained"
+            android:textColor="@color/dark_gray"
+            android:textSize="18sp" />
+
+        <TextView
+            android:id="@+id/consent_obtained_date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@+id/consent_obtained"
+            android:layout_toRightOf="@+id/consent_obtained"
+            android:paddingLeft="8dip"
+            android:textColor="@color/dark_gray"
+            android:textSize="18sp"
+            android:textStyle="italic" />
+
+        <ImageView
+            android:id="@+id/center_image"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="50dp"
+            android:contentDescription="@string/icon"
+            android:paddingRight="5dp" />
+
+        <TextView
+            android:id="@+id/consent_expiry"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/consent_obtained"
+            android:layout_toLeftOf="@+id/center_image"
+            android:paddingLeft="3dip"
+            android:paddingTop="4dip"
+            android:text="@string/consent_expiration"
+            android:textColor="@color/dark_gray"
+            android:textSize="18sp" />
+
+        <TextView
+            android:id="@+id/consent_expiry_date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@+id/consent_expiry"
+            android:layout_toRightOf="@+id/consent_expiry"
+            android:paddingLeft="8dip"
+            android:textColor="@color/dark_gray"
+            android:textSize="18sp"
+            android:textStyle="italic" />
+    </RelativeLayout>
+
+    <TextView
+        android:id="@+id/no_prior_consent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:paddingBottom="10dip"
+        android:paddingLeft="13dip"
+        android:textColor="@color/priority"
+        android:textSize="18sp" />
+
+    <ImageView
+        android:id="@+id/arrow_image"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
+        android:contentDescription="@string/icon_arrow_forward"
+        android:paddingBottom="4dip"
+        android:paddingLeft="3dip"
+        android:paddingTop="4dip" />
+
+</RelativeLayout>

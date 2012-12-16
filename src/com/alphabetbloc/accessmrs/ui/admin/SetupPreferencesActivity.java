@@ -58,7 +58,7 @@ public class SetupPreferencesActivity extends BaseAdminActivity {
 	public static final int RESET_ACCESS_MRS = 2;
 	public static final int ACCOUNT_SETUP = 4;
 
-	// TODO! strong passphrase config variables
+	// TODO Security: add passphrase config variables
 	// private final static int MIN_PASS_LENGTH = 6;
 	// private final static int MAX_PASS_ATTEMPTS = 3;
 	// private final static int PASS_RETRY_WAIT_TIMEOUT = 30000;
@@ -114,11 +114,11 @@ public class SetupPreferencesActivity extends BaseAdminActivity {
 			}
 
 			setupDefaultPreferences();
-			if (mEncryptionPassword != null){
-				//Skip Step 1, Use the Imported Password
+			if (mEncryptionPassword != null) {
+				// Skip Step 1, Use the Imported Password
 				encryptAccessMrsDb(mEncryptionPassword);
 				mEncryptionPassword = null;
-				
+
 			} else
 				createView(REQUEST_DB_SETUP);
 			break;
@@ -156,6 +156,8 @@ public class SetupPreferencesActivity extends BaseAdminActivity {
 
 	protected BroadcastReceiver mWipeDataComplete = new BroadcastReceiver() {
 		public void onReceive(Context ctxt, Intent i) {
+			if (mSetupType == RESET_ACCESS_FORMS)
+				encryptAccessFormsDb();
 			finish();
 		}
 	};
@@ -230,7 +232,7 @@ public class SetupPreferencesActivity extends BaseAdminActivity {
 
 		// if not loading, set appropriate buttons/text
 		switch (view) {
-		// TODO! does not work yet b/c also have to rekey AccessFormsDb
+		// TODO Feature: Rekey Db does not work yet b/c also have to rekey AccessFormsDb
 		case REQUEST_DB_REKEY:
 			mStep = VERIFY_ENTRY;
 			isFreshInstall = false;
@@ -369,7 +371,13 @@ public class SetupPreferencesActivity extends BaseAdminActivity {
 			protected void onPostExecute(Boolean success) {
 				if (success) {
 					// encrypt a new AccessForms instances Db
-					SetupPreferencesActivity.this.encryptAccessFormsDb();
+					if (encryptAccessFormsDb())
+						launcAccountSetup();
+					else {
+						mSetupType = RESET_ACCESS_FORMS;
+						refreshView();
+					}
+
 				} else {
 					if (error != null)
 						Log.e(TAG, "Error adding new SQLCipher key to the Keystore!" + error.getMessage());
@@ -385,7 +393,7 @@ public class SetupPreferencesActivity extends BaseAdminActivity {
 	}
 
 	// STEP 3: Encrypt the AccessForms Db
-	private void encryptAccessFormsDb() {
+	private boolean encryptAccessFormsDb() {
 		boolean isAccessFormsSetup = true;
 
 		try {
@@ -395,40 +403,35 @@ public class SetupPreferencesActivity extends BaseAdminActivity {
 				c.close();
 			isAccessFormsSetup = true;
 
+			if (App.DEBUG)
+				Log.v(TAG, "Successfully encrypted AccessForms db with new password.");
 		} catch (Exception e) {
 
 			e.printStackTrace();
 			isAccessFormsSetup = false;
 		}
 
-		if (isAccessFormsSetup) {
-			if (App.DEBUG)
-				Log.v(TAG, "Successfully encrypted AccessForms db with new password.");
-			launcAccountSetup();
-		} else {
-			mSetupType = RESET_ACCESS_FORMS;
-			refreshView();
-		}
+		return isAccessFormsSetup;
 	}
 
 	// STEP 4: Setup Android Account
 	private void launcAccountSetup() {
 
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
-		
+
 		// launch AccountSetupActivity
 		Intent i = new Intent(mContext, SetupAccountActivity.class);
 		i.putExtra(SetupAccountActivity.LAUNCHED_FROM_ACCT_MGR, false);
 		i.putExtra(SetupAccountActivity.INITIAL_SETUP, prefs.getBoolean(getString(R.string.key_first_run), true));
-		if (mUserPassword != null){
+		if (mUserPassword != null) {
 			prefs.edit().putString(getString(R.string.key_password), EncryptionUtil.encryptString(mUserPassword)).commit();
 			i.putExtra(SetupAccountActivity.USE_CONFIG_FILE, true);
 			mUserPassword = null;
 		}
-		
+
 		// Finished First Run Db and Preferences Setup
 		prefs.edit().putBoolean(getString(R.string.key_first_run), false).commit();
-		
+
 		startActivity(i);
 		finish();
 	}

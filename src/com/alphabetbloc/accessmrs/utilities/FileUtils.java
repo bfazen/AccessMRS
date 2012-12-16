@@ -20,6 +20,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.math.BigInteger;
 import java.security.KeyStore;
 import java.security.MessageDigest;
@@ -30,6 +31,7 @@ import java.util.List;
 
 import android.content.Context;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.res.AssetManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteException;
 import android.os.Environment;
@@ -60,6 +62,7 @@ public class FileUtils {
 
 	// Storage paths
 	public static final String SD_ROOT_DIR = "AccessMRS";
+	public static final String CONSENT = "consent";
 	public static final String INSTANCES = "instances";
 	public static final String FORMS = "forms";
 	public static final String XML_EXT = ".xml";
@@ -349,6 +352,11 @@ public class FileUtils {
 		File instances = new File(getExternalRootDirectory(), INSTANCES);
 		return instances.getAbsolutePath();
 	}
+	
+	public static String getExternalConsentPath() {
+		File consent = new File(getExternalRootDirectory(), CONSENT);
+		return consent.getAbsolutePath();
+	}
 
 	public static String getExternalFormsPath() {
 		File forms = new File(getExternalRootDirectory(), FORMS);
@@ -413,6 +421,41 @@ public class FileUtils {
 
 		return file;
 
+	}
+	
+	public static File copyAssetToSd(String assetPath, String sdPath) {
+
+		File sdFile = new File(sdPath);
+		if (sdFile.exists())
+			return sdFile;
+
+		AssetManager assetManager = App.getApp().getAssets();
+		try {
+
+			InputStream in = assetManager.open(assetPath);
+			OutputStream out = new FileOutputStream(sdPath);
+
+			byte[] buffer = new byte[1024];
+			int read;
+			while ((read = in.read(buffer)) != -1) {
+				out.write(buffer, 0, read);
+			}
+
+			in.close();
+			in = null;
+			out.flush();
+			out.close();
+			out = null;
+
+		} catch (Exception e) {
+			Log.e(TAG, e.getMessage());
+		}
+
+		if (sdFile.exists())
+			if (App.DEBUG)
+				Log.v(TAG, "File has been successfully moved: " + assetPath + " -> " + sdPath);
+
+		return sdFile;
 	}
 
 	/**
