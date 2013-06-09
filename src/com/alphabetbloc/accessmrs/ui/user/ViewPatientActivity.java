@@ -68,15 +68,19 @@ public class ViewPatientActivity extends BasePatientListActivity {
 		patientIdStr = getIntent().getStringExtra(KEY_PATIENT_ID);
 		Integer patientId = Integer.valueOf(patientIdStr);
 		mPatient = Db.open().getPatient(patientId);
+
 		if (mPatient == null) {
+			if (App.DEBUG)
+				Log.e(TAG, "mPatient is missing?!");
 			UiUtils.toastAlert(mContext, getString(R.string.error_db), getString(R.string.error, R.string.no_patient));
 			finish();
-		}
-		// TODO! SWAP THE NEXT 2 LINES AFTER TESTING:
-		// mConsent = (mPatient.getPatientId() < 0) ? -1 :
-		// mPatient.getConsent();
-		mConsent = mPatient.getConsent();
+		} else {
 
+			if (mPatient.getPatientId() < 0)
+				mConsent = -1;
+			else
+				mConsent = mPatient.getConsent();
+		}
 		final GestureDetector mFormDetector = new GestureDetector(new onFormClick());
 		mFormListener = new OnTouchListener() {
 			public boolean onTouch(View v, MotionEvent event) {
@@ -117,7 +121,7 @@ public class ViewPatientActivity extends BasePatientListActivity {
 				i.putExtra(KEY_PATIENT_ID, patientIdStr);
 				startActivityForResult(i, OBTAIN_CONSENT);
 			}
-			
+
 			getAllObservations(mPatient.getPatientId());
 			getPatientForms(mPatient.getPatientId());
 			mPatient.setTotalCompletedForms(findPreviousEncounters());
@@ -222,9 +226,9 @@ public class ViewPatientActivity extends BasePatientListActivity {
 					mPatient.setSaved(true);
 				else
 					mPatient.setSaved(false);
-				if(App.DEBUG)
+				if (App.DEBUG)
 					Log.v(TAG, "Setting Saved Form Number to = " + c.getInt(savedNumberIndex));
-				
+
 				int priorityIndex = c.getColumnIndexOrThrow(DataModel.KEY_PRIORITY_FORM_NUMBER);
 				if (mConsent != null && mConsent == DataModel.CONSENT_OBTAINED) {
 					mPatient.setPriorityNumber(c.getInt(priorityIndex));
@@ -236,7 +240,7 @@ public class ViewPatientActivity extends BasePatientListActivity {
 					mPatient.setPriorityNumber(0);
 					mPatient.setPriority(false);
 				}
-					
+
 			}
 
 			c.close();

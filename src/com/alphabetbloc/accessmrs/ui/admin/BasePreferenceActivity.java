@@ -57,18 +57,19 @@ public abstract class BasePreferenceActivity extends PreferenceActivity implemen
 			public void run() {
 				if (!RefreshDataService.isSyncActive) {
 					// Sync is not yet active, so we must be starting a sync
-					if (App.DEBUG) Log.v(TAG, "SyncStatusChanged: Preferences does not request syncs");
+					if (App.DEBUG)
+						Log.v(TAG, "SyncStatusChanged: Preferences does not request syncs");
 					SyncManager.sCancelSync.set(true);
 
 				} else {
 					// we are just completing a sync (whether success or not)
-					if (App.DEBUG) Log.v(TAG, "SyncStatusChanged: completing sync");
+					if (App.DEBUG)
+						Log.v(TAG, "SyncStatusChanged: completing sync");
 					// dismiss dialog
 					if (mSyncActiveDialog != null) {
 						mSyncActiveDialog.dismiss();
 						mSyncActiveDialog = null;
 					}
-
 
 				}
 			}
@@ -89,7 +90,7 @@ public abstract class BasePreferenceActivity extends PreferenceActivity implemen
 		mSyncActiveDialog.setProgress(0);
 		mSyncActiveDialog.show();
 	}
-	
+
 	@Override
 	protected void onResume() {
 		mPaused = false;
@@ -117,9 +118,11 @@ public abstract class BasePreferenceActivity extends PreferenceActivity implemen
 
 						@Override
 						public void run() {
-							int loop = (SyncManager.sLoopProgress == SyncManager.sLoopCount) ? 0 : ((int) Math.round(((float) SyncManager.sLoopProgress.get() / (float) SyncManager.sLoopCount.get()) * 10F));
-							mSyncActiveDialog.setProgress((SyncManager.sSyncStep.get() * 10) + loop);
-							mSyncActiveDialog.setMessage(SyncManager.sSyncTitle);
+							if (mSyncActiveDialog != null) {
+								int loop = (SyncManager.sLoopProgress == SyncManager.sLoopCount) ? 0 : ((int) Math.round(((float) SyncManager.sLoopProgress.get() / (float) SyncManager.sLoopCount.get()) * 10F));
+								mSyncActiveDialog.setProgress((SyncManager.sSyncStep.get() * 10) + loop);
+								mSyncActiveDialog.setMessage(SyncManager.sSyncTitle);
+							}
 						}
 					});
 
@@ -136,8 +139,9 @@ public abstract class BasePreferenceActivity extends PreferenceActivity implemen
 			if (requestSync) {
 				// should never happen
 			} else if (newSync) {
-				// we are starting a new sync automatically (Should never happen in Prefs)
-				 if (mSyncActiveDialog != null && mSyncActiveDialog.isShowing()) {
+				// we are starting a new sync automatically (Should never happen
+				// in Prefs)
+				if (mSyncActiveDialog != null && mSyncActiveDialog.isShowing()) {
 					mSyncActiveDialog.dismiss();
 					mSyncActiveDialog = null;
 				}

@@ -224,9 +224,11 @@ public abstract class BaseUserListActivity extends ListActivity implements SyncS
 
 						@Override
 						public void run() {
-							int loop = (SyncManager.sLoopProgress == SyncManager.sLoopCount) ? 0 : ((int) Math.round(((float) SyncManager.sLoopProgress.get() / (float) SyncManager.sLoopCount.get()) * 10F));
-							mSyncActiveDialog.setProgress((SyncManager.sSyncStep.get() * 10) + loop);
-							mSyncActiveDialog.setMessage(SyncManager.sSyncTitle);
+							if (mSyncActiveDialog != null) {
+								int loop = (SyncManager.sLoopProgress == SyncManager.sLoopCount) ? 0 : ((int) Math.round(((float) SyncManager.sLoopProgress.get() / (float) SyncManager.sLoopCount.get()) * 10F));
+								mSyncActiveDialog.setProgress((SyncManager.sSyncStep.get() * 10) + loop);
+								mSyncActiveDialog.setMessage(SyncManager.sSyncTitle);
+							}
 						}
 					});
 
@@ -297,9 +299,10 @@ public abstract class BaseUserListActivity extends ListActivity implements SyncS
 	}
 
 	/**
-	 * Implement this method if you want to save the position of the item in the scroll
-	 * list..
+	 * Implement this method if you want to save the position of the item in the
+	 * scroll list..
 	 */
-	protected void savePosition() {}
+	protected void savePosition() {
+	}
 
 }

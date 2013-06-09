@@ -149,7 +149,7 @@ public class AccountAuthenticatorService extends Service {
 		 */
 		@Override
 		public Bundle hasFeatures(AccountAuthenticatorResponse response, Account account, String[] features) throws NetworkErrorException {
-			if (App.DEBUG) Log.v(TAG, "hasFeatures: " + features);
+//			if (App.DEBUG) Log.v(TAG, "hasFeatures: " + features);
 			return null;
 		}
 

@@ -4,7 +4,6 @@ import java.io.File;
 
 import javax.crypto.spec.SecretKeySpec;
 
-
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.content.ActivityNotFoundException;
@@ -40,7 +39,7 @@ public class LauncherUtil {
 	public static final String UNLOCK_ACTION = "com.android.credentials.UNLOCK";
 	public static final String ACCESS_FORMS_NOT_INSTALLED = "com.alphabetbloc.accessforms.access_forms_not_installed";
 	public static Intent sLaunchIntent;
-	
+
 	public static boolean isSetupComplete() {
 		boolean isSetupComplete = false;
 
@@ -59,7 +58,7 @@ public class LauncherUtil {
 
 		return isSetupComplete;
 	}
-	
+
 	public static Intent getLaunchIntent() {
 
 		if (!isAccessFormsInstalled()) {
@@ -167,7 +166,8 @@ public class LauncherUtil {
 	}
 
 	private static boolean setupDatabases() {
-		// Step 3: check Db exists, has a key and pwd -> reset AccessMrs if missing
+		// Step 3: check Db exists, has a key and pwd -> reset AccessMrs if
+		// missing
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(App.getApp());
 		File db = App.getApp().getDatabasePath(DataModel.DATABASE_NAME);
 		String pwd = prefs.getString(App.getApp().getString(R.string.key_encryption_password), "");
@@ -191,7 +191,8 @@ public class LauncherUtil {
 		Account[] accounts = accountManager.getAccountsByType(App.getApp().getString(R.string.app_account_type));
 		if (accounts.length > 0) {
 			// already setup
-			if (App.DEBUG) Log.v(TAG, "there is an account numer=" + accounts.length + "username=" + accounts[0].name);
+			if (App.DEBUG)
+				Log.v(TAG, "there is an account numer=" + accounts.length + "username=" + accounts[0].name);
 			return true;
 		} else {
 			Intent i = new Intent(App.getApp(), SetupAccountActivity.class);
@@ -201,32 +202,40 @@ public class LauncherUtil {
 		}
 	}
 
-	// Step 3: Open or create the AccessForms db -> reset ACCESS_FORMS db if fail
+	// Step 3: Open or create the AccessForms db -> reset ACCESS_FORMS db if
+	// fail
 	private static boolean isAccessFormsSetup() {
-		if(App.DEBUG) Log.w(TAG, "IS AccessForms Setup?");
+		if (App.DEBUG)
+			Log.w(TAG, "IS AccessForms Setup?");
 		try {
 			// If there is no db, then further setup is not needed
 			Context mAccessFormsCtx = App.getApp().createPackageContext("com.alphabetbloc.accessforms", Context.CONTEXT_RESTRICTED);
 			File db = mAccessFormsCtx.getDatabasePath(InstanceProviderAPI.DATABASE_NAME);
-			if(!db.exists()){
-				if(App.DEBUG) Log.w(TAG, "AccessForms does NOT have an existing db");
+			if (!db.exists()) {
+				if (App.DEBUG)
+					Log.w(TAG, "AccessForms does NOT have an existing db");
 				return true;
-			} else 
-				if(App.DEBUG) 	Log.w(TAG, "AccessForms has an existing db");
+			} else {
+				if (App.DEBUG)
+					Log.w(TAG, "AccessForms has an existing db");
+			}
 		} catch (NameNotFoundException e1) {
-			if(App.DEBUG) Log.w(TAG, "AccessForms has no context... must be new install, so no need to reinstall");
+			if (App.DEBUG)
+				Log.w(TAG, "AccessForms has no context... must be new install, so no need to reinstall");
 			e1.printStackTrace();
 			return true;
 		}
-		
-		//If db exists, then make sure we have a key and can open it
-		if(App.DEBUG) Log.w(TAG, "AccessForms has db, so lets see if we can open it?");
+
+		// If db exists, then make sure we have a key and can open it
+		if (App.DEBUG)
+			Log.w(TAG, "AccessForms has db, so lets see if we can open it?");
 		try {
 			Cursor c = App.getApp().getContentResolver().query(InstanceColumns.CONTENT_URI, null, null, null, null);
 			if (c != null)
 				c.close();
 		} catch (Exception e) {
-			if(App.DEBUG) Log.w(TAG, "AccessForms db key has been lost");
+			if (App.DEBUG)
+				Log.w(TAG, "AccessForms db key has been lost");
 			return false;
 		}
 
@@ -234,8 +243,10 @@ public class LauncherUtil {
 	}
 
 	private static void setupAccessForms() {
-		if(App.DEBUG) Log.w(TAG, "setup AccessForms is called... because the db key has been lost");
-		// Lost key! (AccessMrs reinstalled?) CATASTROPHE... SO RESET AccessForms
+		if (App.DEBUG)
+			Log.w(TAG, "setup AccessForms is called... because the db key has been lost");
+		// Lost key! (AccessMrs reinstalled?) CATASTROPHE... SO RESET
+		// AccessForms
 		Intent i = new Intent(App.getApp(), SetupPreferencesActivity.class);
 		i.putExtra(SetupPreferencesActivity.SETUP_INTENT, SetupPreferencesActivity.RESET_ACCESS_FORMS);
 		sLaunchIntent = i;

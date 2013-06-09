@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.alphabetbloc.accessmrs"
     android:sharedUserId="com.alphabetbloc.apps.android.integrated"
-    android:versionCode="1"
+    android:versionCode="2"
     android:versionName="@string/app_version" >
 
     <!-- TODO! the shared user id is really a stopgap measure before going through and changing the entire db structure (again!) -->

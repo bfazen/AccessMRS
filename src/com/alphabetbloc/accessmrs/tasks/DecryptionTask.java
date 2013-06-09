@@ -60,19 +60,19 @@ public class DecryptionTask extends AsyncTask<Object, Void, Boolean> {
 	protected Boolean doInBackground(Object... params) {
 		int id = (Integer) params[0];
 		String dbPath = (String) params[1];
-		
+
 		String inPath = FileUtils.getEncryptedFilePath(dbPath);
 		String outPath = FileUtils.getDecryptedFilePath(dbPath);
-		
+
 		boolean decrypted = false;
 		if (id > 0)
 			decrypted = decryptFormInstance(id, inPath, outPath);
-		
-		if (decrypted)
-			if (App.DEBUG) Log.v(TAG, "Decryption Sucessful!");
-		else
-			Log.e(TAG, "Decryption Error with AccessForms Instance Id: " + String.valueOf(id) + " at path=" + inPath);
 
+		if (decrypted) {
+			if (App.DEBUG) Log.v(TAG, "Decryption Sucessful!");
+		} else {
+			Log.e(TAG, "Decryption Error with AccessForms Instance Id: " + String.valueOf(id) + " at path=" + inPath);
+		}
 		return decrypted;
 	}
 
@@ -153,10 +153,9 @@ public class DecryptionTask extends AsyncTask<Object, Void, Boolean> {
 		}
 	}
 
-	
 	/**
-	 * We update the AccessForms Db with the time of decryption so that we can be
-	 * sure to delete later!
+	 * We update the AccessForms Db with the time of decryption so that we can
+	 * be sure to delete later!
 	 * 
 	 * @param id
 	 * @param filepath
@@ -191,12 +190,12 @@ public class DecryptionTask extends AsyncTask<Object, Void, Boolean> {
 
 	private boolean decryptFile(String inPath, String outPath, Cipher cipher, SecretKeySpec keySpec) throws Exception {
 		boolean decrypted = false;
-		
-		//input file
+
+		// input file
 		File inFile = new File(inPath);
 		String outName = inPath.substring(inPath.lastIndexOf(File.separator), inPath.lastIndexOf(FileUtils.ENC_EXT));
-		
-		//output dir & file
+
+		// output dir & file
 		File outDir = (new File(outPath)).getParentFile();
 		FileUtils.createFolder(outDir.getAbsolutePath());
 		File outFile = new File(outDir.getAbsolutePath(), outName);
@@ -204,7 +203,6 @@ public class DecryptionTask extends AsyncTask<Object, Void, Boolean> {
 			outFile = new File(outDir.getAbsolutePath(), outName + "-" + String.valueOf(System.currentTimeMillis()) + FileUtils.ENC_EXT);
 			Log.w(TAG, "File already exists. File has been renamed to " + outFile.getName());
 		}
-
 
 		try {
 			// make the streams

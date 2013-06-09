@@ -28,7 +28,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 
-
 import android.content.Context;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.AssetManager;
@@ -100,8 +99,10 @@ public class FileUtils {
 						if (!file.delete()) {
 							if (App.DEBUG)
 								Log.v(TAG, "Failed to delete " + file);
-						} else if (App.DEBUG)
-							Log.v(TAG, "successfully deleted a file from:" + path);
+						} else {
+							if (App.DEBUG)
+								Log.v(TAG, "successfully deleted a file from:" + path);
+						}
 					}
 				}
 				return folder.delete();
@@ -202,10 +203,14 @@ public class FileUtils {
 					for (File file : files) {
 						if (file.isDirectory())
 							deleteAllFiles(file.getAbsolutePath());
-						else if (!file.delete())
-							if (App.DEBUG) Log.v(TAG, "Failed to delete " + file);
-						else
-							if (App.DEBUG) Log.v(TAG, "successfully deleted a file from:" + path);
+						else if (!file.delete()) {
+							if (App.DEBUG)
+								Log.v(TAG, "Failed to delete " + file);
+						} else {
+							if (App.DEBUG)
+								Log.v(TAG, "successfully deleted a file from:" + path);
+						}
+
 					}
 
 				}
@@ -272,8 +277,8 @@ public class FileUtils {
 	}
 
 	/**
-	 * Checks if a form exists in AccessForms Db and on Sd. If it does, we already
-	 * have the form, and there is no need to download!
+	 * Checks if a form exists in AccessForms Db and on Sd. If it does, we
+	 * already have the form, and there is no need to download!
 	 * 
 	 * @param formId
 	 * @return true if form exists in AccessForms Db.
@@ -352,7 +357,7 @@ public class FileUtils {
 		File instances = new File(getExternalRootDirectory(), INSTANCES);
 		return instances.getAbsolutePath();
 	}
-	
+
 	public static String getExternalConsentPath() {
 		File consent = new File(getExternalRootDirectory(), CONSENT);
 		return consent.getAbsolutePath();
@@ -422,7 +427,7 @@ public class FileUtils {
 		return file;
 
 	}
-	
+
 	public static File copyAssetToSd(String assetPath, String sdPath) {
 
 		File sdFile = new File(sdPath);

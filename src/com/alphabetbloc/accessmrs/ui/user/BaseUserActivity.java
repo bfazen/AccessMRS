@@ -49,7 +49,6 @@ public abstract class BaseUserActivity extends Activity implements SyncStatusObs
 	private static boolean mPaused;
 	private ScheduledExecutorService mExecutor = Executors.newScheduledThreadPool(5);
 
-
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -211,9 +210,11 @@ public abstract class BaseUserActivity extends Activity implements SyncStatusObs
 
 						@Override
 						public void run() {
-							int loop = (SyncManager.sLoopProgress == SyncManager.sLoopCount) ? 0 : ((int) Math.round(((float) SyncManager.sLoopProgress.get() / (float) SyncManager.sLoopCount.get()) * 10F));
-							mSyncActiveDialog.setProgress((SyncManager.sSyncStep.get() * 10) + loop);
-							mSyncActiveDialog.setMessage(SyncManager.sSyncTitle);
+							if (mSyncActiveDialog != null) { 
+								int loop = (SyncManager.sLoopProgress == SyncManager.sLoopCount) ? 0 : ((int) Math.round(((float) SyncManager.sLoopProgress.get() / (float) SyncManager.sLoopCount.get()) * 10F));
+								mSyncActiveDialog.setProgress((SyncManager.sSyncStep.get() * 10) + loop);
+								mSyncActiveDialog.setMessage(SyncManager.sSyncTitle);
+							}
 						}
 					});
 
