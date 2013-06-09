@@ -14,7 +14,7 @@ import com.alphabetbloc.accessmrs.providers.DbProvider;
 public class App extends Application {
 	private static App mSingleton = null;
 	private static DbProvider.DatabaseHelper mSqlCipherDbHelper;
-	public static final boolean DEBUG = true;
+	public static final boolean DEBUG = false;
 	
 	@Override
 	public void onCreate() {
