@@ -176,35 +176,49 @@ public class SetupPreferencesActivity extends BaseAdminActivity {
 
 		if (configFile.exists()) {
 			// Read text from file
-			try {
-				BufferedReader br = new BufferedReader(new FileReader(configFile));
-				String line;
-
-				while ((line = br.readLine()) != null) {
-
-					int equal = line.indexOf("=");
-					String prefName = line.substring(0, equal);
-					String prefValue = line.substring(equal + 1);
-
-					if (prefName.equalsIgnoreCase(getString(R.string.key_encryption_password)))
-						mEncryptionPassword = prefValue;
-					else if (prefName.equalsIgnoreCase(getString(R.string.key_password)))
-						mUserPassword = prefValue;
-					else
-						PreferencesActivity.updatedPreference(prefName, prefValue);
-
-					if (App.DEBUG)
-						Log.v(TAG, "Imported Preference #" + line + " :" + prefName);
-				}
-
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-
+			readConfigFile(configFile);
+			// Read again to resolve errors (some prefs like sync min must be less than sync max)
+			readConfigFile(configFile);
 			configFile.delete();
-
 		}
 	}
+	
+	//	FIXME: results in StringIndexOutOfBoundsException on line 194 if there is spacing between the lines
+	//	 should just skip to the next line if the = sign does not appear
+	//	Also should not force close, but rather show a message saying that the configuration file did not work and then go to the default configuration
+	//	 also, there should be a button to reimport the configuration file at any time
+	
+	private void readConfigFile(File configFile){
+		try {
+			BufferedReader br = new BufferedReader(new FileReader(configFile));
+			String line;
+
+			while ((line = br.readLine()) != null) {
+
+				int equal = line.indexOf("=");
+				String prefName = line.substring(0, equal);
+				String prefValue = line.substring(equal + 1);
+
+				if (prefName.equalsIgnoreCase(getString(R.string.key_encryption_password)))
+					mEncryptionPassword = prefValue;
+				else if (prefName.equalsIgnoreCase(getString(R.string.key_password)))
+					mUserPassword = prefValue;
+				else if (prefName.equalsIgnoreCase(getString(R.string.key_kosirai_rct))){
+					// TODO DELETE THIS AFTER THE TRIAL!
+					SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
+					prefs.edit().putString(prefName, prefValue).commit();
+				} else
+					PreferencesActivity.updatedPreference(prefName, prefValue, false);
+
+//				if (App.DEBUG)
+//					Log.v(TAG, "Imported Preference \'" + prefName + "\' with value \'" + prefValue + "\'");
+			}
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
 
 	private void createView(int view) {
 		setContentView(R.layout.pwd_setup);
