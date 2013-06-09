@@ -88,7 +88,7 @@ public class CreatePatientActivity extends BaseUserActivity implements OnGesture
 		mContext = this;
 
 		getRegistrationForm();
-		
+
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
 		mProviderId = settings.getString(getString(R.string.key_provider), getString(R.string.default_provider));
 
@@ -96,7 +96,7 @@ public class CreatePatientActivity extends BaseUserActivity implements OnGesture
 		mBirthDatePicker = (DatePicker) findViewById(R.id.birthdate_widget);
 		final Calendar c = Calendar.getInstance();
 		mYear = c.get(Calendar.YEAR);
-		mMonth = 1;
+		mMonth = 0;
 		mDay = 1;
 		mBirthDatePicker.init(mYear, mMonth, mDay, null);
 
@@ -147,7 +147,7 @@ public class CreatePatientActivity extends BaseUserActivity implements OnGesture
 		// do nothing
 	}
 
-	private void getRegistrationForm(){
+	private void getRegistrationForm() {
 		// check to see if form exists in AccessForms Db
 		String dbjrFormName = "no_registration_form";
 		Cursor cursor = App.getApp().getContentResolver().query(FormsColumns.CONTENT_URI, new String[] { FormsColumns.DISPLAY_NAME }, FormsColumns.DISPLAY_NAME + "=?", new String[] { XformUtils.CLIENT_REGISTRATION_FORM_NAME }, null);
@@ -164,7 +164,7 @@ public class CreatePatientActivity extends BaseUserActivity implements OnGesture
 		if (!dbjrFormName.equals(XformUtils.CLIENT_REGISTRATION_FORM_NAME))
 			XformUtils.insertRegistrationForm();
 	}
-	
+
 	private boolean similarClientCheck() {
 		// Verify the client against the db
 		boolean similarFound = false;
@@ -320,7 +320,7 @@ public class CreatePatientActivity extends BaseUserActivity implements OnGesture
 		// mHour = mBirthTime.getCurrentHour();
 		// mMinute = mBirthTime.getCurrentMinute();
 
-		mDbBirthString = String.valueOf(mYear) + "-" + String.valueOf(mMonth) + "-" + String.valueOf(mDay);
+		mDbBirthString = String.valueOf(mYear) + "-" + String.valueOf(mMonth + 1) + "-" + String.valueOf(mDay);
 		SimpleDateFormat dbFormat = new SimpleDateFormat("yyyy-MM-dd");
 		SimpleDateFormat viewFormat = new SimpleDateFormat("MMM dd, yyyy");
 		try {
@@ -400,14 +400,16 @@ public class CreatePatientActivity extends BaseUserActivity implements OnGesture
 
 	private void addFormToAccessForms() {
 		if (mPatient == null)
-			if (App.DEBUG) Log.e(TAG, "Lost a patient after adding them to AccessForms");
+			if (App.DEBUG)
+				Log.e(TAG, "Lost a patient after adding them to AccessForms");
 		int instanceId = XformUtils.createRegistrationFormInstance(mPatient);
 		if (instanceId != -1) {
 			Intent intent = new Intent();
 			intent.setComponent(new ComponentName("com.alphabetbloc.accessforms", "org.odk.collect.android.activities.FormEntryActivity"));
 			intent.setAction(Intent.ACTION_EDIT);
 			intent.setData(Uri.parse(InstanceColumns.CONTENT_URI + "/" + instanceId));
-			intent.putExtra("Client_Registration", true);
+			if (XformUtils.isDefaultRegistration())
+				intent.putExtra("Client_Registration", true);
 			startActivityForResult(intent, REGISTRATION);
 		} else {
 			Toast.makeText(CreatePatientActivity.this, "Sorry, there was a problem saving this form.", Toast.LENGTH_SHORT).show();

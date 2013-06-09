@@ -120,8 +120,6 @@ public class XformUtils {
 		return FileUtils.copyAssetToSd(assetPath, sdPath);
 	}
 
-	
-
 	// PARSE AND INSERT NEW FORM TO FORMS DB
 	public static boolean insertSingleForm(String formPath) {
 
@@ -198,7 +196,7 @@ public class XformUtils {
 			} catch (SQLiteException e) {
 				Log.e("DownloadFormTask", e.getLocalizedMessage());
 				return false;
-				// TODO ?Bug?  Not from ODK Clinic = handle exception
+				// TODO ?Bug? Not from ODK Clinic = handle exception
 			}
 
 			if (mCursor == null) {
@@ -212,20 +210,25 @@ public class XformUtils {
 
 				String dbmd5 = mCursor.getString(mCursor.getColumnIndex(FormsColumns.MD5_HASH));
 				String dbFormId = mCursor.getString(mCursor.getColumnIndex(FormsColumns.JR_FORM_ID));
-
+				if(App.DEBUG) Log.i(TAG, "AccessForms Db: Found Form with \n\t dbmd5=" + dbmd5 + " \n\t ID=" + dbFormId);
+				
 				// if the exact form exists, leave it be. else, insert it.
 				if (dbmd5.equalsIgnoreCase(md5) && dbFormId.equalsIgnoreCase(id + "")) {
 					alreadyExists = true;
+					if(App.DEBUG) Log.i(TAG, "Form already exists in AccessForms Db");
 				}
 
 			}
 
 			if (!alreadyExists) {
-				if (name.equalsIgnoreCase(CLIENT_REGISTRATION_FORM_NAME))
+				if (name.equalsIgnoreCase(CLIENT_REGISTRATION_FORM_NAME)){
 					App.getApp().getContentResolver().delete(FormsColumns.CONTENT_URI, FormsColumns.DISPLAY_NAME + "=?", new String[] { name });
+					if(App.DEBUG) Log.i(TAG, "Deleting old registration form");
+				}
 				App.getApp().getContentResolver().delete(FormsColumns.CONTENT_URI, FormsColumns.MD5_HASH + "=?", new String[] { md5 });
 				App.getApp().getContentResolver().delete(FormsColumns.CONTENT_URI, FormsColumns.JR_FORM_ID + "=?", new String[] { id + "" });
 				App.getApp().getContentResolver().insert(FormsColumns.CONTENT_URI, values);
+				if(App.DEBUG) Log.i(TAG, "Adding New Form to AccessForms db with \n\t Name=" + name + " \n\t ID=" + id);
 			}
 
 			if (mCursor != null) {
@@ -291,6 +294,24 @@ public class XformUtils {
 			return createRegistrationFormInstance(mPatient);
 		} else
 			return createFormInstance(mPatient, formPath, jrFormId, jrFormName);
+	}
+
+	public static boolean isDefaultRegistration() {
+
+		String[] projection = new String[] { FormsColumns.JR_FORM_ID };
+		String selection = FormsColumns.DISPLAY_NAME + "=?";
+		String[] selectionArgs = new String[] { XformUtils.CLIENT_REGISTRATION_FORM_NAME };
+		Cursor c = App.getApp().getContentResolver().query(FormsColumns.CONTENT_URI, projection, selection, selectionArgs, null);
+
+		String jrFormId = null;
+		if (c != null) {
+			if (c.moveToFirst()) {
+					jrFormId = c.getString(c.getColumnIndex(FormsColumns.JR_FORM_ID));
+			}
+			c.close();
+		}
+
+		return (jrFormId.equalsIgnoreCase(REGISTRATION_FORM_ID)) ? true : false;
 	}
 
 	public static int createFormInstance(Patient mPatient, String formPath, String jrFormId, String formname) {
@@ -471,9 +492,9 @@ public class XformUtils {
 					childElement.clear();
 					Date date = new Date();
 					date.setTime(System.currentTimeMillis());
-					// SimpleDateFormat sdf = new
-					// SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-					SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+//					FIXME: This should be set by options menu
+					SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+//					SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 					String dateString = sdf.format(date);
 					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, dateString);
 				}
@@ -487,6 +508,14 @@ public class XformUtils {
 						addClient = "Temporary Visit Only";
 					childElement.addChild(0, org.kxml2.kdom.Node.TEXT, addClient);
 				}
+				
+//				if (childName.equalsIgnoreCase("encounter.visit_number")) {
+//					if (childElement != null) {
+//						int visit = Integer.valueOf((String) childElement.getChild(0));
+//						Log.e(TAG, "encounter.visit_number = " + visit);
+//						childElement.addChild(0, org.kxml2.kdom.Node.TEXT, String.valueOf(visit++));
+//					}
+//				}
 
 				if (childName.equalsIgnoreCase("date") || childName.equalsIgnoreCase("time")) {
 					childElement.clear();
