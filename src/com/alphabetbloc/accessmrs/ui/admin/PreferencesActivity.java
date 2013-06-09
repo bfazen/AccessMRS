@@ -55,10 +55,15 @@ public class PreferencesActivity extends BasePreferenceActivity implements OnSha
 	 * @param value
 	 *            The new value for the preference
 	 */
+	public static void updatedPreference(String key, String value, boolean showAlerts) {
+		mShowToast = showAlerts;
+		updatedPreference(key, value);
+	}
+
 	public static void updatedPreference(String key, String value) {
 
 		setCurrentPreferences();
-		
+
 		// Search for matching key
 		boolean matchingKey = false;
 		String[] keys = mCurrentAdminPrefs.keySet().toArray(new String[0]);
@@ -73,7 +78,8 @@ public class PreferencesActivity extends BasePreferenceActivity implements OnSha
 		}
 
 		if (!matchingKey) {
-			if (App.DEBUG) Log.v(TAG, "Could not find a matching key to " + key);
+			if (App.DEBUG)
+				Log.v(TAG, "Could not find a matching key to \'" + key + "\'");
 			return;
 		}
 
@@ -113,14 +119,19 @@ public class PreferencesActivity extends BasePreferenceActivity implements OnSha
 		// Log the Update Attempt
 		if (foundKey) {
 			String currentValue = mCurrentAdminPrefs.get(key);
-			if (currentValue != originalValue)
-				if (App.DEBUG) Log.v(TAG, "Updated Preference " + key + " to a new value");
-			else if (mValueError)
-				if (App.DEBUG) Log.v(TAG, "Preference Not Updated: Value not allowed for Preference " + key);
-			else
-				if (App.DEBUG) Log.v(TAG, "No Change Required for Current Preference " + key);
+			if (currentValue != originalValue) {
+				if (App.DEBUG)
+					Log.v(TAG, "Updated Preference \'" + key + "\' to a new value");
+			} else if (mValueError) {
+				if (App.DEBUG)
+					Log.v(TAG, "Preference Not Updated: Value not allowed for Preference " + key + "\'");
+			} else {
+				if (App.DEBUG)
+					Log.v(TAG, "No Change Required for Current Preference \'" + key + "\'");
+			}
 		} else {
-			if (App.DEBUG) Log.v(TAG, "Preference " + key + " was not found, and could not be updated.");
+			if (App.DEBUG)
+				Log.v(TAG, "Preference \'" + key + "\' was not found, and could not be updated.");
 		}
 	}
 
@@ -143,7 +154,8 @@ public class PreferencesActivity extends BasePreferenceActivity implements OnSha
 
 		if (keys != null) {
 			for (int i = 0; i < keys.length; i++) {
-				if (App.DEBUG) Log.v(TAG, "key i=" + i + " key=" + keys[i]);
+				if (App.DEBUG)
+					Log.v(TAG, "key i=" + i + " key=" + keys[i]);
 				Preference changedPref = findPreference(keys[i]);
 				setSummary(changedPref, keys[i]);
 			}
@@ -223,7 +235,8 @@ public class PreferencesActivity extends BasePreferenceActivity implements OnSha
 
 		if (!isPositiveInteger(newValue)) {
 			prefs.edit().putString(key, mCurrentAdminPrefs.get(key)).commit();
-			if(App.DEBUG) Log.w(TAG, "New Value was not an Integer, so adding back in value of=" + mCurrentAdminPrefs.get(key));
+			if (App.DEBUG)
+				Log.w(TAG, "New Value was not an Integer, so adding back in old value.");
 			return;
 		}
 
@@ -235,7 +248,8 @@ public class PreferencesActivity extends BasePreferenceActivity implements OnSha
 			prefs.edit().putString(key, String.valueOf(newMinValue)).commit();
 			setCurrentPreferences();
 		} else {
-			UiUtils.toastAlert(App.getApp().getString(R.string.pref_not_allowed), App.getApp().getString(R.string.pref_min_requirement));
+			if (mShowToast)
+				UiUtils.toastAlert(App.getApp().getString(R.string.pref_not_allowed), App.getApp().getString(R.string.pref_min_requirement));
 			prefs.edit().putString(key, mCurrentAdminPrefs.get(key)).commit();
 			mValueError = true;
 		}
@@ -246,7 +260,8 @@ public class PreferencesActivity extends BasePreferenceActivity implements OnSha
 
 		if (!isPositiveInteger(newValue)) {
 			prefs.edit().putString(key, mCurrentAdminPrefs.get(key)).commit();
-			if(App.DEBUG) Log.w(TAG, "New Value was not an Integer, so adding back in value of=" + mCurrentAdminPrefs.get(key));
+			if (App.DEBUG)
+				Log.w(TAG, "New Value was not an Integer, so adding back in old value.");
 			return;
 		}
 
@@ -264,7 +279,8 @@ public class PreferencesActivity extends BasePreferenceActivity implements OnSha
 			}
 			setCurrentPreferences();
 		} else {
-			UiUtils.toastAlert(App.getApp().getString(R.string.pref_not_allowed), App.getApp().getString(R.string.pref_max_requirement));
+			if (mShowToast)
+				UiUtils.toastAlert(App.getApp().getString(R.string.pref_not_allowed), App.getApp().getString(R.string.pref_max_requirement));
 			prefs.edit().putString(key, mCurrentAdminPrefs.get(key)).commit();
 			mValueError = true;
 		}
@@ -292,7 +308,8 @@ public class PreferencesActivity extends BasePreferenceActivity implements OnSha
 		String falseString = "false";
 		if (newValue.equalsIgnoreCase(trueString) || newValue.equalsIgnoreCase(falseString))
 			isBoolean = true;
-		if(App.DEBUG) Log.v(TAG, "isBooleanValue=" + isBoolean + " for value=" + newValue + "=");
+		if (App.DEBUG)
+			Log.v(TAG, "Check isBooleanValue? Was value  \'" + newValue + "' parsed as boolean?    Answer = "+ isBoolean);
 		return isBoolean;
 	}
 
@@ -300,8 +317,6 @@ public class PreferencesActivity extends BasePreferenceActivity implements OnSha
 		Preference changedPref = findPreference(key);
 		verifyUpdatedPreference(prefs, changedPref, key);
 	}
-
-	
 
 	private static Map<String, String> createAdminPreferenceMap() {
 		Map<String, String> map = new HashMap<String, String>();
@@ -366,11 +381,21 @@ public class PreferencesActivity extends BasePreferenceActivity implements OnSha
 		Map<String, String> map = new HashMap<String, String>();
 		Context c = App.getApp();
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(c);
-//		map.put(c.getString(R.string.key_provider), prefs.getString(c.getString(R.string.key_provider), c.getString(R.string.default_provider)));
-//		map.put(c.getString(R.string.key_location), prefs.getString(c.getString(R.string.key_location), c.getString(R.string.default_location)));
-//		map.put(c.getString(R.string.key_program), prefs.getString(c.getString(R.string.key_program), c.getString(R.string.default_program)));
-//		map.put(c.getString(R.string.key_saved_search), prefs.getString(c.getString(R.string.key_saved_search), c.getString(R.string.default_saved_search)));
-//		map.put(c.getString(R.string.key_use_saved_searches), String.valueOf(prefs.getBoolean(c.getString(R.string.key_use_saved_searches), Boolean.parseBoolean(c.getString(R.string.default_use_saved_searches)))));
+		// map.put(c.getString(R.string.key_provider),
+		// prefs.getString(c.getString(R.string.key_provider),
+		// c.getString(R.string.default_provider)));
+		// map.put(c.getString(R.string.key_location),
+		// prefs.getString(c.getString(R.string.key_location),
+		// c.getString(R.string.default_location)));
+		// map.put(c.getString(R.string.key_program),
+		// prefs.getString(c.getString(R.string.key_program),
+		// c.getString(R.string.default_program)));
+		// map.put(c.getString(R.string.key_saved_search),
+		// prefs.getString(c.getString(R.string.key_saved_search),
+		// c.getString(R.string.default_saved_search)));
+		// map.put(c.getString(R.string.key_use_saved_searches),
+		// String.valueOf(prefs.getBoolean(c.getString(R.string.key_use_saved_searches),
+		// Boolean.parseBoolean(c.getString(R.string.default_use_saved_searches)))));
 		map.put(c.getString(R.string.key_show_form_prompt), String.valueOf(prefs.getBoolean(c.getString(R.string.key_show_form_prompt), Boolean.parseBoolean(c.getString(R.string.default_show_form_prompt)))));
 
 		return Collections.unmodifiableMap(map);
