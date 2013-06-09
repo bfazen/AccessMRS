@@ -4,7 +4,7 @@
     <!-- NON UI STRING CONSTANTS (referenced in both java and xml). -->
     <!-- APP -->
     <string name="app_name">AccessMRS</string>
-    <string name="app_version">1.0.2</string>
+    <string name="app_version">1.0.3</string>
     <string name="app_package_name">com.alphabetbloc.accessmrs</string>
     <string name="app_provider_authority">com.alphabetbloc.accessmrs.providers.dbprovider</string>
     <string name="app_account_type">com.alphabetbloc.accessmrs.account</string>
@@ -30,6 +30,7 @@
     <string name="key_max_consent_time">maximum_consent_time</string>
     <string name="key_clear_consent_time">clear_consent_time</string>
     <string name="key_request_consent">request_client_consent</string>
+    <string name="key_kosirai_rct">kosirai_rct</string>
 
     <!-- Defaults -->
     <string name="default_server">https://41.57.100.6:8443/amrs</string>
@@ -49,6 +50,7 @@
     <string name="default_max_consent_time">62000</string>
     <string name="default_clear_consent_time">6200000</string>
     <string name="default_request_consent">true</string>
+    <string name="default_kosirai_rct">control</string>
 
     <!-- UI STRINGS -->
     <!-- PREFERENCES -->

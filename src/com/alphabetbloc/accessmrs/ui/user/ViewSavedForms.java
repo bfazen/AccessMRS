@@ -5,8 +5,10 @@ import java.util.ArrayList;
 
 import android.content.ComponentName;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
@@ -16,6 +18,7 @@ import android.widget.ListView;
 import com.alphabetbloc.accessforms.provider.InstanceProviderAPI.InstanceColumns;
 import com.alphabetbloc.accessmrs.adapters.MergeAdapter;
 import com.alphabetbloc.accessmrs.data.Form;
+import com.alphabetbloc.accessmrs.utilities.App;
 import com.alphabetbloc.accessmrs.R;
 
 /**
@@ -103,6 +106,12 @@ public class ViewSavedForms extends ViewFormsActivity {
 		intent.setComponent(new ComponentName("com.alphabetbloc.accessforms", "org.odk.collect.android.activities.FormEntryActivity"));
 		intent.setAction(Intent.ACTION_EDIT);
 		intent.setData(Uri.parse(InstanceColumns.CONTENT_URI + "/" + f.getInstanceId()));
+		
+		//KOSIRAI TRIAL ONLY:
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(App.getApp());
+		String kosiraiRct = prefs.getString(getString(R.string.key_kosirai_rct), getString(R.string.default_kosirai_rct));
+		intent.putExtra(getString(R.string.key_kosirai_rct), kosiraiRct);
+		
 		startActivityForResult(intent, formType);
 	}
 

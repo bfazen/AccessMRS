@@ -125,6 +125,12 @@ public class ViewCompletedForms extends ViewFormsActivity implements DecryptionL
 		intent.setComponent(new ComponentName("com.alphabetbloc.accessforms", "org.odk.collect.android.activities.FormEntryActivity"));
 		intent.setAction(Intent.ACTION_VIEW);
 		intent.putExtra(EDIT_FORM, false);
+		
+		//KOSIRAI TRIAL ONLY:
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(App.getApp());
+		String kosiraiRct = prefs.getString(getString(R.string.key_kosirai_rct), getString(R.string.default_kosirai_rct));
+		intent.putExtra(getString(R.string.key_kosirai_rct), kosiraiRct);
+		
 		intent.setData(Uri.parse(InstanceColumns.CONTENT_URI + "/" + f.getInstanceId()));
 		startActivityForResult(intent, VIEW_FORM_ONLY);
 	}

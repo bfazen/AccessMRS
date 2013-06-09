@@ -1,7 +1,6 @@
 package com.alphabetbloc.accessmrs.providers;
 
 import java.util.ArrayList;
-import java.util.Date;
 
 import net.sqlcipher.SQLException;
 import net.sqlcipher.database.SQLiteQueryBuilder;
@@ -242,6 +241,11 @@ public class Db {
 
 	// Observations
 	public Cursor fetchPriorityFormIdByPatientId(Integer patientId) throws SQLException {
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(App.getApp());
+		String kosiraiRct = prefs.getString(App.getApp().getString(R.string.key_kosirai_rct), App.getApp().getString(R.string.default_kosirai_rct));
+		if (kosiraiRct.equalsIgnoreCase(App.getApp().getString(R.string.default_kosirai_rct)))
+			return null;
+		
 		String[] projection = new String[] { DataModel.KEY_VALUE_INT };
 		String selection = DataModel.KEY_FIELD_NAME + "=" + DataModel.KEY_FIELD_FORM_VALUE + " and " + DataModel.KEY_PATIENT_ID + "=" + patientId;
 		return DbProvider.openDb().queryDistinct(DataModel.OBSERVATIONS_TABLE, projection, selection, null, null);
@@ -424,10 +428,10 @@ public class Db {
 
 		if (requestConsent) {
 			Cursor cursor = fetchPriorConsent(patientId);
-			
+
 			if (cursor != null) {
 				if (cursor.moveToFirst()) {
-					
+
 					consent = cursor.getInt(cursor.getColumnIndex(DataModel.CONSENT_VALUE));
 					consentDate = cursor.getLong(cursor.getColumnIndex(DataModel.CONSENT_DATE));
 					consentExpirationDate = cursor.getLong(cursor.getColumnIndex(DataModel.CONSENT_EXPIRATION_DATE));
@@ -446,7 +450,7 @@ public class Db {
 								Log.v(TAG, "Consent is Now Expired");
 						}
 					}
-					
+
 					if (App.DEBUG)
 						Log.v(TAG, cursor.getCount() + "Prior Consents Found.  First Row has values: \n\tValue=" + consent + "\n\tVoided=" + voided + "\n\tDate=" + consentDate);
 				}
@@ -454,7 +458,7 @@ public class Db {
 				cursor.close();
 			}
 
-			p.setConsent(consent);
+			p.setConsent(consent); //FIXME: This caused an FC at one point due to NPE?	
 			p.setConsentDate(consentDate);
 			p.setConsentExpirationDate(consentExpirationDate);
 
@@ -583,6 +587,11 @@ public class Db {
 	// COUNT SECTION
 	public int countAllPriorityFormNumbers() throws SQLException {
 		int count = 0;
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(App.getApp());
+		String kosiraiRct = prefs.getString(App.getApp().getString(R.string.key_kosirai_rct), App.getApp().getString(R.string.default_kosirai_rct));
+		if (kosiraiRct.equalsIgnoreCase(App.getApp().getString(R.string.default_kosirai_rct)))
+			return count;
+		
 		Cursor c = null;
 		String[] projection = new String[] { "count(*) AS " + DataModel.KEY_PRIORITY_FORM_NUMBER };
 		String selection = DataModel.KEY_PRIORITY_FORM_NUMBER + " IS NOT NULL";
@@ -815,6 +824,11 @@ public class Db {
 	}
 
 	public void updatePriorityFormNumbers() throws SQLException {
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(App.getApp());
+		String kosiraiRct = prefs.getString(App.getApp().getString(R.string.key_kosirai_rct), App.getApp().getString(R.string.default_kosirai_rct));
+		if (kosiraiRct.equalsIgnoreCase(App.getApp().getString(R.string.default_kosirai_rct)))
+			return;
+		
 		// There should not be anything to update to null...
 		ContentValues cvNull = new ContentValues();
 		cvNull.putNull(DataModel.KEY_PRIORITY_FORM_NUMBER);
@@ -844,7 +858,11 @@ public class Db {
 	}
 
 	public void updatePriorityFormsByPatientId(String updatePatientId, String formId) throws SQLException {
-
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(App.getApp());
+		String kosiraiRct = prefs.getString(App.getApp().getString(R.string.key_kosirai_rct), App.getApp().getString(R.string.default_kosirai_rct));
+		if (kosiraiRct.equalsIgnoreCase(App.getApp().getString(R.string.default_kosirai_rct)))
+			return;
+		
 		boolean deleted = DbProvider.openDb().delete(DataModel.OBSERVATIONS_TABLE, DataModel.KEY_PATIENT_ID + "=" + updatePatientId + " AND " + DataModel.KEY_FIELD_NAME + "=" + DataModel.KEY_FIELD_FORM_VALUE + " AND " + DataModel.KEY_VALUE_INT + "=" + formId, null);
 		if (deleted) {
 

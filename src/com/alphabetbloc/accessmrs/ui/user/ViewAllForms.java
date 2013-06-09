@@ -458,6 +458,12 @@ public class ViewAllForms extends ViewFormsActivity {
 		intent.putExtra(EDIT_FORM, false);
 		intent.putExtra("path_name", uriString);
 		intent.putExtra("form_id", formId);
+
+		//KOSIRAI TRIAL ONLY:
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(App.getApp());
+		String kosiraiRct = prefs.getString(getString(R.string.key_kosirai_rct), getString(R.string.default_kosirai_rct));
+		intent.putExtra(getString(R.string.key_kosirai_rct), kosiraiRct);
+		
 		startActivityForResult(intent, VIEW_FORM_ONLY);
 	}
 
@@ -466,6 +472,12 @@ public class ViewAllForms extends ViewFormsActivity {
 		intent.setComponent(new ComponentName("com.alphabetbloc.accessforms", "org.odk.collect.android.activities.FormEntryActivity"));
 		intent.setAction(Intent.ACTION_EDIT);
 		intent.setData(Uri.parse(InstanceColumns.CONTENT_URI + "/" + instanceId));
+		
+		//KOSIRAI TRIAL ONLY:
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(App.getApp());
+		String kosiraiRct = prefs.getString(getString(R.string.key_kosirai_rct), getString(R.string.default_kosirai_rct));
+		intent.putExtra(getString(R.string.key_kosirai_rct), kosiraiRct);
+		
 		startActivityForResult(intent, priority);
 	}
 
@@ -516,6 +528,12 @@ public class ViewAllForms extends ViewFormsActivity {
 					// NB: changed this from ACTION_VIEW
 					intent.setAction(Intent.ACTION_EDIT);
 					intent.setData(Uri.parse(InstanceColumns.CONTENT_URI + "/" + instanceId));
+					
+					//KOSIRAI TRIAL ONLY:
+					SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(App.getApp());
+					String kosiraiRct = prefs.getString(getString(R.string.key_kosirai_rct), getString(R.string.default_kosirai_rct));
+					intent.putExtra(getString(R.string.key_kosirai_rct), kosiraiRct);
+					
 					startActivityForResult(intent, priority);
 				} else {
 					Uri formUri = ContentUris.withAppendedId(FormsColumns.CONTENT_URI, id);
