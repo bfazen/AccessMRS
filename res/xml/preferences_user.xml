@@ -6,10 +6,24 @@
             android:summary="@string/account_change_username_password"
             android:title="@string/account_change_details" >
             <intent
-                android:targetClass="com.alphabetbloc.clinic.ui.admin.SetupAccountActivity"
+                android:targetClass="com.alphabetbloc.accessmrs.ui.admin.SetupAccountActivity"
                 android:targetPackage="@string/app_package_name" />
         </Preference>
-
+        <!--
+         <EditTextPreference
+            android:id="@+id/provider_id"
+            android:defaultValue="@string/default_provider"
+            android:dialogTitle="@string/pref_change_provider"
+            android:inputType="phone"
+            android:key="@string/key_provider"
+            android:title="@string/pref_provider" />
+            <EditTextPreference
+            android:id="@+id/provider_id"
+            android:defaultValue="@string/default_provider"
+            android:dialogTitle="@string/pref_change_provider"
+            android:inputType="phone"
+            android:key="@string/key_provider"
+            android:title="@string/pref_provider" />
         <EditTextPreference
             android:id="@+id/program"
             android:defaultValue="@string/default_program"
@@ -32,6 +46,7 @@
             android:summaryOff="@string/pref_saved_search_off"
             android:summaryOn="@string/pref_saved_search_on"
             android:title="@string/pref_use_saved_search" />
+        -->
         <CheckBoxPreference
             android:id="@+id/show_form_prompt"
             android:defaultValue="@string/default_show_form_prompt"

@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/linearLayout1"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/light_gray"
+    android:orientation="vertical" >
+
+    <TextView
+        android:id="@+id/sign_here"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingLeft="2dp"
+        android:paddingRight="10dp"
+        android:paddingTop="10dp"
+        android:layout_alignLeft="@+id/signature_box"
+        android:text="@string/consent_request_signature"
+        android:textColor="@color/black_color"
+        android:textSize="20sp" />
+
+    <LinearLayout
+        android:id="@+id/signature_box"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/sign_here"
+        android:layout_above="@+id/button_row"
+        android:layout_margin="10dp"
+        android:background="@drawable/rounded_border" />
+
+    <Button
+        android:id="@+id/signature_clear"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignRight="@+id/signature_box"
+        android:layout_alignTop="@+id/signature_box"
+        android:background="@android:drawable/ic_menu_close_clear_cancel"
+        android:layout_marginRight="2dip"
+        android:layout_marginTop="2dip"  />
+
+    <RelativeLayout
+        android:id="@+id/button_row"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:orientation="horizontal"
+        android:paddingBottom="2dip"
+        android:paddingLeft="3dip"
+        android:paddingRight="3dip"
+        android:paddingTop="2dip" >
+
+        <Button
+            android:id="@+id/signature_accept"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_toLeftOf="@+id/center_image"
+            android:padding="10dip"
+            android:text="@string/consent_accept"
+            android:textSize="18sp" />
+
+        <ImageView
+            android:id="@+id/center_image"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            android:contentDescription="@string/icon" />
+
+        <Button
+            android:id="@+id/signature_cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_toRightOf="@+id/center_image"
+            android:padding="10dip"
+            android:text="@string/cancel"
+            android:textSize="18sp" />
+    </RelativeLayout>
+
+</RelativeLayout>

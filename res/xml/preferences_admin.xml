@@ -6,10 +6,24 @@
             android:summary="@string/account_change_username_password"
             android:title="@string/account_change_details" >
             <intent
-                android:targetClass="com.alphabetbloc.clinic.ui.admin.SetupAccountActivity"
+                android:targetClass="com.alphabetbloc.accessmrs.ui.admin.SetupAccountActivity"
                 android:targetPackage="@string/app_package_name" />
         </Preference>
 
+        <EditTextPreference
+            android:id="@+id/provider_id"
+            android:defaultValue="@string/default_provider"
+            android:dialogTitle="@string/pref_change_provider"
+            android:inputType="phone"
+            android:key="@string/key_provider"
+            android:title="@string/pref_provider" />
+        <EditTextPreference
+            android:id="@+id/location_id"
+            android:defaultValue="@string/default_location"
+            android:dialogTitle="@string/pref_change_location"
+            android:inputType="phone"
+            android:key="@string/key_location"
+            android:title="@string/pref_location" />
         <EditTextPreference
             android:id="@+id/program"
             android:defaultValue="@string/default_program"
@@ -39,6 +53,31 @@
             android:summaryOff="@string/pref_form_prompt_off"
             android:summaryOn="@string/pref_form_prompt_on"
             android:title="@string/pref_form_prompt" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="@string/pref_consent_settings" >
+        <CheckBoxPreference
+            android:id="@+id/request_consent"
+            android:defaultValue="@string/default_request_consent"
+            android:key="@string/key_request_consent"
+            android:summaryOff="@string/pref_request_consent_off"
+            android:summaryOn="@string/pref_request_consent_on"
+            android:title="@string/pref_request_consent" />
+
+        <EditTextPreference
+            android:id="@+id/max_consent_time"
+            android:defaultValue="@string/default_max_consent_time"
+            android:dialogTitle="@string/pref_max_consent_time"
+            android:inputType="phone"
+            android:key="@string/key_max_consent_time"
+            android:title="@string/pref_max_consent" />
+        
+        <EditTextPreference
+            android:id="@+id/clear_consent_time"
+            android:defaultValue="@string/default_clear_consent_time"
+            android:dialogTitle="@string/pref_clear_consent_time"
+            android:inputType="phone"
+            android:key="@string/key_clear_consent_time"
+            android:title="@string/pref_clear_consent" />
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/pref_manage_device_pref" >
         <CheckBoxPreference
@@ -75,7 +114,7 @@
             android:summary="@string/pref_wipe_data_desc"
             android:title="@string/pref_wipe_all_data" >
             <intent
-                android:targetClass="com.alphabetbloc.clinic.ui.admin.WipeDataActivity"
+                android:targetClass="com.alphabetbloc.accessmrs.ui.admin.WipeDataActivity"
                 android:targetPackage="@string/app_package_name" />
         </Preference>
     </PreferenceCategory>
@@ -99,21 +138,21 @@
             android:summary="@string/ssl_client_auth_desc"
             android:title="@string/ssl_client_auth" >
             <intent
-                android:targetClass="com.alphabetbloc.clinic.ui.admin.SSLClientAuthActivity"
+                android:targetClass="com.alphabetbloc.accessmrs.ui.admin.SSLClientAuthActivity"
                 android:targetPackage="@string/app_package_name" />
         </Preference>
         <Preference
             android:summary="@string/ssl_manage_certs_desc"
             android:title="@string/ssl_manage_certs" >
             <intent
-                android:targetClass="com.alphabetbloc.clinic.ui.admin.SSLAddCertificatesActivity"
+                android:targetClass="com.alphabetbloc.accessmrs.ui.admin.SSLAddCertificatesActivity"
                 android:targetPackage="@string/app_package_name" />
         </Preference>
         <Preference
             android:summary="@string/ssl_manage_certs_desc"
             android:title="@string/ssl_test_ssl" >
             <intent
-                android:targetClass="com.alphabetbloc.clinic.ui.admin.SSLTestActivity"
+                android:targetClass="com.alphabetbloc.accessmrs.ui.admin.SSLTestActivity"
                 android:targetPackage="@string/app_package_name" />
         </Preference>
     </PreferenceCategory>

@@ -1,3 +1,0 @@
-<WakefulIntentService
-  listener="om.alphabetbloc.clinic.listeners.RefreshDataListener"
-/>

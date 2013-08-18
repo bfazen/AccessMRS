@@ -28,6 +28,7 @@ the License.
     <color name="priority">#b83838</color>
     <color name="saved">#e3b600</color>
     <color name="completed">#378531</color>
+    <color name="black_color">#ff000000</color>
     
 
 </resources>

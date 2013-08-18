@@ -3,19 +3,22 @@
 
     <!-- NON UI STRING CONSTANTS (referenced in both java and xml). -->
     <!-- APP -->
-    <string name="app_name">Clinic for CHWs</string>
-    <string name="app_version">1.0.2</string>
-    <string name="app_package_name">com.alphabetbloc.clinic</string>
-    <string name="app_provider_authority">com.alphabetbloc.clinic.providers.dbprovider</string>
-    <string name="app_account_type">com.alphabetbloc.clinic.account</string>
+    <string name="app_name">AccessMRS</string>
+    <string name="app_version">1.0.3</string>
+    <string name="app_package_name">com.alphabetbloc.accessmrs</string>
+    <string name="app_provider_authority">com.alphabetbloc.accessmrs.providers.dbprovider</string>
+    <string name="app_account_type">com.alphabetbloc.accessmrs.account</string>
 
     <!-- Keys -->
     <string name="key_server">server</string>
     <string name="key_username">username</string>
     <string name="key_password">password</string>
+    <string name="key_encryption_key">encryption_key</string>
+    <string name="key_encryption_password">encryption_password</string>
     <string name="key_saved_search">saved_search</string>
     <string name="key_program">program</string>
     <string name="key_provider">provider</string>
+    <string name="key_location">location</string>
     <string name="key_first_run">first_run</string>
     <string name="key_use_saved_searches">use_saved_searches</string>
     <string name="key_client_auth">client_authentication</string>
@@ -24,9 +27,13 @@
     <string name="key_min_refresh_seconds">minimum_refresh_time</string>
     <string name="key_max_refresh_seconds">maximum_refresh_time</string>
     <string name="key_show_form_prompt">show_form_prompt</string>
+    <string name="key_max_consent_time">maximum_consent_time</string>
+    <string name="key_clear_consent_time">clear_consent_time</string>
+    <string name="key_request_consent">request_client_consent</string>
+    <string name="key_kosirai_rct">kosirai_rct</string>
 
     <!-- Defaults -->
-    <string name="default_server">https://41.57.100.29:8443/amrs</string>
+    <string name="default_server">https://41.57.100.6:8443/amrs</string>
     <string name="default_username">JGreen</string>
     <string name="default_password">Password2012</string>
     <string name="default_provider">1</string>
@@ -38,7 +45,12 @@
     <string name="default_enable_activity_logging">true</string>
     <string name="default_use_client_auth">false</string>
     <string name="default_min_refresh_seconds">60</string>
-    <string name="default_max_refresh_seconds">120</string>
+    <string name="default_max_refresh_seconds">620</string>
+    <string name="default_location">1</string>
+    <string name="default_max_consent_time">62000</string>
+    <string name="default_clear_consent_time">6200000</string>
+    <string name="default_request_consent">true</string>
+    <string name="default_kosirai_rct">control</string>
 
     <!-- UI STRINGS -->
     <!-- PREFERENCES -->
@@ -48,22 +60,24 @@
     <string name="account_admin_settings_summary">Server Setup, SSL, User Interface, etc.</string>
     <string name="account_change_username_password">Change Username or Password</string>
     <string name="account_change_details">Edit Account Details</string>
+    <string name="account_setup_complete">Setup Complete</string>
+    <string name="account_password_reminder">Please Remember Your Password: \n\n  %s</string>
 
     <!-- Manage Device Prefs -->
     <string name="pref_user_settings">User Settings</string>
     <string name="pref_settings">Settings</string>
     <string name="pref_admin_settings">Manage</string>
     <string name="pref_manage_device_pref">Device Management</string>
-    <string name="pref_enable_activity_logging">Log User Activity</string>
+    <string name="pref_enable_activity_logging">Activity Logging</string>
     <string name="pref_activity_logging_on">Log forms loaded for each client</string>
     <string name="pref_activity_logging_off">Do not log user activity</string>
-    <string name="pref_show_settings_menu">Show Settings Menu</string>
+    <string name="pref_show_settings_menu">Settings Menu</string>
     <string name="pref_show_menu_on">Allow user access to this device administrator settings menu</string>
     <string name="pref_show_menu_off">Hide this device administrator menu from users</string>
     <string name="pref_change_server">Change URL</string>
-    <string name="pref_use_saved_search">Use Dynamic Cohorts</string>
+    <string name="pref_use_saved_search">Dynamic Cohorts</string>
     <string name="pref_saved_search_on">Use Dynamic Cohorts with OpenMRS Saved Searches</string>
-    <string name="pref_saved_search_off">Use Static Cohorts</string>
+    <string name="pref_saved_search_off">Use Static Cohorts from OpenMRS</string>
     <string name="pref_server">Server</string>
     <string name="pref_saved_search">Cohort or Search ID</string>
     <string name="pref_change_saved_search">Change Cohort or Search ID</string>
@@ -71,11 +85,22 @@
     <string name="pref_change_program">Change Program</string>
     <string name="pref_min_refresh_seconds">Don\'t sync if data was updated in last (seconds)</string>
     <string name="pref_max_refresh_seconds">Sync with server if data is older than (seconds)</string>
+    <string name="pref_consent_settings">Client Informed Consent</string>
+    <string name="pref_max_consent_time">Renew consent if consent is older than (seconds):</string>
+    <string name="pref_max_consent">Renew Consent After</string>
+    <string name="pref_clear_consent">Delete Old Consents</string>
+    <string name="pref_clear_consent_time">Delete a recorded consent signature from database if consent is older than (seconds)</string>
     <string name="pref_min_refresh">Don\'t Sync Before</string>
+    <string name="pref_location">Location</string>
+    <string name="pref_change_location">Change Location</string>
+    <string name="pref_location_prefix">Current Location ID:  </string>
     <string name="pref_max_refresh">Sync Data After</string>
+    <string name="pref_provider">Provider</string>
+    <string name="pref_change_provider">Change Provider</string>
+    <string name="pref_provider_prefix">Current Provider ID:  </string>
     <string name="pref_program_prefix">Current Program ID:  </string>
     <string name="pref_savedsearch_prefix">Current Cohort ID:  </string>
-    <string name="pref_not_an_int">This entry must be an integer. Please try again.</string>
+    <string name="pref_not_a_positive_int">This entry must be a positive integer. Please try again.</string>
     <string name="pref_min_requirement">The value must be greater than the \'don\'t refresh before\ setting.</string>
     <string name="pref_max_requirement">This value must be less than the \'sync after\' setting.</string>
     <string name="pref_wipe_all_data">Reset Databases</string>
@@ -83,6 +108,10 @@
     <string name="pref_form_prompt">Form Confirmation</string>
     <string name="pref_form_prompt_on">Ask for user confirmation before loading a new form.</string>
     <string name="pref_form_prompt_off">Load new forms directly.</string>
+    <string name="pref_request_consent">Request Client Consent</string>
+    <string name="pref_request_consent_on">Ask client for consent with signature before allowing provider access to client data.</string>
+    <string name="pref_request_consent_off">Do not require provider to obtain client consent to view client data.</string>
+    <string name="pref_not_allowed">Value not allowed</string>
 
     <!-- PreferenceActivity -> WipeDataActivity Alerts -->
     <string name="alert_title_first_warning">WARNING !!!</string>
@@ -96,6 +125,8 @@
     <string name="alert_second_cancel_button">Not Sure, Keep Data For Now</string>
     <string name="nothing_erased">Nothing has been erased, and no changes have been made to the device.</string>
     <string name="wiping_data">! Erasing Data Now !</string>
+    <string name="wiping_data_error_title">Database Error</string>
+    <string name="wiping_data_successful_title">Database Reset</string>
     <string name="wiping_data_successful">All data has been erased and settings have been set to defaults.</string>
     <string name="wiping_data_error">Sorry, there was an error wiping the data. Please try again.</string>
 
@@ -131,12 +162,21 @@
     <string name="ssl_test_failure">Unable to Connect to Server.</string>
 
     <!-- DEVICE SETUP -->
-    <!-- ClinicLauncherActivity SQLLite Setup with SQLCipher Password -->
+    <!-- AccessMRS LauncherActivity SQLLite Setup with SQLCipher Password -->
     <string name="sql_verify_pwd">Enter your passphrase:</string>
     <string name="sql_set_sqlcipher_pwd">Please enter a secure password for your database.</string>
     <string name="sql_change_sqlcipher_pwd">Please enter a new password for your database.</string>
     <string name="sql_confirm_sqlcipher_pwd">Please Re-enter Your Password.</string>
     <string name="sql_error_lost_db_key">ERROR! The key to the Database has been lost! Current Database is useless. Deleting and Reinstalling.</string>
+    <string name="access_forms_not_installed">The companion application AccessForms Must Be Installed To Use AccessMRS Software. Please install AccessForms and try again.</string>
+    <string name="sql_error_lost_db_key_title">SYSTEM ERROR</string>
+    <string name="sql_error_empty_password">Could not verify password. Please Click To Enter Password.</string>
+    <string name="sql_error_verify_pwd">Password is incorrect. Please try again.</string>
+    <string name="sql_error_new_pwd">Passwords must include a mix of numbers, upper and lower case letters and be at least six characters long.</string>
+    <string name="sql_error_confirm_pwd">Passwords do not match. Please enter a new password.</string>
+    <string name="sql_error_title">Database Error</string>
+    <string name="installation_error">Installation Error</string>
+
     <!--
 	<string name="sql_do_rekey">Encrypting database with the new passphrase... Please be patient...</string>
     <string name="sql_reset_new_pwd">Enter a strong passphrase to secure your data. It must contain at least one uppercase, one lowercase and one number, and be longer than six characters.</string>
@@ -145,17 +185,21 @@
 
 
     <!-- AccountAuthenticator OpenMRS username/password -->
-    <string name="auth_server_account_setup">Please setup a new account with Username and Password.</string>
+    <string name="auth_server_account_setup">Please enter Username and Password for a new OpenMRS account.</string>
     <string name="auth_server_username">Username</string>
     <string name="auth_server_user">User</string>
     <string name="auth_server_password">Password</string>
     <string name="auth_server_error_login">Unable to login. Please ensure all preferences are correct.</string>
-    <string name="auth_server_verify_account">You can only use one account with this device. Please verify your current login information.</string>
+    <string name="auth_server_verify_account">Please verify your current login information.</string>
     <string name="auth_server_verify_error">Password is incorrect. Please try again.</string>
     <string name="auth_verifying_server_account">Verifying account with OpenMRS server. Please wait.</string>
     <string name="auth_server_setup_complete">Congratulations, you have now setup an account with OpenMRS.</string>
     <string name="auth_dont_verify">Don\'t Verify</string>
     <string name="auth_try_again">Try Again</string>
+    <string name="auth_no_account">You must have an OpenMRS account setup to use AccessMRS.</string>
+    <string name="auth_error_title">Authentication Error</string>
+    <string name="auth_invalid_username">%s is not a valid Username.  Please enter an id with only letters and numbers.</string>
+    <string name="auth_empty_entry">Please Click on White Box to Enter Username and Password.</string>
 
     <!-- Accessibility Services: Content Description -->
     <string name="icon">Small Icon</string>
@@ -177,6 +221,25 @@
     <string name="icon_last_download_time">Last Download Time Icon</string>
 
     <!-- GENERAL UI STRINGS (By Activity) -->
+    <!-- Consent Client -->
+    <string name="consent_accept">Accept</string>
+    <string name="consent_decline">Decline</string>
+    <string name="consent_cancel">Ask Later</string>
+    <string name="consent_return">Return To Summary</string>
+    <string name="consent_revoke">Withdraw Consent</string>
+    <string name="consent_clear">Clear Signature</string>
+    <string name="consent_request_signature">Ask client to sign name here:</string>
+    <string name="consent_expired_title">Client Consent Expired</string>
+    <string name="consent_expired_body">The previous consent for this client on %s has now expired.  Please obtain a new consent from this client to see clinical data.</string>
+    <string name="consent_signature_addendum_line1">Consented on %s</string>
+    <string name="consent_signature_addendum_line2">Consent Valid Until %s</string>
+    <string name="consent_obtained">Obtained:</string>
+    <string name="consent_expiration">Expiration:</string>
+    <string name="consent_expired">Previous consent expired.\nClick to consent.</string>
+    <string name="consent_deferred">Consent deferred.\nClick to consent.</string>
+    <string name="consent_declined">Consent declined by client.\nClick to consent.</string>
+    <string name="consent_validity_period">Consent is valid from today (%1$s) and will expire on %2$s. After the expiration date, current provider may only access data from forms he/she has previously filled out.</string>
+
     <!-- Add New Client -->
     <string name="add_new_client">Add New Client</string>
     <string name="add_id">ID Number from AMRS Card:</string>
@@ -190,21 +253,81 @@
     <string name="add_temporary">For this visit only</string>
     <string name="add_permanent">Permanently: Keep Me Updated on This Client</string>
     <string name="add_create_new">Create New Client</string>
-    <string name="similar_clients_section">Similar Clients Found. Only create a new client if they are not listed below:</string>
-    <string name="similar_client_section">Similar Client Found. Only create a new client if they are not listed below:</string>
+
+    <plurals name="similar_clients_section">
+        <item quantity="one">%s Similar Client Found. Only create a new client if they are not listed below:</item>
+        <item quantity="other">%s Similar Clients Found. Only create a new client if they are not listed below:</item>
+    </plurals>
 
     <!-- Refreshing Data -->
+    <string name="refresh_title">Refreshing Data</string>
     <string name="download_patients">Refresh Data</string>
     <string name="downloading">%s…</string>
-    <string name="sync_in_progress_title">Please wait …</string>
-    <string name="sync_in_progress">Currently refreshing data.  Please be patient.</string>
-    <string name="upload_all_successful">%s forms(s) uploaded successfully.</string>
-    <string name="upload_some_failed">Sorry, %s forms(s) failed to upload!</string>
+    <string name="sync_in_progress_title">Refreshing Data …</string>
+    <string name="sync_in_progress">Connecting To Server …</string>
+    <string name="sync_upload_forms_not_needed">No Forms to Upload</string>
+    <string name="sync_upload_forms_failed">Could not upload forms. Please check connection.</string>
+
+    <plurals name="sync_upload_forms_successful">
+        <item quantity="one">%s form uploaded successfully.</item>
+        <item quantity="other">%s forms uploaded successfully.</item>
+    </plurals>
+    <plurals name="sync_upload_forms_partial">
+        <item quantity="one">Sorry, %s form failed to upload.</item>
+        <item quantity="other">Sorry, %s forms failed to upload.</item>
+    </plurals>
+
+    <string name="sync_download_forms_failed">Could not download forms. Please check connection.</string>
+    <string name="sync_download_forms_not_needed">No New Forms To Download</string>
+
+    <plurals name="sync_download_forms_successful">
+        <item quantity="one">%s new form downloaded successfully.</item>
+        <item quantity="other">%s new forms downloaded successfully.</item>
+    </plurals>
+    <plurals name="sync_download_forms_partial">
+        <item quantity="one">Sorry, %s form failed to download.</item>
+        <item quantity="other">Sorry, %s forms failed to download.</item>
+    </plurals>
+
+    <!-- Time Duration -->
+    <plurals name="time_years">
+        <item quantity="one"> Year </item>
+        <item quantity="other"> Years </item>
+    </plurals>
+    <plurals name="time_months">
+        <item quantity="one"> Month </item>
+        <item quantity="other"> Months </item>
+    </plurals>
+    <plurals name="time_days">
+        <item quantity="one"> Day </item>
+        <item quantity="other"> Days </item>
+    </plurals>
+    <plurals name="time_hours">
+        <item quantity="one"> Hour </item>
+        <item quantity="other"> Hours </item>
+    </plurals>
+    <plurals name="time_mins">
+        <item quantity="one"> Min </item>
+        <item quantity="other"> Mins </item>
+    </plurals>
+    <plurals name="time_secs">
+        <item quantity="one"> Sec </item>
+        <item quantity="other"> Secs </item>
+    </plurals>
+
+    <string name="sync_download_obs_failed">Could not download data. Please check connection.</string>
     <string name="uploading_patients">Uploading Forms…</string>
     <string name="refresh_clients_title">Refresh Client List</string>
     <string name="refresh_clients_text">Your client list is out of date. Please refresh data now.</string>
     <string name="refresh">Refresh</string>
     <string name="click_to_refresh">Click to Refresh Client Data</string>
+    <string name="sync_error">Sync Error</string>
+    <string name="no_connection">Unable to establish connection with the server. Please make sure you have data service available and try again.</string>
+    <string name="sync_uploading_forms">Uploading Forms …</string>
+    <string name="sync_downloading_forms">Downloading Forms …</string>
+    <string name="sync_downloading_data">Downloading Data …</string>
+    <string name="sync_updating_data">Updating Phone Data …</string>
+    <string name="sync_connecting">Connecting …</string>
 
     <!-- Dashboard Activity And Patient List Actvity -->
     <string name="provider_lists_section">Current Client Lists:</string>
@@ -216,7 +339,7 @@
     <string name="completed_client">Completed Client</string>
     <string name="incomplete_clients">Incomplete Clients</string>
     <string name="incomplete_client">Incomplete Client</string>
-    <string name="dashboard_title">Clinic For CHWs</string>
+    <string name="dashboard_title">AccessMRS</string>
     <string name="ss_service_started">Update Clients Started</string>
     <string name="ss_service_label">Update Client List</string>
     <string name="all_clients_section">All Available Clients</string>
@@ -243,6 +366,7 @@
     <string name="to_do_forms">Suggested Forms To Fill</string>
     <string name="incomplete_forms">Incomplete Forms To Fill</string>
     <string name="note">Note:</string>
+    <string name="consent_section">Client Consent:</string>
 
     <!-- Previous Encounters -->
     <string name="instances_last_day">Visits in the past day:</string>
@@ -255,12 +379,24 @@
     <!-- Error Strings -->
     <string name="unlocking_db">Unlocking databases.</string>
     <string name="error">Error: %s</string>
+
+    <plurals name="errors">
+        <item quantity="one">%d Error</item>
+        <item quantity="other">%d Errors</item>
+    </plurals>
+
     <string name="no_forms">No forms found.</string>
     <string name="no_patients">No patients found.</string>
     <string name="no_patient">No patient found.</string>
+    <string name="no_account_setup">Please setup an account to sync data.</string>
     <string name="no_upload_patients">No forms to upload!</string>
-    <string name="odk_collect_error">Error: ODK Collect not installed.</string>
-    <string name="storage_error">SD card not ready.</string>
+    <string name="access_forms_error">Error: AccessForms is not installed.</string>
+    <string name="error_storage">SD card is not available.  Please check the card or disconnect from USB.</string>
+    <string name="error_storage_title">Storage Error</string>
+    <string name="error_db">Database Error</string>
+    <string name="error_connection">Connection Error. Please Check Your Service and Try Again</string>
+    <string name="error_filesystem">File Error</string>
+    <string name="error_opening_file">Sorry, there has been an error opening this file. The file may be corrupt or missing from storage.</string>
 
     <!-- Misc Resources -->
     <string name="female">Female</string>

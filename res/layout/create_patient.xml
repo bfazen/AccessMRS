@@ -100,7 +100,6 @@
                 android:layout_marginRight="8dip"
                 android:inputType="text" >
 
-                <requestFocus />
             </EditText>
 
             <TextView

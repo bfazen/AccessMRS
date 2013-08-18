@@ -40,7 +40,6 @@
             android:hint="@string/key_server"
             android:inputType="text" >
 
-            <requestFocus />
         </EditText>
 
         <TextView
@@ -64,7 +63,6 @@
             android:hint="@string/key_username"
             android:inputType="text" >
 
-            <requestFocus />
         </EditText>
 
         <TextView
@@ -86,9 +84,8 @@
             android:layout_marginRight="10dp"
             android:layout_toRightOf="@+id/password_text"
             android:hint="@string/key_password"
-            android:inputType="text" >
+            android:inputType="textPassword" >
 
-            <requestFocus />
         </EditText>
 
         <Button

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.alphabetbloc.clinic"
+    package="com.alphabetbloc.accessmrs"
     android:sharedUserId="com.alphabetbloc.apps.android.integrated"
-    android:versionCode="1"
+    android:versionCode="2"
     android:versionName="@string/app_version" >
 
     <!-- TODO! the shared user id is really a stopgap measure before going through and changing the entire db structure (again!) -->
@@ -67,7 +67,7 @@
         <!-- Activities -->
         <!-- User Activities -->
         <activity
-            android:name=".ui.admin.ClinicLauncherActivity"
+            android:name=".ui.admin.LauncherActivity"
             android:label="@string/app_name"
             android:launchMode="singleTop"
             android:screenOrientation="portrait" >
@@ -92,11 +92,15 @@
             android:name=".ui.user.ListPatientActivity"
             android:label="@string/app_name"
             android:screenOrientation="portrait" />
-        <activity
-            android:name=".ui.user.RefreshDataActivity"
+         <activity
+            android:name=".ui.user.PatientConsentActivity"
+            android:label="@string/app_name"
+             />
+         <activity
+            android:name=".ui.user.ViewConsentActivity"
             android:label="@string/app_name"
             android:screenOrientation="portrait"
-            android:theme="@android:style/Theme.NoDisplay" />
+             />
         <activity
             android:name=".ui.user.ViewAllForms"
             android:label="@string/app_name"
@@ -128,16 +132,6 @@
             android:label="@string/app_name"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".ui.admin.DeviceAdminPreference"
-            android:label="@string/chw_menu_pref"
-            android:theme="@android:style/Theme.NoDisplay" >
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </activity>
-        <activity
             android:name=".ui.admin.SetupPreferencesActivity"
             android:label="@string/app_name"
             android:screenOrientation="portrait" />
@@ -161,13 +155,13 @@
             android:label="@string/app_name"
             android:screenOrientation="portrait" />
 
-        <!-- Un-used Clinic activities (could be added back in later...) -->
+        <!-- Un-used AccessMRS activities (could be added back in later...) -->
         <activity
-            android:name="org.odk.clinic.android.unused.ObservationChartActivity"
+            android:name="org.odk.accessmrs.android.unused.ObservationChartActivity"
             android:label="@string/app_name"
             android:screenOrientation="portrait" />
         <activity
-            android:name="org.odk.clinic.android.unused.ObservationTimelineActivity"
+            android:name="org.odk.accessmrs.android.unused.ObservationTimelineActivity"
             android:label="@string/app_name"
             android:screenOrientation="portrait" />
 
@@ -177,18 +171,6 @@
             android:authorities="@string/app_provider_authority" />
 
         <!-- Receivers -->
-        <receiver android:name=".receivers.RefreshDataReceiver" >
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.ACTION_POWER_CONNECTED" />
-            </intent-filter>
-
-            <meta-data
-                android:name="com.commonsware.cwac.wakeful"
-                android:resource="@xml/wakeful_refresh_data" />
-        </receiver>
         <receiver android:name=".receivers.EncryptDataReceiver" >
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
@@ -212,12 +194,17 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
             <intent-filter>
-                <action android:name="com.alphabetbloc.clinic.WIPE_DATA_SERVICE" />
+                <action android:name="com.alphabetbloc.accessmrs.WIPE_DATA_SERVICE" />
             </intent-filter>
             <!-- Could add other things here, eg. SMS to force encryption... -->
             <meta-data
                 android:name="com.commonsware.cwac.wakeful"
                 android:resource="@xml/wakeful_wipe_data" />
+        </receiver>
+        <receiver android:name=".receivers.AccessAdminPreferenceReceiver" >
+            <intent-filter>
+                <action android:name="com.alphabetbloc.accessmrs.SET_PREFERENCE" />
+            </intent-filter>
         </receiver>
 
         <!-- Services -->
