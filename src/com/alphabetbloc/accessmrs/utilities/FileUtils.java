@@ -1,7 +1,6 @@
-package com.alphabetbloc.accessmrs.utilities;
-
 /*
  * Copyright (C) 2009 University of Washington
+ * Copyright (C) 2012 Louis Fazen
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -13,6 +12,7 @@ package com.alphabetbloc.accessmrs.utilities;
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+package com.alphabetbloc.accessmrs.utilities;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -47,9 +47,7 @@ import com.alphabetbloc.accessmrs.R;
  * 
  * @author Louis Fazen (louis.fazen@gmail.com) (All methods except where
  *         otherwise noted)
- * @author Yaw Anokwa, Carl Hartung (carlhartung@gmail.com) (StorageReady(),
- *         deleteFile(), createFolder(), getMD5Hash(), and doesXFormExist taken
- *         from ODK Clinic/Collect)
+ * @author Yaw Anokwa, Carl Hartung (StorageReady(), deleteFile(), createFolder(), getMD5Hash(), and doesXFormExist() taken from ODK Clinic/Collect)
  * 
  */
 public class FileUtils {

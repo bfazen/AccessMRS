@@ -21,8 +21,8 @@ import android.provider.BaseColumns;
 
 /**
  * 
+ * @author Yaw Anokwa, Carl Hartung (other ODK authors?)
  * @author Louis Fazen (louis.fazen@gmail.com)
- * @author Yaw Anokwa, Carl Hartung (other authors? taken from ODK Clinic/Collect, originally from NotePadProvider Tutorial)
  *
  */
 public final class InstanceProviderAPI {
@@ -57,8 +57,6 @@ public final class InstanceProviderAPI {
         public static final String INSTANCE_FILE_PATH = "instanceFilePath";
         public static final String JR_FORM_ID = "jrFormId";
         
-        
-//        louis.fazen is adding these two columns because they were not provided originally...
         public static final String PATIENT_ID = "patientId";
         public static final String FORM_NAME = "formName";
         
@@ -69,13 +67,5 @@ public final class InstanceProviderAPI {
         public static final String SUBMISSION_KEY = "key";
         public static final String DECRYPTION_TIME = "decryptionTime";
         
-        //public static final String DISPLAY_SUB_SUBTEXT = "displaySubSubtext";
-
-
-//        public static final String DEFAULT_SORT_ORDER = "modified DESC";
-//        public static final String TITLE = "title";
-//        public static final String NOTE = "note";
-//        public static final String CREATED_DATE = "created";
-//        public static final String MODIFIED_DATE = "modified";
     }
 }

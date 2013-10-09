@@ -1,5 +1,6 @@
 /***
   Copyright (c) 2009-11 CommonsWare, LLC
+  Copyright 2012 Louis Fazen
   
   Licensed under the Apache License, Version 2.0 (the "License"); you may
   not use this file except in compliance with the License. You may obtain
@@ -23,7 +24,7 @@ import com.alphabetbloc.accessmrs.services.EncryptionService;
 import com.alphabetbloc.accessmrs.services.WakefulIntentService;
 
 /**
- * 
+ * @author Commonsware
  * @author Louis Fazen (louis.fazen@gmail.com)
  *
  */

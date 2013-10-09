@@ -1,5 +1,6 @@
 /*******************************************************************************
  * Copyright 2010 Sam Steele 
+ * Copyright 2012 Louis Fazen
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +32,7 @@ import android.os.IBinder;
 import android.util.Log;
 
 /**
- * 
+ * @author Sam Steele
  * @author Louis Fazen (louis.fazen@gmail.com)
  *
  */

@@ -1,6 +1,5 @@
-package com.alphabetbloc.accessmrs.utilities;
-
 /*
+ * Copyright (c) 2012 Louis Fazen
  * Copyright (C) 2009 University of Washington
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
@@ -13,6 +12,8 @@ package com.alphabetbloc.accessmrs.utilities;
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
+
+package com.alphabetbloc.accessmrs.utilities;
 
 import java.io.File;
 import java.io.FileReader;

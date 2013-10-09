@@ -22,8 +22,8 @@ import android.provider.BaseColumns;
 
 /**
  * 
- * @author Louis Fazen (louis.fazen@gmail.com)
- * @author Yaw Anokwa, Carl Hartung (other authors? taken from ODK Clinic/Collect, originally from NotePadProvider Tutorial)
+ * @author Yaw Anokwa, Carl Hartung (other ODK authors?)
+ * @author edited... Louis Fazen (louis.fazen@gmail.com)
  *
  */
 public final class FormsProviderAPI {
@@ -45,7 +45,6 @@ public final class FormsProviderAPI {
         public static final String CONTENT_ITEM_TYPE = "vnd.android.cursor.item/vnd.odk.form";
         
         public static final String ACCESS_FORMS_PATH = Environment.getExternalStorageDirectory() + "/odk/forms";
-
 
         // These are the only things needed for an insert
         public static final String DISPLAY_NAME = "displayName";
